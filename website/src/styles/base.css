@@ -1,0 +1,150 @@
+* {
+  box-sizing: border-box;
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+}
+
+html {
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  color-scheme: light;
+  font-family: var(--font-sans);
+}
+
+html.dark-theme {
+  background: var(--bg-primary);
+  color-scheme: dark;
+}
+
+html.dark-theme img,
+html.dark-theme video,
+html.dark-theme iframe {
+  filter: none;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+/* Custom Scrollbars */
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+*::-webkit-scrollbar-track {
+  background: var(--scrollbar-track);
+}
+
+*::-webkit-scrollbar-thumb {
+  min-height: 42px;
+  border: 2px solid var(--scrollbar-track);
+  border-radius: var(--radius-full);
+  background: var(--scrollbar-thumb);
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: var(--scrollbar-thumb-hover);
+}
+
+*::-webkit-scrollbar-thumb:active {
+  background: var(--color-primary);
+}
+
+*::-webkit-scrollbar-corner {
+  background: var(--scrollbar-track);
+}
+
+/* Sub-container Scrollbars */
+.dashboard-widget-body,
+.search-results,
+.notification-list,
+.dashboard-customize-panel {
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb) transparent;
+}
+
+.dashboard-widget-body::-webkit-scrollbar,
+.search-results::-webkit-scrollbar,
+.notification-list::-webkit-scrollbar,
+.dashboard-customize-panel::-webkit-scrollbar {
+  width: 7px;
+}
+
+.dashboard-widget-body::-webkit-scrollbar-track,
+.search-results::-webkit-scrollbar-track,
+.notification-list::-webkit-scrollbar-track,
+.dashboard-customize-panel::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.dashboard-widget-body::-webkit-scrollbar-thumb,
+.search-results::-webkit-scrollbar-thumb,
+.notification-list::-webkit-scrollbar-thumb,
+.dashboard-customize-panel::-webkit-scrollbar-thumb {
+  border: 2px solid transparent;
+  border-radius: var(--radius-full);
+  background: var(--scrollbar-thumb);
+  background-clip: padding-box;
+}
+
+.dashboard-widget-body::-webkit-scrollbar-thumb:hover,
+.search-results::-webkit-scrollbar-thumb:hover,
+.notification-list::-webkit-scrollbar-thumb:hover,
+.dashboard-customize-panel::-webkit-scrollbar-thumb:hover {
+  background: var(--scrollbar-thumb-hover);
+  background-clip: padding-box;
+}
+
+/* Global Keyframe Animations */
+@keyframes modal-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes modal-slide-in {
+  from {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes calendar-panel-in {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+@keyframes mail-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

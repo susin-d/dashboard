@@ -1,0 +1,802 @@
+/* Settings Page Styles */
+
+.setting-page {
+  display: grid;
+  gap: 32px;
+  padding-bottom: 48px;
+}
+
+.setting-section {
+  display: grid;
+  grid-template-columns: minmax(180px, 240px) minmax(0, 1fr);
+  gap: 36px;
+  padding-top: 32px;
+  border-top: 1px solid var(--border-color);
+}
+
+.setting-section:first-child {
+  padding-top: 0;
+  border-top: none;
+}
+
+@media (max-width: 860px) {
+  .setting-section {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+}
+
+.section-heading h2 {
+  margin: 0 0 6px;
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--text-primary);
+  letter-spacing: -0.015em;
+}
+
+.section-heading p {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+/* Card Shells */
+.workspace-settings-card,
+.coding-settings-card,
+.hackathon-source-settings {
+  overflow: hidden;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-xl, 14px);
+  box-shadow: var(--shadow-sm);
+}
+
+.apps-settings-stack {
+  display: grid;
+  gap: 20px;
+}
+
+/* Header inside Card */
+.workspace-settings-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 20px 22px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.workspace-settings-header > div {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.coding-settings-header,
+.hackathon-source-heading {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 20px 22px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.workspace-google-mark,
+.hackathon-source-heading > span,
+.coding-settings-header > span {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  flex: 0 0 auto;
+  color: var(--text-inverse);
+  background: var(--color-primary);
+  border-radius: 11px;
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.workspace-settings-header h3,
+.coding-settings-header h3,
+.hackathon-source-heading h3 {
+  margin: 0 0 3px;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.workspace-settings-header p,
+.coding-settings-header p,
+.hackathon-source-heading p {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+
+/* Header Connect / Action Buttons */
+.workspace-settings-header button,
+.coding-settings-footer button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 9px 16px;
+  color: var(--text-inverse);
+  background: var(--color-primary);
+  border: 1px solid var(--color-primary);
+  border-radius: var(--radius-md, 8px);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.18s ease;
+}
+
+.workspace-settings-header button:hover,
+.coding-settings-footer button:hover {
+  opacity: 0.92;
+  transform: translateY(-1px);
+}
+
+.workspace-settings-header button.workspace-connected {
+  color: var(--text-primary);
+  background: var(--bg-tertiary);
+  border-color: var(--border-color);
+}
+
+.workspace-settings-header button.workspace-connected:hover {
+  background: var(--bg-hover);
+  border-color: var(--border-hover, var(--text-muted));
+}
+
+.workspace-connection-error {
+  margin: 0;
+  padding: 12px 22px;
+  background: rgba(239, 68, 68, 0.08);
+  border-bottom: 1px solid var(--border-color);
+  color: var(--color-danger, #ef4444);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* Google Workspace Apps Grid */
+.workspace-app-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+  padding: 20px 22px;
+}
+
+.workspace-app-list a {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md, 10px);
+  background: var(--bg-surface, var(--bg-secondary, #fafafa));
+  color: var(--text-primary);
+  text-decoration: none;
+  transition: all 0.18s ease;
+}
+
+.workspace-app-list a:hover {
+  border-color: var(--color-primary);
+  background: var(--bg-hover, #f3f4f6);
+  transform: translateY(-1px);
+}
+
+.workspace-app-list a span {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  flex: 0 0 auto;
+  border-radius: 8px;
+  background: var(--color-primary);
+  color: var(--text-inverse);
+}
+
+.workspace-app-list a div {
+  flex: 1;
+  min-width: 0;
+}
+
+.workspace-app-list a strong {
+  display: block;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.workspace-app-list a small {
+  display: block;
+  margin-top: 2px;
+  color: var(--text-secondary);
+  font-size: 11px;
+}
+
+.workspace-app-list a svg:last-child {
+  color: var(--text-muted);
+  transition: color 0.18s ease;
+}
+
+.workspace-app-list a:hover svg:last-child {
+  color: var(--color-primary);
+}
+
+/* Google Calendar Body & Accounts */
+.google-calendar-settings-body {
+  padding: 20px 22px;
+}
+
+.google-calendar-empty {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.google-calendar-account-list {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.google-calendar-account {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md, 10px);
+  background: var(--bg-surface, #fafafa);
+}
+
+.google-calendar-avatar {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: var(--color-primary);
+  color: var(--text-inverse);
+  font-size: 14px;
+  font-weight: 700;
+  overflow: hidden;
+}
+
+.google-calendar-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.google-calendar-account > div {
+  flex: 1;
+  min-width: 0;
+}
+
+.google-calendar-account strong {
+  display: block;
+  font-size: 13px;
+  color: var(--text-primary);
+}
+
+.google-calendar-account small {
+  display: block;
+  margin-top: 2px;
+  color: var(--text-secondary);
+  font-size: 11px;
+}
+
+.google-calendar-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.google-calendar-chips span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 8px;
+  border-radius: 12px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
+.google-calendar-chips i {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+}
+
+.google-calendar-remove {
+  padding: 7px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+
+.google-calendar-remove:hover {
+  border-color: #ef4444;
+  background: rgba(239, 68, 68, 0.08);
+  color: #ef4444;
+}
+
+.google-calendar-refresh {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 14px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+
+.google-calendar-refresh:hover {
+  border-color: var(--color-primary);
+  color: var(--text-primary);
+}
+
+/* GitHub & Gmail Card Copy */
+.github-settings-copy {
+  padding: 16px 22px 20px;
+}
+
+.github-settings-copy p {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.github-settings-copy strong {
+  display: block;
+  margin-top: 10px;
+  color: var(--text-primary);
+  font-size: 12px;
+}
+
+/* Competitive Coding Form */
+.coding-profile-fields {
+  display: grid;
+  gap: 0;
+}
+
+.coding-profile-fields label {
+  display: grid;
+  grid-template-columns: 200px 1fr;
+  align-items: center;
+  gap: 20px;
+  padding: 18px 22px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+@media (max-width: 640px) {
+  .coding-profile-fields label {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+}
+
+.coding-profile-fields label span {
+  display: flex;
+  flex-direction: column;
+}
+
+.coding-profile-fields strong {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.coding-profile-fields small {
+  margin-top: 2px;
+  color: var(--text-secondary);
+  font-size: 11px;
+}
+
+.coding-profile-fields input {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md, 8px);
+  background: var(--bg-surface, #fafafa);
+  color: var(--text-primary);
+  font: inherit;
+  font-size: 13px;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.coding-profile-fields input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
+  background: var(--bg-card);
+}
+
+.coding-settings-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 16px;
+  padding: 16px 22px;
+  background: var(--bg-surface, #fafafa);
+}
+
+.coding-settings-footer p {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+
+/* Hackathon Sources List */
+.hackathon-source-settings {
+  width: 100%;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.hackathon-source-list {
+  display: grid;
+  gap: 0;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.hackathon-source-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px 24px;
+  width: 100%;
+  box-sizing: border-box;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.hackathon-source-row:last-child {
+  border-bottom: none;
+}
+
+.hackathon-source-logo {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  flex: 0 0 auto;
+  border-radius: 10px;
+  background: #000000;
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+
+.hackathon-source-row > div {
+  flex: 1;
+  min-width: 0;
+}
+
+.hackathon-source-row strong {
+  display: block;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.hackathon-source-row small {
+  display: block;
+  margin: 2px 0 4px;
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+
+.hackathon-source-row a {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--color-primary);
+  font-size: 11px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.hackathon-source-row a:hover {
+  text-decoration: underline;
+}
+
+.hackathon-source-row button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  flex: 0 0 auto;
+  margin-left: 12px;
+  padding: 8px 16px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md, 8px);
+  background: var(--bg-card);
+  color: var(--text-primary);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.18s ease;
+}
+
+.hackathon-source-row button:hover {
+  border-color: var(--color-primary);
+  background: var(--bg-hover, #f3f4f6);
+}
+
+.hackathon-source-row button.enabled {
+  border-color: var(--border-color);
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
+}
+
+.hackathon-source-row button.enabled:hover {
+  border-color: #ef4444;
+  background: rgba(239, 68, 68, 0.08);
+  color: #ef4444;
+}
+
+.hackathon-source-message {
+  margin: 0;
+  padding: 14px 22px;
+  background: var(--bg-surface, #fafafa);
+  border-top: 1px solid var(--border-color);
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+
+/* Delete Account Section & Modal */
+.delete-account-section {
+  padding-bottom: 32px;
+}
+
+.delete-account-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 22px;
+  background: rgba(239, 68, 68, 0.05);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  border-radius: var(--radius-xl, 14px);
+}
+
+.delete-account-card h3 {
+  margin: 0;
+  color: #ef4444;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.delete-account-card p {
+  margin: 4px 0 0;
+  color: var(--text-secondary);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.delete-account-card button {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 10px 16px;
+  color: #ffffff;
+  background: #ef4444;
+  border: 1px solid #ef4444;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.18s ease;
+}
+
+.delete-account-card button:hover {
+  background: #dc2626;
+  border-color: #dc2626;
+}
+
+/* Delete Modal */
+.delete-account-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 150;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  animation: fadeIn 0.18s ease;
+}
+
+.delete-account-modal {
+  width: min(440px, 100%);
+  padding: 28px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-xl, 16px);
+  background: var(--bg-card);
+  box-shadow: var(--shadow-xl);
+}
+
+.delete-account-modal-icon {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  margin-bottom: 16px;
+  border-radius: 50%;
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+}
+
+.delete-account-modal h2 {
+  margin: 0 0 8px;
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--text-primary);
+}
+
+.delete-account-modal p {
+  margin: 0 0 20px;
+  color: var(--text-secondary);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.delete-account-modal form label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 13px;
+  color: var(--text-primary);
+}
+
+.delete-account-modal form input {
+  width: 100%;
+  padding: 11px 14px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background: var(--bg-surface, #fafafa);
+  color: var(--text-primary);
+  font: inherit;
+  font-size: 13px;
+  margin-bottom: 16px;
+}
+
+.delete-account-modal form input:focus {
+  outline: none;
+  border-color: #ef4444;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.12);
+}
+
+.delete-account-modal-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.delete-account-cancel {
+  padding: 10px 16px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background: var(--bg-card);
+  color: var(--text-primary);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.delete-account-confirm {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 10px 16px;
+  color: #ffffff;
+  background: #ef4444;
+  border: 1px solid #ef4444;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.delete-account-confirm:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Profile Card */
+.profile-card {
+  overflow: hidden;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-xl, 14px);
+  box-shadow: var(--shadow-sm);
+}
+
+.profile-card-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 22px;
+}
+
+.profile-card-avatar {
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  flex: 0 0 auto;
+  color: var(--text-inverse);
+  background: var(--color-primary);
+  border-radius: 50%;
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.profile-card-header h3 {
+  margin: 0 0 3px;
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--text-primary);
+  letter-spacing: -0.015em;
+}
+
+.profile-card-header p {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+
+.profile-details {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  border-top: 1px solid var(--border-color);
+}
+
+.profile-detail {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 18px 22px;
+}
+
+.profile-detail + .profile-detail {
+  border-left: 1px solid var(--border-color);
+}
+
+.profile-detail strong {
+  display: block;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.profile-detail span {
+  display: block;
+  margin-top: 2px;
+  color: var(--text-secondary);
+  font-size: 12px;
+}

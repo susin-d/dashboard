@@ -1,0 +1,109 @@
+:root {
+  /* Colors - Light Theme */
+  --bg-primary: #ffffff;
+  --bg-secondary: #f7f7f7;
+  --bg-tertiary: #f1f1f1;
+  --bg-card: #ffffff;
+  --bg-card-hover: #fafafa;
+  --bg-hover: #f5f5f5;
+  --bg-hover-subtle: #fafafa;
+  --bg-overlay: rgba(255, 255, 255, 0.92);
+  --bg-backdrop: rgba(0, 0, 0, 0.16);
+
+  --text-primary: #0a0a0a;
+  --text-secondary: #666666;
+  --text-muted: #999999;
+  --text-disabled: #bbbbbb;
+  --text-inverse: #ffffff;
+
+  --color-primary: #111111;
+  --color-primary-hover: #000000;
+  --color-primary-light: #f3f3f3;
+
+  --border-color: #ededed;
+  --border-light: #f3f3f3;
+  --border-heavy: #cccccc;
+  --border-focus: #bcbcbc;
+
+  --scrollbar-track: #f3f3f3;
+  --scrollbar-thumb: #9a9a9a;
+  --scrollbar-thumb-hover: #111111;
+
+  /* Accents & Status Colors */
+  --color-accent: #2563eb;
+  --color-accent-light: #eff6ff;
+  --color-success: #16a34a;
+  --color-success-light: #f0fdf4;
+  --color-warning: #ca8a04;
+  --color-warning-light: #fefce8;
+  --color-danger: #dc2626;
+  --color-danger-light: #fef2f2;
+  --color-purple: #9333ea;
+  --color-purple-light: #faf5ff;
+
+  /* Typography */
+  --font-sans: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 20px 55px rgba(0, 0, 0, 0.16);
+  --shadow-focus: 0 0 0 3px rgba(0, 0, 0, 0.05);
+
+  /* Radii */
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius-md: 9px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-full: 999px;
+
+  /* Transitions */
+  --transition-fast: 140ms ease;
+  --transition-normal: 200ms ease;
+  --transition-slow: 300ms ease;
+
+  /* Mobile Safe Area Insets */
+  --safe-area-top: env(safe-area-inset-top, 0px);
+  --safe-area-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-area-left: env(safe-area-inset-left, 0px);
+  --safe-area-right: env(safe-area-inset-right, 0px);
+}
+
+html.dark-theme {
+  /* Colors - Dark Theme Overrides */
+  --bg-primary: #080808;
+  --bg-secondary: #121212;
+  --bg-tertiary: #1a1a1a;
+  --bg-card: #141414;
+  --bg-card-hover: #1f1f1f;
+  --bg-hover: #222222;
+  --bg-hover-subtle: #191919;
+  --bg-overlay: rgba(18, 18, 18, 0.92);
+  --bg-backdrop: rgba(0, 0, 0, 0.55);
+
+  --text-primary: #f3f3f3;
+  --text-secondary: #aaaaaa;
+  --text-muted: #777777;
+  --text-disabled: #555555;
+  --text-inverse: #0a0a0a;
+
+  --color-primary: #ffffff;
+  --color-primary-hover: #e5e5e5;
+  --color-primary-light: #222222;
+
+  --border-color: #262626;
+  --border-light: #1e1e1e;
+  --border-heavy: #444444;
+  --border-focus: #555555;
+
+  --scrollbar-track: #141414;
+  --scrollbar-thumb: #555555;
+  --scrollbar-thumb-hover: #888888;
+
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.5);
+  --shadow-lg: 0 20px 55px rgba(0, 0, 0, 0.7);
+  --shadow-focus: 0 0 0 3px rgba(255, 255, 255, 0.1);
+}

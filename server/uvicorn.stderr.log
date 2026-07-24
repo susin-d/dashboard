@@ -1,0 +1,93 @@
+INFO:     Will watch for changes in these directories: ['C:\\project\\Opensync\\server']
+INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
+INFO:     Started reloader process [4536] using WatchFiles
+INFO:     Started server process [16700]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'app\services\google_calendar.py', 'app\api\routes\google_calendar.py', 'app\api\router.py', 'app\core\config.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [16700]
+WARNING:  WatchFiles detected changes in 'app\services\google_calendar.py'. Reloading...
+INFO:     Started server process [18852]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [18852]
+INFO:     Started server process [11568]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'app\core\config.py', 'app\api\routes\google_drive.py', 'app\api\router.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [11568]
+INFO:     Started server process [18828]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'app\api\routes\google_drive.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for connections to close. (CTRL+C to force quit)
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [18828]
+INFO:     Started server process [13516]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'app\services\hackathon_sources.py', 'app\api\routes\workspace.py', 'app\schemas\workspace.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [13516]
+WARNING:  WatchFiles detected changes in 'app\services\hackathon_sources.py'. Reloading...
+Process SpawnProcess-6:
+Traceback (most recent call last):
+  File "C:\Python314\Lib\multiprocessing\process.py", line 320, in _bootstrap
+    self.run()
+    ~~~~~~~~^^
+  File "C:\Python314\Lib\multiprocessing\process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\project\Opensync\server\.venv\Lib\site-packages\uvicorn\_subprocess.py", line 76, in subprocess_started
+    config.configure_logging()
+    ~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\project\Opensync\server\.venv\Lib\site-packages\uvicorn\config.py", line 391, in configure_logging
+    logging.config.dictConfig(self.log_config)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Python314\Lib\logging\config.py", line 946, in dictConfig
+    dictConfigClass(config).configure()
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Python314\Lib\logging\config.py", line 577, in configure
+    _clearExistingHandlers()
+    ~~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Python314\Lib\logging\config.py", line 290, in _clearExistingHandlers
+    logging.shutdown(logging._handlerList[:])
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python314\Lib\logging\__init__.py", line 2233, in shutdown
+    for wr in reversed(handlerList[:]):
+              ~~~~~~~~^^^^^^^^^^^^^^^^
+KeyboardInterrupt
+INFO:     Started server process [16188]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'app\api\routes\workspace.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for connections to close. (CTRL+C to force quit)
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [16188]
+INFO:     Started server process [12972]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'app\services\hackathon_sources.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for connections to close. (CTRL+C to force quit)
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [12972]
+INFO:     Started server process [19140]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
