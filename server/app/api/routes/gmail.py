@@ -196,6 +196,51 @@ async def connect_gmail(
     }
 
 
+@router.get("/token")
+async def get_gmail_token(
+    email: str | None = Query(default=None),
+    database: Client = Depends(get_firestore),
+    user: dict = Depends(get_current_user),
+):
+    """Return a fresh Gmail access token for the given account (or first account)."""
+    collection = gmail_accounts_collection(database, user["uid"])
+    if email:
+        doc_id = account_document_id(email)
+        snapshot = collection.document(doc_id).get()
+        if not snapshot.exists:
+            raise HTTPException(status_code=404, detail="Gmail account not found.")
+        data = snapshot.to_dict()
+    else:
+        snapshots = list(collection.stream())
+        if not snapshots:
+            raise HTTPException(status_code=404, detail="No Gmail accounts connected.")
+        data = snapshots[0].to_dict()
+
+    encrypted_refresh_token = data.get("refresh_token")
+    if not encrypted_refresh_token:
+        raise HTTPException(
+            status_code=400,
+            detail="No refresh token stored for this Gmail account. Please reconnect.",
+        )
+
+    try:
+        from app.services.google_calendar import decrypt_google_token, refresh_google_token
+        refresh_token = decrypt_google_token(encrypted_refresh_token)
+        access_token = await refresh_google_token(refresh_token)
+    except Exception as error:
+        logger.error("Gmail token refresh failed: %s", error, exc_info=True)
+        raise HTTPException(
+            status_code=502,
+            detail="Could not refresh Gmail access token. Please reconnect your account.",
+        ) from error
+
+    return {
+        "email": data.get("email", ""),
+        "access_token": access_token,
+        "expires_in": 3599,
+    }
+
+
 @router.get("/accounts")
 def get_gmail_accounts(
     database: Client = Depends(get_firestore),

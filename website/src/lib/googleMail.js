@@ -1,5 +1,6 @@
-import { authorizeGmail, clearGmailAuthorization, hasGmailConnection } from './firebase'
+import { authorizeGmail, clearGmailAuthorization, hasGmailConnection, saveGmailAccountToken } from './firebase'
 import { getStoredAuthToken } from './authApi'
+import { getGmailToken } from './gmailApi'
 
 const API = 'https://gmail.googleapis.com/gmail/v1/users/me'
 const BACKEND_API_URL = import.meta.env.VITE_API_URL ?? 'http://127.0.0.1:8000/api/v1'
@@ -93,8 +94,27 @@ function encodeMessage({ to, cc, bcc, subject, body, inReplyTo, references }) {
 
 export { hasGmailConnection }
 
+/**
+ * Returns a valid Gmail access token for the given account email.
+ * Tries the sessionStorage cache first; if missing or expired, fetches a
+ * fresh token from the backend (which owns the stored refresh token) and
+ * caches it for the duration of the session.
+ */
+async function resolveGmailToken(email = null) {
+  try {
+    const cached = await authorizeGmail(email)
+    return cached
+  } catch {
+    // Cache miss or expired — fetch a fresh token from the backend
+  }
+  const { email: accountEmail, access_token: accessToken, expires_in: expiresIn } = await getGmailToken(email)
+  const expiresAt = Date.now() + (expiresIn ?? 3599) * 1000
+  saveGmailAccountToken(accountEmail, accessToken, expiresAt)
+  return accessToken
+}
+
 export async function loadGoogleMail(query = '', folder = 'INBOX', pageToken = '', targetEmail = null) {
-  const token = await authorizeGmail(targetEmail)
+  const token = await resolveGmailToken(targetEmail)
   const params = new URLSearchParams({ maxResults: '40' })
   if (folder) params.set('labelIds', folder)
   if (query.trim()) params.set('q', query.trim())
@@ -116,7 +136,7 @@ export async function loadGoogleMail(query = '', folder = 'INBOX', pageToken = '
 }
 
 export async function loadGoogleMessage(id, targetEmail = null) {
-  const token = await authorizeGmail(targetEmail)
+  const token = await resolveGmailToken(targetEmail)
   const message = await gmailFetch(`/messages/${id}?format=full`, token)
   return {
     ...summary(message),
@@ -128,7 +148,7 @@ export async function loadGoogleMessage(id, targetEmail = null) {
 }
 
 export async function updateGoogleMessage(id, { add = [], remove = [] }, targetEmail = null) {
-  const token = await authorizeGmail(targetEmail)
+  const token = await resolveGmailToken(targetEmail)
   return gmailFetch(`/messages/${id}/modify`, token, {
     method: 'POST',
     body: JSON.stringify({ addLabelIds: add, removeLabelIds: remove }),
@@ -136,7 +156,7 @@ export async function updateGoogleMessage(id, { add = [], remove = [] }, targetE
 }
 
 export async function sendGoogleMessage(message, targetEmail = null) {
-  const token = await authorizeGmail(targetEmail)
+  const token = await resolveGmailToken(targetEmail)
   return gmailFetch('/messages/send', token, {
     method: 'POST',
     body: JSON.stringify({

@@ -4,7 +4,7 @@ import {
   MailPlus, RefreshCw, Reply, Search, Send, Star, Trash2, X,
 } from 'lucide-react'
 import {
-  hasGmailConnection, loadGoogleMail, loadGoogleMessage,
+  loadGoogleMail, loadGoogleMessage,
   sendGoogleMessage, updateGoogleMessage,
 } from '../lib/googleMail'
 import { getGmailAccounts, getGmailStatus } from '../lib/gmailApi'
@@ -41,7 +41,7 @@ export function MailsPage({ onNavigate }) {
   const [folder, setFolder] = useState('INBOX')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-  const [connected, setConnected] = useState(hasGmailConnection)
+  const [connected, setConnected] = useState(null)
   const [selected, setSelected] = useState(null)
   const [reading, setReading] = useState(false)
   const [compose, setCompose] = useState(null)
@@ -99,6 +99,8 @@ export function MailsPage({ onNavigate }) {
           if (!selectedAccountEmail) {
             setSelectedAccountEmail(fetchedAccounts[0].email)
           }
+        } else {
+          setConnected(false)
         }
       })
       .catch(() => {
@@ -111,7 +113,10 @@ export function MailsPage({ onNavigate }) {
             }
           })
           .catch((statusError) => {
-            if (active) setError(statusError.message)
+            if (active) {
+              setConnected(false)
+              setError(statusError.message)
+            }
           })
       })
     return () => {
@@ -190,6 +195,14 @@ export function MailsPage({ onNavigate }) {
     } finally {
       setSending(false)
     }
+  }
+
+  if (connected === null) {
+    return (
+      <div className="mail-page empty-connect">
+        <LoaderCircle size={36} className="mail-spin" />
+      </div>
+    )
   }
 
   if (!connected) {

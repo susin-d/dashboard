@@ -31,6 +31,11 @@ export function getGmailStatus() {
   return request('/status')
 }
 
+export function getGmailToken(email = null) {
+  const path = email ? `/token?email=${encodeURIComponent(email)}` : '/token'
+  return request(path)
+}
+
 export function getGmailAccounts() {
   return request('/accounts')
 }
