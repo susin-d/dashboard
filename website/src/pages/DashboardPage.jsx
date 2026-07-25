@@ -237,12 +237,26 @@ export function DashboardPage({
     },
     projects: {
       total: projects.length,
-      body: <div className="dashboard-project-list">{projects.slice(0, 3).map((project) => (
-        <div key={project.id}>
-          <span><strong>{project.name}</strong><em>{project.progress}%</em></span>
-          <div><i style={{ width: `${project.progress}%` }} /></div>
+      body: projects.length ? (
+        <div className="dashboard-project-list">
+          {projects.slice(0, 3).map((project) => (
+            <div key={project.id} className="dashboard-project-item">
+              <div className="dashboard-project-info">
+                <strong className="dashboard-project-name">{project.name}</strong>
+                <span className="dashboard-project-percent">{project.progress}%</span>
+              </div>
+              <div className="dashboard-project-bar-track">
+                <div
+                  className="dashboard-project-bar-fill"
+                  style={{ width: `${project.progress}%` }}
+                />
+              </div>
+            </div>
+          ))}
         </div>
-      ))}</div>,
+      ) : (
+        <p className="dashboard-widget-empty">No active projects.</p>
+      ),
     },
     jobs: {
       total: jobs.length,

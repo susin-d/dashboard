@@ -6,6 +6,7 @@ const workspacePages = new Set([
   'todo',
   'calendar',
   'mails',
+  'chats',
   'competitive-coding',
   'hackathons',
   'projects',

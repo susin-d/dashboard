@@ -9,6 +9,7 @@ from app.api.routes import (
     google_calendar,
     google_drive,
     github,
+    google_chat,
     health,
     notifications,
     profiles,
@@ -33,6 +34,10 @@ api_router.include_router(github.router, tags=["GitHub integration"])
 api_router.include_router(
     google_calendar.router,
     tags=["Google Calendar integration"],
+)
+api_router.include_router(
+    google_chat.router,
+    tags=["Google Chat integration"],
 )
 api_router.include_router(todos.router, tags=["todos"])
 api_router.include_router(workspace.router, tags=["workspace data"])

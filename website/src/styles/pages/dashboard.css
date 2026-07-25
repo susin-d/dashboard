@@ -221,9 +221,71 @@
 }
 
 .dashboard-project-list {
-  display: grid;
-  gap: 13px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 4px 0;
+}
+
+.dashboard-project-item,
+.dashboard-project-list > div {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
   padding: 8px 0;
+  border-top: 1px solid var(--border-color);
+}
+
+.dashboard-project-item:first-child,
+.dashboard-project-list > div:first-child {
+  border-top: 0;
+  padding-top: 2px;
+}
+
+.dashboard-project-info,
+.dashboard-project-list span {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+}
+
+.dashboard-project-name,
+.dashboard-project-list strong {
+  color: var(--text-primary);
+  font-size: 13px;
+  font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dashboard-project-percent,
+.dashboard-project-list em {
+  color: var(--text-secondary);
+  font-size: 11px;
+  font-weight: 600;
+  font-style: normal;
+  flex: 0 0 auto;
+}
+
+.dashboard-project-bar-track,
+.dashboard-project-list > div > div {
+  height: 5px;
+  width: 100%;
+  border-radius: var(--radius-full);
+  background: var(--bg-tertiary);
+  overflow: hidden;
+}
+
+.dashboard-project-bar-fill,
+.dashboard-project-list i {
+  display: block;
+  height: 100%;
+  border-radius: var(--radius-full);
+  background: var(--text-primary);
+  transition: width var(--transition-normal);
 }
 
 /* Dashboard Customize Panel & Edit Toggle Styles */

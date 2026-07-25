@@ -8,6 +8,7 @@ import {
   HardDrive,
   Globe2,
   Mail,
+  MessageSquare,
   GitFork,
   Presentation,
   RefreshCw,
@@ -47,6 +48,11 @@ import {
   disconnectGithub,
   getGithubStatus,
 } from '../lib/githubApi'
+import {
+  beginGoogleChatOAuth,
+  disconnectGoogleChatAccount,
+  getGoogleChatAccounts,
+} from '../lib/googleChatApi'
 import {
   loadHackathons,
   loadHackathonSources,
@@ -111,6 +117,9 @@ export function SettingPage({
   const [gmailAccounts, setGmailAccounts] = useState([])
   const [gmailBusy, setGmailBusy] = useState(false)
   const [gmailMessage, setGmailMessage] = useState('')
+  const [googleChatAccounts, setGoogleChatAccounts] = useState([])
+  const [googleChatBusy, setGoogleChatBusy] = useState(false)
+  const [googleChatMessage, setGoogleChatMessage] = useState('')
   const [hackathonSources, setHackathonSources] = useState([])
   const [hackathonSourceBusy, setHackathonSourceBusy] = useState('')
   const [hackathonSourceMessage, setHackathonSourceMessage] = useState('')
@@ -137,8 +146,17 @@ export function SettingPage({
       })
   }
 
+  const fetchGoogleChatAccounts = () => {
+    getGoogleChatAccounts()
+      .then(({ accounts }) => {
+        setGoogleChatAccounts(accounts || [])
+      })
+      .catch(() => setGoogleChatAccounts([]))
+  }
+
   useEffect(() => {
     fetchGmailAccounts()
+    fetchGoogleChatAccounts()
   }, [user?.uid])
 
   useEffect(() => {
@@ -243,6 +261,7 @@ export function SettingPage({
     const searchParams = new URLSearchParams(window.location.search)
     const result = searchParams.get('github')
     const gmailResult = searchParams.get('gmail')
+    const chatResult = searchParams.get('chat')
     const reason = searchParams.get('reason')
     if (result) {
       setGithubMessage(
@@ -260,6 +279,15 @@ export function SettingPage({
       )
       window.history.replaceState({}, '', window.location.pathname)
     }
+    if (chatResult) {
+      setGoogleChatMessage(
+        chatResult === 'connected'
+          ? 'Google Chat account connected successfully.'
+          : `Google Chat connection failed: ${reason || 'OAuth authorization failed'}`,
+      )
+      window.history.replaceState({}, '', window.location.pathname)
+    }
+    fetchGoogleChatAccounts()
     getGithubStatus()
       .then(({ connected }) => {
         if (active) setGithubConnected(connected)
@@ -421,6 +449,33 @@ export function SettingPage({
       setGmailMessage(error.message || 'Could not disconnect account.')
     } finally {
       setGmailBusy(false)
+    }
+  }
+
+  const addGoogleChatAccount = async () => {
+    setGoogleChatBusy(true)
+    setGoogleChatMessage('')
+    try {
+      await beginGoogleChatOAuth()
+    } catch (error) {
+      setGoogleChatMessage(error.message || 'Google Chat account could not be connected.')
+      setGoogleChatBusy(false)
+    }
+  }
+
+  const removeGoogleChatAccount = async (account) => {
+    setGoogleChatBusy(true)
+    setGoogleChatMessage('')
+    try {
+      if (account.id) {
+        await disconnectGoogleChatAccount(account.id)
+      }
+      fetchGoogleChatAccounts()
+      setGoogleChatMessage(`Disconnected Google Chat for ${account.email}.`)
+    } catch (error) {
+      setGoogleChatMessage(error.message || 'Could not disconnect account.')
+    } finally {
+      setGoogleChatBusy(false)
     }
   }
 
@@ -730,6 +785,50 @@ export function SettingPage({
                 </p>
               )}
               {gmailMessage && <strong role="status">{gmailMessage}</strong>}
+            </div>
+          </section>
+
+          <section className="workspace-settings-card google-chat-settings-card">
+            <div className="workspace-settings-header">
+              <div>
+                <span className="workspace-google-mark"><MessageSquare size={19} /></span>
+                <div>
+                  <h3>Google Chat</h3>
+                  <p>Connect and manage multiple Google Chat accounts</p>
+                </div>
+              </div>
+              <button onClick={addGoogleChatAccount} disabled={googleChatBusy}>
+                {googleChatBusy ? 'Connecting…' : 'Add Google Chat account'}
+              </button>
+            </div>
+            <div className="google-calendar-settings-body">
+              {googleChatAccounts.length ? (
+                <div className="google-calendar-account-list">
+                  {googleChatAccounts.map((acc) => (
+                    <div className="google-calendar-account" key={acc.id || acc.email}>
+                      <span className="google-calendar-avatar">
+                        <MessageSquare size={16} />
+                      </span>
+                      <div>
+                        <strong>{acc.display_name || acc.email}</strong>
+                        <small>{acc.email} · Google Chat connected</small>
+                      </div>
+                      <button
+                        className="google-calendar-remove"
+                        onClick={() => removeGoogleChatAccount(acc)}
+                        aria-label={`Disconnect ${acc.email}`}
+                      >
+                        <Trash2 size={15} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="google-calendar-empty">
+                  Connect one or more Google Chat accounts to view spaces, direct messages, and chat across accounts.
+                </p>
+              )}
+              {googleChatMessage && <strong role="status">{googleChatMessage}</strong>}
             </div>
           </section>
 

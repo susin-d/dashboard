@@ -8,6 +8,7 @@ import {
   LayoutDashboard,
   ListTodo,
   Mail,
+  MessageSquare,
   Rocket,
   Settings,
 } from 'lucide-react'
@@ -18,6 +19,7 @@ export const navigationItems = [
   { id: 'todo', label: 'Todo List', icon: ListTodo },
   { id: 'calendar', label: 'Calendar', icon: CalendarDays },
   { id: 'mails', label: 'Mails', icon: Mail },
+  { id: 'chats', label: 'Chats', icon: MessageSquare },
   { id: 'competitive-coding', label: 'Competitive Coding', icon: Code2 },
   { id: 'hackathons', label: 'Hackathons', icon: Rocket },
   { id: 'projects', label: 'Projects', icon: FolderKanban },

@@ -7,6 +7,7 @@ import { DocumentsPage } from './pages/DocumentsPage'
 import { HackathonsPage } from './pages/HackathonsPage'
 import { JobsPage } from './pages/JobsPage'
 import { MailsPage } from './pages/MailsPage'
+import { ChatsPage } from './pages/ChatsPage'
 import { ProfilePage } from './pages/ProfilePage'
 import { ProjectDetailPage } from './pages/ProjectDetailPage'
 import { ProjectsPage } from './pages/ProjectsPage'
@@ -253,6 +254,7 @@ function App() {
       />
     ),
     mails: <MailsPage onNavigate={navigateWorkspace} />,
+    chats: <ChatsPage onNavigate={navigateWorkspace} />,
     profile: (
       <ProfilePage
         user={userProfile}
