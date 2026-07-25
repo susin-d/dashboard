@@ -135,6 +135,7 @@ async def google_calendar_callback(
 @router.get("/data")
 async def get_google_calendar_data(
     database: Client = Depends(get_firestore),
+    user: dict = Depends(get_current_user),
 ):
     snapshots = await asyncio.to_thread(
         lambda: list(accounts_collection(database, user["uid"]).stream()),

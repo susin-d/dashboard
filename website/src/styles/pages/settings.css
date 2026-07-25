@@ -91,8 +91,9 @@
 .workspace-google-mark,
 .hackathon-source-heading > span,
 .coding-settings-header > span {
-  display: grid;
-  place-items: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   width: 42px;
   height: 42px;
   flex: 0 0 auto;
@@ -101,6 +102,14 @@
   border-radius: 11px;
   font-size: 16px;
   font-weight: 800;
+}
+
+.workspace-google-mark svg,
+.hackathon-source-heading > span svg,
+.coding-settings-header > span svg,
+.google-calendar-avatar svg {
+  display: block;
+  margin: auto;
 }
 
 .workspace-settings-header h3,
@@ -261,8 +270,9 @@
 }
 
 .google-calendar-avatar {
-  display: grid;
-  place-items: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   width: 36px;
   height: 36px;
   flex: 0 0 auto;

@@ -420,13 +420,13 @@
 
 .google-calendar-settings-body,
 .github-settings-copy {
-  padding: 18px 20px;
+  padding: 20px 22px;
 }
 
 .google-calendar-account {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 14px;
   padding: 13px 0;
   border-top: 1px solid var(--border-color);
 }
@@ -442,17 +442,23 @@
 }
 
 .google-calendar-avatar {
-  display: grid;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   width: 36px;
   height: 36px;
   flex: 0 0 auto;
   overflow: hidden;
-  place-items: center;
   border-radius: 50%;
   background: var(--color-primary);
   color: var(--text-inverse);
-  font-size: 10px;
-  font-weight: 800;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.google-calendar-avatar svg {
+  display: block;
+  margin: auto;
 }
 
 .google-calendar-avatar img {
