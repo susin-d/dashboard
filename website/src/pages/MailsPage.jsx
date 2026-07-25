@@ -47,7 +47,6 @@ export function MailsPage({ onNavigate }) {
   const [selectedAccountEmail, setSelectedAccountEmail] = useState('')
   const [query, setQuery] = useState('')
   const [folder, setFolder] = useState('INBOX')
-  const [filterMode, setFilterMode] = useState('all') // 'all', 'unread', 'starred'
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [connected, setConnected] = useState(null)
@@ -134,12 +133,6 @@ export function MailsPage({ onNavigate }) {
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const unreadCount = useMemo(() => messages.filter((message) => message.unread).length, [messages])
-
-  const filteredMessages = useMemo(() => {
-    if (filterMode === 'unread') return messages.filter((m) => m.unread)
-    if (filterMode === 'starred') return messages.filter((m) => m.starred)
-    return messages
-  }, [messages, filterMode])
 
   const openMessage = async (message) => {
     setReading(true)
@@ -235,208 +228,151 @@ export function MailsPage({ onNavigate }) {
     <div className="mail-page">
       {notice && (
         <div className="mail-toast">
-          <span>{notice}</span>
-          <button onClick={() => setNotice('')} aria-label="Close notification"><X size={14} /></button>
+          {notice}
+          <button onClick={() => setNotice('')} aria-label="Close notice"><X size={14} /></button>
         </div>
       )}
 
-      {/* Page Header */}
+      {/* Fixed Sub-Sidebar Attached Next to Main App Sidebar */}
+      <aside className="mail-folders">
+        <div className="mail-mobile-compose">
+          <button onClick={() => setCompose({ ...EMPTY_COMPOSE })}>
+            <MailPlus size={17} /><span>Compose</span>
+          </button>
+        </div>
+
+        {accounts.length > 1 && (
+          <div className="mail-account-select">
+            <label htmlFor="gmail-account-picker">Account</label>
+            <select
+              id="gmail-account-picker"
+              value={selectedAccountEmail || account}
+              onChange={(e) => {
+                const newEmail = e.target.value
+                setSelectedAccountEmail(newEmail)
+                refresh(query, folder, '', false, newEmail)
+              }}
+            >
+              {accounts.map((acc) => (
+                <option key={acc.id || acc.email} value={acc.email}>
+                  {acc.email}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+
+        {FOLDERS.map(({ id, label, icon: Icon }) => (
+          <button
+            key={id}
+            className={folder === id ? 'active' : ''}
+            onClick={() => { setFolder(id); setSelected(null); setQuery('') }}
+          >
+            <Icon size={18} />
+            <span>{label}</span>
+            {id === 'INBOX' && unreadCount > 0 && <strong>{unreadCount}</strong>}
+          </button>
+        ))}
+
+        <a href="https://mail.google.com" target="_blank" rel="noreferrer">
+          <ExternalLink size={18} />
+          <span>Open Gmail</span>
+        </a>
+        {account && <small>{account}</small>}
+      </aside>
+
+      {/* Page Heading & Search Toolbar */}
       <div className="page-heading mail-page-heading">
         <div>
           <p>Communication</p>
-          <div className="mail-title-row">
-            <h1>Mails</h1>
-            {unreadCount > 0 && <span className="mail-unread-badge">{unreadCount} unread</span>}
-          </div>
+          <h1>Mails</h1>
         </div>
-
-        <div className="mail-header-actions">
-          <button className="primary-button compose-btn-top" onClick={() => setCompose({ ...EMPTY_COMPOSE })}>
-            <MailPlus size={16} /> Compose
+        <div className="mail-toolbar">
+          <form onSubmit={(event) => { event.preventDefault(); refresh(query, folder, '', false, selectedAccountEmail) }}>
+            <Search size={17} />
+            <input
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder="Search mail"
+              aria-label="Search mail"
+            />
+            {query && (
+              <button type="button" onClick={() => { setQuery(''); refresh('', folder, '', false, selectedAccountEmail) }} aria-label="Clear search">
+                <X size={15} />
+              </button>
+            )}
+          </form>
+          <button onClick={() => refresh(query, folder, pageToken, true, selectedAccountEmail)} disabled={loading} aria-label="Refresh inbox">
+            <RefreshCw size={17} className={loading ? 'mail-spin' : ''} />
           </button>
         </div>
+        <button className="primary-button" onClick={() => setCompose({ ...EMPTY_COMPOSE })}>
+          <MailPlus size={16} /> Compose
+        </button>
       </div>
 
-      {/* Modern Integrated 2-Pane Workspace */}
-      <div className="mail-workspace">
-        {/* Left Folder Nav Sidebar */}
-        <aside className="mail-sidebar">
-          <button className="mail-sidebar-compose" onClick={() => setCompose({ ...EMPTY_COMPOSE })}>
-            <MailPlus size={16} /> Compose Mail
-          </button>
-
-          {accounts.length > 1 && (
-            <div className="mail-account-select">
-              <label htmlFor="gmail-account-picker">Account</label>
-              <select
-                id="gmail-account-picker"
-                value={selectedAccountEmail || account}
-                onChange={(e) => {
-                  const newEmail = e.target.value
-                  setSelectedAccountEmail(newEmail)
-                  refresh(query, folder, '', false, newEmail)
-                }}
-              >
-                {accounts.map((acc) => (
-                  <option key={acc.id || acc.email} value={acc.email}>
-                    {acc.email}
-                  </option>
-                ))}
-              </select>
+      {/* Main Mail List Container */}
+      <div className="mail-layout">
+        <div className="mail-list">
+          {error && <div className="mail-state error" role="alert">{error}</div>}
+          {loading && !messages.length && <div className="mail-state"><LoaderCircle className="mail-spin" />Loading mail…</div>}
+          {!loading && !error && !messages.length && (
+            <div className="mail-state">
+              <Mail size={28} />
+              <strong>No messages here</strong>
+              <span>You're all caught up.</span>
             </div>
           )}
-
-          <nav className="mail-sidebar-nav" aria-label="Mail Folders">
-            {FOLDERS.map(({ id, label, icon: Icon }) => (
-              <button
-                key={id}
-                className={`mail-nav-item ${folder === id ? 'active' : ''}`}
-                onClick={() => { setFolder(id); setSelected(null); setQuery(''); setFilterMode('all') }}
-              >
-                <Icon size={17} />
-                <span>{label}</span>
-                {id === 'INBOX' && unreadCount > 0 && (
-                  <strong className="nav-badge">{unreadCount}</strong>
-                )}
-              </button>
-            ))}
-          </nav>
-
-          <div className="mail-sidebar-footer">
-            <a href="https://mail.google.com" target="_blank" rel="noreferrer" className="mail-external-link">
-              <ExternalLink size={15} />
-              <span>Open Gmail</span>
-            </a>
-            {account && <div className="mail-account-pill" title={account}><span className="dot" />{account}</div>}
-          </div>
-        </aside>
-
-        {/* Right Content Panel */}
-        <main className="mail-content-panel">
-          {/* Action & Filter Toolbar */}
-          <div className="mail-action-bar">
-            <form
-              className="mail-search-form"
-              onSubmit={(event) => { event.preventDefault(); refresh(query, folder, '', false, selectedAccountEmail) }}
+          {messages.map((message) => (
+            <button
+              className={`mail-row ${message.unread ? 'unread' : ''}`}
+              onClick={() => openMessage(message)}
+              key={message.id}
             >
-              <Search size={16} className="search-icon" />
-              <input
-                value={query}
-                onChange={(event) => setQuery(event.target.value)}
-                placeholder="Search mail by sender, subject, content..."
-                aria-label="Search mail"
-              />
-              {query && (
-                <button type="button" onClick={() => { setQuery(''); refresh('', folder, '', false, selectedAccountEmail) }} aria-label="Clear search">
-                  <X size={14} />
-                </button>
-              )}
-            </form>
-
-            <div className="mail-filter-tabs">
-              <button className={filterMode === 'all' ? 'active' : ''} onClick={() => setFilterMode('all')}>All</button>
-              <button className={filterMode === 'unread' ? 'active' : ''} onClick={() => setFilterMode('unread')}>Unread</button>
-              <button className={filterMode === 'starred' ? 'active' : ''} onClick={() => setFilterMode('starred')}>Starred</button>
-            </div>
-
-            <div className="mail-toolbar-right">
-              <button
-                className="mail-icon-btn"
-                onClick={() => refresh(query, folder, pageToken, true, selectedAccountEmail)}
-                disabled={loading}
-                aria-label="Refresh inbox"
-                title="Refresh mail"
-              >
-                <RefreshCw size={16} className={loading ? 'mail-spin' : ''} />
-              </button>
-
-              <div className="mail-pagination-controls">
-                <button onClick={openNewerMessages} disabled={!previousPageTokens.length || loading} aria-label="Previous page" title="Previous page">
-                  <ChevronLeft size={16} />
-                </button>
-                <span className="page-indicator">
-                  {previousPageTokens.length ? `Page ${previousPageTokens.length + 1}` : 'Page 1'}
-                </span>
-                <button onClick={openOlderMessages} disabled={!nextPageToken || loading} aria-label="Next page" title="Next page">
-                  <ChevronRight size={16} />
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {/* Email List Table */}
-          <div className="mail-list-container">
-            {error && <div className="mail-state error" role="alert">{error}</div>}
-            {loading && !filteredMessages.length && (
-              <div className="mail-state">
-                <LoaderCircle size={32} className="mail-spin" />
-                <span>Loading emails…</span>
-              </div>
-            )}
-            {!loading && !error && !filteredMessages.length && (
-              <div className="mail-state">
-                <Mail size={36} />
-                <strong>No messages found</strong>
-                <span>You're all caught up in this folder.</span>
-              </div>
-            )}
-
-            {filteredMessages.map((message) => (
-              <div
-                key={message.id}
-                className={`mail-row-item ${message.unread ? 'unread' : ''}`}
-                onClick={() => openMessage(message)}
+              <span
+                className="mail-star"
+                onClick={(event) => toggleStar(message, event)}
                 role="button"
-                tabIndex={0}
-                onKeyDown={(e) => { if (e.key === 'Enter') openMessage(message) }}
+                tabIndex="0"
+                aria-label={message.starred ? 'Unstar message' : 'Star message'}
               >
-                <button
-                  className="mail-star-btn"
-                  onClick={(event) => toggleStar(message, event)}
-                  aria-label={message.starred ? 'Unstar message' : 'Star message'}
-                >
-                  <Star size={16} className={message.starred ? 'starred' : ''} />
-                </button>
+                <Star size={16} className={message.starred ? 'starred' : ''} />
+              </span>
+              <strong>{message.sender}</strong>
+              <div><b>{message.subject}</b><span> — {message.snippet}</span></div>
+              <time>{formatMailDate(message.date)}</time>
+            </button>
+          ))}
+        </div>
 
-                <div className="mail-sender-col" title={message.sender}>
-                  <strong>{message.sender}</strong>
-                </div>
-
-                <div className="mail-subject-col">
-                  <span className="mail-subject">{message.subject || '(No Subject)'}</span>
-                  <span className="mail-snippet"> — {message.snippet}</span>
-                </div>
-
-                <div className="mail-date-col">
-                  <time>{formatMailDate(message.date)}</time>
-                </div>
-              </div>
-            ))}
-          </div>
-        </main>
+        <nav className="mail-pagination" aria-label="Mail pages">
+          <button onClick={openNewerMessages} disabled={!previousPageTokens.length || loading} aria-label="Previous page">
+            <ChevronLeft size={17} />
+          </button>
+          <span className="mail-page-indicator">
+            {previousPageTokens.length ? `Page ${previousPageTokens.length + 1}` : 'Page 1'}
+          </span>
+          <button onClick={openOlderMessages} disabled={!nextPageToken || loading} aria-label="Next page">
+            <ChevronRight size={17} />
+          </button>
+        </nav>
       </div>
 
       {/* Message Reader Modal */}
       {selected && (
         <div className="mail-modal" role="dialog" aria-modal="true" aria-labelledby="message-title">
-          <div className="mail-card reader-card">
+          <div className="mail-card">
             <header className="mail-card-header">
-              <div className="mail-card-title-box">
+              <div>
                 <span className="mail-avatar">{(selected.sender || selected.from || 'M')[0]?.toUpperCase()}</span>
-                <div className="mail-header-details">
+                <div>
                   <h3 id="message-title">{selected.subject || '(No Subject)'}</h3>
-                  <div className="mail-meta-line">
-                    <span className="sender-name">{selected.from}</span>
-                    <span className="meta-arrow">→</span>
-                    <span className="recipient-name">{selected.to || 'me'}</span>
-                    <time>{formatMailDate(selected.date, true)}</time>
-                  </div>
+                  <span>{selected.from} → {selected.to || 'me'}</span>
+                  <time>{formatMailDate(selected.date, true)}</time>
                 </div>
               </div>
-
               <div className="mail-card-actions">
                 <button
-                  className="mail-action-btn"
                   onClick={() =>
                     setCompose({
                       ...EMPTY_COMPOSE,
@@ -448,22 +384,14 @@ export function MailsPage({ onNavigate }) {
                       body: `\n\nOn ${selected.date}, ${selected.from} wrote:\n> ${selected.body.replaceAll('\n', '\n> ')}`,
                     })
                   }
-                  title="Reply"
                 >
-                  <Reply size={15} /> <span>Reply</span>
+                  <Reply size={16} /> Reply
                 </button>
-                <button className="mail-action-btn" onClick={() => archiveMessage(selected)} title="Archive">
-                  <Archive size={15} /> <span>Archive</span>
-                </button>
-                <button className="mail-action-btn danger" onClick={() => deleteMessage(selected)} title="Delete">
-                  <Trash2 size={15} /> <span>Trash</span>
-                </button>
-                <button className="mail-action-btn close" onClick={() => setSelected(null)} aria-label="Close message">
-                  <X size={16} />
-                </button>
+                <button onClick={() => archiveMessage(selected)}><Archive size={16} /> Archive</button>
+                <button onClick={() => deleteMessage(selected)}><Trash2 size={16} /> Trash</button>
+                <button onClick={() => setSelected(null)} aria-label="Close message"><X size={16} /></button>
               </div>
             </header>
-
             <div className="mail-card-body">
               {reading ? (
                 <div className="mail-state"><LoaderCircle className="mail-spin" />Loading message body…</div>
@@ -474,7 +402,7 @@ export function MailsPage({ onNavigate }) {
                   sandbox="allow-popups"
                 />
               ) : (
-                <pre className="mail-text-body">{selected.body}</pre>
+                <pre>{selected.body}</pre>
               )}
             </div>
           </div>
@@ -487,59 +415,19 @@ export function MailsPage({ onNavigate }) {
           <form className="mail-card compose-card" onSubmit={sendMessage}>
             <header className="mail-card-header">
               <h3 id="compose-title">{compose.threadId ? 'Reply Message' : 'New Message'}</h3>
-              <button type="button" className="mail-action-btn close" onClick={() => setCompose(null)} aria-label="Close compose">
-                <X size={16} />
-              </button>
+              <button type="button" onClick={() => setCompose(null)} aria-label="Close compose"><X size={16} /></button>
             </header>
-
             <div className="compose-fields">
-              <div className="compose-row">
-                <span>To</span>
-                <input
-                  value={compose.to}
-                  onChange={(event) => setCompose((c) => ({ ...c, to: event.target.value }))}
-                  placeholder="recipient@example.com"
-                  required
-                />
-              </div>
-              <div className="compose-row">
-                <span>Cc</span>
-                <input
-                  value={compose.cc}
-                  onChange={(event) => setCompose((c) => ({ ...c, cc: event.target.value }))}
-                  placeholder="Optional CC recipients"
-                />
-              </div>
-              <div className="compose-row">
-                <span>Bcc</span>
-                <input
-                  value={compose.bcc}
-                  onChange={(event) => setCompose((c) => ({ ...c, bcc: event.target.value }))}
-                  placeholder="Optional BCC recipients"
-                />
-              </div>
-              <div className="compose-row">
-                <span>Subject</span>
-                <input
-                  value={compose.subject}
-                  onChange={(event) => setCompose((c) => ({ ...c, subject: event.target.value }))}
-                  placeholder="Subject line"
-                  required
-                />
-              </div>
-              <textarea
-                value={compose.body}
-                onChange={(event) => setCompose((c) => ({ ...c, body: event.target.value }))}
-                placeholder="Write your email message here…"
-                rows={12}
-                required
-              />
+              <input value={compose.to} onChange={(event) => setCompose((c) => ({ ...c, to: event.target.value }))} placeholder="To" required />
+              <input value={compose.cc} onChange={(event) => setCompose((c) => ({ ...c, cc: event.target.value }))} placeholder="Cc" />
+              <input value={compose.bcc} onChange={(event) => setCompose((c) => ({ ...c, bcc: event.target.value }))} placeholder="Bcc" />
+              <input value={compose.subject} onChange={(event) => setCompose((c) => ({ ...c, subject: event.target.value }))} placeholder="Subject" required />
+              <textarea value={compose.body} onChange={(event) => setCompose((c) => ({ ...c, body: event.target.value }))} placeholder="Write your message…" rows="12" required />
             </div>
-
             <footer className="compose-footer">
-              <button type="button" className="secondary-button" onClick={() => setCompose(null)}>Discard</button>
+              <button type="button" onClick={() => setCompose(null)}>Discard</button>
               <button className="primary-button" type="submit" disabled={sending}>
-                {sending ? <><LoaderCircle size={15} className="mail-spin" /> Sending…</> : <><Send size={15} /> Send Email</>}
+                {sending ? 'Sending…' : <><Send size={15} /> Send</>}
               </button>
             </footer>
           </form>
