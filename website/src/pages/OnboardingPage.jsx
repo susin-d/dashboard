@@ -33,31 +33,34 @@ export function OnboardingPage({ user, onComplete }) {
       <section className="onboarding-card">
         <StarWavesLogo size={36} />
         <div className="onboarding-icon"><UserRound size={23} /></div>
-        <p>One last step</p>
-        <h1>What should we call you?</h1>
+        <p className="onboarding-eyebrow">One last step</p>
+        <h1 className="onboarding-title">What should we call you?</h1>
         <span className="onboarding-copy">
           This name will appear in your StarWaves header and profile.
         </span>
-        <form onSubmit={submit}>
-          <label htmlFor="onboarding-name">Your name</label>
-          <input
-            id="onboarding-name"
-            value={name}
-            onChange={(event) => setName(event.target.value)}
-            placeholder="Enter your full name"
-            minLength="2"
-            maxLength="100"
-            autoComplete="name"
-            autoFocus
-            required
-          />
+        <form className="onboarding-form" onSubmit={submit}>
+          <label htmlFor="onboarding-name">
+            Your name
+            <input
+              id="onboarding-name"
+              type="text"
+              value={name}
+              onChange={(event) => setName(event.target.value)}
+              placeholder="Enter your full name"
+              minLength="2"
+              maxLength="100"
+              autoComplete="name"
+              autoFocus
+              required
+            />
+          </label>
           {error && <span className="auth-error" role="alert">{error}</span>}
           <button type="submit" disabled={saving}>
             {saving ? 'Saving…' : 'Continue to workspace'}
             {!saving && <ArrowRight size={17} />}
           </button>
         </form>
-        <small>Signed in as {user?.email}</small>
+        <small className="onboarding-footer-text">Signed in as {user?.email}</small>
       </section>
     </main>
   )

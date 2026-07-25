@@ -594,3 +594,61 @@
   transform: translateX(-50%);
   z-index: 110;
 }
+
+/* Mobile & Tablet Web Responsiveness */
+@media (max-width: 768px) {
+  .mail-page-heading {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .mail-toolbar {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .mail-folders {
+    position: static;
+    width: 100%;
+    height: auto;
+    max-height: 160px;
+    flex-direction: row;
+    flex-wrap: wrap;
+    padding: 10px;
+    border-right: 0;
+    border-bottom: 1px solid var(--border-color);
+  }
+
+  .mail-folders button,
+  .mail-folders a {
+    width: auto;
+    padding: 6px 10px;
+  }
+
+  .mail-folders span,
+  .mail-folders small {
+    opacity: 1;
+  }
+
+  .mail-row {
+    grid-template-columns: 20px 100px minmax(0, 1fr) 50px;
+    gap: 8px;
+    padding: 10px 12px;
+    font-size: 11px;
+  }
+
+  .mail-reader {
+    width: 100%;
+  }
+
+  .mail-compose-layer {
+    padding: 12px;
+  }
+
+  .mail-compose {
+    width: 100%;
+    height: calc(100vh - 24px);
+  }
+}
+

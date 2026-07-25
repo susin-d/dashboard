@@ -372,3 +372,12 @@
   align-items: center;
   gap: 7px;
 }
+
+@media (max-width: 768px) {
+  .projects-grid,
+  .project-page-layout,
+  .project-edit-form-row {
+    grid-template-columns: 1fr;
+  }
+}
+

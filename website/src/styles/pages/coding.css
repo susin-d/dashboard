@@ -206,3 +206,15 @@ a.contest-status:hover {
   color: var(--text-inverse);
   background: var(--color-primary);
 }
+
+@media (max-width: 640px) {
+  .contest-row {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .contest-site-header {
+    padding: 12px;
+  }
+}
+

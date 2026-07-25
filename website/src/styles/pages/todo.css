@@ -135,3 +135,16 @@
   margin: 0;
   font-size: 13px;
 }
+
+@media (max-width: 640px) {
+  .todo-delete {
+    opacity: 1;
+  }
+
+  .todo-filters {
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    padding-bottom: 4px;
+  }
+}
+

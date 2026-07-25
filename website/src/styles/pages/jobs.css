@@ -191,3 +191,16 @@
   max-height: calc(100vh - 40px);
   overflow-y: auto;
 }
+
+@media (max-width: 640px) {
+  .job-detail-grid,
+  .job-dates {
+    grid-template-columns: 1fr;
+  }
+
+  .job-detail-item + .job-detail-item {
+    border-left: 0;
+    border-top: 1px solid var(--border-color);
+  }
+}
+

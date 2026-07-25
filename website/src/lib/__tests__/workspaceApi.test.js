@@ -1,11 +1,10 @@
-import { describe, it } from 'node:test'
-import assert from 'node:assert/strict'
+import { describe, expect, it } from 'vitest'
 
 describe('Workspace API Data Transformers', () => {
   it('formats project IDs correctly', () => {
     const cleanProjectId = (id) => String(id).replace(/^project-/, '')
-    assert.equal(cleanProjectId('project-abc12345'), 'abc12345')
-    assert.equal(cleanProjectId('rawId999'), 'rawId999')
+    expect(cleanProjectId('project-abc12345')).toBe('abc12345')
+    expect(cleanProjectId('rawId999')).toBe('rawId999')
   })
 
   it('maps job payload fields correctly', () => {
@@ -26,8 +25,9 @@ describe('Workspace API Data Transformers', () => {
     }
 
     const mapped = mapJob(apiJob)
-    assert.equal(mapped.id, 'job-1')
-    assert.equal(mapped.company, 'Google')
-    assert.equal(mapped.workType, 'Full-time')
+    expect(mapped.id).toBe('job-1')
+    expect(mapped.company).toBe('Google')
+    expect(mapped.workType).toBe('Full-time')
   })
 })
+

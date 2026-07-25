@@ -243,3 +243,34 @@
   border-radius: inherit;
   background: var(--color-primary);
 }
+
+@media (max-width: 1024px) {
+  .stats-metric-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .stats-metric-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .stats-detail-grid,
+  .stats-github-overview,
+  .stats-language-list,
+  .stats-github-numbers {
+    grid-template-columns: 1fr;
+  }
+
+  .stats-github-numbers span {
+    border-left: 0;
+    border-top: 1px solid var(--border-color);
+  }
+}
+
+@media (max-width: 480px) {
+  .stats-metric-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
