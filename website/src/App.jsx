@@ -51,6 +51,7 @@ function App() {
     notifications,
     setNotifications,
     contestSites,
+    setContestSites,
     hackathons,
     setHackathons,
     googleCalendarEvents,
