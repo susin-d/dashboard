@@ -30,6 +30,14 @@ function emailAddress(value = '') {
   return value.match(/<([^>]+)>/)?.[1] || value
 }
 
+function sanitizeEmailHtml(html = '') {
+  if (!html) return ''
+  return html
+    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+    .replace(/\s+on[a-z]+\s*=\s*(?:'[^']*'|"[^"]*"|[^\s>]+)/gi, '')
+    .replace(/(href|src)\s*=\s*["']?\s*javascript:[^"'>\s]+/gi, '$1="#"')
+}
+
 const EMPTY_COMPOSE = { to: '', cc: '', bcc: '', subject: '', body: '', threadId: '', inReplyTo: '', references: '' }
 
 export function MailsPage({ onNavigate }) {
@@ -342,7 +350,11 @@ export function MailsPage({ onNavigate }) {
               {reading ? (
                 <div className="mail-state"><LoaderCircle className="mail-spin" />Loading message body…</div>
               ) : selected.html ? (
-                <iframe title={selected.subject} srcDoc={selected.html} sandbox="allow-popups allow-same-origin" />
+                <iframe
+                  title={selected.subject}
+                  srcDoc={selected.html.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')}
+                  sandbox="allow-popups allow-same-origin allow-scripts"
+                />
               ) : (
                 <pre>{selected.body}</pre>
               )}
