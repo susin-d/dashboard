@@ -168,8 +168,20 @@ export function useWorkspaceData(currentUser, activePage) {
             ? notificationsResult.value
             : [],
         )
+        const enabledPlatforms = (() => {
+          try {
+            return JSON.parse(
+              localStorage.getItem('starwaves-enabled-contest-platforms') ??
+                '["codeforces","codechef","leetcode"]',
+            )
+          } catch {
+            return ['codeforces', 'codechef', 'leetcode']
+          }
+        })()
+        const rawContestSites =
+          contestsResult.status === 'fulfilled' ? contestsResult.value : []
         setContestSites(
-          contestsResult.status === 'fulfilled' ? contestsResult.value : [],
+          rawContestSites.filter((site) => enabledPlatforms.includes(site.id)),
         )
         setProjects((current) => [
           ...(projectsResult.status === 'fulfilled' ? projectsResult.value : []),

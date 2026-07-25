@@ -273,7 +273,7 @@
   display: grid;
   width: 34px;
   height: 34px;
-  flex: 0 0 auto;
+  flex: 0 0 34px;
   place-items: center;
   border-radius: 9px;
   background: var(--bg-tertiary);

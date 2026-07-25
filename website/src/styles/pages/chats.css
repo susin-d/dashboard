@@ -500,3 +500,28 @@
   max-width: 360px;
   font-size: 14px;
 }
+
+/* Spin animation for refresh icon */
+@keyframes chats-spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+.spin {
+  animation: chats-spin 700ms linear infinite;
+}
+
+/* Icon button with label text */
+.icon-button-text {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Page heading actions row */
+.page-heading-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}

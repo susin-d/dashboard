@@ -54,6 +54,7 @@ import {
   getGoogleChatAccounts,
 } from '../lib/googleChatApi'
 import {
+  loadContests,
   loadHackathons,
   loadHackathonSources,
   setHackathonSourceEnabled,
@@ -90,10 +91,35 @@ const workspaceApps = [
   },
 ]
 
+const CONTEST_PLATFORMS = [
+  {
+    id: 'codeforces',
+    name: 'Codeforces',
+    shortName: 'CF',
+    description: 'Upcoming contests, rounds, and division challenges.',
+    url: 'https://codeforces.com',
+  },
+  {
+    id: 'codechef',
+    name: 'CodeChef',
+    shortName: 'CC',
+    description: 'Starters, Long Challenges, and Cook-Offs.',
+    url: 'https://www.codechef.com',
+  },
+  {
+    id: 'leetcode',
+    name: 'LeetCode',
+    shortName: 'LC',
+    description: 'Weekly & Biweekly contests with Global Leaderboards.',
+    url: 'https://leetcode.com/contest',
+  },
+]
+
 export function SettingPage({
   user,
   onGoogleCalendarsChange,
   onHackathonsChange,
+  onContestSitesChange,
   importedIcsCalendars = [],
   setImportedIcsCalendars,
   setImportedIcsEvents,
@@ -127,6 +153,51 @@ export function SettingPage({
   const [accountDeleteMessage, setAccountDeleteMessage] = useState('')
   const [deleteModalOpen, setDeleteModalOpen] = useState(false)
   const [deleteConfirmation, setDeleteConfirmation] = useState('')
+  const [enabledContestPlatforms, setEnabledContestPlatforms] = useState(() => {
+    try {
+      return JSON.parse(
+        localStorage.getItem('starwaves-enabled-contest-platforms') ??
+          '["codeforces","codechef","leetcode"]',
+      )
+    } catch {
+      return ['codeforces', 'codechef', 'leetcode']
+    }
+  })
+  const [contestPlatformMessage, setContestPlatformMessage] = useState('')
+
+  const toggleContestPlatform = async (platformId) => {
+    const nextEnabled = enabledContestPlatforms.includes(platformId)
+      ? enabledContestPlatforms.filter((id) => id !== platformId)
+      : [...enabledContestPlatforms, platformId]
+
+    setEnabledContestPlatforms(nextEnabled)
+    try {
+      localStorage.setItem(
+        'starwaves-enabled-contest-platforms',
+        JSON.stringify(nextEnabled),
+      )
+    } catch {
+      // ignore
+    }
+
+    const platformName =
+      CONTEST_PLATFORMS.find((p) => p.id === platformId)?.name || platformId
+    const isNowEnabled = nextEnabled.includes(platformId)
+    setContestPlatformMessage(
+      `${platformName} contest details ${isNowEnabled ? 'turned on' : 'turned off'}.`,
+    )
+
+    if (onContestSitesChange) {
+      try {
+        const rawContests = await loadContests()
+        onContestSitesChange(
+          rawContests.filter((site) => nextEnabled.includes(site.id)),
+        )
+      } catch (err) {
+        console.error('Could not refresh contest platforms:', err)
+      }
+    }
+  }
 
   const fetchGmailAccounts = () => {
     getGmailAccounts()
@@ -399,6 +470,21 @@ export function SettingPage({
     }
   }
 
+  const disconnectAllCalendarAccounts = async () => {
+    setCalendarBusy(true)
+    setCalendarMessage('')
+    try {
+      await Promise.all(calendarConnections.map((c) => removeGoogleCalendarAccount(c.id)))
+      setCalendarConnections([])
+      onGoogleCalendarsChange([])
+      setCalendarMessage('All Google Calendar accounts disconnected.')
+    } catch (error) {
+      setCalendarMessage(error.message)
+    } finally {
+      setCalendarBusy(false)
+    }
+  }
+
   const toggleHackathonSource = async (source) => {
     setHackathonSourceBusy(source.id)
     setHackathonSourceMessage('')
@@ -452,6 +538,25 @@ export function SettingPage({
     }
   }
 
+  const disconnectAllGmailAccounts = async () => {
+    setGmailBusy(true)
+    setGmailMessage('')
+    try {
+      await Promise.all(
+        gmailAccounts.map((acc) =>
+          acc.id ? disconnectGmailAccount(acc.id) : disconnectGmail(),
+        ),
+      )
+      gmailAccounts.forEach((acc) => clearGmailAuthorization(acc.email))
+      setGmailAccounts([])
+      setGmailMessage('All Gmail accounts disconnected.')
+    } catch (error) {
+      setGmailMessage(error.message || 'Could not disconnect accounts.')
+    } finally {
+      setGmailBusy(false)
+    }
+  }
+
   const addGoogleChatAccount = async () => {
     setGoogleChatBusy(true)
     setGoogleChatMessage('')
@@ -474,6 +579,24 @@ export function SettingPage({
       setGoogleChatMessage(`Disconnected Google Chat for ${account.email}.`)
     } catch (error) {
       setGoogleChatMessage(error.message || 'Could not disconnect account.')
+    } finally {
+      setGoogleChatBusy(false)
+    }
+  }
+
+  const disconnectAllGoogleChatAccounts = async () => {
+    setGoogleChatBusy(true)
+    setGoogleChatMessage('')
+    try {
+      await Promise.all(
+        googleChatAccounts
+          .filter((acc) => acc.id)
+          .map((acc) => disconnectGoogleChatAccount(acc.id)),
+      )
+      setGoogleChatAccounts([])
+      setGoogleChatMessage('All Google Chat accounts disconnected.')
+    } catch (error) {
+      setGoogleChatMessage(error.message || 'Could not disconnect accounts.')
     } finally {
       setGoogleChatBusy(false)
     }
@@ -626,8 +749,17 @@ export function SettingPage({
                   <p>Combine calendars from multiple Google accounts</p>
                 </div>
               </div>
-              <button onClick={addGoogleCalendarAccount} disabled={calendarBusy}>
-                {calendarBusy ? 'Connecting…' : 'Add Google account'}
+              <button
+                className={calendarConnections.length > 0 ? 'workspace-connected' : ''}
+                onClick={calendarConnections.length > 0 ? disconnectAllCalendarAccounts : addGoogleCalendarAccount}
+                disabled={calendarBusy}
+              >
+                {calendarConnections.length > 0 && <Check size={15} />}
+                {calendarBusy
+                  ? calendarConnections.length > 0 ? 'Disconnecting…' : 'Connecting…'
+                  : calendarConnections.length > 0
+                    ? 'Disconnect'
+                    : 'Add Google account'}
               </button>
             </div>
 
@@ -753,8 +885,17 @@ export function SettingPage({
                   <p>Connect and switch between multiple Gmail accounts</p>
                 </div>
               </div>
-              <button onClick={addGmailAccount} disabled={gmailBusy}>
-                {gmailBusy ? 'Connecting…' : 'Add Gmail account'}
+              <button
+                className={gmailAccounts.length > 0 ? 'workspace-connected' : ''}
+                onClick={gmailAccounts.length > 0 ? disconnectAllGmailAccounts : addGmailAccount}
+                disabled={gmailBusy}
+              >
+                {gmailAccounts.length > 0 && <Check size={15} />}
+                {gmailBusy
+                  ? gmailAccounts.length > 0 ? 'Disconnecting…' : 'Connecting…'
+                  : gmailAccounts.length > 0
+                    ? 'Disconnect'
+                    : 'Add Gmail account'}
               </button>
             </div>
             <div className="google-calendar-settings-body">
@@ -797,8 +938,17 @@ export function SettingPage({
                   <p>Connect and manage multiple Google Chat accounts</p>
                 </div>
               </div>
-              <button onClick={addGoogleChatAccount} disabled={googleChatBusy}>
-                {googleChatBusy ? 'Connecting…' : 'Add Google Chat account'}
+              <button
+                className={googleChatAccounts.length > 0 ? 'workspace-connected' : ''}
+                onClick={googleChatAccounts.length > 0 ? disconnectAllGoogleChatAccounts : addGoogleChatAccount}
+                disabled={googleChatBusy}
+              >
+                {googleChatAccounts.length > 0 && <Check size={15} />}
+                {googleChatBusy
+                  ? googleChatAccounts.length > 0 ? 'Disconnecting…' : 'Connecting…'
+                  : googleChatAccounts.length > 0
+                    ? 'Disconnect'
+                    : 'Add Google Chat account'}
               </button>
             </div>
             <div className="google-calendar-settings-body">
@@ -926,6 +1076,49 @@ export function SettingPage({
             </button>
           </div>
         </form>
+
+        <div className="hackathon-source-settings" style={{ marginTop: '20px' }}>
+          <div className="hackathon-source-heading">
+            <span><Code2 size={18} /></span>
+            <div>
+              <h3>Contest platforms & details</h3>
+              <p>Turn on or off upcoming contest details from specific platform sources.</p>
+            </div>
+          </div>
+
+          <div className="hackathon-source-list">
+            {CONTEST_PLATFORMS.map((platform) => {
+              const isEnabled = enabledContestPlatforms.includes(platform.id)
+              return (
+                <div className="hackathon-source-row" key={platform.id}>
+                  <span className={`hackathon-source-logo ${platform.id}`}>
+                    {platform.shortName}
+                  </span>
+                  <div>
+                    <strong>{platform.name}</strong>
+                    <small>{platform.description}</small>
+                    <a href={platform.url} target="_blank" rel="noreferrer">
+                      Visit site <ExternalLink size={11} />
+                    </a>
+                  </div>
+                  <button
+                    className={isEnabled ? 'enabled' : ''}
+                    onClick={() => toggleContestPlatform(platform.id)}
+                    aria-pressed={isEnabled}
+                  >
+                    <i />
+                    {isEnabled ? 'Turn off' : 'Turn on'}
+                  </button>
+                </div>
+              )
+            })}
+          </div>
+          {contestPlatformMessage && (
+            <p className="hackathon-source-message" role="status">
+              {contestPlatformMessage}
+            </p>
+          )}
+        </div>
       </div>
 
       <div className="setting-section">

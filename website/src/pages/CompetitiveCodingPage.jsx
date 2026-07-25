@@ -28,7 +28,16 @@ export function CompetitiveCodingPage({ contestSites }) {
       </div>
 
       <div className="contest-site-list">
-        {contestSites.map((site) => {
+        {contestSites.length === 0 ? (
+          <div className="empty-contest-platforms" style={{ padding: '40px 20px', textAlign: 'center', background: 'var(--bg-secondary, #09090b)', border: '1px solid var(--border-color, #27272a)', borderRadius: '12px' }}>
+            <Trophy size={36} style={{ color: 'var(--text-tertiary, #71717a)', marginBottom: '12px' }} />
+            <h3 style={{ margin: '0 0 8px 0', color: 'var(--text-primary, #ffffff)' }}>No Contest Sources Enabled</h3>
+            <p style={{ margin: 0, color: 'var(--text-secondary, #a1a1aa)', fontSize: '14px' }}>
+              All contest platforms are turned off. You can turn on contest details for Codeforces, CodeChef, and LeetCode in Settings.
+            </p>
+          </div>
+        ) : (
+          contestSites.map((site) => {
           const isOpen = openSites.has(site.id)
           const visibleContests = showAll[site.id]
             ? site.contests
@@ -125,7 +134,8 @@ export function CompetitiveCodingPage({ contestSites }) {
               )}
             </article>
           )
-        })}
+        })
+        )}
       </div>
     </section>
   )

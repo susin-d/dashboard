@@ -271,6 +271,7 @@ function App() {
         user={userProfile}
         onGoogleCalendarsChange={setGoogleCalendarEvents}
         onHackathonsChange={setHackathons}
+        onContestSitesChange={setContestSites}
         importedIcsCalendars={importedIcsCalendars}
         setImportedIcsCalendars={setImportedIcsCalendars}
         importedIcsEvents={importedIcsEvents}

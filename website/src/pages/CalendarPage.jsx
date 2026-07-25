@@ -661,44 +661,60 @@ export function CalendarPage({ eventsByDate, onNavigate }) {
 
               {selectedGoogleEvents.length ? (
                 <div className="calendar-detail-records">
-                  {selectedGoogleEvents.map((event) => (
-                    <div className="calendar-detail-record" key={event.id}>
-                      <div
-                        className="calendar-detail-record-icon google-calendar-icon"
-                        style={{ background: 'var(--border-heavy)' }}
-                      >
-                        <CalendarDays size={16} />
-                      </div>
-                      <div>
-                        <strong>{event.title}</strong>
-                        <span>
-                          {event.allDay
-                            ? 'All day'
-                            : new Date(event.start).toLocaleTimeString(undefined, {
-                                hour: 'numeric',
-                                minute: '2-digit',
-                              })}
-                          {' · '}
-                          {event.calendarName}
-                        </span>
-                        <small>{event.accountEmail}</small>
-                        {event.location && (
-                          <small><MapPin size={11} /> {event.location}</small>
+                  {selectedGoogleEvents.map((event) => {
+                    const timeLabel = event.allDay
+                      ? 'All day'
+                      : new Date(event.start).toLocaleTimeString(undefined, {
+                          hour: 'numeric',
+                          minute: '2-digit',
+                        })
+
+                    const showCalendarName =
+                      event.calendarName && event.calendarName !== event.accountEmail
+
+                    return (
+                      <div className="calendar-detail-record" key={event.id}>
+                        <div className="calendar-detail-record-icon google-calendar-icon">
+                          <CalendarDays size={16} />
+                        </div>
+                        <div>
+                          <strong>{event.title}</strong>
+                          <div className="calendar-detail-meta">
+                            <span>{timeLabel}</span>
+                            {showCalendarName && (
+                              <>
+                                <span className="dot-sep">·</span>
+                                <span>{event.calendarName}</span>
+                              </>
+                            )}
+                            {event.accountEmail && (
+                              <>
+                                <span className="dot-sep">·</span>
+                                <span>{event.accountEmail}</span>
+                              </>
+                            )}
+                          </div>
+                          {event.location && (
+                            <div className="calendar-detail-meta" style={{ marginTop: '2px' }}>
+                              <MapPin size={11} />
+                              <span>{event.location}</span>
+                            </div>
+                          )}
+                        </div>
+                        {event.htmlLink && (
+                          <a
+                            className="google-calendar-event-link"
+                            href={event.htmlLink}
+                            target="_blank"
+                            rel="noreferrer"
+                            aria-label={`Open ${event.title} in Google Calendar`}
+                          >
+                            <ExternalLink size={14} />
+                          </a>
                         )}
                       </div>
-                      {event.htmlLink && (
-                        <a
-                          className="google-calendar-event-link"
-                          href={event.htmlLink}
-                          target="_blank"
-                          rel="noreferrer"
-                          aria-label={`Open ${event.title} in Google Calendar`}
-                        >
-                          <ExternalLink size={14} />
-                        </a>
-                      )}
-                    </div>
-                  ))}
+                    )
+                  })}
                 </div>
               ) : (
                 <div className="calendar-detail-no-contests">

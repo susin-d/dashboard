@@ -1,5 +1,6 @@
 import hashlib
 import logging
+import uuid
 from urllib.parse import quote, urlencode
 
 import httpx
@@ -263,8 +264,99 @@ async def get_google_chat_spaces(
     accounts = [doc.to_dict() for doc in docs if doc.to_dict().get("connected")]
     if account_email:
         accounts = [a for a in accounts if a.get("email") == account_email]
-    
-    # Structure space responses or fallback
+
+    all_spaces = []
+    async with httpx.AsyncClient(timeout=15) as client:
+        for acc in accounts:
+            token = acc.get("access_token")
+            email = acc.get("email")
+            if not token:
+                continue
+
+            try:
+                # Fetch spaces from Google Chat API
+                spaces_res = await client.get(
+                    "https://chat.googleapis.com/v1/spaces",
+                    headers={"Authorization": f"Bearer {token}"},
+                )
+                if spaces_res.status_code == 200:
+                    data = spaces_res.json()
+                    raw_spaces = data.get("spaces", [])
+                    for s in raw_spaces:
+                        space_name = s.get("name")
+                        display_name = s.get("displayName") or "Direct Message"
+                        space_type = (
+                            "space"
+                            if s.get("spaceType") in ("SPACE", "GROUP_CHAT")
+                            else "dm"
+                        )
+
+                        # Fetch messages for this space
+                        msgs = []
+                        try:
+                            msgs_res = await client.get(
+                                f"https://chat.googleapis.com/v1/{space_name}/messages?pageSize=20",
+                                headers={"Authorization": f"Bearer {token}"},
+                            )
+                            if msgs_res.status_code == 200:
+                                raw_msgs = msgs_res.json().get("messages", [])
+                                for m in raw_msgs:
+                                    sender_info = m.get("sender", {})
+                                    sender_name = sender_info.get(
+                                        "displayName",
+                                        "User",
+                                    )
+                                    avatar = "".join(
+                                        [part[0] for part in sender_name.split()[:2]]
+                                    ).upper() or "GC"
+                                    msgs.append(
+                                        {
+                                            "id": m.get("name", f"msg-{uuid.uuid4().hex[:8]}"),
+                                            "sender": sender_name,
+                                            "senderEmail": sender_info.get(
+                                                "name",
+                                                email,
+                                            ),
+                                            "avatar": avatar,
+                                            "time": m.get("createTime", "")[:16].replace(
+                                                "T", " "
+                                            ),
+                                            "content": m.get("text", ""),
+                                            "isSelf": sender_name == acc.get("display_name"),
+                                        }
+                                    )
+                        except Exception as e:
+                            logger.warning(
+                                "Error fetching messages for space %s: %s",
+                                space_name,
+                                e,
+                            )
+
+                        last_msg = msgs[-1]["content"] if msgs else "No messages yet."
+                        last_time = msgs[-1]["time"] if msgs else ""
+
+                        all_spaces.append(
+                            {
+                                "id": space_name,
+                                "name": display_name,
+                                "type": space_type,
+                                "accountEmail": email,
+                                "accountName": acc.get("display_name", email),
+                                "unreadCount": 0,
+                                "lastMessage": last_msg,
+                                "lastTime": last_time,
+                                "membersCount": 2,
+                                "isPrivate": space_type == "dm",
+                                "messages": msgs,
+                            }
+                        )
+            except Exception as error:
+                logger.warning(
+                    "Google Chat API call error for account %s: %s",
+                    email,
+                    error,
+                )
+
     return {
         "accounts": [
             {
@@ -274,5 +366,47 @@ async def get_google_chat_spaces(
             }
             for a in accounts
         ],
-        "spaces": [],
+        "spaces": all_spaces,
     }
+
+
+@router.post("/messages")
+async def send_google_chat_message(
+    body: GoogleChatMessageSend,
+    database: Client = Depends(get_firestore),
+    user: dict = Depends(get_current_user),
+):
+    docs = chat_accounts_collection(database, user["uid"]).stream()
+    accounts = [doc.to_dict() for doc in docs if doc.to_dict().get("connected")]
+    if body.account_email:
+        accounts = [a for a in accounts if a.get("email") == body.account_email]
+
+    if not accounts:
+        raise HTTPException(
+            status_code=404,
+            detail="No connected Google Chat account found for message sending.",
+        )
+
+    account = accounts[0]
+    token = account.get("access_token")
+    if not token:
+        raise HTTPException(
+            status_code=401,
+            detail="Account access token is missing.",
+        )
+
+    async with httpx.AsyncClient(timeout=15) as client:
+        res = await client.post(
+            f"https://chat.googleapis.com/v1/{body.space_id}/messages",
+            headers={
+                "Authorization": f"Bearer {token}",
+                "Content-Type": "application/json",
+            },
+            json={"text": body.text},
+        )
+        if not res.is_success:
+            raise HTTPException(
+                status_code=res.status_code,
+                detail=f"Google Chat API rejected message: {res.text}",
+            )
+        return res.json()
