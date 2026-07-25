@@ -190,12 +190,14 @@ export function SettingPage({
 
   useEffect(() => {
     let active = true
-    const result = new URLSearchParams(window.location.search).get('calendar')
+    const searchParams = new URLSearchParams(window.location.search)
+    const result = searchParams.get('calendar')
+    const reason = searchParams.get('reason')
     if (result) {
       setCalendarMessage(
         result === 'connected'
           ? 'Google Calendar connected successfully.'
-          : 'Google Calendar connection failed.',
+          : `Google Calendar connection failed: ${reason || 'OAuth authorization failed'}`,
       )
       window.history.replaceState({}, '', window.location.pathname)
     }
@@ -215,9 +217,11 @@ export function SettingPage({
 
   useEffect(() => {
     let active = true
-    const result = new URLSearchParams(window.location.search).get('drive')
+    const searchParams = new URLSearchParams(window.location.search)
+    const result = searchParams.get('drive')
+    const reason = searchParams.get('reason')
     if (result === 'error') {
-      setConnectionError('Google Drive connection failed.')
+      setConnectionError(`Google Drive connection failed: ${reason || 'OAuth authorization failed'}`)
     }
     if (result) {
       window.history.replaceState({}, '', window.location.pathname)
@@ -236,13 +240,15 @@ export function SettingPage({
 
   useEffect(() => {
     let active = true
-    const result = new URLSearchParams(window.location.search).get('github')
-    const gmailResult = new URLSearchParams(window.location.search).get('gmail')
+    const searchParams = new URLSearchParams(window.location.search)
+    const result = searchParams.get('github')
+    const gmailResult = searchParams.get('gmail')
+    const reason = searchParams.get('reason')
     if (result) {
       setGithubMessage(
         result === 'connected'
           ? 'GitHub connected successfully.'
-          : 'GitHub connection failed.',
+          : `GitHub connection failed: ${reason || 'OAuth authorization failed'}`,
       )
       window.history.replaceState({}, '', window.location.pathname)
     }
@@ -250,7 +256,7 @@ export function SettingPage({
       setGmailMessage(
         gmailResult === 'connected'
           ? 'Gmail account connected successfully.'
-          : 'Gmail connection failed.',
+          : `Gmail connection failed: ${reason || 'OAuth authorization failed'}`,
       )
       window.history.replaceState({}, '', window.location.pathname)
     }

@@ -1,6 +1,7 @@
 import asyncio
 import hashlib
-from urllib.parse import urlencode
+import logging
+from urllib.parse import quote, urlencode
 
 import httpx
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -22,7 +23,22 @@ from app.services.google_calendar import (
     refresh_google_token,
 )
 
+logger = logging.getLogger(__name__)
+
 router = APIRouter(prefix="/integrations/google-calendar")
+
+
+def format_oauth_error(error: Exception) -> str:
+    if isinstance(error, httpx.HTTPStatusError):
+        try:
+            data = error.response.json()
+            desc = data.get("error_description") or data.get("error") or str(error)
+            return f"Google HTTP {error.response.status_code}: {desc}"
+        except Exception:
+            return f"Google HTTP {error.response.status_code}: {error.response.text[:100]}"
+    elif isinstance(error, httpx.HTTPError):
+        return f"Network error connecting to Google: {error}"
+    return str(error) or error.__class__.__name__
 
 
 def accounts_collection(database: Client, user_id: str):
@@ -99,15 +115,11 @@ async def google_calendar_callback(
             },
             merge=True,
         )
-    except (
-        BadSignature,
-        SignatureExpired,
-        KeyError,
-        ValueError,
-        httpx.HTTPError,
-    ):
+    except Exception as error:
+        logger.error("Google Calendar OAuth callback error: %s", error, exc_info=True)
+        reason = quote(format_oauth_error(error))
         return RedirectResponse(
-            f"{settings.frontend_url}/app/setting?calendar=error",
+            f"{settings.frontend_url}/app/setting?calendar=error&reason={reason}",
             status_code=302,
         )
     return RedirectResponse(

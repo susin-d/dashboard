@@ -1,4 +1,5 @@
-from urllib.parse import unquote, urlencode
+import logging
+from urllib.parse import quote, unquote, urlencode
 
 import httpx
 from fastapi import APIRouter, Depends, Header, HTTPException, Query, Request
@@ -18,7 +19,22 @@ from app.services.google_calendar import (
     require_google_oauth_config,
 )
 
+logger = logging.getLogger(__name__)
+
 router = APIRouter(prefix="/integrations/google-drive")
+
+
+def format_oauth_error(error: Exception) -> str:
+    if isinstance(error, httpx.HTTPStatusError):
+        try:
+            data = error.response.json()
+            desc = data.get("error_description") or data.get("error") or str(error)
+            return f"Google HTTP {error.response.status_code}: {desc}"
+        except Exception:
+            return f"Google HTTP {error.response.status_code}: {error.response.text[:100]}"
+    elif isinstance(error, httpx.HTTPError):
+        return f"Network error connecting to Google: {error}"
+    return str(error) or error.__class__.__name__
 
 
 def drive_reference(database: Client, user_id: str):
@@ -124,15 +140,11 @@ async def google_drive_callback(
             },
             merge=True,
         )
-    except (
-        BadSignature,
-        SignatureExpired,
-        KeyError,
-        ValueError,
-        httpx.HTTPError,
-    ):
+    except Exception as error:
+        logger.error("Google Drive OAuth callback error: %s", error, exc_info=True)
+        reason = quote(format_oauth_error(error))
         return RedirectResponse(
-            f"{settings.frontend_url}/app/setting?drive=error",
+            f"{settings.frontend_url}/app/setting?drive=error&reason={reason}",
             status_code=302,
         )
     return RedirectResponse(
