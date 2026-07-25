@@ -1,6 +1,7 @@
 import { authorizeGmail, clearGmailAuthorization, hasGmailConnection, saveGmailAccountToken } from './firebase'
 import { getStoredAuthToken } from './authApi'
 import { getGmailToken } from './gmailApi'
+import { openOAuthPopup } from '../utils/popupOAuth'
 
 const API = 'https://gmail.googleapis.com/gmail/v1/users/me'
 const BACKEND_API_URL = import.meta.env.VITE_API_URL ?? 'http://127.0.0.1:8000/api/v1'
@@ -16,7 +17,7 @@ export async function beginGmailOAuth() {
     throw new Error(failure?.detail || 'Gmail could not be connected.')
   }
   const { url } = await response.json()
-  window.location.assign(url)
+  return openOAuthPopup(url, 'gmail-oauth')
 }
 
 function header(message, name) {

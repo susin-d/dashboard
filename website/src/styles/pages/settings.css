@@ -57,6 +57,7 @@
   box-shadow: var(--shadow-sm);
 }
 
+.setting-content-stack,
 .apps-settings-stack {
   display: grid;
   gap: 20px;

@@ -380,9 +380,12 @@ export function SettingPage({
         setWorkspaceConnected(false)
       } else {
         await beginGoogleDriveOAuth()
+        const { connected } = await getGoogleDriveStatus()
+        setWorkspaceConnected(connected)
       }
     } catch (error) {
       setConnectionError(error.message || 'Google Workspace could not be connected.')
+    } finally {
       setConnecting(false)
     }
   }
@@ -433,8 +436,12 @@ export function SettingPage({
     setCalendarMessage('')
     try {
       await beginGoogleCalendarOAuth()
+      const data = await loadGoogleCalendarData()
+      setCalendarConnections(data.connections)
+      onGoogleCalendarsChange(data.events)
     } catch (error) {
       setCalendarMessage(error.message || 'Google Calendar could not be connected.')
+    } finally {
       setCalendarBusy(false)
     }
   }
@@ -513,8 +520,10 @@ export function SettingPage({
     setGmailMessage('')
     try {
       await beginGmailOAuth()
+      fetchGmailAccounts()
     } catch (error) {
       setGmailMessage(error.message || 'Gmail account could not be connected.')
+    } finally {
       setGmailBusy(false)
     }
   }
@@ -562,8 +571,10 @@ export function SettingPage({
     setGoogleChatMessage('')
     try {
       await beginGoogleChatOAuth()
+      fetchGoogleChatAccounts()
     } catch (error) {
       setGoogleChatMessage(error.message || 'Google Chat account could not be connected.')
+    } finally {
       setGoogleChatBusy(false)
     }
   }
@@ -1021,103 +1032,105 @@ export function SettingPage({
           <p>Add a username or full profile URL for each coding platform.</p>
         </div>
 
-        <form
-          className="coding-settings-card"
-          onSubmit={submitCodingProfile}
-        >
-          <div className="coding-settings-header">
-            <span><Code2 size={18} /></span>
-            <div>
-              <h3>Coding profiles</h3>
-              <p>These IDs will be used for your stats and contest activity.</p>
+        <div className="setting-content-stack">
+          <form
+            className="coding-settings-card"
+            onSubmit={submitCodingProfile}
+          >
+            <div className="coding-settings-header">
+              <span><Code2 size={18} /></span>
+              <div>
+                <h3>Coding profiles</h3>
+                <p>These IDs will be used for your stats and contest activity.</p>
+              </div>
             </div>
-          </div>
 
-          <div className="coding-profile-fields">
-            <label>
-              <span><strong>Codeforces</strong><small>Handle or profile URL</small></span>
-              <input
-                value={codingProfile.codeforces}
-                onChange={(event) =>
-                  updateCodingField('codeforces', event.target.value)
-                }
-                placeholder="tourist or codeforces.com/profile/tourist"
-              />
-            </label>
-            <label>
-              <span><strong>CodeChef</strong><small>Username or profile URL</small></span>
-              <input
-                value={codingProfile.codechef}
-                onChange={(event) =>
-                  updateCodingField('codechef', event.target.value)
-                }
-                placeholder="username or codechef.com/users/username"
-              />
-            </label>
-            <label>
-              <span><strong>LeetCode</strong><small>Username or profile URL</small></span>
-              <input
-                value={codingProfile.leetcode}
-                onChange={(event) =>
-                  updateCodingField('leetcode', event.target.value)
-                }
-                placeholder="username or leetcode.com/u/username"
-              />
-            </label>
-          </div>
-
-          <div className="coding-settings-footer">
-            {codingMessage && (
-              <p role="status">{codingMessage}</p>
-            )}
-            <button type="submit" disabled={codingSaving}>
-              <Save size={15} />
-              {codingSaving ? 'Saving…' : 'Save profiles'}
-            </button>
-          </div>
-        </form>
-
-        <div className="hackathon-source-settings" style={{ marginTop: '20px' }}>
-          <div className="hackathon-source-heading">
-            <span><Code2 size={18} /></span>
-            <div>
-              <h3>Contest platforms & details</h3>
-              <p>Turn on or off upcoming contest details from specific platform sources.</p>
+            <div className="coding-profile-fields">
+              <label>
+                <span><strong>Codeforces</strong><small>Handle or profile URL</small></span>
+                <input
+                  value={codingProfile.codeforces}
+                  onChange={(event) =>
+                    updateCodingField('codeforces', event.target.value)
+                  }
+                  placeholder="tourist or codeforces.com/profile/tourist"
+                />
+              </label>
+              <label>
+                <span><strong>CodeChef</strong><small>Username or profile URL</small></span>
+                <input
+                  value={codingProfile.codechef}
+                  onChange={(event) =>
+                    updateCodingField('codechef', event.target.value)
+                  }
+                  placeholder="username or codechef.com/users/username"
+                />
+              </label>
+              <label>
+                <span><strong>LeetCode</strong><small>Username or profile URL</small></span>
+                <input
+                  value={codingProfile.leetcode}
+                  onChange={(event) =>
+                    updateCodingField('leetcode', event.target.value)
+                  }
+                  placeholder="username or leetcode.com/u/username"
+                />
+              </label>
             </div>
-          </div>
 
-          <div className="hackathon-source-list">
-            {CONTEST_PLATFORMS.map((platform) => {
-              const isEnabled = enabledContestPlatforms.includes(platform.id)
-              return (
-                <div className="hackathon-source-row" key={platform.id}>
-                  <span className={`hackathon-source-logo ${platform.id}`}>
-                    {platform.shortName}
-                  </span>
-                  <div>
-                    <strong>{platform.name}</strong>
-                    <small>{platform.description}</small>
-                    <a href={platform.url} target="_blank" rel="noreferrer">
-                      Visit site <ExternalLink size={11} />
-                    </a>
+            <div className="coding-settings-footer">
+              {codingMessage && (
+                <p role="status">{codingMessage}</p>
+              )}
+              <button type="submit" disabled={codingSaving}>
+                <Save size={15} />
+                {codingSaving ? 'Saving…' : 'Save profiles'}
+              </button>
+            </div>
+          </form>
+
+          <div className="hackathon-source-settings">
+            <div className="hackathon-source-heading">
+              <span><Code2 size={18} /></span>
+              <div>
+                <h3>Contest platforms & details</h3>
+                <p>Turn on or off upcoming contest details from specific platform sources.</p>
+              </div>
+            </div>
+
+            <div className="hackathon-source-list">
+              {CONTEST_PLATFORMS.map((platform) => {
+                const isEnabled = enabledContestPlatforms.includes(platform.id)
+                return (
+                  <div className="hackathon-source-row" key={platform.id}>
+                    <span className={`hackathon-source-logo ${platform.id}`}>
+                      {platform.shortName}
+                    </span>
+                    <div>
+                      <strong>{platform.name}</strong>
+                      <small>{platform.description}</small>
+                      <a href={platform.url} target="_blank" rel="noreferrer">
+                        Visit site <ExternalLink size={11} />
+                      </a>
+                    </div>
+                    <button
+                      className={isEnabled ? 'enabled' : ''}
+                      onClick={() => toggleContestPlatform(platform.id)}
+                      aria-pressed={isEnabled}
+                    >
+                      <i />
+                      {isEnabled ? 'Turn off' : 'Turn on'}
+                    </button>
                   </div>
-                  <button
-                    className={isEnabled ? 'enabled' : ''}
-                    onClick={() => toggleContestPlatform(platform.id)}
-                    aria-pressed={isEnabled}
-                  >
-                    <i />
-                    {isEnabled ? 'Turn off' : 'Turn on'}
-                  </button>
-                </div>
-              )
-            })}
+                )
+              })}
+            </div>
+            {contestPlatformMessage && (
+              <p className="hackathon-source-message" role="status">
+                {contestPlatformMessage}
+              </p>
+            )}
           </div>
-          {contestPlatformMessage && (
-            <p className="hackathon-source-message" role="status">
-              {contestPlatformMessage}
-            </p>
-          )}
         </div>
       </div>
 

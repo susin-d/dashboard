@@ -1,4 +1,5 @@
 import { getStoredAuthToken } from './authApi'
+import { openOAuthPopup } from '../utils/popupOAuth'
 
 const API_URL = import.meta.env.VITE_API_URL ?? 'http://127.0.0.1:8000/api/v1'
 
@@ -23,7 +24,7 @@ async function request(path, options = {}) {
 
 export async function beginGoogleCalendarOAuth() {
   const { url } = await request('/authorize')
-  window.location.assign(url)
+  return openOAuthPopup(url, 'google-calendar-oauth')
 }
 
 export function loadGoogleCalendarData() {

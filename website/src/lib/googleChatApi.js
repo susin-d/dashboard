@@ -1,4 +1,5 @@
 import { getStoredAuthToken } from './authApi'
+import { openOAuthPopup } from '../utils/popupOAuth'
 
 const API_URL = import.meta.env.VITE_API_URL ?? 'http://127.0.0.1:8000/api/v1'
 
@@ -22,10 +23,9 @@ async function request(path, options = {}) {
 export async function beginGoogleChatOAuth() {
   const data = await request('/authorize')
   if (data?.url) {
-    window.location.href = data.url
-  } else {
-    throw new Error('Could not initiate Google Chat OAuth authorization.')
+    return openOAuthPopup(data.url, 'google-chat-oauth')
   }
+  throw new Error('Could not initiate Google Chat OAuth authorization.')
 }
 
 export function getGoogleChatAccounts() {
