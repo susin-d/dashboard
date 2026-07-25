@@ -112,7 +112,7 @@ export function PrivacyPolicyPage({ onNavigate }) {
               If you have any questions or concerns regarding this Privacy Policy, please contact us at:
             </p>
             <p style={{ marginTop: '8px', fontWeight: 600 }}>
-              Email: <a href="mailto:susindransd@gmail.com" style={{ color: 'var(--text-primary)', textDecoration: 'underline' }}>susindransd@gmail.com</a><br />
+              Email: <a href="mailto:dev@susindran.in" style={{ color: 'var(--text-primary)', textDecoration: 'underline' }}>dev@susindran.in</a><br />
               Domain: susindran.in
             </p>
           </section>
