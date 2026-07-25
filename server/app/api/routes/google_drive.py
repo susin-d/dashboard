@@ -3,7 +3,7 @@ from urllib.parse import quote, unquote, urlencode
 
 import httpx
 from fastapi import APIRouter, Depends, Header, HTTPException, Query, Request
-from fastapi.responses import RedirectResponse
+from fastapi.responses import HTMLResponse, RedirectResponse
 from firebase_admin import firestore
 from google.cloud.firestore_v1 import Client
 from itsdangerous import BadSignature, SignatureExpired, URLSafeTimedSerializer
@@ -143,13 +143,17 @@ async def google_drive_callback(
     except Exception as error:
         logger.error("Google Drive OAuth callback error: %s", error, exc_info=True)
         reason = quote(format_oauth_error(error))
-        return RedirectResponse(
-            f"{settings.frontend_url}/app/setting?drive=error&reason={reason}",
-            status_code=302,
+        return HTMLResponse(
+            f"""<!DOCTYPE html><html><body><script>
+            if (window.opener) {{ window.close(); }}
+            else {{ window.location.href = "{settings.frontend_url}/app/setting?drive=error&reason={reason}"; }}
+            </script></body></html>"""
         )
-    return RedirectResponse(
-        f"{settings.frontend_url}/app/setting?drive=connected",
-        status_code=302,
+    return HTMLResponse(
+        f"""<!DOCTYPE html><html><body><script>
+        if (window.opener) {{ window.close(); }}
+        else {{ window.location.href = "{settings.frontend_url}/app/setting?drive=connected"; }}
+        </script></body></html>"""
     )
 
 

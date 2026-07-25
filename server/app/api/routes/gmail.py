@@ -4,7 +4,7 @@ from urllib.parse import quote, urlencode
 
 import httpx
 from fastapi import APIRouter, Depends, HTTPException, Query
-from fastapi.responses import RedirectResponse
+from fastapi.responses import HTMLResponse, RedirectResponse
 from firebase_admin import firestore
 from google.cloud.firestore_v1 import Client
 from itsdangerous import BadSignature, SignatureExpired, URLSafeTimedSerializer
@@ -141,13 +141,17 @@ async def gmail_callback(
     except Exception as error:
         logger.error("Gmail OAuth callback error: %s", error, exc_info=True)
         reason = quote(format_oauth_error(error))
-        return RedirectResponse(
-            f"{settings.frontend_url}/app/setting?gmail=error&reason={reason}",
-            status_code=302,
+        return HTMLResponse(
+            f"""<!DOCTYPE html><html><body><script>
+            if (window.opener) {{ window.close(); }}
+            else {{ window.location.href = "{settings.frontend_url}/app/setting?gmail=error&reason={reason}"; }}
+            </script></body></html>"""
         )
-    return RedirectResponse(
-        f"{settings.frontend_url}/app/setting?gmail=connected",
-        status_code=302,
+    return HTMLResponse(
+        f"""<!DOCTYPE html><html><body><script>
+        if (window.opener) {{ window.close(); }}
+        else {{ window.location.href = "{settings.frontend_url}/app/setting?gmail=connected"; }}
+        </script></body></html>"""
     )
 
 
