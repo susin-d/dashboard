@@ -21,7 +21,7 @@ export function AppLayout({
       if (window.innerWidth <= 760 || event.pointerType === 'touch') return
 
       setSidebarExpanded((expanded) => {
-        const expandedBoundary = activePage === 'mails' ? 470 : 280
+        const expandedBoundary = 280
 
         if (!expanded && event.clientX <= 96) return true
         if (expanded && event.clientX > expandedBoundary) return false
