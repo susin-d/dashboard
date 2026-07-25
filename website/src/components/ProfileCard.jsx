@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { Mail, ShieldCheck, User, X } from 'lucide-react'
-import { updateProfile } from 'firebase/auth'
-import { auth } from '../lib/firebase'
+import { updateUserProfile } from '../lib/authApi'
 
 export function ProfileCard({ user, onProfileUpdated }) {
   const [editing, setEditing] = useState(false)
@@ -18,9 +17,7 @@ export function ProfileCard({ user, onProfileUpdated }) {
     setSaving(true)
     setError('')
     try {
-      if (auth.currentUser) {
-        await updateProfile(auth.currentUser, { displayName: displayName.trim() })
-      }
+      await updateUserProfile(displayName.trim())
       onProfileUpdated?.(displayName.trim())
       setEditing(false)
     } catch (err) {

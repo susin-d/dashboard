@@ -1,23 +1,12 @@
 import { ArrowLeft, ArrowRight, Eye, EyeOff, LockKeyhole, Mail } from 'lucide-react'
 import { useState } from 'react'
 import {
-  createUserWithEmailAndPassword,
-  sendPasswordResetEmail,
-  signInWithEmailAndPassword,
-  signInWithPopup,
-} from 'firebase/auth'
-import { auth, googleProvider } from '../lib/firebase'
+  beginGoogleOAuth,
+  loginWithEmail,
+  requestPasswordReset,
+  signupWithEmail,
+} from '../lib/authApi'
 import { StarWavesLogo } from '../components/StarWavesLogo'
-
-const authErrors = {
-  'auth/email-already-in-use': 'An account already exists for this email.',
-  'auth/invalid-credential': 'The email or password is incorrect.',
-  'auth/invalid-email': 'Enter a valid email address.',
-  'auth/popup-closed-by-user': 'Google sign-in was cancelled.',
-  'auth/too-many-requests': 'Too many attempts. Please try again later.',
-  'auth/weak-password': 'Choose a stronger password with at least 8 characters.',
-  'auth/user-not-found': 'No account found with this email address.',
-}
 
 export function AuthPage({ mode, onNavigate, onAuthenticate }) {
   const signup = mode === 'signup'
@@ -44,15 +33,15 @@ export function AuthPage({ mode, onNavigate, onAuthenticate }) {
     try {
       const email = form.get('email')
       const password = form.get('password')
+      let user
       if (signup) {
-        const credential = await createUserWithEmailAndPassword(auth, email, password)
-        finishAuthentication(credential.user)
+        user = await signupWithEmail(email, password)
       } else {
-        const credential = await signInWithEmailAndPassword(auth, email, password)
-        finishAuthentication(credential.user)
+        user = await loginWithEmail(email, password)
       }
+      finishAuthentication(user)
     } catch (authError) {
-      setError(authErrors[authError.code] ?? 'Unable to continue. Please try again.')
+      setError(authError.message || 'Unable to continue. Please try again.')
     } finally {
       setSubmitting(false)
     }
@@ -68,10 +57,10 @@ export function AuthPage({ mode, onNavigate, onAuthenticate }) {
     setInfoMessage('')
     setSubmitting(true)
     try {
-      await sendPasswordResetEmail(auth, emailValue.trim())
-      setInfoMessage('Password reset email sent! Check your inbox.')
+      await requestPasswordReset(emailValue.trim())
+      setInfoMessage('If an account exists with that email, a password reset email has been sent!')
     } catch (authError) {
-      setError(authErrors[authError.code] ?? 'Unable to send password reset email.')
+      setError(authError.message || 'Unable to send password reset email.')
     } finally {
       setSubmitting(false)
     }
@@ -82,10 +71,10 @@ export function AuthPage({ mode, onNavigate, onAuthenticate }) {
     setInfoMessage('')
     setSubmitting(true)
     try {
-      const credential = await signInWithPopup(auth, googleProvider)
-      finishAuthentication(credential.user)
+      const user = await beginGoogleOAuth()
+      finishAuthentication(user)
     } catch (authError) {
-      setError(authErrors[authError.code] ?? 'Google sign-in could not be completed.')
+      setError(authError.message || 'Google sign-in could not be completed.')
     } finally {
       setSubmitting(false)
     }

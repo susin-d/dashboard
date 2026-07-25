@@ -1,31 +1,3 @@
-import { getApp, getApps, initializeApp } from 'firebase/app'
-import {
-  getAuth,
-  GoogleAuthProvider,
-} from 'firebase/auth'
-
-const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
-  appId: import.meta.env.VITE_FIREBASE_APP_ID,
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-}
-
-const app = getApps().length ? getApp() : initializeApp(firebaseConfig)
-
-export const auth = getAuth(app)
-export const googleProvider = new GoogleAuthProvider()
-googleProvider.setCustomParameters({ prompt: 'select_account' })
-
-export const gmailProvider = new GoogleAuthProvider()
-gmailProvider.addScope('https://www.googleapis.com/auth/gmail.modify')
-gmailProvider.addScope('https://www.googleapis.com/auth/gmail.send')
-gmailProvider.setCustomParameters({
-  include_granted_scopes: 'true',
-  prompt: 'consent',
-})
-
 // Connection helpers for multi-account Gmail authorization cache
 const GMAIL_SESSION_KEY = 'starwaves-gmail-authorization-v2'
 const GMAIL_ACCOUNTS_KEY = 'starwaves-gmail-accounts-v2'

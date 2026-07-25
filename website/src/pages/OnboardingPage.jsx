@@ -1,6 +1,6 @@
 import { ArrowRight, UserRound } from 'lucide-react'
-import { updateProfile } from 'firebase/auth'
 import { useState } from 'react'
+import { updateUserProfile } from '../lib/authApi'
 import { StarWavesLogo } from '../components/StarWavesLogo'
 
 export function OnboardingPage({ user, onComplete }) {
@@ -19,8 +19,8 @@ export function OnboardingPage({ user, onComplete }) {
     setSaving(true)
     setError('')
     try {
-      await updateProfile(user, { displayName: cleanName })
-      onComplete(user, cleanName)
+      const updatedUser = await updateUserProfile(cleanName)
+      onComplete(updatedUser, cleanName)
     } catch {
       setError('Your name could not be saved. Please try again.')
     } finally {
