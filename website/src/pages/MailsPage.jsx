@@ -4,7 +4,7 @@ import {
   MailPlus, RefreshCw, Reply, Search, Send, Star, Trash2, X,
 } from 'lucide-react'
 import {
-  loadGoogleMail, loadGoogleMessage,
+  hasGmailConnection, loadGoogleMail, loadGoogleMessage,
   sendGoogleMessage, updateGoogleMessage,
 } from '../lib/googleMail'
 import { getGmailAccounts, getGmailStatus } from '../lib/gmailApi'
@@ -273,34 +273,36 @@ export function MailsPage({ onNavigate }) {
           {account && <small>{account}</small>}
         </aside>
 
-        <div className="mail-list">
-          {error && <div className="mail-state error" role="alert">{error}</div>}
-          {loading && !messages.length && <div className="mail-state"><LoaderCircle className="mail-spin" />Loading mail…</div>}
-          {!loading && !error && !messages.length && <div className="mail-state"><Mail size={28} /><strong>No messages here</strong><span>You're all caught up.</span></div>}
-          {messages.map((message) => (
-            <button className={`mail-row ${message.unread ? 'unread' : ''}`} onClick={() => openMessage(message)} key={message.id}>
-              <span className="mail-star" onClick={(event) => toggleStar(message, event)} role="button" tabIndex="0" aria-label={message.starred ? 'Unstar message' : 'Star message'}>
-                <Star size={16} className={message.starred ? 'starred' : ''} />
-              </span>
-              <strong>{message.sender}</strong>
-              <div><b>{message.subject}</b><span> — {message.snippet}</span></div>
-              <time>{formatMailDate(message.date)}</time>
+        <div className="mail-main">
+          <div className="mail-list">
+            {error && <div className="mail-state error" role="alert">{error}</div>}
+            {loading && !messages.length && <div className="mail-state"><LoaderCircle className="mail-spin" />Loading mail…</div>}
+            {!loading && !error && !messages.length && <div className="mail-state"><Mail size={28} /><strong>No messages here</strong><span>You're all caught up.</span></div>}
+            {messages.map((message) => (
+              <button className={`mail-row ${message.unread ? 'unread' : ''}`} onClick={() => openMessage(message)} key={message.id}>
+                <span className="mail-star" onClick={(event) => toggleStar(message, event)} role="button" tabIndex="0" aria-label={message.starred ? 'Unstar message' : 'Star message'}>
+                  <Star size={16} className={message.starred ? 'starred' : ''} />
+                </span>
+                <strong>{message.sender}</strong>
+                <div><b>{message.subject}</b><span> — {message.snippet}</span></div>
+                <time>{formatMailDate(message.date)}</time>
+              </button>
+            ))}
+          </div>
+          <nav className="mail-pagination" aria-label="Mail pages">
+            <button onClick={openNewerMessages} disabled={!previousPageTokens.length || loading} aria-label="Previous page">
+              <ChevronLeft size={17} />
             </button>
-          ))}
+            <input
+              readOnly
+              aria-label="Current page indicator"
+              value={previousPageTokens.length ? `Page ${previousPageTokens.length + 1}` : 'Page 1'}
+            />
+            <button onClick={openOlderMessages} disabled={!nextPageToken || loading} aria-label="Next page">
+              <ChevronRight size={17} />
+            </button>
+          </nav>
         </div>
-        <nav className="mail-pagination" aria-label="Mail pages">
-          <button onClick={openNewerMessages} disabled={!previousPageTokens.length || loading} aria-label="Previous page">
-            <ChevronLeft size={17} />
-          </button>
-          <input
-            readOnly
-            aria-label="Current page indicator"
-            value={previousPageTokens.length ? `Page ${previousPageTokens.length + 1}` : 'Page 1'}
-          />
-          <button onClick={openOlderMessages} disabled={!nextPageToken || loading} aria-label="Next page">
-            <ChevronRight size={17} />
-          </button>
-        </nav>
       </div>
 
       {selected && (

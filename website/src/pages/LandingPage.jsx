@@ -121,7 +121,7 @@ const faqItems = [
   },
 ]
 
-export function LandingPage({ onNavigate }) {
+export function LandingPage({ user, onNavigate }) {
   const [activeTab, setActiveTab] = useState('dashboard')
   const [openFaq, setOpenFaq] = useState(0)
   const [demoTasks, setDemoTasks] = useState([
@@ -144,12 +144,20 @@ export function LandingPage({ onNavigate }) {
           <StarWavesLogo size={28} /> StarWaves
         </button>
         <div className="public-nav-actions">
-          <button className="public-login-link" onClick={() => onNavigate('/login')}>
-            Log in
-          </button>
-          <button className="public-nav-cta" onClick={() => onNavigate('/signup')}>
-            Get started <ArrowRight size={14} />
-          </button>
+          {user ? (
+            <button className="public-nav-cta" onClick={() => onNavigate('/app/dashboard')}>
+              Dashboard <ArrowRight size={14} />
+            </button>
+          ) : (
+            <>
+              <button className="public-login-link" onClick={() => onNavigate('/login')}>
+                Log in
+              </button>
+              <button className="public-nav-cta" onClick={() => onNavigate('/signup')}>
+                Get started <ArrowRight size={14} />
+              </button>
+            </>
+          )}
         </div>
       </nav>
 
@@ -531,12 +539,20 @@ export function LandingPage({ onNavigate }) {
           </p>
         </div>
         <div className="final-cta-actions">
-          <button className="cta-primary large" onClick={() => onNavigate('/signup')}>
-            Create your account <ArrowRight size={18} />
-          </button>
-          <button className="cta-secondary large" onClick={() => onNavigate('/login')}>
-            Log in to workspace
-          </button>
+          {user ? (
+            <button className="cta-primary large" onClick={() => onNavigate('/app/dashboard')}>
+              Go to Dashboard <ArrowRight size={18} />
+            </button>
+          ) : (
+            <>
+              <button className="cta-primary large" onClick={() => onNavigate('/signup')}>
+                Create your account <ArrowRight size={18} />
+              </button>
+              <button className="cta-secondary large" onClick={() => onNavigate('/login')}>
+                Log in to workspace
+              </button>
+            </>
+          )}
         </div>
       </section>
 

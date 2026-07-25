@@ -25,7 +25,7 @@ function header(message, name) {
   )?.value ?? ''
 }
 
-async function gmailFetch(path, token, options) {
+async function gmailFetch(path, token, options, retries = 3, backoff = 500) {
   const response = await fetch(`${API}${path}`, {
     ...options,
     headers: {
@@ -34,6 +34,10 @@ async function gmailFetch(path, token, options) {
       ...options?.headers,
     },
   })
+  if (response.status === 429 && retries > 0) {
+    await new Promise((resolve) => setTimeout(resolve, backoff))
+    return gmailFetch(path, token, options, retries - 1, backoff * 2)
+  }
   if (!response.ok) {
     if (response.status === 401 || response.status === 403) clearGmailAuthorization()
     const failure = await response.json().catch(() => null)
@@ -113,6 +117,26 @@ async function resolveGmailToken(email = null) {
   return accessToken
 }
 
+async function mapConcurrent(items, limit, fn) {
+  if (!items?.length) return []
+  const results = new Array(items.length)
+  let index = 0
+  async function worker() {
+    while (index < items.length) {
+      const currentIndex = index++
+      results[currentIndex] = await fn(items[currentIndex], currentIndex)
+    }
+  }
+  const workers = Array.from({ length: Math.min(limit, items.length) }, () => worker())
+  await Promise.all(workers)
+  return results
+}
+
+function sanitizeEmailHtml(html = '') {
+  if (!html) return ''
+  return html.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+}
+
 export async function loadGoogleMail(query = '', folder = 'INBOX', pageToken = '', targetEmail = null) {
   const token = await resolveGmailToken(targetEmail)
   const params = new URLSearchParams({ maxResults: '40' })
@@ -123,10 +147,11 @@ export async function loadGoogleMail(query = '', folder = 'INBOX', pageToken = '
     gmailFetch('/profile', token),
     gmailFetch(`/messages?${params}`, token),
   ])
-  const messages = await Promise.all(
-    (list.messages ?? []).map((item) =>
+  const messages = await mapConcurrent(
+    list.messages ?? [],
+    6,
+    (item) =>
       gmailFetch(`/messages/${item.id}?format=metadata&metadataHeaders=From&metadataHeaders=To&metadataHeaders=Subject&metadataHeaders=Date`, token),
-    ),
   )
   return {
     email: profile.emailAddress,
@@ -142,7 +167,7 @@ export async function loadGoogleMessage(id, targetEmail = null) {
     ...summary(message),
     messageId: header(message, 'Message-ID'),
     references: header(message, 'References'),
-    html: findBody(message.payload, 'text/html'),
+    html: sanitizeEmailHtml(findBody(message.payload, 'text/html')),
     body: findBody(message.payload, 'text/plain') || decodeBase64Url(message.payload?.body?.data),
   }
 }

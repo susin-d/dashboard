@@ -281,7 +281,7 @@ function App() {
     ),
   }
 
-  if (route === '/') return <LandingPage onNavigate={navigateRoute} />
+  if (route === '/') return <LandingPage user={activeUser} onNavigate={navigateRoute} />
   if (route === '/privacy') return <PrivacyPolicyPage onNavigate={navigateRoute} />
   if (route === '/terms') return <TermsOfServicePage onNavigate={navigateRoute} />
   if (route === '/login') {
