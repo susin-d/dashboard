@@ -352,8 +352,8 @@ export function MailsPage({ onNavigate }) {
               ) : selected.html ? (
                 <iframe
                   title={selected.subject}
-                  srcDoc={selected.html.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')}
-                  sandbox="allow-popups allow-same-origin allow-scripts"
+                  srcDoc={sanitizeEmailHtml(selected.html)}
+                  sandbox="allow-popups allow-popups-to-escape-sandbox allow-same-origin allow-scripts"
                 />
               ) : (
                 <pre>{selected.body}</pre>
