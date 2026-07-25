@@ -1,13 +1,13 @@
-import { auth } from './firebase'
+import { getStoredAuthToken } from './authApi'
 
 const API_URL = import.meta.env.VITE_API_URL ?? 'http://127.0.0.1:8000/api/v1'
 
 async function request(path, options = {}, authenticated = true) {
   const headers = {}
   if (authenticated) {
-    const user = auth.currentUser
-    if (!user) throw new Error('Sign in to access workspace data.')
-    headers.Authorization = `Bearer ${await user.getIdToken()}`
+    const token = getStoredAuthToken()
+    if (!token) throw new Error('Sign in to access workspace data.')
+    headers.Authorization = `Bearer ${token}`
   }
   if (options.body) headers['Content-Type'] = 'application/json'
   const response = await fetch(`${API_URL}${path}`, {

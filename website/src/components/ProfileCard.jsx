@@ -92,7 +92,7 @@ export function ProfileCard({ user, onProfileUpdated }) {
                   />
                 </div>
               </label>
-              {error && <p style={{ color: '#ef4444', fontSize: '0.85rem', marginBottom: '0.75rem' }}>{error}</p>}
+              {error && <p style={{ color: 'var(--text-primary)', fontSize: '0.85rem', marginBottom: '0.75rem' }}>{error}</p>}
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem' }}>
                 <button type="button" onClick={() => setEditing(false)} className="secondary-button" style={{ padding: '0.4rem 0.8rem' }}>
                   Cancel

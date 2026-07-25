@@ -176,7 +176,6 @@ export function ProjectsPage({ projects, setProjects, onOpenProject }) {
                         className="secondary-button"
                         type="button"
                         onClick={(e) => handleDelete(e, project.id)}
-                        style={{ color: '#ef4444' }}
                       >
                         <Trash2 size={15} /> Delete
                       </button>

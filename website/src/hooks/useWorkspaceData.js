@@ -32,6 +32,36 @@ export function useWorkspaceData(currentUser, activePage) {
   const [contestSites, setContestSites] = useState([])
   const [hackathons, setHackathons] = useState([])
   const [googleCalendarEvents, setGoogleCalendarEvents] = useState([])
+  const [importedIcsCalendars, setImportedIcsCalendars] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem('starwaves-imported-calendars') ?? '[]')
+    } catch {
+      return []
+    }
+  })
+  const [importedIcsEvents, setImportedIcsEvents] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem('starwaves-imported-events') ?? '[]')
+    } catch {
+      return []
+    }
+  })
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('starwaves-imported-calendars', JSON.stringify(importedIcsCalendars))
+    } catch {
+      // ignore
+    }
+  }, [importedIcsCalendars])
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('starwaves-imported-events', JSON.stringify(importedIcsEvents))
+    } catch {
+      // ignore
+    }
+  }, [importedIcsEvents])
 
   const calendarEventIndex = useMemo(
     () =>
@@ -42,8 +72,9 @@ export function useWorkspaceData(currentUser, activePage) {
         projects,
         jobs,
         googleCalendarEvents,
+        icsCalendarEvents: importedIcsEvents,
       }),
-    [tasks, contestSites, hackathons, projects, jobs, googleCalendarEvents],
+    [tasks, contestSites, hackathons, projects, jobs, googleCalendarEvents, importedIcsEvents],
   )
 
   // Calendar Reminder Sync
@@ -277,6 +308,10 @@ export function useWorkspaceData(currentUser, activePage) {
     setHackathons,
     googleCalendarEvents,
     setGoogleCalendarEvents,
+    importedIcsCalendars,
+    setImportedIcsCalendars,
+    importedIcsEvents,
+    setImportedIcsEvents,
     calendarEventIndex,
   }
 }

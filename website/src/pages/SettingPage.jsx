@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react'
-import { deleteUser } from 'firebase/auth'
 import {
   Check,
   CalendarDays,
@@ -15,13 +14,14 @@ import {
   Save,
   Sheet,
   Trash2,
+  Upload,
+  FileUp,
 } from 'lucide-react'
 import { ProfileCard } from '../components/ProfileCard'
+import { clearAuthSession } from '../lib/authApi'
 import {
-  authorizeGmail,
-  auth,
   clearGmailAuthorization,
-  hasGmailConnection,
+  saveGmailAccountToken,
 } from '../lib/firebase'
 import {
   beginGoogleDriveOAuth,
@@ -30,9 +30,12 @@ import {
 } from '../lib/googleDriveApi'
 import {
   disconnectGmail,
+  disconnectGmailAccount,
+  getGmailAccounts,
   getGmailStatus,
   saveGmailConnection,
 } from '../lib/gmailApi'
+import { parseIcsContent } from '../utils/icsParser'
 import {
   beginGoogleCalendarOAuth,
   loadGoogleCalendarData,
@@ -88,6 +91,9 @@ export function SettingPage({
   user,
   onGoogleCalendarsChange,
   onHackathonsChange,
+  importedIcsCalendars = [],
+  setImportedIcsCalendars,
+  setImportedIcsEvents,
 }) {
   const [workspaceConnected, setWorkspaceConnected] = useState(false)
   const [connecting, setConnecting] = useState(false)
@@ -105,7 +111,7 @@ export function SettingPage({
   const [calendarConnections, setCalendarConnections] = useState([])
   const [calendarBusy, setCalendarBusy] = useState(false)
   const [calendarMessage, setCalendarMessage] = useState('')
-  const [gmailConnected, setGmailConnected] = useState(hasGmailConnection)
+  const [gmailAccounts, setGmailAccounts] = useState([])
   const [gmailBusy, setGmailBusy] = useState(false)
   const [gmailMessage, setGmailMessage] = useState('')
   const [hackathonSources, setHackathonSources] = useState([])
@@ -116,20 +122,26 @@ export function SettingPage({
   const [deleteModalOpen, setDeleteModalOpen] = useState(false)
   const [deleteConfirmation, setDeleteConfirmation] = useState('')
 
+  const fetchGmailAccounts = () => {
+    getGmailAccounts()
+      .then(({ accounts }) => {
+        setGmailAccounts(accounts || [])
+      })
+      .catch(() => {
+        getGmailStatus()
+          .then(({ connected, account }) => {
+            if (connected && account) {
+              setGmailAccounts([account])
+            } else {
+              setGmailAccounts([])
+            }
+          })
+          .catch(() => setGmailAccounts([]))
+      })
+  }
+
   useEffect(() => {
-    let active = true
-    getGmailStatus()
-      .then(({ connected }) => {
-        if (!active) return
-        if (!connected) clearGmailAuthorization()
-        setGmailConnected(connected)
-      })
-      .catch((error) => {
-        if (active) setGmailMessage(error.message)
-      })
-    return () => {
-      active = false
-    }
+    fetchGmailAccounts()
   }, [user?.uid])
 
   useEffect(() => {
@@ -370,25 +382,73 @@ export function SettingPage({
     }
   }
 
-  const toggleGmail = async () => {
+  const addGmailAccount = async () => {
     setGmailBusy(true)
     setGmailMessage('')
     try {
-      if (gmailConnected) {
-        await disconnectGmail()
-        clearGmailAuthorization()
-        setGmailConnected(false)
-        setGmailMessage('Google Mail disconnected.')
-      } else {
-        const accessToken = await authorizeGmail()
-        await saveGmailConnection(accessToken)
-        setGmailConnected(true)
-        setGmailMessage('Google Mail connected successfully.')
+      const accessToken = await authorizeGmail()
+      const result = await saveGmailConnection(accessToken)
+      if (result?.account?.email) {
+        saveGmailAccountToken(result.account.email, accessToken, Date.now() + 3600 * 1000)
       }
+      fetchGmailAccounts()
+      setGmailMessage('Gmail account connected successfully.')
     } catch (error) {
-      setGmailMessage(error.message || 'Google Mail could not be connected.')
+      setGmailMessage(error.message || 'Gmail account could not be connected.')
     } finally {
       setGmailBusy(false)
+    }
+  }
+
+  const removeGmailAccount = async (account) => {
+    setGmailBusy(true)
+    setGmailMessage('')
+    try {
+      if (account.id) {
+        await disconnectGmailAccount(account.id)
+      } else {
+        await disconnectGmail()
+      }
+      clearGmailAuthorization(account.email)
+      fetchGmailAccounts()
+      setGmailMessage(`Disconnected ${account.email}.`)
+    } catch (error) {
+      setGmailMessage(error.message || 'Could not disconnect account.')
+    } finally {
+      setGmailBusy(false)
+    }
+  }
+
+  const handleIcsFileUpload = (event) => {
+    const files = Array.from(event.target.files || [])
+    if (!files.length) return
+    files.forEach((file) => {
+      const reader = new FileReader()
+      reader.onload = (e) => {
+        const text = e.target.result
+        const calId = `ics-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`
+        const calName = file.name.replace(/\.ics$/i, '')
+        const parsed = parseIcsContent(text, calName, calId)
+        if (parsed.events.length) {
+          if (setImportedIcsCalendars) {
+            setImportedIcsCalendars((current) => [...current, parsed.calendar])
+          }
+          if (setImportedIcsEvents) {
+            setImportedIcsEvents((current) => [...current, ...parsed.events])
+          }
+        }
+      }
+      reader.readAsText(file)
+    })
+    event.target.value = ''
+  }
+
+  const removeImportedIcsCalendar = (calendarId) => {
+    if (setImportedIcsCalendars) {
+      setImportedIcsCalendars((current) => current.filter((c) => c.id !== calendarId))
+    }
+    if (setImportedIcsEvents) {
+      setImportedIcsEvents((current) => current.filter((e) => e.calendarId !== calendarId))
     }
   }
 
@@ -398,16 +458,10 @@ export function SettingPage({
     setAccountDeleting(true)
     setAccountDeleteMessage('')
     try {
-      const currentUser = auth.currentUser
-      if (!currentUser) throw new Error('Your session has expired. Please sign in again.')
-      await deleteUser(currentUser)
+      clearAuthSession()
       clearGmailAuthorization()
     } catch (error) {
-      setAccountDeleteMessage(
-        error.code === 'auth/requires-recent-login'
-          ? 'For security, please sign out, sign in again, and then delete your account.'
-          : error.message || 'Your account could not be deleted.',
-      )
+      setAccountDeleteMessage(error.message || 'Your account could not be deleted.')
       setAccountDeleting(false)
     }
   }
@@ -579,26 +633,97 @@ export function SettingPage({
             </div>
           </section>
 
+          <section className="workspace-settings-card ics-calendar-settings-card">
+            <div className="workspace-settings-header">
+              <div>
+                <span className="workspace-google-mark"><FileUp size={19} /></span>
+                <div>
+                  <h3>Imported Calendar Files (.ics)</h3>
+                  <p>Import multiple iCal / .ics files to view external calendar events</p>
+                </div>
+              </div>
+              <label className="ics-upload-button">
+                <Upload size={15} />
+                <span>Import .ics file</span>
+                <input
+                  type="file"
+                  accept=".ics,text/calendar"
+                  multiple
+                  onChange={handleIcsFileUpload}
+                  style={{ display: 'none' }}
+                />
+              </label>
+            </div>
+            <div className="google-calendar-settings-body">
+              {importedIcsCalendars.length ? (
+                <div className="google-calendar-account-list">
+                  {importedIcsCalendars.map((cal) => (
+                    <div className="google-calendar-account" key={cal.id}>
+                      <span className="google-calendar-avatar">
+                        <FileUp size={16} />
+                      </span>
+                      <div>
+                        <strong>{cal.name}</strong>
+                        <small>{cal.eventCount} {cal.eventCount === 1 ? 'event' : 'events'} imported</small>
+                      </div>
+                      <button
+                        className="google-calendar-remove"
+                        onClick={() => removeImportedIcsCalendar(cal.id)}
+                        aria-label={`Remove ${cal.name}`}
+                      >
+                        <Trash2 size={15} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="google-calendar-empty">
+                  Upload .ics calendar files from Apple Calendar, Outlook, or Google Calendar exports.
+                </p>
+              )}
+            </div>
+          </section>
+
           <section className="workspace-settings-card gmail-settings-card">
             <div className="workspace-settings-header">
               <div>
                 <span className="workspace-google-mark"><Mail size={19} /></span>
                 <div>
                   <h3>Google Mail</h3>
-                  <p>Read and send Gmail inside StarWaves</p>
+                  <p>Connect and switch between multiple Gmail accounts</p>
                 </div>
               </div>
-              <button
-                className={gmailConnected ? 'workspace-connected' : ''}
-                onClick={toggleGmail}
-                disabled={gmailBusy}
-              >
-                {gmailConnected && <Check size={15} />}
-                {gmailBusy ? 'Working…' : gmailConnected ? 'Disconnect' : 'Connect'}
+              <button onClick={addGmailAccount} disabled={gmailBusy}>
+                {gmailBusy ? 'Connecting…' : 'Add Gmail account'}
               </button>
             </div>
-            <div className="github-settings-copy">
-              <p>StarWaves requests access to read, organize, and send mail on your behalf.</p>
+            <div className="google-calendar-settings-body">
+              {gmailAccounts.length ? (
+                <div className="google-calendar-account-list">
+                  {gmailAccounts.map((acc) => (
+                    <div className="google-calendar-account" key={acc.id || acc.email}>
+                      <span className="google-calendar-avatar">
+                        <Mail size={16} />
+                      </span>
+                      <div>
+                        <strong>{acc.email}</strong>
+                        <small>Gmail connected</small>
+                      </div>
+                      <button
+                        className="google-calendar-remove"
+                        onClick={() => removeGmailAccount(acc)}
+                        aria-label={`Disconnect ${acc.email}`}
+                      >
+                        <Trash2 size={15} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="google-calendar-empty">
+                  Connect one or more Gmail accounts to read and send email directly within StarWaves.
+                </p>
+              )}
               {gmailMessage && <strong role="status">{gmailMessage}</strong>}
             </div>
           </section>

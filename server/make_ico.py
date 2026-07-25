@@ -14,14 +14,15 @@ if os.path.exists(source_img_path):
 
     icon_sizes = [(16, 16), (32, 32), (48, 48), (64, 64), (128, 128), (256, 256)]
     
+    base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "website"))
     targets = [
-        r"c:\project\Opensync\website\favicon.ico",
-        r"c:\project\Opensync\website\public\favicon.ico",
-        r"c:\project\Opensync\website\public\favicon.png",
-        r"c:\project\Opensync\website\public\starwaves-logo.png"
+        os.path.join(base_dir, "favicon.ico"),
+        os.path.join(base_dir, "public", "favicon.ico"),
+        os.path.join(base_dir, "public", "favicon.png"),
+        os.path.join(base_dir, "public", "starwaves-logo.png")
     ]
     
-    dist_dir = r"c:\project\Opensync\website\dist"
+    dist_dir = os.path.join(base_dir, "dist")
     if os.path.exists(dist_dir):
         targets.append(os.path.join(dist_dir, "favicon.ico"))
         targets.append(os.path.join(dist_dir, "favicon.png"))

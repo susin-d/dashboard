@@ -1,17 +1,34 @@
 import { useEffect, useState } from 'react'
-import { onAuthStateChanged } from 'firebase/auth'
-import { auth } from '../lib/firebase'
+import { fetchCurrentUser, getStoredUser } from '../lib/authApi'
 
 export function useAuth() {
-  const [currentUser, setCurrentUser] = useState(null)
+  const [currentUser, setCurrentUser] = useState(() => getStoredUser())
   const [authReady, setAuthReady] = useState(false)
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setCurrentUser(user)
-      setAuthReady(true)
-    })
-    return () => unsubscribe()
+    let mounted = true
+
+    async function checkAuth() {
+      const user = await fetchCurrentUser()
+      if (mounted) {
+        setCurrentUser(user)
+        setAuthReady(true)
+      }
+    }
+
+    checkAuth()
+
+    const handleAuthChange = () => {
+      if (mounted) {
+        setCurrentUser(getStoredUser())
+      }
+    }
+
+    window.addEventListener('starwaves:auth-change', handleAuthChange)
+    return () => {
+      mounted = false
+      window.removeEventListener('starwaves:auth-change', handleAuthChange)
+    }
   }, [])
 
   return { currentUser, authReady }

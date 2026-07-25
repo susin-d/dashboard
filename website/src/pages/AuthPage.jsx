@@ -156,7 +156,7 @@ export function AuthPage({ mode, onNavigate, onAuthenticate }) {
                 Forgot password?
               </button>
             )}
-            {infoMessage && <p className="auth-info" style={{ color: '#10b981', fontSize: '0.85rem', marginTop: '0.5rem' }}>{infoMessage}</p>}
+            {infoMessage && <p className="auth-info" style={{ color: 'var(--text-primary)', fontSize: '0.85rem', marginTop: '0.5rem' }}>{infoMessage}</p>}
             {error && <p className="auth-error" role="alert">{error}</p>}
             <button className="auth-submit" type="submit" disabled={submitting}>
               {submitting ? 'Please wait…' : signup ? 'Create account' : 'Log in'}

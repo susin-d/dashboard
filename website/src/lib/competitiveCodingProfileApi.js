@@ -1,11 +1,10 @@
-import { auth } from './firebase'
+import { getStoredAuthToken } from './authApi'
 
 const API_URL = import.meta.env.VITE_API_URL ?? 'http://127.0.0.1:8000/api/v1'
 
 async function request(options = {}) {
-  const user = auth.currentUser
-  if (!user) throw new Error('Sign in to update competitive coding IDs.')
-  const token = await user.getIdToken()
+  const token = getStoredAuthToken()
+  if (!token) throw new Error('Sign in to update competitive coding IDs.')
   const response = await fetch(`${API_URL}/settings/competitive-coding`, {
     ...options,
     headers: {

@@ -38,7 +38,19 @@ function RecordList({ items, empty = 'Nothing to show.' }) {
       {items.map((entry) => (
         <div className="dashboard-record" key={entry.id}>
           <div>
-            <strong>{entry.title}</strong>
+            {entry.url ? (
+              <a
+                href={entry.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="dashboard-record-title-link"
+                style={{ color: 'inherit', textDecoration: 'none' }}
+              >
+                <strong style={{ cursor: 'pointer' }}>{entry.title}</strong>
+              </a>
+            ) : (
+              <strong>{entry.title}</strong>
+            )}
             {entry.meta && <span>{entry.meta}</span>}
           </div>
           {entry.badge && <em>{entry.badge}</em>}
@@ -220,7 +232,7 @@ export function DashboardPage({
     hackathons: {
       total: hackathons.length,
       body: <RecordList items={hackathons.slice(0, 3).map((hackathon) => ({
-        id: hackathon.id, title: hackathon.title, meta: hackathon.organizer, badge: formatDate(hackathon.startsAt),
+        id: hackathon.id, title: hackathon.title, meta: hackathon.organizer, badge: formatDate(hackathon.startsAt), url: hackathon.url,
       }))} />,
     },
     projects: {

@@ -1,11 +1,10 @@
-import { auth } from './firebase'
+import { getStoredAuthToken } from './authApi'
 
 const API_URL = import.meta.env.VITE_API_URL ?? 'http://127.0.0.1:8000/api/v1'
 
 export async function loadPlatformCodingStats(platform) {
-  const user = auth.currentUser
-  if (!user) throw new Error('Sign in to load coding statistics.')
-  const token = await user.getIdToken()
+  const token = getStoredAuthToken()
+  if (!token) throw new Error('Sign in to load coding statistics.')
   const response = await fetch(
     `${API_URL}/stats/competitive-coding/${platform}`,
     {

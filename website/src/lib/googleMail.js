@@ -77,8 +77,8 @@ function encodeMessage({ to, cc, bcc, subject, body, inReplyTo, references }) {
 
 export { hasGmailConnection }
 
-export async function loadGoogleMail(query = '', folder = 'INBOX', pageToken = '') {
-  const token = await authorizeGmail()
+export async function loadGoogleMail(query = '', folder = 'INBOX', pageToken = '', targetEmail = null) {
+  const token = await authorizeGmail(targetEmail)
   const params = new URLSearchParams({ maxResults: '40' })
   if (folder) params.set('labelIds', folder)
   if (query.trim()) params.set('q', query.trim())
@@ -99,8 +99,8 @@ export async function loadGoogleMail(query = '', folder = 'INBOX', pageToken = '
   }
 }
 
-export async function loadGoogleMessage(id) {
-  const token = await authorizeGmail()
+export async function loadGoogleMessage(id, targetEmail = null) {
+  const token = await authorizeGmail(targetEmail)
   const message = await gmailFetch(`/messages/${id}?format=full`, token)
   return {
     ...summary(message),
@@ -111,16 +111,16 @@ export async function loadGoogleMessage(id) {
   }
 }
 
-export async function updateGoogleMessage(id, { add = [], remove = [] }) {
-  const token = await authorizeGmail()
+export async function updateGoogleMessage(id, { add = [], remove = [] }, targetEmail = null) {
+  const token = await authorizeGmail(targetEmail)
   return gmailFetch(`/messages/${id}/modify`, token, {
     method: 'POST',
     body: JSON.stringify({ addLabelIds: add, removeLabelIds: remove }),
   })
 }
 
-export async function sendGoogleMessage(message) {
-  const token = await authorizeGmail()
+export async function sendGoogleMessage(message, targetEmail = null) {
+  const token = await authorizeGmail(targetEmail)
   return gmailFetch('/messages/send', token, {
     method: 'POST',
     body: JSON.stringify({

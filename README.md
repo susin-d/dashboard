@@ -87,18 +87,7 @@ Copy-Item .env.example .env
 npm install
 ```
 
-Fill in `website/.env` with the public Firebase web-app configuration:
-
-```dotenv
-VITE_FIREBASE_API_KEY=your-web-api-key
-VITE_FIREBASE_AUTH_DOMAIN=your-project.firebaseapp.com
-VITE_FIREBASE_PROJECT_ID=your-project-id
-VITE_FIREBASE_APP_ID=your-web-app-id
-VITE_FIREBASE_MESSAGING_SENDER_ID=your-sender-id
-```
-
-The frontend uses `http://127.0.0.1:8000/api/v1` by default. To use a different
-backend, add:
+Fill in `website/.env` with backend API configuration:
 
 ```dotenv
 VITE_API_URL=http://127.0.0.1:8000/api/v1

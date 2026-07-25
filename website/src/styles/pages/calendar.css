@@ -365,9 +365,9 @@
 }
 
 .calendar-event.google-calendar {
-  color: #174ea6;
-  background: #e8f0fe;
-  border-left: 3px solid #4285f4;
+  color: var(--text-primary);
+  background: var(--bg-tertiary);
+  border-left: 3px solid var(--border-heavy);
 }
 
 .calendar-events small {

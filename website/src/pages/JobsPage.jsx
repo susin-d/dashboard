@@ -251,7 +251,7 @@ export function JobsPage({ jobs, setJobs, documents, createIntent }) {
                         className="secondary-button"
                         type="button"
                         onClick={() => handleDeleteJob(job.id)}
-                        style={{ padding: '0.35rem 0.7rem', fontSize: '0.85rem', color: '#ef4444' }}
+                        style={{ padding: '0.35rem 0.7rem', fontSize: '0.85rem' }}
                       >
                         <Trash2 size={14} /> Delete
                       </button>

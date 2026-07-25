@@ -98,7 +98,7 @@ export function ProjectDetailPage({ project, onBack, onSave }) {
               <Pencil size={15} />
               Edit
             </button>
-            <button className="secondary-button" onClick={handleDelete} style={{ color: '#ef4444' }}>
+            <button className="secondary-button" onClick={handleDelete}>
               <Trash2 size={15} />
               Delete
             </button>

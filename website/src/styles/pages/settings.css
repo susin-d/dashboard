@@ -153,9 +153,9 @@
 .workspace-connection-error {
   margin: 0;
   padding: 12px 22px;
-  background: rgba(239, 68, 68, 0.08);
+  background: var(--bg-hover);
   border-bottom: 1px solid var(--border-color);
-  color: var(--color-danger, #ef4444);
+  color: var(--text-primary);
   font-size: 12px;
   font-weight: 600;
 }
@@ -175,7 +175,7 @@
   padding: 14px 16px;
   border: 1px solid var(--border-color);
   border-radius: var(--radius-md, 10px);
-  background: var(--bg-surface, var(--bg-secondary, #fafafa));
+  background: var(--bg-card, #ffffff);
   color: var(--text-primary);
   text-decoration: none;
   transition: all 0.18s ease;
@@ -251,7 +251,7 @@
   padding: 14px 16px;
   border: 1px solid var(--border-color);
   border-radius: var(--radius-md, 10px);
-  background: var(--bg-surface, #fafafa);
+  background: var(--bg-card, #ffffff);
 }
 
 .google-calendar-avatar {
@@ -328,9 +328,9 @@
 }
 
 .google-calendar-remove:hover {
-  border-color: #ef4444;
-  background: rgba(239, 68, 68, 0.08);
-  color: #ef4444;
+  border-color: var(--color-primary);
+  background: var(--bg-hover);
+  color: var(--text-primary);
 }
 
 .google-calendar-refresh {
@@ -370,6 +370,55 @@
   margin-top: 10px;
   color: var(--text-primary);
   font-size: 12px;
+}
+
+.ics-upload-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 14px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background: var(--bg-card);
+  color: var(--text-primary);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+
+.ics-upload-button:hover {
+  background: #18181b;
+  color: #ffffff;
+}
+
+.mail-account-select {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px 12px;
+  background: var(--bg-secondary);
+  border-radius: 8px;
+  margin-bottom: 12px;
+}
+
+.mail-account-select label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+.mail-account-select select {
+  width: 100%;
+  padding: 6px 8px;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  background: var(--bg-card);
+  color: var(--text-primary);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
 }
 
 /* Competitive Coding Form */
@@ -416,7 +465,7 @@
   padding: 10px 14px;
   border: 1px solid var(--border-color);
   border-radius: var(--radius-md, 8px);
-  background: var(--bg-surface, #fafafa);
+  background: var(--bg-card, #ffffff);
   color: var(--text-primary);
   font: inherit;
   font-size: 13px;
@@ -426,7 +475,7 @@
 .coding-profile-fields input:focus {
   outline: none;
   border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
+  box-shadow: var(--shadow-focus);
   background: var(--bg-card);
 }
 
@@ -436,7 +485,7 @@
   justify-content: flex-end;
   gap: 16px;
   padding: 16px 22px;
-  background: var(--bg-surface, #fafafa);
+  background: var(--bg-card, #ffffff);
 }
 
 .coding-settings-footer p {
@@ -553,15 +602,15 @@
 }
 
 .hackathon-source-row button.enabled:hover {
-  border-color: #ef4444;
-  background: rgba(239, 68, 68, 0.08);
-  color: #ef4444;
+  border-color: var(--color-primary);
+  background: var(--bg-hover);
+  color: var(--text-primary);
 }
 
 .hackathon-source-message {
   margin: 0;
   padding: 14px 22px;
-  background: var(--bg-surface, #fafafa);
+  background: var(--bg-card, #ffffff);
   border-top: 1px solid var(--border-color);
   color: var(--text-secondary);
   font-size: 12px;
@@ -578,14 +627,14 @@
   justify-content: space-between;
   gap: 24px;
   padding: 22px;
-  background: rgba(239, 68, 68, 0.05);
-  border: 1px solid rgba(239, 68, 68, 0.2);
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-heavy);
   border-radius: var(--radius-xl, 14px);
 }
 
 .delete-account-card h3 {
   margin: 0;
-  color: #ef4444;
+  color: var(--text-primary);
   font-size: 15px;
   font-weight: 700;
 }
@@ -602,9 +651,9 @@
   align-items: center;
   gap: 7px;
   padding: 10px 16px;
-  color: #ffffff;
-  background: #ef4444;
-  border: 1px solid #ef4444;
+  color: var(--text-inverse);
+  background: var(--color-primary);
+  border: 1px solid var(--color-primary);
   border-radius: 8px;
   font-size: 12px;
   font-weight: 700;
@@ -614,8 +663,8 @@
 }
 
 .delete-account-card button:hover {
-  background: #dc2626;
-  border-color: #dc2626;
+  background: var(--color-primary-hover);
+  border-color: var(--color-primary-hover);
 }
 
 /* Delete Modal */
@@ -647,8 +696,8 @@
   height: 44px;
   margin-bottom: 16px;
   border-radius: 50%;
-  background: rgba(239, 68, 68, 0.1);
-  color: #ef4444;
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
 }
 
 .delete-account-modal h2 {
@@ -677,7 +726,7 @@
   padding: 11px 14px;
   border: 1px solid var(--border-color);
   border-radius: 8px;
-  background: var(--bg-surface, #fafafa);
+  background: var(--bg-card, #ffffff);
   color: var(--text-primary);
   font: inherit;
   font-size: 13px;
@@ -686,8 +735,8 @@
 
 .delete-account-modal form input:focus {
   outline: none;
-  border-color: #ef4444;
-  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.12);
+  border-color: var(--color-primary);
+  box-shadow: var(--shadow-focus);
 }
 
 .delete-account-modal-actions {
@@ -713,9 +762,9 @@
   align-items: center;
   gap: 7px;
   padding: 10px 16px;
-  color: #ffffff;
-  background: #ef4444;
-  border: 1px solid #ef4444;
+  color: var(--text-inverse);
+  background: var(--color-primary);
+  border: 1px solid var(--color-primary);
   border-radius: 8px;
   font-size: 12px;
   font-weight: 700;

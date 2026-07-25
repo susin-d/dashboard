@@ -1,6 +1,7 @@
 from fastapi import APIRouter
 
 from app.api.routes import (
+    auth,
     coding_stats,
     competitive_coding_profile,
     documents,
@@ -9,13 +10,16 @@ from app.api.routes import (
     google_drive,
     github,
     health,
+    notifications,
     profiles,
     todos,
     workspace,
 )
 
 api_router = APIRouter()
+api_router.include_router(auth.router, tags=["auth"])
 api_router.include_router(health.router, tags=["health"])
+api_router.include_router(notifications.router, tags=["notifications"])
 api_router.include_router(profiles.router, tags=["profiles"])
 api_router.include_router(documents.router, tags=["documents"])
 api_router.include_router(gmail.router, tags=["Gmail integration"])

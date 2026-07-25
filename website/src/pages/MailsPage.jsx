@@ -1,13 +1,13 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
   Archive, ChevronLeft, ChevronRight, ExternalLink, Inbox, LoaderCircle, Mail, MailOpen,
-  MailPlus, RefreshCw, Reply, Search, Send, Star, Tag, Trash2, X,
+  MailPlus, RefreshCw, Reply, Search, Send, Star, Trash2, X,
 } from 'lucide-react'
 import {
   hasGmailConnection, loadGoogleMail, loadGoogleMessage,
   sendGoogleMessage, updateGoogleMessage,
 } from '../lib/googleMail'
-import { getGmailStatus } from '../lib/gmailApi'
+import { getGmailAccounts, getGmailStatus } from '../lib/gmailApi'
 
 const FOLDERS = [
   { id: 'INBOX', label: 'Inbox', icon: Inbox },
@@ -35,6 +35,8 @@ const EMPTY_COMPOSE = { to: '', cc: '', bcc: '', subject: '', body: '', threadId
 export function MailsPage({ onNavigate }) {
   const [messages, setMessages] = useState([])
   const [account, setAccount] = useState('')
+  const [accounts, setAccounts] = useState([])
+  const [selectedAccountEmail, setSelectedAccountEmail] = useState('')
   const [query, setQuery] = useState('')
   const [folder, setFolder] = useState('INBOX')
   const [loading, setLoading] = useState(false)
@@ -49,11 +51,11 @@ export function MailsPage({ onNavigate }) {
   const [previousPageTokens, setPreviousPageTokens] = useState([])
   const [nextPageToken, setNextPageToken] = useState('')
 
-  const refresh = useCallback(async (search = query, nextFolder = folder, token = '', keepPage = false) => {
+  const refresh = useCallback(async (search = query, nextFolder = folder, token = '', keepPage = false, targetAccount = selectedAccountEmail) => {
     setLoading(true)
     setError('')
     try {
-      const result = await loadGoogleMail(search, nextFolder, token)
+      const result = await loadGoogleMail(search, nextFolder, token, targetAccount || null)
       setMessages(result.messages)
       setAccount(result.email)
       setNextPageToken(result.nextPageToken)
@@ -66,12 +68,12 @@ export function MailsPage({ onNavigate }) {
     } finally {
       setLoading(false)
     }
-  }, [folder, query])
+  }, [folder, query, selectedAccountEmail])
 
   const openOlderMessages = () => {
     if (!nextPageToken || loading) return
     setPreviousPageTokens((tokens) => [...tokens, pageToken])
-    refresh(query, folder, nextPageToken, true)
+    refresh(query, folder, nextPageToken, true, selectedAccountEmail)
   }
 
   const openNewerMessages = () => {
@@ -79,24 +81,43 @@ export function MailsPage({ onNavigate }) {
     const tokens = [...previousPageTokens]
     const previousToken = tokens.pop()
     setPreviousPageTokens(tokens)
-    refresh(query, folder, previousToken, true)
+    refresh(query, folder, previousToken, true, selectedAccountEmail)
   }
 
-  useEffect(() => { if (connected) refresh('', folder) }, [connected, folder]) // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    if (connected) refresh('', folder, '', false, selectedAccountEmail)
+  }, [connected, folder, selectedAccountEmail]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     let active = true
-    getGmailStatus()
-      .then(({ connected: savedConnection }) => {
-        if (active) setConnected(savedConnection)
+    getGmailAccounts()
+      .then(({ accounts: fetchedAccounts }) => {
+        if (!active) return
+        if (fetchedAccounts && fetchedAccounts.length) {
+          setAccounts(fetchedAccounts)
+          setConnected(true)
+          if (!selectedAccountEmail) {
+            setSelectedAccountEmail(fetchedAccounts[0].email)
+          }
+        }
       })
-      .catch((statusError) => {
-        if (active) setError(statusError.message)
+      .catch(() => {
+        getGmailStatus()
+          .then(({ connected: savedConnection, account: singleAcc }) => {
+            if (!active) return
+            setConnected(savedConnection)
+            if (singleAcc?.email) {
+              setAccounts([singleAcc])
+            }
+          })
+          .catch((statusError) => {
+            if (active) setError(statusError.message)
+          })
       })
     return () => {
       active = false
     }
-  }, [])
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const unreadCount = useMemo(() => messages.filter((message) => message.unread).length, [messages])
 
@@ -104,70 +125,66 @@ export function MailsPage({ onNavigate }) {
     setReading(true)
     setError('')
     try {
-      const full = await loadGoogleMessage(message.id)
+      const full = await loadGoogleMessage(message.id, selectedAccountEmail)
       setSelected(full)
       if (message.unread) {
         setMessages((items) => items.map((item) => item.id === message.id ? { ...item, unread: false } : item))
-        updateGoogleMessage(message.id, { remove: ['UNREAD'] }).catch(() => {})
+        await updateGoogleMessage(message.id, { remove: ['UNREAD'] }, selectedAccountEmail)
       }
-    } catch (openError) {
-      setError(openError.message)
+    } catch (readError) {
+      setError(readError.message)
     } finally {
       setReading(false)
     }
   }
 
   const toggleStar = async (message, event) => {
-    event?.stopPropagation()
-    event?.preventDefault()
-    const starred = !message.starred
-    setMessages((items) => items.map((item) => item.id === message.id ? { ...item, starred } : item))
-    if (selected?.id === message.id) setSelected((item) => ({ ...item, starred }))
+    event.stopPropagation()
+    const nextStarred = !message.starred
+    setMessages((items) => items.map((item) => item.id === message.id ? { ...item, starred: nextStarred } : item))
+    if (selected?.id === message.id) setSelected((current) => current ? { ...current, starred: nextStarred } : null)
     try {
-      await updateGoogleMessage(message.id, starred ? { add: ['STARRED'] } : { remove: ['STARRED'] })
+      await updateGoogleMessage(
+        message.id,
+        nextStarred ? { add: ['STARRED'] } : { remove: ['STARRED'] },
+        selectedAccountEmail,
+      )
     } catch (starError) {
       setError(starError.message)
-      refresh()
     }
   }
 
-  const moveMessage = async (action) => {
-    if (!selected) return
-    const operations = {
-      archive: { remove: ['INBOX'] },
-      trash: { add: ['TRASH'], remove: ['INBOX'] },
-      unread: { add: ['UNREAD'] },
-    }
+  const archiveMessage = async (message) => {
+    setMessages((items) => items.filter((item) => item.id !== message.id))
+    if (selected?.id === message.id) setSelected(null)
     try {
-      await updateGoogleMessage(selected.id, operations[action])
-      setSelected(null)
-      setMessages((items) => items.filter((item) => item.id !== selected.id))
-      setNotice(action === 'unread' ? 'Marked as unread' : action === 'trash' ? 'Moved to trash' : 'Archived')
-    } catch (moveError) {
-      setError(moveError.message)
+      await updateGoogleMessage(message.id, { remove: ['INBOX'] }, selectedAccountEmail)
+      setNotice('Message archived.')
+    } catch (archiveError) {
+      setError(archiveError.message)
     }
   }
 
-  const startReply = () => {
-    setCompose({
-      ...EMPTY_COMPOSE,
-      to: emailAddress(selected.from),
-      subject: selected.subject.startsWith('Re:') ? selected.subject : `Re: ${selected.subject}`,
-      threadId: selected.threadId,
-      inReplyTo: selected.messageId,
-      references: [selected.references, selected.messageId].filter(Boolean).join(' '),
-    })
+  const deleteMessage = async (message) => {
+    setMessages((items) => items.filter((item) => item.id !== message.id))
+    if (selected?.id === message.id) setSelected(null)
+    try {
+      await updateGoogleMessage(message.id, { add: ['TRASH'] }, selectedAccountEmail)
+      setNotice('Message moved to Trash.')
+    } catch (deleteError) {
+      setError(deleteError.message)
+    }
   }
 
-  const sendMail = async (event) => {
+  const sendMessage = async (event) => {
     event.preventDefault()
     setSending(true)
     setError('')
     try {
-      await sendGoogleMessage(compose)
+      await sendGoogleMessage(compose, selectedAccountEmail)
       setCompose(null)
-      setNotice('Message sent')
-      if (folder === 'SENT') refresh()
+      setNotice('Message sent successfully.')
+      if (folder === 'SENT') refresh(query, 'SENT', '', false, selectedAccountEmail)
     } catch (sendError) {
       setError(sendError.message)
     } finally {
@@ -175,37 +192,30 @@ export function MailsPage({ onNavigate }) {
     }
   }
 
-  useEffect(() => {
-    if (!notice) return undefined
-    const timer = window.setTimeout(() => setNotice(''), 3000)
-    return () => window.clearTimeout(timer)
-  }, [notice])
-
   if (!connected) {
     return (
-      <section className="mails-page">
-        <div className="page-heading"><div><p>Communication</p><h1>Mails</h1></div></div>
-        <div className="mail-connect-empty">
-          <span><Mail size={28} /></span>
-          <h2>Bring your inbox into StarWaves</h2>
-          <p>Connect Google Mail in Settings to read, organize, and send messages here.</p>
-          <button className="primary-button" onClick={() => onNavigate('setting')}>Open settings</button>
-        </div>
-      </section>
+      <div className="mail-page empty-connect">
+        <Mail size={42} />
+        <h2>Connect Google Mail</h2>
+        <p>Authorize Gmail in settings to view, reply to, and organize your emails inside StarWaves.</p>
+        <button className="primary-button" onClick={() => onNavigate('setting')}>Open Settings</button>
+      </div>
     )
   }
 
   return (
-    <section className="mails-page">
+    <div className="mail-page">
+      {notice && <div className="mail-toast">{notice}<button onClick={() => setNotice('')}><X size={14} /></button></div>}
+
       <div className="page-heading mail-page-heading">
         <div><p>Communication</p><h1>Mails</h1></div>
         <div className="mail-toolbar">
-          <form onSubmit={(event) => { event.preventDefault(); refresh(query, folder) }}>
+          <form onSubmit={(event) => { event.preventDefault(); refresh(query, folder, '', false, selectedAccountEmail) }}>
             <Search size={17} />
             <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search mail" aria-label="Search mail" />
-            {query && <button type="button" onClick={() => { setQuery(''); refresh('', folder) }} aria-label="Clear search"><X size={15} /></button>}
+            {query && <button type="button" onClick={() => { setQuery(''); refresh('', folder, '', false, selectedAccountEmail) }} aria-label="Clear search"><X size={15} /></button>}
           </form>
-          <button onClick={() => refresh(query, folder, pageToken, true)} disabled={loading} aria-label="Refresh inbox">
+          <button onClick={() => refresh(query, folder, pageToken, true, selectedAccountEmail)} disabled={loading} aria-label="Refresh inbox">
             <RefreshCw size={17} className={loading ? 'mail-spin' : ''} />
           </button>
         </div>
@@ -219,6 +229,28 @@ export function MailsPage({ onNavigate }) {
           <div className="mail-mobile-compose">
             <button onClick={() => setCompose({ ...EMPTY_COMPOSE })}><MailPlus size={17} /><span>Compose</span></button>
           </div>
+
+          {accounts.length > 1 && (
+            <div className="mail-account-select">
+              <label htmlFor="gmail-account-picker">Account</label>
+              <select
+                id="gmail-account-picker"
+                value={selectedAccountEmail || account}
+                onChange={(e) => {
+                  const newEmail = e.target.value
+                  setSelectedAccountEmail(newEmail)
+                  refresh(query, folder, '', false, newEmail)
+                }}
+              >
+                {accounts.map((acc) => (
+                  <option key={acc.id || acc.email} value={acc.email}>
+                    {acc.email}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
           {FOLDERS.map(({ id, label, icon: Icon }) => (
             <button className={folder === id ? 'active' : ''} onClick={() => { setFolder(id); setSelected(null); setQuery('') }} key={id}>
               <Icon size={17} /><span>{label}</span>{id === 'INBOX' && <strong>{unreadCount}</strong>}
@@ -248,11 +280,9 @@ export function MailsPage({ onNavigate }) {
             <ChevronLeft size={17} />
           </button>
           <input
-            type="number"
-            min="1"
-            value={previousPageTokens.length + 1}
             readOnly
-            aria-label="Current page number"
+            aria-label="Current page indicator"
+            value={previousPageTokens.length ? `Page ${previousPageTokens.length + 1}` : 'Page 1'}
           />
           <button onClick={openOlderMessages} disabled={!nextPageToken || loading} aria-label="Next page">
             <ChevronRight size={17} />
@@ -260,55 +290,75 @@ export function MailsPage({ onNavigate }) {
         </nav>
       </div>
 
-      {(selected || reading) && (
-        <div className="mail-overlay" onMouseDown={(event) => { if (event.target === event.currentTarget) setSelected(null) }}>
-          <article className="mail-reader">
-            {reading && !selected ? <div className="mail-reader-loading"><LoaderCircle className="mail-spin" />Opening message…</div> : selected && <>
-              <header className="mail-reader-toolbar">
-                <button onClick={() => setSelected(null)} aria-label="Back"><ChevronLeft size={20} /></button>
+      {selected && (
+        <div className="mail-modal" role="dialog" aria-modal="true" aria-labelledby="message-title">
+          <div className="mail-card">
+            <header className="mail-card-header">
+              <div>
+                <span className="mail-avatar">{selected.sender[0]?.toUpperCase()}</span>
                 <div>
-                  <button onClick={() => moveMessage('archive')} title="Archive"><Archive size={18} /></button>
-                  <button onClick={() => moveMessage('trash')} title="Move to trash"><Trash2 size={18} /></button>
-                  <button onClick={() => moveMessage('unread')} title="Mark unread"><Mail size={18} /></button>
-                  <button onClick={(event) => toggleStar(selected, event)} title="Star"><Star size={18} className={selected.starred ? 'starred' : ''} /></button>
-                </div>
-              </header>
-              <div className="mail-reader-content">
-                <div className="mail-reader-subject"><h2>{selected.subject}</h2><span><Tag size={13} /> {folder.toLowerCase()}</span></div>
-                <div className="mail-reader-sender">
-                  <span>{selected.sender.slice(0, 1).toUpperCase()}</span>
-                  <div><strong>{selected.sender}</strong><small>to {selected.to || 'me'}</small></div>
+                  <h3 id="message-title">{selected.subject}</h3>
+                  <span>{selected.from} → {selected.to || 'me'}</span>
                   <time>{formatMailDate(selected.date, true)}</time>
                 </div>
-                {selected.html
-                  ? <iframe className="mail-html-body" title="Message content" sandbox="" srcDoc={selected.html} />
-                  : <div className="mail-text-body">{selected.body || selected.snippet}</div>}
               </div>
-              <footer><button onClick={startReply}><Reply size={16} /> Reply</button></footer>
-            </>}
-          </article>
+              <div className="mail-card-actions">
+                <button
+                  onClick={() =>
+                    setCompose({
+                      ...EMPTY_COMPOSE,
+                      to: emailAddress(selected.from),
+                      subject: selected.subject.startsWith('Re:') ? selected.subject : `Re: ${selected.subject}`,
+                      threadId: selected.threadId,
+                      inReplyTo: selected.messageId,
+                      references: selected.references ? `${selected.references} ${selected.messageId}` : selected.messageId,
+                      body: `\n\nOn ${selected.date}, ${selected.from} wrote:\n> ${selected.body.replaceAll('\n', '\n> ')}`,
+                    })
+                  }
+                >
+                  <Reply size={16} /> Reply
+                </button>
+                <button onClick={() => archiveMessage(selected)}><Archive size={16} /> Archive</button>
+                <button onClick={() => deleteMessage(selected)}><Trash2 size={16} /> Trash</button>
+                <button onClick={() => setSelected(null)} aria-label="Close message"><X size={16} /></button>
+              </div>
+            </header>
+            <div className="mail-card-body">
+              {reading ? (
+                <div className="mail-state"><LoaderCircle className="mail-spin" />Loading message body…</div>
+              ) : selected.html ? (
+                <iframe title={selected.subject} srcDoc={selected.html} sandbox="allow-popups allow-same-origin" />
+              ) : (
+                <pre>{selected.body}</pre>
+              )}
+            </div>
+          </div>
         </div>
       )}
 
       {compose && (
-        <div className="mail-compose-layer">
-          <form className="mail-compose" onSubmit={sendMail}>
-            <header><strong>{compose.threadId ? 'Reply' : 'New message'}</strong><button type="button" onClick={() => setCompose(null)} aria-label="Close compose"><X size={17} /></button></header>
-            <label><span>To</span><input autoFocus required type="email" value={compose.to} onChange={(event) => setCompose({ ...compose, to: event.target.value })} /></label>
-            <details><summary>Cc / Bcc</summary>
-              <label><span>Cc</span><input value={compose.cc} onChange={(event) => setCompose({ ...compose, cc: event.target.value })} /></label>
-              <label><span>Bcc</span><input value={compose.bcc} onChange={(event) => setCompose({ ...compose, bcc: event.target.value })} /></label>
-            </details>
-            <input className="mail-compose-subject" required placeholder="Subject" value={compose.subject} onChange={(event) => setCompose({ ...compose, subject: event.target.value })} />
-            <textarea required placeholder="Write your message…" value={compose.body} onChange={(event) => setCompose({ ...compose, body: event.target.value })} />
-            <footer>
-              <button className="primary-button" disabled={sending}>{sending ? <LoaderCircle className="mail-spin" size={16} /> : <Send size={16} />}{sending ? 'Sending…' : 'Send'}</button>
-              <button type="button" onClick={() => setCompose(null)} aria-label="Discard draft"><Trash2 size={17} /></button>
+        <div className="mail-modal" role="dialog" aria-modal="true" aria-labelledby="compose-title">
+          <form className="mail-card compose-card" onSubmit={sendMessage}>
+            <header className="mail-card-header">
+              <h3 id="compose-title">{compose.threadId ? 'Reply Message' : 'New Message'}</h3>
+              <button type="button" onClick={() => setCompose(null)} aria-label="Close compose"><X size={16} /></button>
+            </header>
+            <div className="compose-fields">
+              <input value={compose.to} onChange={(event) => setCompose((c) => ({ ...c, to: event.target.value }))} placeholder="To" required />
+              <input value={compose.cc} onChange={(event) => setCompose((c) => ({ ...c, cc: event.target.value }))} placeholder="Cc" />
+              <input value={compose.bcc} onChange={(event) => setCompose((c) => ({ ...c, bcc: event.target.value }))} placeholder="Bcc" />
+              <input value={compose.subject} onChange={(event) => setCompose((c) => ({ ...c, subject: event.target.value }))} placeholder="Subject" required />
+              <textarea value={compose.body} onChange={(event) => setCompose((c) => ({ ...c, body: event.target.value }))} placeholder="Write your message…" rows="12" required />
+            </div>
+            <footer className="compose-footer">
+              <button type="button" onClick={() => setCompose(null)}>Discard</button>
+              <button className="primary-button" type="submit" disabled={sending}>
+                {sending ? 'Sending…' : <><Send size={15} /> Send</>}
+              </button>
             </footer>
           </form>
         </div>
       )}
-      {notice && <div className="mail-toast" role="status">{notice}</div>}
-    </section>
+    </div>
   )
 }

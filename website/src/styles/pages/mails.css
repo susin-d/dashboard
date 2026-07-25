@@ -313,8 +313,8 @@
 
 .mail-row .starred,
 .mail-reader .starred {
-  color: #e1a000;
-  fill: #e1a000;
+  color: var(--text-primary);
+  fill: var(--text-primary);
 }
 
 .mail-state {

@@ -332,7 +332,7 @@ export function DocumentsPage({ documents, setDocuments, createIntent }) {
                         <Pencil size={14} />
                         Edit
                       </button>
-                      <button onClick={() => handleDeleteDocument(document.id)} style={{ color: '#ef4444' }}>
+                      <button onClick={() => handleDeleteDocument(document.id)}>
                         <Trash2 size={14} />
                         Delete
                       </button>

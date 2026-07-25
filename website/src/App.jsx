@@ -50,7 +50,12 @@ function App() {
     contestSites,
     hackathons,
     setHackathons,
+    googleCalendarEvents,
     setGoogleCalendarEvents,
+    importedIcsCalendars,
+    setImportedIcsCalendars,
+    importedIcsEvents,
+    setImportedIcsEvents,
     calendarEventIndex,
   } = useWorkspaceData(activeUser, activePage)
 
@@ -237,6 +242,11 @@ function App() {
     calendar: (
       <CalendarPage
         eventsByDate={calendarEventIndex}
+        googleCalendarEvents={googleCalendarEvents}
+        importedIcsCalendars={importedIcsCalendars}
+        setImportedIcsCalendars={setImportedIcsCalendars}
+        importedIcsEvents={importedIcsEvents}
+        setImportedIcsEvents={setImportedIcsEvents}
         onNavigate={navigateWorkspace}
       />
     ),
@@ -257,6 +267,10 @@ function App() {
         user={userProfile}
         onGoogleCalendarsChange={setGoogleCalendarEvents}
         onHackathonsChange={setHackathons}
+        importedIcsCalendars={importedIcsCalendars}
+        setImportedIcsCalendars={setImportedIcsCalendars}
+        importedIcsEvents={importedIcsEvents}
+        setImportedIcsEvents={setImportedIcsEvents}
       />
     ),
   }

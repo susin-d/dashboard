@@ -665,7 +665,7 @@ export function CalendarPage({ eventsByDate, onNavigate }) {
                     <div className="calendar-detail-record" key={event.id}>
                       <div
                         className="calendar-detail-record-icon google-calendar-icon"
-                        style={{ background: event.calendarColor || '#4285f4' }}
+                        style={{ background: 'var(--border-heavy)' }}
                       >
                         <CalendarDays size={16} />
                       </div>
