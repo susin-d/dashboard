@@ -61,6 +61,8 @@ export function useRouter() {
 
     if (page === 'landing') path = '/'
     else if (page === 'auth') path = '/login'
+    else if (page === 'privacy') path = '/privacy'
+    else if (page === 'terms') path = '/terms'
     else if (page === 'onboarding') path = '/onboarding'
     else if (page === 'project-detail' && options.projectId) {
       path = `/app/projects/${options.projectId}`

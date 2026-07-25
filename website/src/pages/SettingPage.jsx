@@ -20,6 +20,7 @@ import {
 import { ProfileCard } from '../components/ProfileCard'
 import { clearAuthSession } from '../lib/authApi'
 import {
+  authorizeGmail,
   clearGmailAuthorization,
   saveGmailAccountToken,
 } from '../lib/firebase'

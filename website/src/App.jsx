@@ -16,6 +16,8 @@ import { TodoPage } from './pages/TodoPage'
 import { LandingPage } from './pages/LandingPage'
 import { AuthPage } from './pages/AuthPage'
 import { OnboardingPage } from './pages/OnboardingPage'
+import { PrivacyPolicyPage } from './pages/PrivacyPolicyPage'
+import { TermsOfServicePage } from './pages/TermsOfServicePage'
 import { updateNotification } from './lib/workspaceApi'
 import { CALENDAR_REMINDER_PREFIX } from './utils/calendarReminders'
 import { useAuth, useRouter, useWorkspaceData } from './hooks'
@@ -276,6 +278,8 @@ function App() {
   }
 
   if (route === '/') return <LandingPage onNavigate={navigateRoute} />
+  if (route === '/privacy') return <PrivacyPolicyPage onNavigate={navigateRoute} />
+  if (route === '/terms') return <TermsOfServicePage onNavigate={navigateRoute} />
   if (route === '/login') {
     if (!authReady || activeUser) {
       return <div className="auth-loading">Loading StarWaves…</div>

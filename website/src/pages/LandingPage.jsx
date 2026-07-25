@@ -91,7 +91,11 @@ export function LandingPage({ onNavigate }) {
 
       <footer className="public-footer">
         <span style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}><StarWavesLogo size={22} /> StarWaves</span>
-        <p>Plan clearly. Build consistently.</p>
+        <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+          <button onClick={() => onNavigate('/privacy')} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', font: 'inherit', fontSize: '12px' }}>Privacy Policy</button>
+          <span>•</span>
+          <button onClick={() => onNavigate('/terms')} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', font: 'inherit', fontSize: '12px' }}>Terms of Service</button>
+        </div>
         <small>© 2026 StarWaves</small>
       </footer>
     </main>
