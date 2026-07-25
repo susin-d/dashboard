@@ -155,10 +155,11 @@ export function LandingPage({ onNavigate }) {
             <Sparkles size={13} />
             <span>One workspace. Every ambition.</span>
           </div>
-          <h1>Keep your work and growth in sync.</h1>
+          <h1>StarWaves — keep your work and growth in sync.</h1>
           <p className="landing-intro">
-            StarWaves brings tasks, calendars, coding contests, hackathons,
-            projects, applications, and documents into one focused monochrome workspace.
+            StarWaves is a developer productivity workspace that brings tasks, calendars,
+            coding contests, hackathons, projects, job applications, and documents into one
+            focused monochrome interface — so you can stay organized without switching tools.
           </p>
           <div className="landing-actions">
             <button className="cta-primary" onClick={() => onNavigate('/signup')}>
