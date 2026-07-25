@@ -1,3 +1,5 @@
+from datetime import datetime, timezone
+
 from firebase_admin import firestore
 from google.cloud.firestore_v1 import Client
 
@@ -32,14 +34,16 @@ def create_todo(
     todo: TodoCreate,
 ) -> TodoResponse:
     reference = collection(database, user_id).document()
+    now = datetime.now(timezone.utc).isoformat()
+    data = values_for_firestore(todo.model_dump(mode="python"))
     reference.set(
         {
-            **values_for_firestore(todo.model_dump(mode="python")),
+            **data,
             "created_at": firestore.SERVER_TIMESTAMP,
             "updated_at": firestore.SERVER_TIMESTAMP,
         },
     )
-    return from_snapshot(reference.get())
+    return TodoResponse(id=reference.id, **data, created_at=now, updated_at=now)
 
 
 def update_todo(
@@ -49,16 +53,17 @@ def update_todo(
     changes: TodoUpdate,
 ) -> TodoResponse | None:
     reference = collection(database, user_id).document(todo_id)
-    if not reference.get().exists:
+    try:
+        reference.update(
+            {
+                **values_for_firestore(
+                    changes.model_dump(exclude_unset=True, mode="python"),
+                ),
+                "updated_at": firestore.SERVER_TIMESTAMP,
+            },
+        )
+    except Exception:
         return None
-    reference.update(
-        {
-            **values_for_firestore(
-                changes.model_dump(exclude_unset=True, mode="python"),
-            ),
-            "updated_at": firestore.SERVER_TIMESTAMP,
-        },
-    )
     return from_snapshot(reference.get())
 
 

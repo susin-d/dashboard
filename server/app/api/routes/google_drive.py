@@ -1,3 +1,4 @@
+import asyncio
 import logging
 from urllib.parse import quote, unquote, urlencode
 
@@ -75,7 +76,7 @@ async def exchange_drive_code(code: str) -> dict:
 
 
 async def access_token(database: Client, user_id: str) -> str:
-    snapshot = drive_reference(database, user_id).get()
+    snapshot = await asyncio.to_thread(drive_reference(database, user_id).get)
     if not snapshot.exists:
         raise HTTPException(status_code=409, detail="Connect Google Drive first.")
     try:
@@ -120,7 +121,7 @@ async def google_drive_callback(
         user_id = drive_state_serializer().loads(state, max_age=600)["uid"]
         token_data = await exchange_drive_code(code)
         profile = await google_profile(token_data["access_token"])
-        existing = drive_reference(database, user_id).get().to_dict() or {}
+        existing = (await asyncio.to_thread(drive_reference(database, user_id).get)).to_dict() or {}
         refresh_token = token_data.get("refresh_token")
         encrypted_refresh_token = (
             encrypt_google_token(refresh_token)
@@ -129,16 +130,18 @@ async def google_drive_callback(
         )
         if not encrypted_refresh_token:
             raise ValueError("Google did not return durable Drive access.")
-        drive_reference(database, user_id).set(
-            {
-                "subject": profile["sub"],
-                "email": profile["email"],
-                "name": profile.get("name") or profile["email"],
-                "picture": profile.get("picture", ""),
-                "refresh_token": encrypted_refresh_token,
-                "updated_at": firestore.SERVER_TIMESTAMP,
-            },
-            merge=True,
+        await asyncio.to_thread(
+            lambda: drive_reference(database, user_id).set(
+                {
+                    "subject": profile["sub"],
+                    "email": profile["email"],
+                    "name": profile.get("name") or profile["email"],
+                    "picture": profile.get("picture", ""),
+                    "refresh_token": encrypted_refresh_token,
+                    "updated_at": firestore.SERVER_TIMESTAMP,
+                },
+                merge=True,
+            ),
         )
     except Exception as error:
         logger.error("Google Drive OAuth callback error: %s", error, exc_info=True)

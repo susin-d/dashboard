@@ -1,3 +1,5 @@
+from datetime import datetime, timezone
+
 from firebase_admin import firestore
 from google.cloud.firestore_v1 import Client
 
@@ -28,14 +30,21 @@ def upsert_document(
 ) -> DocumentResponse:
     reference = _collection(database, user_id).document(document_id)
     existing = reference.get()
+    now = datetime.now(timezone.utc).isoformat()
+    data = document.model_dump(mode="python")
     values = {
-        **document.model_dump(mode="python"),
+        **data,
         "updated_at": firestore.SERVER_TIMESTAMP,
     }
     if not existing.exists:
         values["created_at"] = firestore.SERVER_TIMESTAMP
     reference.set(values, merge=True)
-    return _from_snapshot(reference.get())
+    return DocumentResponse(
+        id=document_id,
+        **data,
+        updated_at=now,
+        created_at=existing.to_dict().get("created_at", now) if existing.exists else now,
+    )
 
 
 def delete_document(database: Client, user_id: str, document_id: str) -> bool:

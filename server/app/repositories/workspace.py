@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, datetime, timezone
 from typing import Any
 
 from firebase_admin import firestore
@@ -37,26 +37,29 @@ class JobRepository:
 
     def create(self, job: JobCreate) -> dict[str, Any]:
         reference = self.collection.document()
+        now = datetime.now(timezone.utc).isoformat()
+        data = serialize_dates(job.model_dump(mode="python"))
         reference.set(
             {
-                **serialize_dates(job.model_dump(mode="python")),
+                **data,
                 "created_at": firestore.SERVER_TIMESTAMP,
                 "updated_at": firestore.SERVER_TIMESTAMP,
             },
         )
-        return {"id": reference.id, **(reference.get().to_dict() or {})}
+        return {"id": reference.id, **data, "created_at": now, "updated_at": now}
 
     def update(self, job_id: str, updates: dict[str, Any]) -> dict[str, Any] | None:
         reference = self.collection.document(job_id)
-        if not reference.get().exists:
-            return None
         cleaned_updates = serialize_dates(updates)
-        reference.update(
-            {
-                **cleaned_updates,
-                "updated_at": firestore.SERVER_TIMESTAMP,
-            },
-        )
+        try:
+            reference.update(
+                {
+                    **cleaned_updates,
+                    "updated_at": firestore.SERVER_TIMESTAMP,
+                },
+            )
+        except Exception:
+            return None
         return {"id": reference.id, **(reference.get().to_dict() or {})}
 
     def delete(self, job_id: str) -> bool:
@@ -82,37 +85,41 @@ class ProjectRepository:
 
     def create(self, project: ProjectCreate) -> dict[str, Any]:
         reference = self.collection.document()
+        now = datetime.now(timezone.utc).isoformat()
+        data = serialize_dates(project.model_dump(mode="python"))
         reference.set(
             {
-                **serialize_dates(project.model_dump(mode="python")),
+                **data,
                 "created_at": firestore.SERVER_TIMESTAMP,
                 "updated_at": firestore.SERVER_TIMESTAMP,
             },
         )
-        return {"id": reference.id, **(reference.get().to_dict() or {})}
+        return {"id": reference.id, **data, "created_at": now, "updated_at": now}
 
     def update(self, project_id: str, project: ProjectCreate) -> dict[str, Any] | None:
         reference = self.collection.document(project_id)
-        if not reference.get().exists:
+        try:
+            reference.update(
+                {
+                    **serialize_dates(project.model_dump(mode="python")),
+                    "updated_at": firestore.SERVER_TIMESTAMP,
+                },
+            )
+        except Exception:
             return None
-        reference.update(
-            {
-                **serialize_dates(project.model_dump(mode="python")),
-                "updated_at": firestore.SERVER_TIMESTAMP,
-            },
-        )
         return {"id": reference.id, **(reference.get().to_dict() or {})}
 
     def patch(self, project_id: str, updates: dict[str, Any]) -> dict[str, Any] | None:
         reference = self.collection.document(project_id)
-        if not reference.get().exists:
+        try:
+            reference.update(
+                {
+                    **serialize_dates(updates),
+                    "updated_at": firestore.SERVER_TIMESTAMP,
+                },
+            )
+        except Exception:
             return None
-        reference.update(
-            {
-                **serialize_dates(updates),
-                "updated_at": firestore.SERVER_TIMESTAMP,
-            },
-        )
         return {"id": reference.id, **(reference.get().to_dict() or {})}
 
     def delete(self, project_id: str) -> bool:
@@ -142,14 +149,15 @@ class NotificationRepository:
         update_data: NotificationUpdate,
     ) -> dict[str, Any] | None:
         reference = self.collection.document(notification_id)
-        if not reference.get().exists:
+        try:
+            reference.update(
+                {
+                    **update_data.model_dump(exclude_unset=True),
+                    "updated_at": firestore.SERVER_TIMESTAMP,
+                },
+            )
+        except Exception:
             return None
-        reference.update(
-            {
-                **update_data.model_dump(exclude_unset=True),
-                "updated_at": firestore.SERVER_TIMESTAMP,
-            },
-        )
         return {"id": reference.id, **(reference.get().to_dict() or {})}
 
     def delete(self, notification_id: str) -> bool:
@@ -160,14 +168,15 @@ class NotificationRepository:
         return True
 
     def mark_all_read(self) -> int:
+        batch = self.database.batch()
         count = 0
         for item in self.collection.where("unread", "==", True).stream():
-            item.reference.update(
-                {
-                    "unread": False,
-                    "updated_at": firestore.SERVER_TIMESTAMP,
-                },
-            )
+            batch.update(item.reference, {
+                "unread": False,
+                "updated_at": firestore.SERVER_TIMESTAMP,
+            })
             count += 1
+        if count:
+            batch.commit()
         return count
 

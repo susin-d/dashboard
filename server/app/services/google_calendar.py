@@ -1,3 +1,4 @@
+import asyncio
 import base64
 import hashlib
 from datetime import datetime, timezone
@@ -121,12 +122,12 @@ async def google_calendar_data(access_token: str) -> dict:
             if not page_token:
                 break
 
-        events = []
-        for calendar in calendars:
+        async def fetch_calendar_events(cal):
+            cal_events = []
             page_token = None
             while True:
                 response = await client.get(
-                    f"/calendars/{quote(calendar['id'], safe='')}/events",
+                    f"/calendars/{quote(cal['id'], safe='')}/events",
                     params={
                         "timeMin": time_min,
                         "timeMax": time_max,
@@ -144,14 +145,14 @@ async def google_calendar_data(access_token: str) -> dict:
                         continue
                     start = event["start"]
                     end = event.get("end", start)
-                    events.append(
+                    cal_events.append(
                         {
-                            "id": f"{calendar['id']}:{event['id']}",
+                            "id": f"{cal['id']}:{event['id']}",
                             "googleEventId": event["id"],
-                            "calendarId": calendar["id"],
-                            "calendarName": calendar.get("summaryOverride")
-                            or calendar.get("summary", "Calendar"),
-                            "calendarColor": calendar.get("backgroundColor", "#4285f4"),
+                            "calendarId": cal["id"],
+                            "calendarName": cal.get("summaryOverride")
+                            or cal.get("summary", "Calendar"),
+                            "calendarColor": cal.get("backgroundColor", "#4285f4"),
                             "title": event.get("summary", "(Untitled event)"),
                             "description": event.get("description", ""),
                             "location": event.get("location", ""),
@@ -164,6 +165,12 @@ async def google_calendar_data(access_token: str) -> dict:
                 page_token = payload.get("nextPageToken")
                 if not page_token:
                     break
+            return cal_events
+
+        calendar_results = await asyncio.gather(
+            *(fetch_calendar_events(cal) for cal in calendars),
+        )
+        events = [event for cal_events in calendar_results for event in cal_events]
 
     return {
         "calendars": [

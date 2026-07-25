@@ -1,3 +1,4 @@
+import asyncio
 import hashlib
 import logging
 import uuid
@@ -132,7 +133,7 @@ async def google_chat_callback(
 
         doc_id = account_document_id(email)
         doc_ref = chat_accounts_collection(database, user_id).document(doc_id)
-        existing = doc_ref.get().to_dict() or {}
+        existing = (await asyncio.to_thread(doc_ref.get)).to_dict() or {}
         refresh_token = token_data.get("refresh_token")
         encrypted_refresh_token = (
             encrypt_google_token(refresh_token)
@@ -140,18 +141,20 @@ async def google_chat_callback(
             else existing.get("refresh_token")
         )
 
-        doc_ref.set(
-            {
-                "id": doc_id,
-                "email": email,
-                "display_name": display_name,
-                "picture": picture,
-                "connected": True,
-                "access_token": token_data["access_token"],
-                "refresh_token": encrypted_refresh_token,
-                "updated_at": firestore.SERVER_TIMESTAMP,
-            },
-            merge=True,
+        await asyncio.to_thread(
+            lambda: doc_ref.set(
+                {
+                    "id": doc_id,
+                    "email": email,
+                    "display_name": display_name,
+                    "picture": picture,
+                    "connected": True,
+                    "access_token": token_data["access_token"],
+                    "refresh_token": encrypted_refresh_token,
+                    "updated_at": firestore.SERVER_TIMESTAMP,
+                },
+                merge=True,
+            ),
         )
     except Exception as error:
         logger.error("Google Chat OAuth callback error: %s", error, exc_info=True)
@@ -222,17 +225,19 @@ async def connect_google_chat_account(
 
     doc_id = account_document_id(email)
     doc_ref = chat_accounts_collection(database, user["uid"]).document(doc_id)
-    doc_ref.set(
-        {
-            "id": doc_id,
-            "email": email,
-            "display_name": display_name,
-            "picture": picture,
-            "connected": True,
-            "access_token": connection.access_token,
-            "updated_at": firestore.SERVER_TIMESTAMP,
-        },
-        merge=True,
+    await asyncio.to_thread(
+        lambda: doc_ref.set(
+            {
+                "id": doc_id,
+                "email": email,
+                "display_name": display_name,
+                "picture": picture,
+                "connected": True,
+                "access_token": connection.access_token,
+                "updated_at": firestore.SERVER_TIMESTAMP,
+            },
+            merge=True,
+        ),
     )
     return {
         "connected": True,
@@ -264,10 +269,54 @@ async def get_google_chat_spaces(
     database: Client = Depends(get_firestore),
     user: dict = Depends(get_current_user),
 ):
-    docs = chat_accounts_collection(database, user["uid"]).stream()
+    docs = await asyncio.to_thread(
+        lambda: list(chat_accounts_collection(database, user["uid"]).stream()),
+    )
     accounts = [doc.to_dict() for doc in docs if doc.to_dict().get("connected")]
     if account_email:
         accounts = [a for a in accounts if a.get("email") == account_email]
+
+    async def fetch_space_messages(client, space_name, token, email, acc):
+        msgs = []
+        try:
+            msgs_res = await client.get(
+                f"https://chat.googleapis.com/v1/{space_name}/messages?pageSize=20",
+                headers={"Authorization": f"Bearer {token}"},
+            )
+            if msgs_res.status_code == 200:
+                raw_msgs = msgs_res.json().get("messages", [])
+                for m in raw_msgs:
+                    sender_info = m.get("sender", {})
+                    sender_name = sender_info.get(
+                        "displayName",
+                        "User",
+                    )
+                    avatar = "".join(
+                        [part[0] for part in sender_name.split()[:2]]
+                    ).upper() or "GC"
+                    msgs.append(
+                        {
+                            "id": m.get("name", f"msg-{uuid.uuid4().hex[:8]}"),
+                            "sender": sender_name,
+                            "senderEmail": sender_info.get(
+                                "name",
+                                email,
+                            ),
+                            "avatar": avatar,
+                            "time": m.get("createTime", "")[:16].replace(
+                                "T", " "
+                            ),
+                            "content": m.get("text", ""),
+                            "isSelf": sender_name == acc.get("display_name"),
+                        }
+                    )
+        except Exception as e:
+            logger.warning(
+                "Error fetching messages for space %s: %s",
+                space_name,
+                e,
+            )
+        return msgs
 
     all_spaces = []
     async with httpx.AsyncClient(timeout=15) as client:
@@ -278,7 +327,6 @@ async def get_google_chat_spaces(
                 continue
 
             try:
-                # Fetch spaces from Google Chat API
                 spaces_res = await client.get(
                     "https://chat.googleapis.com/v1/spaces",
                     headers={"Authorization": f"Bearer {token}"},
@@ -286,7 +334,15 @@ async def get_google_chat_spaces(
                 if spaces_res.status_code == 200:
                     data = spaces_res.json()
                     raw_spaces = data.get("spaces", [])
-                    for s in raw_spaces:
+
+                    # Fetch messages for all spaces concurrently
+                    message_tasks = [
+                        fetch_space_messages(client, s.get("name"), token, email, acc)
+                        for s in raw_spaces
+                    ]
+                    all_msgs = await asyncio.gather(*message_tasks)
+
+                    for s, msgs in zip(raw_spaces, all_msgs):
                         space_name = s.get("name")
                         display_name = s.get("displayName") or "Direct Message"
                         space_type = (
@@ -294,47 +350,6 @@ async def get_google_chat_spaces(
                             if s.get("spaceType") in ("SPACE", "GROUP_CHAT")
                             else "dm"
                         )
-
-                        # Fetch messages for this space
-                        msgs = []
-                        try:
-                            msgs_res = await client.get(
-                                f"https://chat.googleapis.com/v1/{space_name}/messages?pageSize=20",
-                                headers={"Authorization": f"Bearer {token}"},
-                            )
-                            if msgs_res.status_code == 200:
-                                raw_msgs = msgs_res.json().get("messages", [])
-                                for m in raw_msgs:
-                                    sender_info = m.get("sender", {})
-                                    sender_name = sender_info.get(
-                                        "displayName",
-                                        "User",
-                                    )
-                                    avatar = "".join(
-                                        [part[0] for part in sender_name.split()[:2]]
-                                    ).upper() or "GC"
-                                    msgs.append(
-                                        {
-                                            "id": m.get("name", f"msg-{uuid.uuid4().hex[:8]}"),
-                                            "sender": sender_name,
-                                            "senderEmail": sender_info.get(
-                                                "name",
-                                                email,
-                                            ),
-                                            "avatar": avatar,
-                                            "time": m.get("createTime", "")[:16].replace(
-                                                "T", " "
-                                            ),
-                                            "content": m.get("text", ""),
-                                            "isSelf": sender_name == acc.get("display_name"),
-                                        }
-                                    )
-                        except Exception as e:
-                            logger.warning(
-                                "Error fetching messages for space %s: %s",
-                                space_name,
-                                e,
-                            )
 
                         last_msg = msgs[-1]["content"] if msgs else "No messages yet."
                         last_time = msgs[-1]["time"] if msgs else ""
@@ -380,7 +395,9 @@ async def send_google_chat_message(
     database: Client = Depends(get_firestore),
     user: dict = Depends(get_current_user),
 ):
-    docs = chat_accounts_collection(database, user["uid"]).stream()
+    docs = await asyncio.to_thread(
+        lambda: list(chat_accounts_collection(database, user["uid"]).stream()),
+    )
     accounts = [doc.to_dict() for doc in docs if doc.to_dict().get("connected")]
     if body.account_email:
         accounts = [a for a in accounts if a.get("email") == body.account_email]

@@ -1,3 +1,5 @@
+import asyncio
+
 from fastapi import APIRouter, Depends
 from google.cloud.firestore_v1 import Client
 
@@ -28,7 +30,7 @@ async def get_coding_stats(
     database: Client = Depends(get_firestore),
     user: dict = Depends(get_current_user),
 ):
-    settings = coding_settings(database, user["uid"])
+    settings = await asyncio.to_thread(coding_settings, database, user["uid"])
     return await load_coding_stats(settings)
 
 
@@ -37,7 +39,7 @@ async def get_codeforces_stats(
     database: Client = Depends(get_firestore),
     user: dict = Depends(get_current_user),
 ):
-    settings = coding_settings(database, user["uid"])
+    settings = await asyncio.to_thread(coding_settings, database, user["uid"])
     return await load_platform_coding_stats(
         "codeforces",
         settings.get("codeforces", ""),
@@ -49,7 +51,7 @@ async def get_codechef_stats(
     database: Client = Depends(get_firestore),
     user: dict = Depends(get_current_user),
 ):
-    settings = coding_settings(database, user["uid"])
+    settings = await asyncio.to_thread(coding_settings, database, user["uid"])
     return await load_platform_coding_stats(
         "codechef",
         settings.get("codechef", ""),
@@ -61,7 +63,7 @@ async def get_leetcode_stats(
     database: Client = Depends(get_firestore),
     user: dict = Depends(get_current_user),
 ):
-    settings = coding_settings(database, user["uid"])
+    settings = await asyncio.to_thread(coding_settings, database, user["uid"])
     return await load_platform_coding_stats(
         "leetcode",
         settings.get("leetcode", ""),

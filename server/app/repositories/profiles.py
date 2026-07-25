@@ -1,3 +1,5 @@
+from datetime import datetime, timezone
+
 from firebase_admin import firestore
 from google.cloud.firestore_v1 import Client
 
@@ -12,14 +14,16 @@ def _profile_from_snapshot(snapshot) -> ProfileResponse:
 
 def create_profile(database: Client, profile: ProfileCreate) -> ProfileResponse:
     document = database.collection(COLLECTION).document()
+    now = datetime.now(timezone.utc).isoformat()
+    data = profile.model_dump(mode="json")
     document.set(
         {
-            **profile.model_dump(mode="json"),
+            **data,
             "created_at": firestore.SERVER_TIMESTAMP,
             "updated_at": firestore.SERVER_TIMESTAMP,
         },
     )
-    return _profile_from_snapshot(document.get())
+    return ProfileResponse(id=document.id, **data, created_at=now, updated_at=now)
 
 
 def get_profile(database: Client, profile_id: str) -> ProfileResponse | None:
@@ -38,22 +42,22 @@ def update_profile(
     changes: ProfileUpdate,
 ) -> ProfileResponse | None:
     document = database.collection(COLLECTION).document(profile_id)
-    if not document.get().exists:
+    try:
+        document.update(
+            {
+                **changes.model_dump(exclude_unset=True, mode="json"),
+                "updated_at": firestore.SERVER_TIMESTAMP,
+            },
+        )
+    except Exception:
         return None
-
-    document.update(
-        {
-            **changes.model_dump(exclude_unset=True, mode="json"),
-            "updated_at": firestore.SERVER_TIMESTAMP,
-        },
-    )
     return _profile_from_snapshot(document.get())
 
 
 def delete_profile(database: Client, profile_id: str) -> bool:
-    document = database.collection(COLLECTION).document(profile_id)
-    if not document.get().exists:
+    snapshot = database.collection(COLLECTION).document(profile_id).get()
+    if not snapshot.exists:
         return False
-    document.delete()
+    snapshot.reference.delete()
     return True
 

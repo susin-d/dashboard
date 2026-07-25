@@ -4,11 +4,17 @@ from itsdangerous import BadSignature, SignatureExpired, URLSafeTimedSerializer
 from app.core.config import settings
 
 
+_serializer: URLSafeTimedSerializer | None = None
+
+
 def auth_serializer() -> URLSafeTimedSerializer:
-    return URLSafeTimedSerializer(
-        settings.auth_secret_key,
-        salt="starwaves-auth-token",
-    )
+    global _serializer
+    if _serializer is None:
+        _serializer = URLSafeTimedSerializer(
+            settings.auth_secret_key,
+            salt="starwaves-auth-token",
+        )
+    return _serializer
 
 
 def create_user_token(user_data: dict) -> str:

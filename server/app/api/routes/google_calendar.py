@@ -135,39 +135,17 @@ async def google_calendar_callback(
 @router.get("/data")
 async def get_google_calendar_data(
     database: Client = Depends(get_firestore),
-    user: dict = Depends(get_current_user),
 ):
-    connections = []
-    events = []
     snapshots = await asyncio.to_thread(
         lambda: list(accounts_collection(database, user["uid"]).stream()),
     )
-    for snapshot in snapshots:
+
+    async def process_account(snapshot):
         account = snapshot.to_dict()
-        try:
-            access_token = await refresh_google_token(
-                decrypt_google_token(account["refresh_token"]),
-            )
-            data = await google_calendar_data(access_token)
-        except (KeyError, ValueError, httpx.HTTPError) as error:
-            raise HTTPException(status_code=502, detail=str(error)) from None
-        connections.append(
-            {
-                "id": snapshot.id,
-                "email": account["email"],
-                "name": account.get("name", account["email"]),
-                "picture": account.get("picture", ""),
-                "calendars": data["calendars"],
-            },
+        access_token = await refresh_google_token(
+            decrypt_google_token(account["refresh_token"]),
         )
-        events.extend(
-            {
-                **event,
-                "id": f"{snapshot.id}:{event['id']}",
-                "accountEmail": account["email"],
-            }
-            for event in data["events"]
-        )
+        data = await google_calendar_data(access_token)
         await asyncio.to_thread(
             snapshot.reference.update,
             {
@@ -175,6 +153,32 @@ async def get_google_calendar_data(
                 "updated_at": firestore.SERVER_TIMESTAMP,
             },
         )
+        connection = {
+            "id": snapshot.id,
+            "email": account["email"],
+            "name": account.get("name", account["email"]),
+            "picture": account.get("picture", ""),
+            "calendars": data["calendars"],
+        }
+        enriched_events = [
+            {
+                **event,
+                "id": f"{snapshot.id}:{event['id']}",
+                "accountEmail": account["email"],
+            }
+            for event in data["events"]
+        ]
+        return connection, enriched_events
+
+    try:
+        results = await asyncio.gather(
+            *(process_account(s) for s in snapshots),
+        )
+    except (KeyError, ValueError, httpx.HTTPError) as error:
+        raise HTTPException(status_code=502, detail=str(error)) from None
+
+    connections = [r[0] for r in results]
+    events = [e for r in results for e in r[1]]
     return {"connections": connections, "events": events}
 
 

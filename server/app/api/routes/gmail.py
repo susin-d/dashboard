@@ -1,3 +1,4 @@
+import asyncio
 import hashlib
 import logging
 from urllib.parse import quote, urlencode
@@ -119,7 +120,7 @@ async def gmail_callback(
 
         doc_id = account_document_id(email)
         doc_ref = gmail_accounts_collection(database, user_id).document(doc_id)
-        existing = doc_ref.get().to_dict() or {}
+        existing = (await asyncio.to_thread(doc_ref.get)).to_dict() or {}
         refresh_token = token_data.get("refresh_token")
         encrypted_refresh_token = (
             encrypt_google_token(refresh_token)
@@ -127,16 +128,18 @@ async def gmail_callback(
             else existing.get("refresh_token")
         )
 
-        doc_ref.set(
-            {
-                "id": doc_id,
-                "email": email,
-                "connected": True,
-                "access_token": token_data["access_token"],
-                "refresh_token": encrypted_refresh_token,
-                "updated_at": firestore.SERVER_TIMESTAMP,
-            },
-            merge=True,
+        await asyncio.to_thread(
+            lambda: doc_ref.set(
+                {
+                    "id": doc_id,
+                    "email": email,
+                    "connected": True,
+                    "access_token": token_data["access_token"],
+                    "refresh_token": encrypted_refresh_token,
+                    "updated_at": firestore.SERVER_TIMESTAMP,
+                },
+                merge=True,
+            ),
         )
     except Exception as error:
         logger.error("Gmail OAuth callback error: %s", error, exc_info=True)
@@ -184,15 +187,17 @@ async def connect_gmail(
 
     doc_id = account_document_id(email)
     doc_ref = gmail_accounts_collection(database, user["uid"]).document(doc_id)
-    doc_ref.set(
-        {
-            "id": doc_id,
-            "email": email,
-            "connected": True,
-            "access_token": connection.access_token,
-            "updated_at": firestore.SERVER_TIMESTAMP,
-        },
-        merge=True,
+    await asyncio.to_thread(
+        lambda: doc_ref.set(
+            {
+                "id": doc_id,
+                "email": email,
+                "connected": True,
+                "access_token": connection.access_token,
+                "updated_at": firestore.SERVER_TIMESTAMP,
+            },
+            merge=True,
+        ),
     )
     return {
         "connected": True,
@@ -210,12 +215,12 @@ async def get_gmail_token(
     collection = gmail_accounts_collection(database, user["uid"])
     if email:
         doc_id = account_document_id(email)
-        snapshot = collection.document(doc_id).get()
+        snapshot = await asyncio.to_thread(collection.document(doc_id).get)
         if not snapshot.exists:
             raise HTTPException(status_code=404, detail="Gmail account not found.")
         data = snapshot.to_dict()
     else:
-        snapshots = list(collection.stream())
+        snapshots = await asyncio.to_thread(lambda: list(collection.stream()))
         if not snapshots:
             raise HTTPException(status_code=404, detail="No Gmail accounts connected.")
         data = snapshots[0].to_dict()
@@ -296,10 +301,14 @@ def disconnect_gmail_account(
 
 
 @router.delete("", status_code=204)
-def disconnect_all_gmail(
+async def disconnect_all_gmail(
     database: Client = Depends(get_firestore),
     user: dict = Depends(get_current_user),
 ):
-    snapshots = list(gmail_accounts_collection(database, user["uid"]).stream())
-    for snapshot in snapshots:
-        snapshot.reference.delete()
+    collection = gmail_accounts_collection(database, user["uid"])
+    snapshots = await asyncio.to_thread(lambda: list(collection.stream()))
+    if snapshots:
+        batch = database.batch()
+        for snapshot in snapshots:
+            batch.delete(snapshot.reference)
+        await asyncio.to_thread(batch.commit)

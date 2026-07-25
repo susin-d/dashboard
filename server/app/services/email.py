@@ -80,3 +80,14 @@ def send_welcome_email(to_email: str, user_name: str) -> bool:
     )
     body_text = f"Welcome to StarWaves, {user_name}! Visit {settings.frontend_url} to get started."
     return send_email(to_email, subject, body_html, body_text)
+
+
+async def async_send_email(
+    to_email: str,
+    subject: str,
+    body_html: str,
+    body_text: str | None = None,
+) -> bool:
+    import asyncio
+
+    return await asyncio.to_thread(send_email, to_email, subject, body_html, body_text)

@@ -1,7 +1,7 @@
 from urllib.parse import urlencode
 
 import httpx
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, status
 from fastapi.responses import HTMLResponse
 from google.cloud.firestore_v1 import Client
 from itsdangerous import BadSignature, SignatureExpired, URLSafeTimedSerializer
@@ -242,11 +242,15 @@ def login(payload: LoginRequest, database: Client = Depends(get_firestore)):
     }
 
 @router.post("/forgot-password")
-def forgot_password(payload: ForgotPasswordRequest, database: Client = Depends(get_firestore)):
+def forgot_password(
+    payload: ForgotPasswordRequest,
+    background_tasks: BackgroundTasks,
+    database: Client = Depends(get_firestore),
+):
     user_record = get_user_by_email(database, payload.email)
     if user_record:
         token = state_serializer().dumps({"uid": user_record["uid"], "action": "reset_password"})
-        send_password_reset_email(user_record["email"], token)
+        background_tasks.add_task(send_password_reset_email, user_record["email"], token)
     return {"message": "If an account exists with that email, a password reset link has been sent via email."}
 
 

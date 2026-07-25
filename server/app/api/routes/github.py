@@ -74,13 +74,15 @@ async def github_callback(
     try:
         user_id = state_serializer().loads(state, max_age=600)["uid"]
         token_data = await exchange_code(code)
-        reference(database, user_id).set(
-            {
-                "access_token": encrypt_token(token_data["access_token"]),
-                "scope": token_data.get("scope", ""),
-                "updated_at": firestore.SERVER_TIMESTAMP,
-            },
-            merge=True,
+        await asyncio.to_thread(
+            lambda: reference(database, user_id).set(
+                {
+                    "access_token": encrypt_token(token_data["access_token"]),
+                    "scope": token_data.get("scope", ""),
+                    "updated_at": firestore.SERVER_TIMESTAMP,
+                },
+                merge=True,
+            ),
         )
     except Exception as error:
         logger.error("GitHub OAuth callback error: %s", error, exc_info=True)

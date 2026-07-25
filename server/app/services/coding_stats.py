@@ -151,9 +151,10 @@ async def parse_leetcode(client: httpx.AsyncClient, value: str) -> dict:
                 await asyncio.sleep(1)
         return {}
 
-    ranking_data = await request_query(*queries["ranking"])
-    profile_data, questions_data = await asyncio.gather(
-        *(request_query(*queries[key]) for key in ("profile", "questions")),
+    ranking_data, profile_data, questions_data = await asyncio.gather(
+        request_query(*queries["ranking"]),
+        request_query(*queries["profile"]),
+        request_query(*queries["questions"]),
     )
     if not ranking_data.get("userContestRanking"):
         ranking_data = await request_query(*queries["ranking"])

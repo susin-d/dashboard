@@ -508,6 +508,6 @@ async def list_contests():
             leetcode_contests(client),
         )
     result = [platform for platform in platforms if platform is not None]
-    if len(result) == 3 and all(platform["contests"] for platform in result):
+    if result:
         _contest_cache = (time.monotonic() + CONTEST_CACHE_TTL, result)
     return result
