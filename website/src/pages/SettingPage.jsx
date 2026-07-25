@@ -19,11 +19,7 @@ import {
 } from 'lucide-react'
 import { ProfileCard } from '../components/ProfileCard'
 import { clearAuthSession } from '../lib/authApi'
-import {
-  authorizeGmail,
-  clearGmailAuthorization,
-  saveGmailAccountToken,
-} from '../lib/firebase'
+import { clearGmailAuthorization } from '../lib/firebase'
 import {
   beginGoogleDriveOAuth,
   disconnectGoogleDrive,
@@ -34,8 +30,8 @@ import {
   disconnectGmailAccount,
   getGmailAccounts,
   getGmailStatus,
-  saveGmailConnection,
 } from '../lib/gmailApi'
+import { beginGmailOAuth } from '../lib/googleMail'
 import { parseIcsContent } from '../utils/icsParser'
 import {
   beginGoogleCalendarOAuth,
@@ -241,11 +237,20 @@ export function SettingPage({
   useEffect(() => {
     let active = true
     const result = new URLSearchParams(window.location.search).get('github')
+    const gmailResult = new URLSearchParams(window.location.search).get('gmail')
     if (result) {
       setGithubMessage(
         result === 'connected'
           ? 'GitHub connected successfully.'
           : 'GitHub connection failed.',
+      )
+      window.history.replaceState({}, '', window.location.pathname)
+    }
+    if (gmailResult) {
+      setGmailMessage(
+        gmailResult === 'connected'
+          ? 'Gmail account connected successfully.'
+          : 'Gmail connection failed.',
       )
       window.history.replaceState({}, '', window.location.pathname)
     }
@@ -387,16 +392,9 @@ export function SettingPage({
     setGmailBusy(true)
     setGmailMessage('')
     try {
-      const accessToken = await authorizeGmail()
-      const result = await saveGmailConnection(accessToken)
-      if (result?.account?.email) {
-        saveGmailAccountToken(result.account.email, accessToken, Date.now() + 3600 * 1000)
-      }
-      fetchGmailAccounts()
-      setGmailMessage('Gmail account connected successfully.')
+      await beginGmailOAuth()
     } catch (error) {
       setGmailMessage(error.message || 'Gmail account could not be connected.')
-    } finally {
       setGmailBusy(false)
     }
   }

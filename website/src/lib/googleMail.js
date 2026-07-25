@@ -1,6 +1,22 @@
 import { authorizeGmail, clearGmailAuthorization, hasGmailConnection } from './firebase'
+import { getStoredAuthToken } from './authApi'
 
 const API = 'https://gmail.googleapis.com/gmail/v1/users/me'
+const BACKEND_API_URL = import.meta.env.VITE_API_URL ?? 'http://127.0.0.1:8000/api/v1'
+
+export async function beginGmailOAuth() {
+  const token = getStoredAuthToken()
+  if (!token) throw new Error('Sign in to connect Gmail.')
+  const response = await fetch(`${BACKEND_API_URL}/integrations/gmail/authorize`, {
+    headers: { Authorization: `Bearer ${token}` },
+  })
+  if (!response.ok) {
+    const failure = await response.json().catch(() => null)
+    throw new Error(failure?.detail || 'Gmail could not be connected.')
+  }
+  const { url } = await response.json()
+  window.location.assign(url)
+}
 
 function header(message, name) {
   return message.payload?.headers?.find(
