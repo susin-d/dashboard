@@ -15,6 +15,7 @@ import {
   Clock,
   Briefcase,
   TrendingUp,
+  Shield,
 } from 'lucide-react'
 import { StarWavesLogo } from '../components/StarWavesLogo'
 
@@ -113,6 +114,10 @@ const faqItems = [
   {
     question: 'Can I access StarWaves on mobile devices?',
     answer: 'Yes, StarWaves is fully responsive across mobile, tablet, and desktop viewports, with native PWA and mobile layout optimizations.',
+  },
+  {
+    question: 'How does StarWaves use my Google account data?',
+    answer: 'StarWaves only requests access to specific Google services you choose to connect — such as Google Calendar (to display your events), Gmail (to manage messages within the app), and Google Drive (to import documents). Your data is used solely within your workspace and is never shared with third parties. You can disconnect any Google service at any time from your account settings.',
   },
 ]
 
@@ -445,6 +450,74 @@ export function LandingPage({ onNavigate }) {
               </div>
             )
           })}
+        </div>
+      </section>
+
+      {/* Google Integration & Data Transparency Section */}
+      <section className="landing-google-data-section" id="google-data-usage">
+        <div className="landing-section-heading">
+          <p className="section-eyebrow">Google Integration & Data Transparency</p>
+          <h2>How StarWaves uses your Google data</h2>
+          <span className="section-subtitle">
+            StarWaves integrates with Google services to bring your existing tools into one workspace.
+            Your data is only used within your personal workspace and is never sold or shared with third parties.
+          </span>
+        </div>
+        <div className="google-data-grid">
+          <div className="google-data-card">
+            <div className="google-data-card-icon">
+              <CalendarDays size={20} />
+            </div>
+            <h3>Google Calendar</h3>
+            <p className="google-data-scope">calendar.readonly</p>
+            <p>
+              StarWaves reads your Google Calendar events so you can view your schedule alongside
+              tasks, coding contests, and deadlines — all in one unified timeline. StarWaves does
+              not modify or delete any of your calendar data.
+            </p>
+          </div>
+          <div className="google-data-card">
+            <div className="google-data-card-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+            </div>
+            <h3>Gmail</h3>
+            <p className="google-data-scope">gmail.readonly, gmail.modify, gmail.send</p>
+            <p>
+              When you connect Gmail, StarWaves lets you read, compose, and manage emails directly
+              within your workspace. This is entirely optional and only activated when you explicitly
+              connect your Gmail account.
+            </p>
+          </div>
+          <div className="google-data-card">
+            <div className="google-data-card-icon">
+              <FolderKanban size={20} />
+            </div>
+            <h3>Google Drive</h3>
+            <p className="google-data-scope">drive.metadata.readonly, drive.file</p>
+            <p>
+              StarWaves can import and display your recent Google Drive files so you can access
+              project documents without leaving your workspace. Only metadata and files you choose
+              to import are accessed.
+            </p>
+          </div>
+          <div className="google-data-card">
+            <div className="google-data-card-icon">
+              <Shield size={20} />
+            </div>
+            <h3>Authentication</h3>
+            <p className="google-data-scope">openid, email, profile</p>
+            <p>
+              StarWaves uses Google Sign-In to securely authenticate your identity. We only receive
+              your name, email address, and profile picture to create and manage your account.
+            </p>
+          </div>
+        </div>
+        <div className="google-data-footer">
+          <p>
+            You can disconnect any Google service at any time from your account settings.
+            For full details on how we handle your data, read our{' '}
+            <button className="inline-link" onClick={() => onNavigate('/privacy')}>Privacy Policy</button>.
+          </p>
         </div>
       </section>
 

@@ -904,6 +904,98 @@ html.dark-theme .public-nav {
   line-height: 1.65;
 }
 
+/* Google Integration & Data Transparency Section */
+.landing-google-data-section {
+  padding: 100px max(24px, calc((100% - 1200px) / 2));
+  background: var(--bg-secondary);
+  border-top: 1px solid var(--border-color);
+}
+
+.google-data-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+
+.google-data-card {
+  padding: 28px 24px;
+  border: 1px solid var(--border-color);
+  border-radius: 14px;
+  background: var(--bg-card);
+  transition: border-color var(--transition-fast);
+}
+
+.google-data-card:hover {
+  border-color: var(--border-heavy);
+}
+
+.google-data-card-icon {
+  display: grid;
+  width: 40px;
+  height: 40px;
+  place-items: center;
+  border-radius: 10px;
+  background: var(--color-primary);
+  color: var(--text-inverse);
+  margin-bottom: 16px;
+}
+
+.google-data-card h3 {
+  margin: 0 0 6px;
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+}
+
+.google-data-scope {
+  display: inline-block;
+  margin: 0 0 12px;
+  padding: 2px 8px;
+  border: 1px solid var(--border-heavy);
+  border-radius: 6px;
+  font-size: 10px;
+  font-weight: 700;
+  font-family: monospace;
+  color: var(--text-secondary);
+  background: var(--bg-secondary);
+}
+
+.google-data-card > p:last-child {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 13px;
+  line-height: 1.65;
+}
+
+.google-data-footer {
+  margin-top: 28px;
+  text-align: center;
+}
+
+.google-data-footer p {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.inline-link {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--text-primary);
+  font: inherit;
+  font-weight: 700;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.inline-link:hover {
+  color: var(--text-primary);
+  opacity: 0.8;
+}
+
 /* Final CTA Section */
 .landing-final-cta {
   display: flex;
@@ -1031,6 +1123,10 @@ html.dark-theme .public-nav {
 
   .coding-stat-box.full-width {
     grid-column: span 1;
+  }
+
+  .google-data-grid {
+    grid-template-columns: 1fr;
   }
 
   .public-footer {
