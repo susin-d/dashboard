@@ -280,20 +280,6 @@
   opacity: 1;
 }
 
-.mail-account-avatar {
-  align-items: center;
-  background: var(--color-primary);
-  border-radius: 50%;
-  color: var(--text-inverse);
-  display: inline-flex;
-  flex: 0 0 24px;
-  font-size: 11px;
-  font-weight: 700;
-  height: 24px;
-  justify-content: center;
-  width: 24px;
-}
-
 .mail-account-dropdown {
   bottom: calc(100% + 8px);
   position: absolute;

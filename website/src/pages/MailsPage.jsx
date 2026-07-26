@@ -268,7 +268,6 @@ export function MailsPage({ onNavigate }) {
             aria-expanded={accountMenuOpen}
             onClick={() => setAccountMenuOpen((open) => !open)}
           >
-            <span className="mail-account-avatar">{(selectedAccountEmail || account || '?')[0].toUpperCase()}</span>
             <span>{selectedAccountEmail || account || 'Choose account'}</span>
             <ChevronDown size={15} />
           </button>
@@ -280,9 +279,8 @@ export function MailsPage({ onNavigate }) {
                   setAccountMenuOpen(false)
                   setSelected(null)
                   refresh(query, folder, '', false, acc.email)
-                }}>
-                  <span className="mail-account-avatar">{acc.email[0].toUpperCase()}</span>
-                  <span>{acc.email}</span>
+              }}>
+                <span>{acc.email}</span>
                 </button>
               ))}
               <button role="menuitem" onClick={() => onNavigate('setting')}>

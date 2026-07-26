@@ -349,7 +349,14 @@
   color: var(--text-primary);
 }
 
-.google-calendar-refresh {
+.google-calendar-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.google-calendar-refresh,
+.google-calendar-add-account {
   display: inline-flex;
   align-items: center;
   gap: 7px;
@@ -364,7 +371,8 @@
   transition: all 0.18s ease;
 }
 
-.google-calendar-refresh:hover {
+.google-calendar-refresh:hover,
+.google-calendar-add-account:hover {
   border-color: var(--color-primary);
   color: var(--text-primary);
 }

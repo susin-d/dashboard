@@ -821,14 +821,15 @@ export function SettingPage({
                       </div>
                     ))}
                   </div>
-                  <button
-                    className="google-calendar-refresh"
-                    onClick={refreshCalendars}
-                    disabled={calendarBusy}
-                  >
-                    <RefreshCw size={14} />
-                    Refresh all calendars
-                  </button>
+                  <div className="google-calendar-actions">
+                    <button className="google-calendar-refresh" onClick={refreshCalendars} disabled={calendarBusy}>
+                      <RefreshCw size={14} />
+                      Refresh all calendars
+                    </button>
+                    <button className="google-calendar-add-account" onClick={addGoogleCalendarAccount} disabled={calendarBusy}>
+                      Add another account
+                    </button>
+                  </div>
                 </>
               ) : (
                 <p className="google-calendar-empty">
@@ -915,9 +916,10 @@ export function SettingPage({
             </div>
             <div className="google-calendar-settings-body">
               {gmailAccounts.length ? (
-                <div className="google-calendar-account-list">
-                  {gmailAccounts.map((acc) => (
-                    <div className="google-calendar-account" key={acc.id || acc.email}>
+                <>
+                  <div className="google-calendar-account-list">
+                    {gmailAccounts.map((acc) => (
+                      <div className="google-calendar-account" key={acc.id || acc.email}>
                       <span className="google-calendar-avatar">
                         <Mail size={16} />
                       </span>
@@ -932,9 +934,13 @@ export function SettingPage({
                       >
                         <Trash2 size={15} />
                       </button>
-                    </div>
-                  ))}
-                </div>
+                      </div>
+                    ))}
+                  </div>
+                  <button className="google-calendar-add-account" onClick={addGmailAccount} disabled={gmailBusy}>
+                    Add another account
+                  </button>
+                </>
               ) : (
                 <p className="google-calendar-empty">
                   Connect one or more Gmail accounts to read and send email directly within StarWaves.
@@ -968,9 +974,10 @@ export function SettingPage({
             </div>
             <div className="google-calendar-settings-body">
               {googleChatAccounts.length ? (
-                <div className="google-calendar-account-list">
-                  {googleChatAccounts.map((acc) => (
-                    <div className="google-calendar-account" key={acc.id || acc.email}>
+                <>
+                  <div className="google-calendar-account-list">
+                    {googleChatAccounts.map((acc) => (
+                      <div className="google-calendar-account" key={acc.id || acc.email}>
                       <span className="google-calendar-avatar">
                         <MessageSquare size={16} />
                       </span>
@@ -985,9 +992,13 @@ export function SettingPage({
                       >
                         <Trash2 size={15} />
                       </button>
-                    </div>
-                  ))}
-                </div>
+                      </div>
+                    ))}
+                  </div>
+                  <button className="google-calendar-add-account" onClick={addGoogleChatAccount} disabled={googleChatBusy}>
+                    Add another account
+                  </button>
+                </>
               ) : (
                 <p className="google-calendar-empty">
                   Connect one or more Google Chat accounts to view spaces, direct messages, and chat across accounts.
