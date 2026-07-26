@@ -1,3 +1,5 @@
+import { fetchWithTimeout } from './request'
+
 const API_URL = import.meta.env.VITE_API_URL ?? 'http://127.0.0.1:8000/api/v1'
 const TOKEN_KEY = 'starwaves_auth_token'
 const USER_KEY = 'starwaves_auth_user'
@@ -46,7 +48,7 @@ async function request(path, options = {}, authenticated = false) {
     headers['Content-Type'] = 'application/json'
   }
 
-  const response = await fetch(`${API_URL}${path}`, {
+  const response = await fetchWithTimeout(`${API_URL}${path}`, {
     ...options,
     headers: { ...headers, ...options.headers },
   })

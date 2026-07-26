@@ -1,4 +1,5 @@
 import { getStoredAuthToken } from './authApi'
+import { fetchWithTimeout } from './request'
 
 const API_URL = import.meta.env.VITE_API_URL ?? 'http://127.0.0.1:8000/api/v1'
 
@@ -10,7 +11,7 @@ async function request(path, options = {}, authenticated = true) {
     headers.Authorization = `Bearer ${token}`
   }
   if (options.body) headers['Content-Type'] = 'application/json'
-  const response = await fetch(`${API_URL}${path}`, {
+  const response = await fetchWithTimeout(`${API_URL}${path}`, {
     ...options,
     headers: { ...headers, ...options.headers },
   })
