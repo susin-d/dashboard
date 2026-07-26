@@ -29,6 +29,9 @@ export function Header({
   notificationsOpen,
   setNotificationsOpen,
   user,
+  notificationsCanLoadMore,
+  notificationsLoading,
+  onLoadMoreNotifications,
 }) {
   const [profileMenuOpen, setProfileMenuOpen] = useState(false)
   const [searchOpen, setSearchOpen] = useState(false)
@@ -369,6 +372,11 @@ export function Header({
                 })
               )}
             </div>
+            {notificationsCanLoadMore && (
+              <button className="secondary-button" type="button" onClick={onLoadMoreNotifications} disabled={notificationsLoading}>
+                {notificationsLoading ? 'Loading…' : 'Load more notifications'}
+              </button>
+            )}
           </aside>
         </div>,
         document.body,

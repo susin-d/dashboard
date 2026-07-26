@@ -16,6 +16,7 @@ import {
   X,
 } from 'lucide-react'
 import { calendarDateKey } from '../utils/calendarEvents'
+import { CalendarPicker } from '../components/ui/CalendarPicker'
 
 const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 
@@ -49,12 +50,9 @@ export function CalendarPage({ eventsByDate, onNavigate }) {
     () => new Date(today.getFullYear(), today.getMonth(), 1),
   )
   const [selectedDate, setSelectedDate] = useState(null)
-  const [dateMenuOpen, setDateMenuOpen] = useState(false)
   const [viewMenuOpen, setViewMenuOpen] = useState(false)
   const [calendarView, setCalendarView] = useState('days')
-  const [jumpDay, setJumpDay] = useState(today.getDate())
-  const [jumpMonth, setJumpMonth] = useState(today.getMonth())
-  const [jumpYear, setJumpYear] = useState(today.getFullYear())
+  const [pickerDate, setPickerDate] = useState(null)
   const [focusedEventId, setFocusedEventId] = useState(null)
   const days = useMemo(() => buildCalendarDays(visibleMonth), [visibleMonth])
   const months = useMemo(
@@ -66,14 +64,6 @@ export function CalendarPage({ eventsByDate, onNavigate }) {
         }),
       })),
     [],
-  )
-  const years = useMemo(
-    () =>
-      Array.from(
-        { length: 21 },
-        (_, index) => today.getFullYear() - 10 + index,
-      ),
-    [today],
   )
   const selectedEvents = selectedDate
     ? eventsByDate.get(calendarDateKey(selectedDate)) ?? []
@@ -152,25 +142,6 @@ export function CalendarPage({ eventsByDate, onNavigate }) {
     })
   }
 
-  const returnToToday = () => {
-    setVisibleMonth(new Date(today.getFullYear(), today.getMonth(), 1))
-    setJumpDay(today.getDate())
-    setJumpMonth(today.getMonth())
-    setJumpYear(today.getFullYear())
-    setSelectedDate(today)
-    setCalendarView('days')
-    setDateMenuOpen(false)
-  }
-
-  const jumpToDate = () => {
-    const lastDay = new Date(jumpYear, jumpMonth + 1, 0).getDate()
-    const date = new Date(jumpYear, jumpMonth, Math.min(jumpDay, lastDay))
-    setVisibleMonth(new Date(jumpYear, jumpMonth, 1))
-    setSelectedDate(date)
-    setCalendarView('days')
-    setDateMenuOpen(false)
-  }
-
   const selectView = (view) => {
     setCalendarView(view)
     setViewMenuOpen(false)
@@ -185,83 +156,16 @@ export function CalendarPage({ eventsByDate, onNavigate }) {
         </div>
 
         <div className="calendar-actions">
-          <div className="calendar-date-jump">
-            <button
-              className="calendar-today-button"
-              onClick={() => setDateMenuOpen((open) => !open)}
-              aria-expanded={dateMenuOpen}
-            >
-              Today
-              <ChevronDown
-                className={dateMenuOpen ? 'chevron-open' : ''}
-                size={14}
-              />
-            </button>
-
-            {dateMenuOpen && (
-              <div className="calendar-date-menu">
-                <div className="calendar-date-menu-heading">
-                  <strong>Jump to date</strong>
-                  <span>Select a day, month and year</span>
-                </div>
-                <div className="calendar-date-selects">
-                  <label>
-                    Day
-                    <select
-                      value={jumpDay}
-                      onChange={(event) => setJumpDay(Number(event.target.value))}
-                    >
-                      {Array.from({ length: 31 }, (_, index) => index + 1).map(
-                        (day) => (
-                          <option key={day} value={day}>
-                            {day}
-                          </option>
-                        ),
-                      )}
-                    </select>
-                  </label>
-                  <label>
-                    Month
-                    <select
-                      value={jumpMonth}
-                      onChange={(event) =>
-                        setJumpMonth(Number(event.target.value))
-                      }
-                    >
-                      {months.map((month) => (
-                        <option key={month.value} value={month.value}>
-                          {month.label}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                  <label>
-                    Year
-                    <select
-                      value={jumpYear}
-                      onChange={(event) =>
-                        setJumpYear(Number(event.target.value))
-                      }
-                    >
-                      {years.map((year) => (
-                        <option key={year} value={year}>
-                          {year}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                </div>
-                <div className="calendar-date-menu-actions">
-                  <button className="secondary-button" onClick={returnToToday}>
-                    Today
-                  </button>
-                  <button className="primary-button" onClick={jumpToDate}>
-                    Go to date
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
+          <CalendarPicker
+            value={pickerDate}
+            onChange={(date) => {
+              setPickerDate(date)
+              if (date) {
+                setVisibleMonth(new Date(date.getFullYear(), date.getMonth(), 1))
+                setCalendarView('days')
+              }
+            }}
+          />
           <div className="calendar-view-switcher">
             <button
               className="calendar-view-button"

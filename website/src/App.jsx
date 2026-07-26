@@ -340,6 +340,9 @@ function App() {
       notificationsOpen={notificationsOpen}
       setNotificationsOpen={setNotificationsOpen}
       user={userProfile}
+      notificationsCanLoadMore={pagination.notifications.has_more}
+      notificationsLoading={loadingMore}
+      onLoadMoreNotifications={() => loadMore('notifications')}
     >
       {pages[activePage] ?? pages.dashboard}
     </AppLayout>

@@ -12,6 +12,7 @@
 @import './styles/components/buttons.css';
 @import './styles/components/modals.css';
 @import './styles/components/forms.css';
+@import './styles/components/calendar-picker.css';
 
 /* Page Styles */
 @import './styles/pages/dashboard.css';
