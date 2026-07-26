@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import {
   CalendarDays,
-  ChevronDown,
   ExternalLink,
   Filter,
   MapPin,
@@ -30,9 +29,6 @@ const emptyHackathon = {
 export function HackathonsPage({ hackathons, setHackathons, canLoadMore, loadingMore, onLoadMore }) {
   const [cardLayout, setCardLayout] = useState(
     () => window.localStorage.getItem('starwaves-hackathon-layout') || 'compact',
-  )
-  const [openHackathons, setOpenHackathons] = useState(
-    () => new Set([hackathons[0]?.id]),
   )
   const [detailModalHackathon, setDetailModalHackathon] = useState(null)
   const [formOpen, setFormOpen] = useState(false)
@@ -89,15 +85,6 @@ export function HackathonsPage({ hackathons, setHackathons, canLoadMore, loading
       localStorage.removeItem('starwaves.hackathon-focus')
     }
   }, [hackathons])
-
-  const toggleHackathon = (hackathonId) => {
-    setOpenHackathons((current) => {
-      const next = new Set(current)
-      if (next.has(hackathonId)) next.delete(hackathonId)
-      else next.add(hackathonId)
-      return next
-    })
-  }
 
   const updateField = (field, value) => {
     setForm((current) => ({ ...current, [field]: value }))
@@ -248,29 +235,16 @@ export function HackathonsPage({ hackathons, setHackathons, canLoadMore, loading
         {filteredHackathons.map((hackathon) => {
           const startsAt = new Date(hackathon.startsAt)
           const endsAt = new Date(hackathon.endsAt)
-          const isOpen = openHackathons.has(hackathon.id)
           const isManual = hackathon.source === 'manual'
 
           return (
             <article
-              className={`contest-site-card hackathon-list-card ${
-                isOpen ? 'open' : ''
-              }`}
+              className="contest-site-card hackathon-list-card"
               key={hackathon.id}
               data-record-id={hackathon.id}
             >
               <div
                 className="contest-site-header"
-                onClick={() => toggleHackathon(hackathon.id)}
-                role="button"
-                tabIndex={0}
-                onKeyDown={(event) => {
-                  if (event.key === 'Enter' || event.key === ' ') {
-                    event.preventDefault()
-                    toggleHackathon(hackathon.id)
-                  }
-                }}
-                aria-expanded={isOpen}
               >
                 <div className="hackathon-card-topline">
                   <span className="hackathon-card-source">{hackathon.source === 'manual' ? 'StarWaves' : hackathon.source.toUpperCase()}</span>
@@ -309,12 +283,10 @@ export function HackathonsPage({ hackathons, setHackathons, canLoadMore, loading
                 </div>
                 <div className="hackathon-card-footer">
                   <strong>{hackathon.teamSize || 'Open'} <small>team size</small></strong>
-                  <ChevronDown size={17} />
                 </div>
               </div>
 
-              {isOpen && (
-                <div className="contest-site-content hackathon-detail-content">
+              <div className="contest-site-content hackathon-detail-content">
                   <div className="hackathon-detail-grid">
                     <div className="hackathon-detail-item">
                       <CalendarDays size={17} />
@@ -397,8 +369,7 @@ export function HackathonsPage({ hackathons, setHackathons, canLoadMore, loading
                       )}
                     </div>
                   </div>
-                </div>
-              )}
+              </div>
             </article>
           )
         })}
