@@ -1,15 +1,18 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import {
   CalendarClock,
   ChevronDown,
   FolderKanban,
   Plus,
+  RotateCcw,
+  Search,
+  SlidersHorizontal,
   Trash2,
   Users,
   X,
 } from 'lucide-react'
 import { createProject, deleteProject } from '../lib/workspaceApi'
-import { ConfirmDialog, PageHeader } from '../components/ui'
+import { ConfirmDialog, CustomDropdown, PageHeader } from '../components/ui'
 
 const emptyProject = {
   name: '',
@@ -31,6 +34,26 @@ export function ProjectsPage({ projects, setProjects, onOpenProject, canLoadMore
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const [deleteId, setDeleteId] = useState(null)
+  const [query, setQuery] = useState('')
+  const [statusFilter, setStatusFilter] = useState('All')
+  const [sortOrder, setSortOrder] = useState('updated')
+
+  const filteredProjects = useMemo(() => {
+    const normalizedQuery = query.trim().toLowerCase()
+    return projects
+      .filter((project) => {
+        const searchable = `${project.name} ${project.description} ${(project.technologies || []).join(' ')}`.toLowerCase()
+        return (!normalizedQuery || searchable.includes(normalizedQuery)) && (statusFilter === 'All' || project.status === statusFilter)
+      })
+      .sort((first, second) => {
+        if (sortOrder === 'name') return first.name.localeCompare(second.name)
+        if (sortOrder === 'progress') return Number(second.progress || 0) - Number(first.progress || 0)
+        return new Date(second.updatedAt).getTime() - new Date(first.updatedAt).getTime()
+      })
+  }, [projects, query, statusFilter, sortOrder])
+
+  const hasFilters = Boolean(query.trim()) || statusFilter !== 'All' || sortOrder !== 'updated'
+  const resetFilters = () => { setQuery(''); setStatusFilter('All'); setSortOrder('updated') }
 
   const toggleProject = (projectId) => {
     setOpenProjects((current) => {
@@ -93,7 +116,7 @@ export function ProjectsPage({ projects, setProjects, onOpenProject, canLoadMore
         actions={<>
           <div className="project-summary">
             <FolderKanban size={16} />
-            <span>{projects.length} projects</span>
+            <span>{filteredProjects.length} of {projects.length} projects</span>
           </div>
           <button className="primary-button" onClick={() => setFormOpen(true)}>
             <Plus size={16} /> Add project
@@ -101,8 +124,13 @@ export function ProjectsPage({ projects, setProjects, onOpenProject, canLoadMore
         </>}
       />
 
+      <div className="project-toolbar" aria-label="Filter projects">
+        <label className="project-search"><Search size={16} /><span className="sr-only">Search projects</span><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search projects, tools, or descriptions" />{query && <button type="button" onClick={() => setQuery('')} aria-label="Clear search"><X size={15} /></button>}</label>
+        <div className="project-filter-controls"><SlidersHorizontal size={15} aria-hidden="true" /><CustomDropdown value={statusFilter} onChange={setStatusFilter} ariaLabel="Filter by status" options={['All', 'Active', 'Planning', 'On hold', 'Completed'].map((value) => ({ value, label: value === 'All' ? 'All statuses' : value }))} /><CustomDropdown value={sortOrder} onChange={setSortOrder} ariaLabel="Sort projects" options={[{ value: 'updated', label: 'Recently updated' }, { value: 'progress', label: 'Progress' }, { value: 'name', label: 'Name' }]} />{hasFilters && <button className="project-reset" type="button" onClick={resetFilters}><RotateCcw size={13} /> Reset</button>}</div>
+      </div>
+
       <div className="project-list">
-        {projects.map((project) => {
+        {filteredProjects.map((project) => {
           const isOpen = openProjects.has(project.id)
           const updatedAt = new Date(project.updatedAt)
 
@@ -200,6 +228,7 @@ export function ProjectsPage({ projects, setProjects, onOpenProject, canLoadMore
             </article>
           )
         })}
+        {!filteredProjects.length && <div className="project-empty-state"><Search size={22} /><strong>No projects match these filters</strong><span>Try a different search or status.</span>{hasFilters && <button className="secondary-button" type="button" onClick={resetFilters}>Clear filters</button>}</div>}
       </div>
 
       <div className="workspace-insight-grid" aria-label="Project overview">

@@ -20,6 +20,81 @@
   padding-top: 18px;
 }
 
+.project-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 22px;
+  padding: 10px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+}
+
+.project-search {
+  min-width: 220px;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 3px;
+  color: var(--text-muted);
+}
+
+.project-search input {
+  width: 100%;
+  padding: 8px 0;
+  color: var(--text-primary);
+  background: transparent;
+  border: 0;
+  outline: 0;
+  font-size: 11px;
+}
+
+.project-search button,
+.project-reset {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px;
+  color: var(--text-muted);
+  background: transparent;
+  border: 0;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.project-filter-controls {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--text-muted);
+}
+
+.project-filter-controls .custom-dropdown-trigger {
+  min-width: 126px;
+  min-height: 32px;
+  padding: 0 9px;
+  font-size: 10px;
+}
+
+.project-empty-state {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  padding: 48px 20px;
+  color: var(--text-muted);
+  background: var(--bg-card);
+  border: 1px dashed var(--border-color);
+  border-radius: 12px;
+  text-align: center;
+}
+
+.project-empty-state strong { color: var(--text-primary); font-size: 13px; }
+.project-empty-state span { font-size: 10px; }
+.project-empty-state button { margin-top: 5px; }
+
 .project-list-card .contest-site-logo svg {
   color: var(--text-inverse);
 }
@@ -382,6 +457,10 @@
 }
 
 @media (max-width: 640px) {
+  .project-toolbar { align-items: stretch; flex-direction: column; }
+  .project-filter-controls { flex-wrap: wrap; }
+  .project-filter-controls .custom-dropdown { flex: 1; }
+  .project-filter-controls .custom-dropdown-trigger { width: 100%; min-width: 0; }
   .workspace-insight-grid {
     grid-template-columns: 1fr;
   }
