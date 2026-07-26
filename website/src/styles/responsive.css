@@ -1,0 +1,199 @@
+/* Shared responsive layout refinements. Keep page-specific rules in their page sheets. */
+
+.content {
+  width: min(100%, 1600px);
+  margin-right: auto;
+  padding-right: clamp(16px, 3vw, 48px);
+  padding-left: clamp(16px, 3vw, 48px);
+}
+
+.page-heading > *,
+.dashboard-heading > * {
+  min-width: 0;
+}
+
+.page-heading-actions,
+.dashboard-heading-actions {
+  flex-wrap: wrap;
+}
+
+@media (max-width: 1024px) {
+  .content {
+    padding-top: 90px;
+  }
+
+  .calendar-content {
+    padding-right: 16px;
+    padding-left: 16px;
+  }
+
+  .calendar-toolbar {
+    gap: 14px;
+  }
+
+  .documents-layout,
+  .mail-layout {
+    min-width: 0;
+  }
+}
+
+@media (max-width: 768px) {
+  .content {
+    padding-top: 78px;
+    padding-right: 16px;
+    padding-bottom: 24px;
+    padding-left: 16px;
+  }
+
+  .page-heading,
+  .dashboard-heading,
+  .calendar-toolbar,
+  .project-page-heading {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .page-heading-actions,
+  .dashboard-heading-actions,
+  .calendar-actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .page-heading-actions > button,
+  .dashboard-heading-actions > button,
+  .dashboard-heading-actions > div,
+  .calendar-actions > button {
+    min-height: 40px;
+  }
+
+  .calendar-content {
+    height: auto;
+    min-height: 100dvh;
+    overflow: visible;
+    padding-top: 78px;
+  }
+
+  .calendar-page {
+    min-height: calc(100dvh - 102px);
+  }
+
+  .calendar-grid {
+    min-height: 560px;
+    overflow-x: auto;
+  }
+
+  .calendar-day {
+    min-width: 92px;
+    padding: 7px;
+  }
+
+  .chats-page {
+    height: auto;
+    min-height: calc(100dvh - 102px);
+  }
+
+  .chats-container {
+    grid-template-columns: minmax(220px, 38%) minmax(0, 1fr);
+    min-height: 560px;
+  }
+}
+
+@media (max-width: 560px) {
+  .topbar {
+    gap: 8px;
+  }
+
+  .header-actions {
+    min-width: 0;
+    gap: 2px;
+  }
+
+  .search-container,
+  .search {
+    min-width: 0;
+  }
+
+  .search input {
+    min-width: 0;
+  }
+
+  .page-heading-actions,
+  .dashboard-heading-actions,
+  .calendar-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .page-heading-actions > button,
+  .dashboard-heading-actions > button,
+  .dashboard-heading-actions > div,
+  .calendar-actions > button {
+    width: 100%;
+  }
+
+  .dashboard-heading-actions > div {
+    display: contents;
+  }
+
+  .calendar-pagination {
+    order: 3;
+    grid-column: span 2;
+    justify-content: center;
+  }
+
+  .calendar-date-menu {
+    position: fixed;
+    top: 70px;
+    right: 12px;
+    left: 12px;
+    width: auto;
+  }
+
+  .calendar-date-selects {
+    grid-template-columns: 1fr;
+  }
+
+  .chats-container {
+    grid-template-columns: 1fr;
+    min-height: 0;
+  }
+
+  .chats-sidebar {
+    max-height: 280px;
+    border-right: 0;
+    border-bottom: 1px solid var(--border-color);
+  }
+}
+
+@media (max-width: 380px) {
+  .topbar {
+    padding-right: 8px;
+    padding-left: 8px;
+  }
+
+  .search {
+    width: 96px;
+  }
+
+  .search:focus-within,
+  .search.open {
+    width: 132px;
+  }
+
+  .content {
+    padding-right: 12px;
+    padding-left: 12px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+}
