@@ -377,6 +377,10 @@
   color: var(--text-primary);
 }
 
+.workspace-add-account {
+  margin: 0 22px 20px;
+}
+
 /* GitHub & Gmail Card Copy */
 .github-settings-copy {
   padding: 16px 22px 20px;

@@ -16,8 +16,13 @@
 .hackathon-list {
   width: 100%;
   display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 12px;
   padding-top: 18px;
+}
+
+.hackathon-empty-state {
+  grid-column: 1 / -1;
 }
 
 .hackathon-toolbar {
@@ -108,6 +113,18 @@
   .hackathon-toolbar { align-items: stretch; flex-direction: column; }
   .hackathon-filter-group { flex-wrap: wrap; }
   .hackathon-filter-group select { flex: 1; }
+}
+
+@media (max-width: 1120px) {
+  .hackathon-list { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+@media (max-width: 860px) {
+  .hackathon-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 560px) {
+  .hackathon-list { grid-template-columns: minmax(0, 1fr); }
 }
 
 .hackathon-list-card .contest-site-logo svg {

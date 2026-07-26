@@ -394,6 +394,20 @@ export function SettingPage({
     }
   }
 
+  const addWorkspaceAccount = async () => {
+    setConnecting(true)
+    setConnectionError('')
+    try {
+      await beginGoogleDriveOAuth()
+      const { connected } = await getGoogleDriveStatus()
+      setWorkspaceConnected(connected)
+    } catch (error) {
+      setConnectionError(error.message || 'Google Workspace account could not be connected.')
+    } finally {
+      setConnecting(false)
+    }
+  }
+
   const updateCodingField = (field, value) => {
     setCodingProfile((current) => ({ ...current, [field]: value }))
     setCodingMessage('')
@@ -751,6 +765,15 @@ export function SettingPage({
               )
             })}
           </div>
+          {workspaceConnected && (
+            <button
+              className="google-calendar-add-account workspace-add-account"
+              onClick={addWorkspaceAccount}
+              disabled={connecting}
+            >
+              {connecting ? 'Connecting…' : 'Add another account'}
+            </button>
+          )}
           </section>
 
           <section className="workspace-settings-card google-calendar-settings-card">
