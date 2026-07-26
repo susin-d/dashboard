@@ -108,7 +108,7 @@
   border-right: 1px solid var(--border-color);
   display: flex;
   flex-direction: column;
-  padding: 16px 12px;
+  padding: 16px 8px;
   overflow-x: hidden;
   overflow-y: auto;
   transition:
@@ -139,7 +139,7 @@
   gap: 16px;
   height: 48px;
   min-width: 0;
-  padding: 10px 14px;
+  padding: 10px 18px;
   text-decoration: none;
   width: 100%;
 }
