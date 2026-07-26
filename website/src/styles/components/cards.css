@@ -10,7 +10,7 @@
   background: var(--bg-card);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-xl);
-  box-shadow: var(--shadow-sm);
+  box-shadow: var(--shadow-surface), var(--shadow-inset);
 }
 
 .empty-state {

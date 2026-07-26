@@ -39,6 +39,33 @@ body {
   padding-right: var(--safe-area-right);
 }
 
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: radial-gradient(circle at 78% -12%, var(--bg-tertiary), transparent 38%), linear-gradient(135deg, transparent 0 48%, rgba(0, 0, 0, 0.018) 100%);
+}
+
+button, .card, .profile-card, .workspace-settings-card, .coding-settings-card,
+.hackathon-source-settings, .project-overview-card, input, select, textarea {
+  box-shadow: var(--shadow-inset);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .card, .profile-card, .workspace-settings-card, .coding-settings-card,
+  .hackathon-source-settings, .project-overview-card {
+    transform: translateZ(0);
+    transition: box-shadow var(--transition-normal), transform var(--transition-normal), border-color var(--transition-normal);
+  }
+  .card:hover, .profile-card:hover, .workspace-settings-card:hover, .coding-settings-card:hover,
+  .hackathon-source-settings:hover, .project-overview-card:hover {
+    transform: translateY(-3px) perspective(800px) rotateX(0.35deg);
+    box-shadow: var(--shadow-lifted);
+  }
+}
+
 button,
 input,
 select,
