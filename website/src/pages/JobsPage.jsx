@@ -12,6 +12,7 @@ import {
   X,
 } from 'lucide-react'
 import { createJob, deleteJob, updateJob } from '../lib/workspaceApi'
+import { ConfirmDialog } from '../components/ui'
 
 const emptyJob = {
   company: '',
@@ -39,6 +40,7 @@ export function JobsPage({ jobs, setJobs, documents, createIntent }) {
   const [editForm, setEditForm] = useState(emptyJob)
   const [editSaving, setEditSaving] = useState(false)
   const [editError, setEditError] = useState('')
+  const [deleteId, setDeleteId] = useState(null)
 
   useEffect(() => {
     if (createIntent?.type === 'job') setFormOpen(true)
@@ -112,12 +114,18 @@ export function JobsPage({ jobs, setJobs, documents, createIntent }) {
   }
 
   const handleDeleteJob = async (jobId) => {
-    if (!window.confirm('Are you sure you want to delete this job entry?')) return
+    setDeleteId(jobId)
+  }
+
+  const confirmDeleteJob = async () => {
+    const jobId = deleteId
+    setDeleteId(null)
+    if (!jobId) return
     try {
       await deleteJob(jobId)
       setJobs((current) => current.filter((item) => item.id !== jobId))
     } catch (error) {
-      alert(error.message || 'Could not delete job.')
+      setEditError(error.message || 'Could not delete job.')
     }
   }
 
@@ -363,6 +371,7 @@ export function JobsPage({ jobs, setJobs, documents, createIntent }) {
           </div>
         </div>
       )}
+      <ConfirmDialog isOpen={Boolean(deleteId)} message="Are you sure you want to delete this job entry?" onCancel={() => setDeleteId(null)} onConfirm={confirmDeleteJob} />
     </section>
   )
 }

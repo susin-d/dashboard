@@ -9,6 +9,7 @@ import {
   X,
 } from 'lucide-react'
 import { createProject, deleteProject } from '../lib/workspaceApi'
+import { ConfirmDialog } from '../components/ui'
 
 const emptyProject = {
   name: '',
@@ -29,6 +30,7 @@ export function ProjectsPage({ projects, setProjects, onOpenProject }) {
   const [form, setForm] = useState(emptyProject)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+  const [deleteId, setDeleteId] = useState(null)
 
   const toggleProject = (projectId) => {
     setOpenProjects((current) => {
@@ -63,12 +65,18 @@ export function ProjectsPage({ projects, setProjects, onOpenProject }) {
 
   const handleDelete = async (event, projectId) => {
     event.stopPropagation()
-    if (!window.confirm('Are you sure you want to delete this project?')) return
+    setDeleteId(projectId)
+  }
+
+  const confirmDelete = async () => {
+    const projectId = deleteId
+    setDeleteId(null)
+    if (!projectId) return
     try {
       await deleteProject(projectId)
       setProjects((current) => current.filter((p) => p.id !== projectId))
     } catch (err) {
-      alert(err.message || 'Failed to delete project')
+      setError(err.message || 'Failed to delete project')
     }
   }
 
@@ -224,6 +232,7 @@ export function ProjectsPage({ projects, setProjects, onOpenProject }) {
           </div>
         </div>
       )}
+      <ConfirmDialog isOpen={Boolean(deleteId)} message="Are you sure you want to delete this project?" onCancel={() => setDeleteId(null)} onConfirm={confirmDelete} />
     </section>
   )
 }

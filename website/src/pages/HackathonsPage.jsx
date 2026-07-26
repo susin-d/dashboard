@@ -12,6 +12,7 @@ import {
   X,
 } from 'lucide-react'
 import { createHackathon, deleteHackathon, updateHackathon } from '../lib/workspaceApi'
+import { ConfirmDialog } from '../components/ui'
 
 const emptyHackathon = {
   title: '',
@@ -38,6 +39,7 @@ export function HackathonsPage({ hackathons, setHackathons }) {
   const [editForm, setEditForm] = useState(emptyHackathon)
   const [editSaving, setEditSaving] = useState(false)
   const [editError, setEditError] = useState('')
+  const [deleteId, setDeleteId] = useState(null)
 
   const toggleHackathon = (hackathonId) => {
     setOpenHackathons((current) => {
@@ -121,12 +123,18 @@ export function HackathonsPage({ hackathons, setHackathons }) {
   }
 
   const handleDeleteHackathon = async (hackathonId) => {
-    if (!window.confirm('Are you sure you want to delete this manual hackathon entry?')) return
+    setDeleteId(hackathonId)
+  }
+
+  const confirmDeleteHackathon = async () => {
+    const hackathonId = deleteId
+    setDeleteId(null)
+    if (!hackathonId) return
     try {
       await deleteHackathon(hackathonId)
       setHackathons((current) => current.filter((item) => item.id !== hackathonId))
     } catch (err) {
-      alert(err.message || 'Could not delete hackathon.')
+      setEditError(err.message || 'Could not delete hackathon.')
     }
   }
 
@@ -465,7 +473,7 @@ export function HackathonsPage({ hackathons, setHackathons }) {
           </div>
         </div>
       )}
+      <ConfirmDialog isOpen={Boolean(deleteId)} message="Are you sure you want to delete this manual hackathon entry?" onCancel={() => setDeleteId(null)} onConfirm={confirmDeleteHackathon} />
     </section>
   )
 }
-

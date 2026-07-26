@@ -13,11 +13,14 @@ import {
   X,
 } from 'lucide-react'
 import { deleteProject, updateProject } from '../lib/workspaceApi'
+import { ConfirmDialog } from '../components/ui'
 
 export function ProjectDetailPage({ project, onBack, onSave }) {
   const [editOpen, setEditOpen] = useState(false)
   const [form, setForm] = useState({})
   const [saving, setSaving] = useState(false)
+  const [deleteRequested, setDeleteRequested] = useState(false)
+  const [error, setError] = useState('')
   const updatedAt = new Date(project.updatedAt)
 
   const openEditor = () => {
@@ -59,19 +62,23 @@ export function ProjectDetailPage({ project, onBack, onSave }) {
       onSave(updated)
       setEditOpen(false)
     } catch (err) {
-      alert(err.message || 'Failed to update project.')
+      setError(err.message || 'Failed to update project.')
     } finally {
       setSaving(false)
     }
   }
 
   const handleDelete = async () => {
-    if (!window.confirm('Are you sure you want to delete this project?')) return
+    setDeleteRequested(true)
+  }
+
+  const confirmDelete = async () => {
+    setDeleteRequested(false)
     try {
       await deleteProject(project.id)
       onBack()
     } catch (err) {
-      alert(err.message || 'Failed to delete project.')
+      setError(err.message || 'Failed to delete project.')
     }
   }
 
@@ -308,6 +315,8 @@ export function ProjectDetailPage({ project, onBack, onSave }) {
           </div>
         </div>
       )}
+      {error && <div className="todo-api-error" role="alert">{error}</div>}
+      <ConfirmDialog isOpen={deleteRequested} message="Are you sure you want to delete this project?" onCancel={() => setDeleteRequested(false)} onConfirm={confirmDelete} />
     </section>
   )
 }

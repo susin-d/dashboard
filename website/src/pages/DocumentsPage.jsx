@@ -21,6 +21,7 @@ import {
   uploadGoogleDriveFile,
 } from '../lib/googleDriveApi'
 import { deleteDocument, persistDocument } from '../lib/documentsApi'
+import { ConfirmDialog } from '../components/ui'
 
 const emptyDocument = {
   name: '',
@@ -50,14 +51,21 @@ export function DocumentsPage({ documents, setDocuments, createIntent }) {
   const [driveQuery, setDriveQuery] = useState('')
   const [documentSaving, setDocumentSaving] = useState(false)
   const [documentSaveError, setDocumentSaveError] = useState('')
+  const [deleteId, setDeleteId] = useState(null)
 
   const handleDeleteDocument = async (documentId) => {
-    if (!window.confirm('Are you sure you want to delete this document?')) return
+    setDeleteId(documentId)
+  }
+
+  const confirmDeleteDocument = async () => {
+    const documentId = deleteId
+    setDeleteId(null)
+    if (!documentId) return
     try {
       await deleteDocument(documentId)
       setDocuments((current) => current.filter((doc) => doc.id !== documentId))
     } catch (err) {
-      alert(err.message || 'Could not delete document.')
+      setDocumentSaveError(err.message || 'Could not delete document.')
     }
   }
 
@@ -529,6 +537,7 @@ export function DocumentsPage({ documents, setDocuments, createIntent }) {
           </div>
         </div>
       )}
+      <ConfirmDialog isOpen={Boolean(deleteId)} message="Are you sure you want to delete this document?" onCancel={() => setDeleteId(null)} onConfirm={confirmDeleteDocument} />
     </section>
   )
 }
