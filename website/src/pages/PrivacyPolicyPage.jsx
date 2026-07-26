@@ -48,7 +48,7 @@ export function PrivacyPolicyPage({ onNavigate }) {
           <section>
             <h2 style={{ fontSize: '20px', fontWeight: 700, marginBottom: '12px' }}>1. Overview</h2>
             <p>
-              StarWaves (&quot;we&quot;, &quot;our&quot;, or &quot;us&quot;) respects your privacy and is committed to protecting your personal information. This Privacy Policy explains how we collect, use, disclose, and safeguard your data when you visit <strong>susindran.in</strong> or use the StarWaves workspace application and integrations.
+              StarWaves (&quot;we&quot;, &quot;our&quot;, or &quot;us&quot;) respects your privacy and is committed to protecting your personal information. This Privacy Policy explains how we collect, use, disclose, and safeguard your data when you visit <strong>starwaves.susindran.in</strong> or use the StarWaves workspace application and integrations.
             </p>
           </section>
 
@@ -113,7 +113,7 @@ export function PrivacyPolicyPage({ onNavigate }) {
             </p>
             <p style={{ marginTop: '8px', fontWeight: 600 }}>
               Email: <a href="mailto:dev@susindran.in" style={{ color: 'var(--text-primary)', textDecoration: 'underline' }}>dev@susindran.in</a><br />
-              Domain: susindran.in
+              Domain: starwaves.susindran.in
             </p>
           </section>
         </article>

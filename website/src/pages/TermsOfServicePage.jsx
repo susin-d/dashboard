@@ -48,7 +48,7 @@ export function TermsOfServicePage({ onNavigate }) {
           <section>
             <h2 style={{ fontSize: '20px', fontWeight: 700, marginBottom: '12px' }}>1. Acceptance of Terms</h2>
             <p>
-              By accessing or using <strong>StarWaves</strong> (accessible via <strong>susindran.in</strong>), you agree to be bound by these Terms of Service (&quot;Terms&quot;). If you do not agree to these Terms, please do not access or use the application.
+              By accessing or using <strong>StarWaves</strong> (accessible via <strong>starwaves.susindran.in</strong>), you agree to be bound by these Terms of Service (&quot;Terms&quot;). If you do not agree to these Terms, please do not access or use the application.
             </p>
           </section>
 
@@ -108,7 +108,7 @@ export function TermsOfServicePage({ onNavigate }) {
             </p>
             <p style={{ marginTop: '8px', fontWeight: 600 }}>
               Email: <a href="mailto:dev@susindran.in" style={{ color: 'var(--text-primary)', textDecoration: 'underline' }}>dev@susindran.in</a><br />
-              Domain: susindran.in
+              Domain: starwaves.susindran.in
             </p>
           </section>
         </article>
