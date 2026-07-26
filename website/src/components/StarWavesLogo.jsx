@@ -11,10 +11,10 @@ export function StarWavesLogo({ size = 30, className = "" }) {
     >
       <rect width="100" height="100" rx="20" fill="#000" />
       <path
-        d="M20 31.5 50 52l30-20.5M20 31.5V68.5c0 2.8 2.2 5 5 5h50c2.8 0 5-2.2 5-5V31.5M20 31.5c0-2.8 2.2-5 5-5h50c2.8 0 5 2.2 5 5"
+        d="M18 39c10-12 20-12 30 0s20 12 30 0M18 54c10-12 20-12 30 0s20 12 30 0M18 69c10-12 20-12 30 0s20 12 30 0"
         fill="none"
         stroke="#fff"
-        strokeWidth="6"
+        strokeWidth="7"
         strokeLinecap="round"
         strokeLinejoin="round"
       />

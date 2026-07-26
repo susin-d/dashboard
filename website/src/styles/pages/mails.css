@@ -131,7 +131,7 @@
   background: transparent;
   border: 0;
   border: 1px solid transparent;
-  border-radius: 14px;
+  border-radius: var(--radius-md);
   color: var(--text-secondary);
   display: flex;
   font-size: 14px;
@@ -155,9 +155,10 @@
 }
 
 .mail-folders button.active {
-  background: var(--color-primary);
-  box-shadow: var(--shadow-sm);
-  color: var(--text-inverse);
+  background: var(--bg-tertiary);
+  border-color: var(--border-heavy);
+  box-shadow: var(--shadow-inset);
+  color: var(--text-primary);
 }
 
 .mail-folders span {
@@ -180,8 +181,8 @@
 }
 
 .mail-folders button.active strong {
-  background: rgba(255, 255, 255, 0.2);
-  color: var(--text-inverse);
+  background: var(--bg-card);
+  color: var(--text-primary);
 }
 
 .mail-folders > a {
