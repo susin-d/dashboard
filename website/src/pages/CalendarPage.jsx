@@ -16,6 +16,7 @@ import {
 } from 'lucide-react'
 import { calendarDateKey } from '../utils/calendarEvents'
 import { CalendarPicker } from '../components/ui/CalendarPicker'
+import { usePersistentState } from '../hooks/usePersistentState'
 
 const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 
@@ -50,7 +51,7 @@ export function CalendarPage({ eventsByDate, onNavigate }) {
   )
   const [selectedDate, setSelectedDate] = useState(null)
   const [viewMenuOpen, setViewMenuOpen] = useState(false)
-  const [calendarView, setCalendarView] = useState('days')
+  const [calendarView, setCalendarView] = usePersistentState('starwaves.calendar.view', 'days')
   const [pickerDate, setPickerDate] = useState(null)
   const [focusedEventId, setFocusedEventId] = useState(null)
   const days = useMemo(() => buildCalendarDays(visibleMonth), [visibleMonth])

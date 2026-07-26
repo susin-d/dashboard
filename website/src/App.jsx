@@ -24,6 +24,7 @@ import { updateNotification } from './lib/workspaceApi'
 import { CALENDAR_REMINDER_PREFIX } from './utils/calendarReminders'
 import { useAuth, useRouter, useWorkspaceData } from './hooks'
 import { NetworkStatus } from './components/NetworkStatus'
+import { useDialogAccessibility } from './hooks/useDialogAccessibility'
 
 const routeTitles = {
   '/': 'StarWaves — Developer productivity workspace',
@@ -45,6 +46,7 @@ function publicRoute(content) {
 }
 
 function App() {
+  useDialogAccessibility()
   const { currentUser, authReady } = useAuth()
   const [sessionUser, setSessionUser] = useState(null)
   const activeUser = currentUser || sessionUser

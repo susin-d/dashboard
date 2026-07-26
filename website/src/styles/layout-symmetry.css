@@ -179,6 +179,12 @@
   min-height: 32px;
 }
 
+.public-page :where(a[href]:not(.legal-link)) {
+  min-height: 32px;
+  display: inline-flex;
+  align-items: center;
+}
+
 .content small,
 .public-page small {
   font-size: max(12px, 0.75em);

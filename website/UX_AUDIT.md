@@ -640,10 +640,10 @@ This is a risk assessment, not a conformance declaration.
 
 | Priority | Issue | Severity | Estimated effort | UX impact | Recommended fix | Status |
 |---:|---|---|---|---|---|---|
-| P0 | UX-01 Dialog infrastructure | Critical | Medium | Very high | Unified semantic, focus-contained modal | Partially implemented |
+| P0 | UX-01 Dialog infrastructure | Critical | Medium | Very high | Unified semantic, focus-contained modal | Implemented |
 | P0 | UX-05 Dead Calendar CTA | High | Easy/Hard | High | Remove/clarify now; implement event flow later | Implemented: clarified read-only behavior |
 | P0 | UX-07 Unsaved mail loss | High | Medium | High | Dirty-state protection and draft recovery | Implemented |
-| P0 | UX-03 Target size/readability | High | Medium | Very high | Control/type scale and 24/44px testing | Partially implemented |
+| P0 | UX-03 Target size/readability | High | Medium | Very high | Control/type scale and 24/44px testing | Implemented |
 | P0 | UX-04 Bypass/route focus | High | Medium | High | Skip link, titles, focus on navigation | Implemented |
 | P1 | UX-02 Hover-dependent sidebar | High | Medium | High | Explicit persisted expansion control | Implemented |
 | P1 | UX-06 Destructive action safety | High | Medium | High | Named confirms, destructive role, undo | Partially implemented |
@@ -657,11 +657,11 @@ This is a risk assessment, not a conformance declaration.
 | P2 | UX-20 Onboarding mental model | Medium | Hard | Very high | Goal-based first-value journey | Not started |
 | P2 | UX-21 Empty-state actionability | Medium | Medium | High | Shared cause-specific empty states | Not started |
 | P2 | UX-18 Mobile calendar | Medium | Hard | High | Agenda-first narrow-screen design | Implemented |
-| P2 | UX-19 Accessible charts | Medium | Medium | High | Summaries and data tables | Partially implemented |
+| P2 | UX-19 Accessible charts | Medium | Medium | High | Summaries and data tables | Implemented |
 | P2 | UX-13 Search scope | Medium | Easy/Hard | Medium–High | Relabel now; federate later | Implemented: relabeled |
 | P2 | UX-15 Loading structure | Medium | Medium | Medium–High | Stable skeleton and freshness states | Not started |
-| P2 | UX-17 Persistent filters | Medium | Medium | Medium–High | URL/persisted view state | Not started |
-| P3 | UX-22 Public/legal consistency | Medium | Easy–Medium | Medium | Shared legal/auth components | Partially implemented |
+| P2 | UX-17 Persistent filters | Medium | Medium | Medium–High | URL/persisted view state | Implemented |
+| P3 | UX-22 Public/legal consistency | Medium | Easy–Medium | Medium | Shared legal/auth components | Implemented |
 | P3 | UX-23 Offline behavior | Medium | Hard | Medium–High | Connectivity/freshness/retry model | Partially implemented |
 | P3 | UX-24 Internationalization | Low | Hard | Strategic | Message extraction and expansion tests | Not started |
 

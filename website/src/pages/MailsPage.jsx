@@ -9,6 +9,7 @@ import {
 } from '../lib/googleMail'
 import { getGmailAccounts, getGmailStatus } from '../lib/gmailApi'
 import { ConfirmDialog } from '../components/ui'
+import { usePersistentState } from '../hooks/usePersistentState'
 
 const FOLDERS = [
   { id: 'INBOX', label: 'Inbox', icon: Inbox },
@@ -47,7 +48,7 @@ export function MailsPage({ onNavigate }) {
   const [accounts, setAccounts] = useState([])
   const [selectedAccountEmail, setSelectedAccountEmail] = useState('')
   const [query, setQuery] = useState('')
-  const [folder, setFolder] = useState('INBOX')
+  const [folder, setFolder] = usePersistentState('starwaves.mail.folder', 'INBOX')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [connected, setConnected] = useState(null)

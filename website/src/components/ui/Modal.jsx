@@ -70,6 +70,7 @@ export function Modal({ isOpen, onClose, title, subtitle, children, className = 
         aria-modal="true"
         aria-labelledby={title ? titleId : undefined}
         aria-describedby={subtitle ? descriptionId : undefined}
+        data-dialog-managed="true"
         tabIndex={-1}
         onClick={(event) => event.stopPropagation()}
       >

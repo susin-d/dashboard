@@ -13,6 +13,7 @@ import {
 } from 'lucide-react'
 import { createProject, deleteProject } from '../lib/workspaceApi'
 import { ConfirmDialog, CustomDropdown, PageHeader } from '../components/ui'
+import { usePersistentState } from '../hooks/usePersistentState'
 
 const emptyProject = {
   name: '',
@@ -35,8 +36,8 @@ export function ProjectsPage({ projects, setProjects, onOpenProject, canLoadMore
   const [error, setError] = useState('')
   const [deleteId, setDeleteId] = useState(null)
   const [query, setQuery] = useState('')
-  const [statusFilter, setStatusFilter] = useState('All')
-  const [sortOrder, setSortOrder] = useState('updated')
+  const [statusFilter, setStatusFilter] = usePersistentState('starwaves.projects.status', 'All')
+  const [sortOrder, setSortOrder] = usePersistentState('starwaves.projects.sort', 'updated')
 
   const filteredProjects = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase()

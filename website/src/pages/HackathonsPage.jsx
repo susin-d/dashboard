@@ -12,6 +12,7 @@ import {
   Users,
   X,
 } from 'lucide-react'
+import { usePersistentState } from '../hooks/usePersistentState'
 import { createHackathon, deleteHackathon, updateHackathon } from '../lib/workspaceApi'
 import { ConfirmDialog } from '../components/ui'
 
@@ -46,9 +47,9 @@ export function HackathonsPage({ hackathons, setHackathons, canLoadMore, loading
   const [editError, setEditError] = useState('')
   const [deleteId, setDeleteId] = useState(null)
   const [searchQuery, setSearchQuery] = useState('')
-  const [modeFilter, setModeFilter] = useState('All formats')
-  const [sourceFilter, setSourceFilter] = useState('All sources')
-  const [sortOrder, setSortOrder] = useState('Soonest')
+  const [modeFilter, setModeFilter] = usePersistentState('starwaves.hackathons.mode', 'All formats')
+  const [sourceFilter, setSourceFilter] = usePersistentState('starwaves.hackathons.source', 'All sources')
+  const [sortOrder, setSortOrder] = usePersistentState('starwaves.hackathons.sort', 'Soonest')
 
   const sourceOptions = [...new Set(hackathons.map((item) => item.source || 'manual'))]
   const filteredHackathons = hackathons

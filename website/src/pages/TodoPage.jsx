@@ -1,14 +1,17 @@
 import { useEffect, useMemo, useState } from 'react'
 import { CalendarDays, Check, Pencil, Plus, Trash2, X } from 'lucide-react'
 import { createTodo, deleteTodo, updateTodo } from '../lib/todosApi'
+import { ConfirmDialog } from '../components/ui'
+import { usePersistentState } from '../hooks/usePersistentState'
 
 export function TodoPage({ tasks, setTasks, createIntent }) {
   const [newTask, setNewTask] = useState('')
   const [dueDate, setDueDate] = useState('')
-  const [filter, setFilter] = useState('all')
+  const [filter, setFilter] = usePersistentState('starwaves.todo.filter', 'all')
   const [taskFormOpen, setTaskFormOpen] = useState(false)
   const [taskSaving, setTaskSaving] = useState(false)
   const [taskError, setTaskError] = useState('')
+  const [deleteRequested, setDeleteRequested] = useState(null)
 
   const [editingTask, setEditingTask] = useState(null)
   const [editTitle, setEditTitle] = useState('')
@@ -86,11 +89,14 @@ export function TodoPage({ tasks, setTasks, createIntent }) {
     }
   }
 
-  const removeTask = async (id) => {
+  const removeTask = async () => {
+    const task = deleteRequested
+    if (!task) return
+    setDeleteRequested(null)
     setTaskError('')
     try {
-      await deleteTodo(id)
-      setTasks((current) => current.filter((task) => task.id !== id))
+      await deleteTodo(task.id)
+      setTasks((current) => current.filter((item) => item.id !== task.id))
     } catch (error) {
       setTaskError(error.message)
     }
@@ -163,7 +169,7 @@ export function TodoPage({ tasks, setTasks, createIntent }) {
                   </button>
                   <button
                     className="todo-delete"
-                    onClick={() => removeTask(task.id)}
+                    onClick={() => setDeleteRequested(task)}
                     aria-label={`Delete ${task.title}`}
                   >
                     <Trash2 size={16} />
@@ -315,6 +321,14 @@ export function TodoPage({ tasks, setTasks, createIntent }) {
           </div>
         </div>
       )}
+      <ConfirmDialog
+        isOpen={Boolean(deleteRequested)}
+        title="Delete task?"
+        message={deleteRequested ? `“${deleteRequested.title}” will be permanently deleted.` : ''}
+        confirmLabel="Delete task"
+        onCancel={() => setDeleteRequested(null)}
+        onConfirm={removeTask}
+      />
     </section>
   )
 }

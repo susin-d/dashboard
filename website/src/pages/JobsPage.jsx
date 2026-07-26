@@ -14,6 +14,7 @@ import {
   SlidersHorizontal,
   RotateCcw,
 } from 'lucide-react'
+import { usePersistentState } from '../hooks/usePersistentState'
 import { createJob, deleteJob, updateJob } from '../lib/workspaceApi'
 import { ConfirmDialog } from '../components/ui'
 
@@ -45,9 +46,9 @@ export function JobsPage({ jobs, setJobs, documents, createIntent, canLoadMore, 
   const [editError, setEditError] = useState('')
   const [deleteId, setDeleteId] = useState(null)
   const [searchQuery, setSearchQuery] = useState('')
-  const [statusFilter, setStatusFilter] = useState('All')
-  const [workTypeFilter, setWorkTypeFilter] = useState('All')
-  const [sortOrder, setSortOrder] = useState('recent')
+  const [statusFilter, setStatusFilter] = usePersistentState('starwaves.jobs.status', 'All')
+  const [workTypeFilter, setWorkTypeFilter] = usePersistentState('starwaves.jobs.work-type', 'All')
+  const [sortOrder, setSortOrder] = usePersistentState('starwaves.jobs.sort', 'recent')
 
   useEffect(() => {
     if (createIntent?.type === 'job') setFormOpen(true)
