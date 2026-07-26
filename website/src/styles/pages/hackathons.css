@@ -181,11 +181,6 @@
   font-weight: 700;
 }
 
-.hackathon-bookmark {
-  margin-left: auto;
-  color: var(--text-secondary);
-}
-
 .hackathon-list-card .contest-site-logo {
   width: 26px;
   height: 26px;
@@ -205,15 +200,7 @@
   -webkit-line-clamp: 2;
 }
 
-.hackathon-card-description {
-  min-height: 28px;
-  color: var(--text-secondary);
-  font-size: 10px;
-  line-height: 1.35;
-}
-
 .hackathon-card-meta {
-  justify-content: space-between;
   gap: 6px;
   color: var(--text-secondary);
   font-size: 9px;
@@ -223,14 +210,6 @@
   display: inline-flex;
   align-items: center;
   gap: 5px;
-}
-
-.hackathon-status {
-  padding: 4px 6px;
-  border: 1px solid var(--border-color);
-  border-radius: 5px;
-  font-size: 8px;
-  font-weight: 700;
 }
 
 .hackathon-card-footer {

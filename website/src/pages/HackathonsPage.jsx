@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import {
   CalendarDays,
-  Bookmark,
   ChevronDown,
   ExternalLink,
   Filter,
@@ -274,11 +273,7 @@ export function HackathonsPage({ hackathons, setHackathons, canLoadMore, loading
                 aria-expanded={isOpen}
               >
                 <div className="hackathon-card-topline">
-                  <span className="contest-site-logo">
-                    <Rocket size={18} />
-                  </span>
                   <span className="hackathon-card-source">{hackathon.source === 'manual' ? 'StarWaves' : hackathon.source.toUpperCase()}</span>
-                  <Bookmark size={16} className="hackathon-bookmark" />
                 </div>
                 <span className="contest-site-copy">
                   {hackathon.url ? (
@@ -309,10 +304,8 @@ export function HackathonsPage({ hackathons, setHackathons, canLoadMore, loading
                     {hackathon.organizer}
                   </small>
                 </span>
-                <span className="hackathon-card-description">{hackathon.mode} opportunity · Build, learn, and grow</span>
                 <div className="hackathon-card-meta">
                   <span><CalendarDays size={13} />{startsAt.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })} – {endsAt.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}</span>
-                  <span className="hackathon-status">{hackathon.mode}</span>
                 </div>
                 <div className="hackathon-card-footer">
                   <strong>{hackathon.teamSize || 'Open'} <small>team size</small></strong>
