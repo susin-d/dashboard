@@ -103,12 +103,12 @@
   bottom: 0;
   left: 72px;
   z-index: 20;
-  width: 64px;
+  width: 72px;
   background: var(--bg-secondary);
   border-right: 1px solid var(--border-color);
   display: flex;
   flex-direction: column;
-  padding: 16px 18px 16px;
+  padding: 16px 14px;
   overflow-x: hidden;
   overflow-y: auto;
   transition:
@@ -138,8 +138,8 @@
   font-weight: 550;
   gap: 16px;
   min-height: 48px;
-  min-width: 54px;
-  padding: 10px 16px;
+  min-width: 0;
+  padding: 10px 12px;
   text-decoration: none;
   width: 100%;
 }
@@ -286,7 +286,7 @@
   border-radius: 50%;
   color: var(--text-inverse);
   display: inline-flex;
-  flex: 0 0 auto;
+  flex: 0 0 24px;
   font-size: 11px;
   font-weight: 700;
   height: 24px;
