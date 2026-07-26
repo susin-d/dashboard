@@ -78,9 +78,8 @@ export function HackathonsPage({ hackathons, setHackathons, canLoadMore, loading
 
     try {
       const { hackathonId } = JSON.parse(rawFocus)
-      if (hackathons.some((hackathon) => hackathon.id === hackathonId)) {
-        setOpenHackathons((current) => new Set([...current, hackathonId]))
-      }
+      const focusedHackathon = hackathons.find((hackathon) => hackathon.id === hackathonId)
+      if (focusedHackathon) setDetailModalHackathon(focusedHackathon)
     } finally {
       localStorage.removeItem('starwaves.hackathon-focus')
     }
@@ -325,30 +324,27 @@ export function HackathonsPage({ hackathons, setHackathons, canLoadMore, loading
                         <span key={tag}>{tag}</span>
                       ))}
                     </div>
-                    <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                    <div className="hackathon-card-actions">
                       <button
-                        className="secondary-button"
+                        className="secondary-button hackathon-card-action"
                         type="button"
                         onClick={() => setDetailModalHackathon(hackathon)}
-                        style={{ padding: '0.35rem 0.7rem', fontSize: '0.85rem' }}
                       >
                         All details
                       </button>
                       {isManual && (
                         <>
                           <button
-                            className="secondary-button"
+                            className="secondary-button hackathon-card-action"
                             type="button"
                             onClick={() => openEditModal(hackathon)}
-                            style={{ padding: '0.35rem 0.7rem', fontSize: '0.85rem' }}
                           >
                             <Pencil size={14} /> Edit
                           </button>
                           <button
-                            className="secondary-button"
+                            className="secondary-button hackathon-card-action"
                             type="button"
                             onClick={() => handleDeleteHackathon(hackathon.id)}
-                            style={{ padding: '0.35rem 0.7rem', fontSize: '0.85rem' }}
                           >
                             <Trash2 size={14} /> Delete
                           </button>
@@ -356,7 +352,7 @@ export function HackathonsPage({ hackathons, setHackathons, canLoadMore, loading
                       )}
                       {hackathon.url && (
                         <a
-                          className="primary-button"
+                          className="primary-button hackathon-card-action"
                           href={hackathon.url}
                           target="_blank"
                           rel="noopener noreferrer"
