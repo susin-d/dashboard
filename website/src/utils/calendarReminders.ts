@@ -40,7 +40,7 @@ function reminderType(event: CalendarEvent) {
   return 'calendar'
 }
 
-function reminderDestination(event: CalendarEvent) {
+function reminderDestination() {
   return 'calendar'
 }
 

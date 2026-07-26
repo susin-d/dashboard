@@ -483,6 +483,7 @@ export function CalendarPage({ eventsByDate, onNavigate }) {
                         task.completed ? 'completed' : ''
                       }`}
                       key={task.id}
+                      data-record-id={task.id}
                       role="link"
                       tabIndex={0}
                       onClick={() => onNavigate('todo')}
@@ -532,6 +533,7 @@ export function CalendarPage({ eventsByDate, onNavigate }) {
                       <div
                         className="calendar-detail-contest"
                         key={contest.id}
+                        data-record-id={contest.id}
                         role="link"
                         tabIndex={0}
                         onClick={() => onNavigate('competitive-coding')}
@@ -579,6 +581,7 @@ export function CalendarPage({ eventsByDate, onNavigate }) {
                     <div
                       className="calendar-detail-record"
                       key={hackathon.id}
+                      data-record-id={hackathon.id}
                       role="link"
                       tabIndex={0}
                       onClick={() => onNavigate('hackathons')}
@@ -619,6 +622,7 @@ export function CalendarPage({ eventsByDate, onNavigate }) {
                     <div
                       className="calendar-detail-record"
                       key={project.id}
+                      data-record-id={project.id}
                       role="link"
                       tabIndex={0}
                       onClick={() => onNavigate('projects')}
@@ -655,6 +659,7 @@ export function CalendarPage({ eventsByDate, onNavigate }) {
                     <div
                       className="calendar-detail-record"
                       key={`${job.id}-${job.calendarKind}`}
+                      data-record-id={job.id}
                       role="link"
                       tabIndex={0}
                       onClick={() => onNavigate('jobs')}
@@ -701,7 +706,7 @@ export function CalendarPage({ eventsByDate, onNavigate }) {
                       event.calendarName && event.calendarName !== event.accountEmail
 
                     return (
-                      <div className="calendar-detail-record" key={event.id}>
+                      <div className="calendar-detail-record" key={event.id} data-record-id={event.id}>
                         <div className="calendar-detail-record-icon google-calendar-icon">
                           <CalendarDays size={16} />
                         </div>
