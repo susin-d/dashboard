@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import {
   BriefcaseBusiness,
   CalendarDays,
@@ -55,6 +55,7 @@ export function CalendarPage({ eventsByDate, onNavigate }) {
   const [jumpDay, setJumpDay] = useState(today.getDate())
   const [jumpMonth, setJumpMonth] = useState(today.getMonth())
   const [jumpYear, setJumpYear] = useState(today.getFullYear())
+  const [focusedEventId, setFocusedEventId] = useState(null)
   const days = useMemo(() => buildCalendarDays(visibleMonth), [visibleMonth])
   const months = useMemo(
     () =>
@@ -77,6 +78,33 @@ export function CalendarPage({ eventsByDate, onNavigate }) {
   const selectedEvents = selectedDate
     ? eventsByDate.get(calendarDateKey(selectedDate)) ?? []
     : []
+
+  useEffect(() => {
+    const rawFocus = localStorage.getItem('starwaves.calendar-focus')
+    if (!rawFocus) return
+
+    try {
+      const focus = JSON.parse(rawFocus)
+      const focusDate = new Date(`${focus.dateKey}T00:00:00`)
+      if (Number.isNaN(focusDate.getTime())) return
+      setVisibleMonth(new Date(focusDate.getFullYear(), focusDate.getMonth(), 1))
+      setSelectedDate(focusDate)
+      setFocusedEventId(focus.targetId)
+      localStorage.removeItem('starwaves.calendar-focus')
+    } catch {
+      localStorage.removeItem('starwaves.calendar-focus')
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!focusedEventId) return
+    const target = document.querySelector(`[data-record-id="${CSS.escape(focusedEventId)}"]`)
+    if (!target) return
+    target.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    target.classList.add('notification-target-highlight')
+    const timer = window.setTimeout(() => target.classList.remove('notification-target-highlight'), 1600)
+    return () => window.clearTimeout(timer)
+  }, [focusedEventId, selectedDate])
   const selectedTasks = selectedEvents
     .filter((event) => event.type === 'task')
     .map((event) => event.source)

@@ -10,6 +10,7 @@ type ReminderNotification = {
   message: string
   time: string
   unread: boolean
+  targetId: string
 }
 
 function localDateAt(dateKey: string, time = '09:00:00') {
@@ -40,16 +41,7 @@ function reminderType(event: CalendarEvent) {
 }
 
 function reminderDestination(event: CalendarEvent) {
-  const destinations: Record<CalendarEvent['type'], string> = {
-    task: 'todo',
-    contest: 'competitive-coding',
-    hackathon: 'hackathons',
-    project: 'projects',
-    job: 'jobs',
-    google: 'calendar',
-  }
-
-  return destinations[event.type] ?? 'calendar'
+  return 'calendar'
 }
 
 export function buildCalendarReminders(
@@ -85,6 +77,8 @@ export function buildCalendarReminders(
         message: event.label,
         time,
         unread: true,
+        targetId: event.source.id,
+        dateKey,
       })
     })
   })

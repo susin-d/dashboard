@@ -68,7 +68,7 @@ export function CompetitiveCodingPage({ contestSites }) {
                       const startDate = new Date(contest.startsAt)
 
                       return (
-                        <div className="contest-row" key={contest.id}>
+                        <div className="contest-row" key={contest.id} data-record-id={contest.id}>
                           <div className="contest-date-tile">
                             <span>
                               {startDate.toLocaleDateString(undefined, {

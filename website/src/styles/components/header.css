@@ -515,4 +515,13 @@
     width: 160px;
   }
 }
+.notification-target-highlight {
+  outline: 2px solid var(--text-primary);
+  outline-offset: 3px;
+  animation: notification-target-pulse 1.6s ease-out;
+}
 
+@keyframes notification-target-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 transparent; }
+  25% { box-shadow: 0 0 0 5px var(--bg-hover); }
+}

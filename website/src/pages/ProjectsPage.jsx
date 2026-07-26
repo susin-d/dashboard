@@ -105,6 +105,7 @@ export function ProjectsPage({ projects, setProjects, onOpenProject }) {
                 isOpen ? 'open' : ''
               }`}
               key={project.id}
+              data-record-id={project.id}
             >
               <button
                 className="contest-site-header"

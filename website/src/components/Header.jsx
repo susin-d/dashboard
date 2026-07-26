@@ -116,7 +116,26 @@ export function Header({
 
     const destination =
       notification.destination ?? notificationDestinations[notification.type]
-    if (destination) onNavigate(destination)
+    if (destination) {
+      if (destination === 'calendar' && notification.targetId && notification.dateKey) {
+        localStorage.setItem(
+          'starwaves.calendar-focus',
+          JSON.stringify({ targetId: notification.targetId, dateKey: notification.dateKey }),
+        )
+      }
+      onNavigate(destination)
+      if (notification.targetId) {
+        window.setTimeout(() => {
+          const target = document.querySelector(
+            `[data-record-id="${CSS.escape(notification.targetId)}"]`,
+          )
+          if (!target) return
+          target.scrollIntoView({ behavior: 'smooth', block: 'center' })
+          target.classList.add('notification-target-highlight')
+          window.setTimeout(() => target.classList.remove('notification-target-highlight'), 1600)
+        }, 120)
+      }
+    }
   }
 
   const handleMarkAllRead = () => {
@@ -357,4 +376,3 @@ export function Header({
     </>
   )
 }
-

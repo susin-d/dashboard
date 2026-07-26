@@ -156,6 +156,7 @@ export function JobsPage({ jobs, setJobs, documents, createIntent }) {
             <article
               className={`contest-site-card job-list-card ${isOpen ? 'open' : ''}`}
               key={job.id}
+              data-record-id={job.id}
             >
               <button
                 className="contest-site-header"

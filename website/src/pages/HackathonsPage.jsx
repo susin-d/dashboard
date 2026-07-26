@@ -161,6 +161,7 @@ export function HackathonsPage({ hackathons, setHackathons }) {
                 isOpen ? 'open' : ''
               }`}
               key={hackathon.id}
+              data-record-id={hackathon.id}
             >
               <div
                 className="contest-site-header"
@@ -467,5 +468,4 @@ export function HackathonsPage({ hackathons, setHackathons }) {
     </section>
   )
 }
-
 

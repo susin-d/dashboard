@@ -130,7 +130,8 @@ export function TodoPage({ tasks, setTasks, createIntent }) {
           {visibleTasks.length ? (
             visibleTasks.map((task) => (
               <div
-                className={`todo-item ${task.completed ? 'completed' : ''}`}
+              className={`todo-item ${task.completed ? 'completed' : ''}`}
+              data-record-id={task.id}
                 key={task.id}
               >
                 <button
@@ -317,4 +318,3 @@ export function TodoPage({ tasks, setTasks, createIntent }) {
     </section>
   )
 }
-
