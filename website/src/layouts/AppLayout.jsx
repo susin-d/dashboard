@@ -20,20 +20,34 @@ export function AppLayout({
   const [sidebarExpanded, setSidebarExpanded] = useState(false)
 
   useEffect(() => {
-    const handlePointerMove = (event) => {
-      if (window.innerWidth <= 760 || event.pointerType === 'touch') return
+    let frameId = null
+    let latestClientX = null
 
+    const updateSidebarState = () => {
+      frameId = null
+      if (latestClientX === null) return
+
+      const expandedBoundary = activePage === 'mails' ? 470 : 280
       setSidebarExpanded((expanded) => {
-        const expandedBoundary = activePage === 'mails' ? 470 : 280
-
-        if (!expanded && event.clientX <= 96) return true
-        if (expanded && event.clientX > expandedBoundary) return false
-        return expanded
+        const nextExpanded = expanded
+          ? latestClientX <= expandedBoundary
+          : latestClientX <= 96
+        return nextExpanded === expanded ? expanded : nextExpanded
       })
     }
 
+    const handlePointerMove = (event) => {
+      if (window.innerWidth <= 760 || event.pointerType === 'touch') return
+
+      latestClientX = event.clientX
+      if (frameId === null) frameId = window.requestAnimationFrame(updateSidebarState)
+    }
+
     window.addEventListener('pointermove', handlePointerMove)
-    return () => window.removeEventListener('pointermove', handlePointerMove)
+    return () => {
+      window.removeEventListener('pointermove', handlePointerMove)
+      if (frameId !== null) window.cancelAnimationFrame(frameId)
+    }
   }, [activePage])
 
   return (

@@ -81,7 +81,10 @@ export function useWorkspaceData(currentUser, activePage) {
 
   // Calendar Reminder Sync
   useEffect(() => {
+    let timer
+
     const syncReminders = () => {
+      if (document.hidden) return
       const generated = buildCalendarReminders(calendarEventIndex)
       setNotifications((current) => {
         const existingById = new Map(
@@ -99,8 +102,29 @@ export function useWorkspaceData(currentUser, activePage) {
     }
 
     syncReminders()
-    const timer = window.setInterval(syncReminders, 60 * 1000)
-    return () => window.clearInterval(timer)
+    const startTimer = () => {
+      if (!document.hidden && !timer) timer = window.setInterval(syncReminders, 60 * 1000)
+    }
+    const stopTimer = () => {
+      if (timer) {
+        window.clearInterval(timer)
+        timer = undefined
+      }
+    }
+    const handleVisibilityChange = () => {
+      if (document.hidden) stopTimer()
+      else {
+        syncReminders()
+        startTimer()
+      }
+    }
+
+    startTimer()
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    return () => {
+      stopTimer()
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+    }
   }, [calendarEventIndex])
 
   // Google Calendar & Documents Fetch

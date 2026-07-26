@@ -46,7 +46,7 @@ export function CalendarPicker({ value = null, onChange, placeholder = 'dd------
 
   return (
     <div className="calendar-picker" ref={rootRef}>
-      <button className="calendar-picker-input" onClick={() => setOpen((current) => !current)} aria-expanded={open}>
+      <button type="button" className="calendar-picker-input" onClick={() => setOpen((current) => !current)} aria-expanded={open}>
         <span className={displayValue ? '' : 'calendar-picker-placeholder'}>{displayValue || placeholder}</span>
         <ChevronDown size={16} className={open ? 'chevron-open' : ''} />
       </button>
@@ -55,8 +55,8 @@ export function CalendarPicker({ value = null, onChange, placeholder = 'dd------
           <div className="calendar-picker-header">
             <strong>{month.toLocaleDateString(undefined, { month: 'long', year: 'numeric' })}</strong>
             <div>
-              <button onClick={() => moveMonth(-1)} aria-label="Previous month"><ChevronLeft size={18} /></button>
-              <button onClick={() => moveMonth(1)} aria-label="Next month"><ChevronRight size={18} /></button>
+              <button type="button" onClick={() => moveMonth(-1)} aria-label="Previous month"><ChevronLeft size={18} /></button>
+              <button type="button" onClick={() => moveMonth(1)} aria-label="Next month"><ChevronRight size={18} /></button>
             </div>
           </div>
           <div className="calendar-picker-weekdays">{weekDays.map((day) => <span key={day}>{day}</span>)}</div>
@@ -70,8 +70,8 @@ export function CalendarPicker({ value = null, onChange, placeholder = 'dd------
             ))}
           </div>
           <div className="calendar-picker-footer">
-            <button onClick={() => { onChange?.(null); setOpen(false) }}>Clear</button>
-            <button onClick={() => selectDate(today)}>Today</button>
+            <button type="button" onClick={() => { onChange?.(null); setOpen(false) }}>Clear</button>
+            <button type="button" onClick={() => selectDate(today)}>Today</button>
           </div>
         </div>
       )}

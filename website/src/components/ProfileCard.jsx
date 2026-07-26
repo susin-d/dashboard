@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Mail, ShieldCheck, User, X } from 'lucide-react'
 import { updateUserProfile } from '../lib/authApi'
 
@@ -7,6 +7,15 @@ export function ProfileCard({ user, onProfileUpdated }) {
   const [displayName, setDisplayName] = useState(user?.fullName || '')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+
+  useEffect(() => {
+    if (!editing) return undefined
+    const handleKeyDown = (event) => {
+      if (event.key === 'Escape') setEditing(false)
+    }
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [editing])
 
   const handleSave = async (e) => {
     e.preventDefault()
@@ -37,6 +46,7 @@ export function ProfileCard({ user, onProfileUpdated }) {
             <p>{user.role}</p>
           </div>
           <button
+            type="button"
             className="profile-edit-button"
             onClick={() => {
               setDisplayName(user.fullName)
@@ -67,34 +77,33 @@ export function ProfileCard({ user, onProfileUpdated }) {
 
       {editing && (
         <div className="modal-backdrop" onClick={() => setEditing(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '420px', padding: '1.5rem', borderRadius: '12px', background: 'var(--bg-surface, #fff)', border: '1px solid var(--border-color, #ccc)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-              <h3 style={{ margin: 0, fontSize: '1.1rem' }}>Edit Profile</h3>
-              <button type="button" onClick={() => setEditing(false)} style={{ background: 'none', border: 'none', cursor: 'pointer' }}>
+          <div className="modal profile-edit-modal" role="dialog" aria-modal="true" aria-labelledby="profile-edit-title" onClick={(e) => e.stopPropagation()}>
+            <div className="profile-edit-header">
+              <h2 id="profile-edit-title">Edit Profile</h2>
+              <button type="button" className="icon-button" onClick={() => setEditing(false)} aria-label="Close profile editor">
                 <X size={18} />
               </button>
             </div>
             <form onSubmit={handleSave}>
-              <label style={{ display: 'block', marginBottom: '1rem', fontSize: '0.9rem', fontWeight: 500 }}>
+              <label className="profile-edit-field">
                 Display Name
-                <div style={{ display: 'flex', alignItems: 'center', marginTop: '0.4rem', border: '1px solid var(--border-color, #ccc)', borderRadius: '6px', padding: '0.4rem 0.6rem' }}>
-                  <User size={16} style={{ marginRight: '0.5rem', opacity: 0.7 }} />
+                <div className="profile-edit-input">
+                  <User size={16} aria-hidden="true" />
                   <input
                     type="text"
                     value={displayName}
                     onChange={(e) => setDisplayName(e.target.value)}
                     placeholder="Enter full name"
-                    style={{ border: 'none', outline: 'none', width: '100%', background: 'transparent', color: 'inherit' }}
                     required
                   />
                 </div>
               </label>
-              {error && <p style={{ color: 'var(--text-primary)', fontSize: '0.85rem', marginBottom: '0.75rem' }}>{error}</p>}
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem' }}>
-                <button type="button" onClick={() => setEditing(false)} className="secondary-button" style={{ padding: '0.4rem 0.8rem' }}>
+              {error && <p className="form-field-error" role="alert">{error}</p>}
+              <div className="profile-edit-actions">
+                <button type="button" onClick={() => setEditing(false)} className="secondary-button">
                   Cancel
                 </button>
-                <button type="submit" disabled={saving} className="primary-button" style={{ padding: '0.4rem 0.8rem' }}>
+                <button type="submit" disabled={saving} className="primary-button">
                   {saving ? 'Saving…' : 'Save Changes'}
                 </button>
               </div>

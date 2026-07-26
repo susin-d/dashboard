@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
-  Archive, ChevronDown, ChevronLeft, ChevronRight, ExternalLink, Inbox, LoaderCircle, Mail, MailOpen,
+  Archive, ChevronDown, ChevronLeft, ChevronRight, Inbox, LoaderCircle, Mail, MailOpen,
   MailPlus, Plus, RefreshCw, Reply, Search, Send, Star, Trash2, X,
 } from 'lucide-react'
 import {
@@ -262,10 +262,6 @@ export function MailsPage({ onNavigate }) {
           </button>
         ))}
 
-        <a href="https://mail.google.com" target="_blank" rel="noreferrer">
-          <ExternalLink size={18} />
-          <span>Open Gmail</span>
-        </a>
         <div className="mail-account-menu">
           <button
             className="mail-account-trigger"

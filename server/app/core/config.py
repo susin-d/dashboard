@@ -73,6 +73,7 @@ class Settings:
         "AUTH_SECRET_KEY",
         "starwaves-super-secret-auth-key-change-in-prod",
     )
+    cron_secret: str | None = os.getenv("CRON_SECRET")
     firestore_database_id: str = os.getenv(
         "FIRESTORE_DATABASE_ID",
         "(default)",

@@ -314,7 +314,7 @@ export function Header({
                 {unreadCount} unread
               </span>
               {notifications.length > 0 && (
-                <button onClick={handleMarkAllRead}>
+                <button type="button" onClick={handleMarkAllRead}>
                   <CheckCheck size={14} />
                   Mark all read
                 </button>
@@ -323,9 +323,9 @@ export function Header({
 
             <div className="notification-list">
               {notifications.length === 0 ? (
-                <div style={{ textAlign: 'center', padding: '2rem 1rem', color: 'var(--text-secondary, #888)' }}>
-                  <Bell size={24} style={{ marginBottom: '0.5rem', opacity: 0.5 }} />
-                  <p style={{ margin: 0, fontSize: '0.9rem' }}>No notifications</p>
+                <div className="notification-empty">
+                  <Bell size={24} aria-hidden="true" />
+                  <p>No notifications</p>
                 </div>
               ) : (
                 notifications.map((notification) => {
@@ -339,12 +339,16 @@ export function Header({
                       }`}
                       key={notification.id}
                       onClick={() => openNotification(notification)}
-                      style={{ position: 'relative', display: 'flex', alignItems: 'center' }}
+                      role="button"
+                      tabIndex="0"
+                      onKeyDown={(event) => {
+                        if (event.key === 'Enter' || event.key === ' ') openNotification(notification)
+                      }}
                     >
                       <span className="notification-icon">
                         <NotificationIcon size={17} />
                       </span>
-                      <span className="notification-copy" style={{ flex: 1 }}>
+                      <span className="notification-copy">
                         <strong>{notification.title}</strong>
                         <span>{notification.message}</span>
                         <small>{notification.time}</small>
@@ -356,14 +360,8 @@ export function Header({
                         type="button"
                         onClick={(e) => handleDeleteNotification(e, notification.id)}
                         title="Dismiss notification"
-                        style={{
-                          background: 'none',
-                          border: 'none',
-                          padding: '4px',
-                          cursor: 'pointer',
-                          opacity: 0.6,
-                          marginLeft: '8px',
-                        }}
+                        className="notification-dismiss"
+                        aria-label={`Dismiss ${notification.title}`}
                       >
                         <Trash2 size={14} />
                       </button>

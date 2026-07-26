@@ -62,7 +62,7 @@ export function TermsOfServicePage({ onNavigate }) {
           <section>
             <h2 style={{ fontSize: '20px', fontWeight: 700, marginBottom: '12px' }}>3. Third-Party Integrations & Google Services</h2>
             <p>
-              StarWaves integrates with third-party services including Google Calendar, Google Drive, Gmail, and GitHub. By connecting these services, you grant StarWaves authorization to access data specified during the OAuth authorization flow in accordance with our <span style={{ textDecoration: 'underline', cursor: 'pointer' }} onClick={() => onNavigate('/privacy')}>Privacy Policy</span>.
+              StarWaves integrates with third-party services including Google Calendar, Google Drive, Gmail, and GitHub. By connecting these services, you grant StarWaves authorization to access data specified during the OAuth authorization flow in accordance with our <button className="inline-link" type="button" onClick={() => onNavigate('/privacy')}>Privacy Policy</button>.
             </p>
             <p style={{ marginTop: '8px' }}>
               You remain subject to the respective terms and conditions of third-party providers (e.g., Google Terms of Service). StarWaves is not responsible for third-party outage or changes in third-party API availability.
