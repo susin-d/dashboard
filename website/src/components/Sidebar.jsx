@@ -1,5 +1,4 @@
 import { useLayoutEffect, useRef, useState } from 'react'
-import { X } from 'lucide-react'
 import { navigationItems } from '../config/navigation'
 
 export function Sidebar({
@@ -67,13 +66,6 @@ export function Sidebar({
         />
         <div className="sidebar-heading">
           <span>Workspace</span>
-          <button
-            className="icon-button close-button"
-            onClick={onClose}
-            aria-label="Close navigation"
-          >
-            <X size={19} />
-          </button>
         </div>
 
         <nav aria-label="Main navigation">

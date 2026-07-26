@@ -423,16 +423,41 @@
   padding: 20px 22px;
 }
 
+.google-calendar-settings-body {
+  display: grid;
+  gap: 20px;
+}
+
+.google-calendar-account-list {
+  overflow: hidden;
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  background: var(--bg-card);
+}
+
 .google-calendar-account {
   display: flex;
   align-items: center;
   gap: 14px;
-  padding: 13px 0;
+  min-width: 0;
+  padding: 16px;
   border-top: 1px solid var(--border-color);
 }
 
 .google-calendar-account:first-child {
   border-top: 0;
+}
+
+.google-calendar-account > div {
+  overflow: hidden;
+}
+
+.google-calendar-account strong,
+.google-calendar-account small {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .google-calendar-account > div,
@@ -475,6 +500,13 @@
 }
 
 .google-calendar-chips span {
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   padding: 4px 7px;
   border-radius: var(--radius-full);
   background: var(--bg-tertiary);
@@ -504,6 +536,31 @@
   color: var(--text-secondary);
   font-size: 10px;
   line-height: 1.55;
+}
+
+.google-calendar-refresh {
+  justify-self: start;
+}
+
+@media (max-width: 560px) {
+  .google-calendar-settings-body,
+  .github-settings-copy {
+    padding: 16px;
+  }
+
+  .google-calendar-account {
+    align-items: flex-start;
+    gap: 10px;
+    padding: 14px;
+  }
+
+  .google-calendar-remove {
+    margin-left: auto;
+  }
+
+  .google-calendar-chips span {
+    max-width: 170px;
+  }
 }
 
 .delete-account-modal-icon {
