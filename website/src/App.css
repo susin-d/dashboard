@@ -30,3 +30,6 @@
 @import './styles/pages/chats.css';
 @import './styles/pages/landing-auth.css';
 @import './styles/pages/missing-states.css';
+
+/* Final shared geometry pass */
+@import './styles/layout-symmetry.css';

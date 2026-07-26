@@ -1,0 +1,246 @@
+/* Shared page geometry. This file intentionally loads after page styles. */
+
+.content {
+  width: calc(100% - 72px);
+  max-width: none;
+  margin-right: 0;
+  padding-right: var(--layout-gutter);
+  padding-left: var(--layout-gutter);
+}
+
+.sidebar-expanded .content {
+  width: calc(100% - 244px);
+}
+
+.content > :where(
+  .dashboard-page,
+  .calendar-page,
+  .competitive-coding-page,
+  .documents-page,
+  .document-opener-page,
+  .hackathons-page,
+  .jobs-page,
+  .mail-page,
+  .chats-page,
+  .profile-page,
+  .project-page,
+  .projects-page,
+  .setting-page,
+  .stats-page,
+  .todo-page
+) {
+  width: min(100%, var(--layout-max-width));
+  margin-inline: auto;
+}
+
+:where(
+  .competitive-coding-page,
+  .documents-page,
+  .document-opener-page,
+  .hackathons-page,
+  .jobs-page,
+  .profile-page,
+  .project-page,
+  .projects-page,
+  .stats-page,
+  .todo-page
+) {
+  display: grid;
+  align-content: start;
+  gap: var(--layout-section-gap);
+}
+
+.page-heading,
+.dashboard-heading,
+.project-page-heading,
+.calendar-toolbar {
+  min-height: 72px;
+  align-items: center;
+  gap: 20px;
+}
+
+.page-heading,
+.dashboard-heading {
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.page-heading > :first-child,
+.dashboard-heading > :first-child,
+.project-page-heading > :nth-child(2),
+.calendar-toolbar > :first-child {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.page-heading-actions,
+.dashboard-heading-actions,
+.project-page-header-actions,
+.calendar-actions {
+  display: flex;
+  flex: 0 1 auto;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+:where(
+  .page-heading-actions,
+  .dashboard-heading-actions,
+  .project-page-header-actions,
+  .calendar-actions
+) :where(button, a, select, input) {
+  min-height: 40px;
+}
+
+:where(
+  .workspace-insight-grid,
+  .stats-metric-grid,
+  .stats-detail-grid,
+  .project-page-grid,
+  .project-detail-grid,
+  .job-detail-grid,
+  .document-detail-grid,
+  .hackathon-detail-grid,
+  .landing-feature-grid,
+  .workflow-steps-grid,
+  .google-data-grid,
+  .stats-ticker-grid
+) {
+  align-items: stretch;
+}
+
+:where(
+  .workspace-insight-grid,
+  .stats-metric-grid,
+  .stats-detail-grid,
+  .project-page-grid,
+  .landing-feature-grid,
+  .workflow-steps-grid,
+  .google-data-grid
+) > * {
+  min-width: 0;
+  height: 100%;
+}
+
+.calendar-content {
+  padding-right: var(--layout-gutter);
+  padding-left: var(--layout-gutter);
+}
+
+.calendar-toolbar {
+  padding-inline: 0;
+}
+
+.chats-container,
+.mail-layout {
+  width: 100%;
+  min-width: 0;
+}
+
+.public-page > :where(
+  .public-header,
+  .landing-hero,
+  .landing-workflow-section,
+  .landing-faq-section,
+  .landing-final-cta,
+  .public-footer,
+  .legal-page
+) {
+  width: min(100%, var(--layout-public-max-width));
+  margin-inline: auto;
+}
+
+.landing-hero,
+.auth-page {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.landing-feature-section,
+.landing-google-data-section {
+  padding-right: max(var(--layout-gutter), calc((100% - var(--layout-public-max-width)) / 2));
+  padding-left: max(var(--layout-gutter), calc((100% - var(--layout-public-max-width)) / 2));
+}
+
+.auth-form-panel,
+.auth-brand-panel {
+  min-width: 0;
+}
+
+.auth-form-shell,
+.onboarding-card {
+  width: min(100%, 480px);
+  margin-inline: auto;
+}
+
+@media (max-width: 1024px) {
+  .stats-metric-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .landing-hero,
+  .auth-page {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .content,
+  .sidebar-expanded .content {
+    width: 100%;
+    margin-left: 0;
+    padding-right: var(--layout-gutter);
+    padding-left: var(--layout-gutter);
+  }
+
+  .page-heading,
+  .dashboard-heading,
+  .project-page-heading,
+  .calendar-toolbar {
+    min-height: 0;
+    align-items: stretch;
+  }
+
+  .page-heading-actions,
+  .dashboard-heading-actions,
+  .project-page-header-actions,
+  .calendar-actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .calendar-content {
+    padding-right: var(--layout-gutter);
+    padding-left: var(--layout-gutter);
+  }
+}
+
+@media (max-width: 560px) {
+  .page-heading-actions,
+  .dashboard-heading-actions,
+  .project-page-header-actions,
+  .calendar-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  :where(
+    .page-heading-actions,
+    .dashboard-heading-actions,
+    .project-page-header-actions,
+    .calendar-actions
+  ) > :where(button, a, div) {
+    width: 100%;
+  }
+
+  .workspace-insight-grid,
+  .stats-metric-grid,
+  .stats-detail-grid,
+  .project-page-grid,
+  .landing-feature-grid,
+  .workflow-steps-grid,
+  .google-data-grid,
+  .stats-ticker-grid {
+    grid-template-columns: 1fr;
+  }
+}
