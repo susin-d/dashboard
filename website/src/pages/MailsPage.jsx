@@ -364,7 +364,9 @@ export function MailsPage({ onNavigate }) {
           <div className="mail-card">
             <header className="mail-card-header">
               <div>
-                <span className="mail-avatar">{(selected.sender || selected.from || 'M')[0]?.toUpperCase()}</span>
+                <span className="mail-avatar" aria-label="Mail" title="Mail">
+                  <Mail size={22} strokeWidth={2.25} aria-hidden="true" />
+                </span>
                 <div>
                   <h3 id="message-title">{selected.subject || '(No Subject)'}</h3>
                   <span>{selected.from} → {selected.to || 'me'}</span>
