@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import {
   CalendarDays,
+  Bookmark,
   ChevronDown,
   ExternalLink,
   Filter,
@@ -28,11 +29,18 @@ const emptyHackathon = {
 }
 
 export function HackathonsPage({ hackathons, setHackathons, canLoadMore, loadingMore, onLoadMore }) {
+  const [cardLayout, setCardLayout] = useState(
+    () => window.localStorage.getItem('starwaves-hackathon-layout') || 'compact',
+  )
   const [openHackathons, setOpenHackathons] = useState(
     () => new Set([hackathons[0]?.id]),
   )
   const [detailModalHackathon, setDetailModalHackathon] = useState(null)
   const [formOpen, setFormOpen] = useState(false)
+
+  useEffect(() => {
+    window.localStorage.setItem('starwaves-hackathon-layout', cardLayout)
+  }, [cardLayout])
   const [form, setForm] = useState(emptyHackathon)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
@@ -222,6 +230,14 @@ export function HackathonsPage({ hackathons, setHackathons, canLoadMore, loading
           <select value={sortOrder} onChange={(event) => setSortOrder(event.target.value)} aria-label="Sort hackathons">
             <option>Soonest</option><option>Latest</option>
           </select>
+          <label className="hackathon-layout-control">
+            Layout
+            <select value={cardLayout} onChange={(event) => setCardLayout(event.target.value)} aria-label="Customize card layout">
+              <option value="compact">Compact</option>
+              <option value="balanced">Balanced</option>
+              <option value="spacious">Spacious</option>
+            </select>
+          </label>
         </div>
         {(searchQuery || modeFilter !== 'All formats' || sourceFilter !== 'All sources' || sortOrder !== 'Soonest') && (
           <button className="text-button" type="button" onClick={clearFilters}>Reset</button>
@@ -229,7 +245,7 @@ export function HackathonsPage({ hackathons, setHackathons, canLoadMore, loading
       </div>
       <div className="hackathon-results-meta"><span>{filteredHackathons.length} of {hackathons.length} opportunities</span><span>{filteredHackathons.length ? 'Open one to see the details' : 'Try a different filter'}</span></div>
 
-      <div className="hackathon-list">
+      <div className={`hackathon-list hackathon-layout-${cardLayout}`}>
         {filteredHackathons.map((hackathon) => {
           const startsAt = new Date(hackathon.startsAt)
           const endsAt = new Date(hackathon.endsAt)
@@ -257,9 +273,13 @@ export function HackathonsPage({ hackathons, setHackathons, canLoadMore, loading
                 }}
                 aria-expanded={isOpen}
               >
-                <span className="contest-site-logo">
-                  <Rocket size={18} />
-                </span>
+                <div className="hackathon-card-topline">
+                  <span className="contest-site-logo">
+                    <Rocket size={18} />
+                  </span>
+                  <span className="hackathon-card-source">{hackathon.source === 'manual' ? 'StarWaves' : hackathon.source.toUpperCase()}</span>
+                  <Bookmark size={16} className="hackathon-bookmark" />
+                </div>
                 <span className="contest-site-copy">
                   {hackathon.url ? (
                     <a
@@ -287,13 +307,17 @@ export function HackathonsPage({ hackathons, setHackathons, canLoadMore, loading
                   )}
                   <small>
                     {hackathon.organizer}
-                    {hackathon.source !== 'manual' && (
-                      <> · {hackathon.source.toUpperCase()}</>
-                    )}
                   </small>
                 </span>
-                <span className="contest-upcoming-count">{hackathon.mode}</span>
-                <ChevronDown size={18} />
+                <span className="hackathon-card-description">{hackathon.mode} opportunity · Build, learn, and grow</span>
+                <div className="hackathon-card-meta">
+                  <span><CalendarDays size={13} />{startsAt.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })} – {endsAt.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                  <span className="hackathon-status">{hackathon.mode}</span>
+                </div>
+                <div className="hackathon-card-footer">
+                  <strong>{hackathon.teamSize || 'Open'} <small>team size</small></strong>
+                  <ChevronDown size={17} />
+                </div>
               </div>
 
               {isOpen && (
