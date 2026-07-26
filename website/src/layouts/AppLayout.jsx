@@ -21,7 +21,9 @@ export function AppLayout({
   const [sidebarExpanded, setSidebarExpanded] = useState(
     () => localStorage.getItem('starwaves.sidebar-expanded') === 'true',
   )
+  const [sidebarProximityExpanded, setSidebarProximityExpanded] = useState(false)
   const contentRef = useRef(null)
+  const isSidebarExpanded = sidebarExpanded || sidebarProximityExpanded
 
   useEffect(() => {
     localStorage.setItem('starwaves.sidebar-expanded', String(sidebarExpanded))
@@ -31,8 +33,48 @@ export function AppLayout({
     contentRef.current?.focus({ preventScroll: true })
   }, [activePage])
 
+  useEffect(() => {
+    if (sidebarExpanded) {
+      setSidebarProximityExpanded(false)
+      return undefined
+    }
+
+    let frameId = null
+    let latestClientX = null
+
+    const updateProximity = () => {
+      frameId = null
+      if (latestClientX === null) return
+      const expandedBoundary = activePage === 'mails' ? 470 : 280
+      setSidebarProximityExpanded((expanded) =>
+        expanded
+          ? latestClientX <= expandedBoundary
+          : latestClientX <= 96,
+      )
+    }
+
+    const handlePointerMove = (event) => {
+      if (window.innerWidth <= 768 || event.pointerType === 'touch') return
+      latestClientX = event.clientX
+      if (frameId === null) {
+        frameId = window.requestAnimationFrame(updateProximity)
+      }
+    }
+
+    window.addEventListener('pointermove', handlePointerMove)
+    return () => {
+      window.removeEventListener('pointermove', handlePointerMove)
+      if (frameId !== null) window.cancelAnimationFrame(frameId)
+    }
+  }, [activePage, sidebarExpanded])
+
+  const toggleSidebarExpanded = () => {
+    setSidebarExpanded(!isSidebarExpanded)
+    setSidebarProximityExpanded(false)
+  }
+
   return (
-    <div className={`app-shell ${sidebarExpanded ? 'sidebar-expanded' : ''}`}>
+    <div className={`app-shell ${isSidebarExpanded ? 'sidebar-expanded' : ''}`}>
       <a className="skip-link" href="#main-content">Skip to main content</a>
       <NetworkStatus />
       <Header
@@ -49,9 +91,9 @@ export function AppLayout({
       />
       <Sidebar
         activePage={activePage}
-        isExpanded={sidebarExpanded}
+        isExpanded={isSidebarExpanded}
         isOpen={sidebarOpen}
-        onToggleExpanded={() => setSidebarExpanded((expanded) => !expanded)}
+        onToggleExpanded={toggleSidebarExpanded}
         onNavigate={onNavigate}
         onClose={() => setSidebarOpen(false)}
       />
