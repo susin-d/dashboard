@@ -4,6 +4,8 @@ import { Sidebar } from '../components/Sidebar'
 import { NetworkStatus } from '../components/NetworkStatus'
 import '../App.css'
 
+const MOBILE_NAV_BREAKPOINT = 900
+
 export function AppLayout({
   activePage,
   children,
@@ -54,7 +56,7 @@ export function AppLayout({
     }
 
     const handlePointerMove = (event) => {
-      if (window.innerWidth <= 768 || event.pointerType === 'touch') return
+      if (window.innerWidth <= MOBILE_NAV_BREAKPOINT || event.pointerType === 'touch') return
       latestClientX = event.clientX
       if (frameId === null) {
         frameId = window.requestAnimationFrame(updateProximity)

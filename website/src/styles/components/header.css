@@ -482,7 +482,7 @@
 }
 
 /* Mobile & Tablet Web Responsiveness */
-@media (max-width: 768px) {
+@media (max-width: 900px) {
   .topbar {
     padding: 0 14px;
     height: 62px;
