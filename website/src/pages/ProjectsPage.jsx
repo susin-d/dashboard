@@ -22,7 +22,7 @@ const emptyProject = {
   liveUrl: '',
 }
 
-export function ProjectsPage({ projects, setProjects, onOpenProject }) {
+export function ProjectsPage({ projects, setProjects, onOpenProject, canLoadMore, loadingMore, onLoadMore }) {
   const [openProjects, setOpenProjects] = useState(
     () => new Set([projects[0]?.id]),
   )
@@ -202,6 +202,8 @@ export function ProjectsPage({ projects, setProjects, onOpenProject }) {
           )
         })}
       </div>
+
+      {canLoadMore && <button className="secondary-button" type="button" onClick={onLoadMore} disabled={loadingMore}>{loadingMore ? 'Loading…' : 'Load more projects'}</button>}
 
       {formOpen && (
         <div className="todo-modal-backdrop" onMouseDown={() => setFormOpen(false)} role="presentation">

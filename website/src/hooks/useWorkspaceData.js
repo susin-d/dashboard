@@ -31,6 +31,8 @@ export function useWorkspaceData(currentUser, activePage) {
   const [notifications, setNotifications] = useState([])
   const [contestSites, setContestSites] = useState([])
   const [hackathons, setHackathons] = useState([])
+  const [pagination, setPagination] = useState({ jobs: {}, projects: {}, hackathons: {}, notifications: {}, contests: {} })
+  const [loadingMore, setLoadingMore] = useState(false)
   const [googleCalendarEvents, setGoogleCalendarEvents] = useState([])
   const [importedIcsCalendars, setImportedIcsCalendars] = useState(() => {
     try {
@@ -159,14 +161,23 @@ export function useWorkspaceData(currentUser, activePage) {
         projectsResult,
       ]) => {
         if (!active) return
-        setJobs(jobsResult.status === 'fulfilled' ? jobsResult.value : [])
+        const jobsPage = jobsResult.status === 'fulfilled' ? jobsResult.value : { items: [] }
+        const projectsPage = projectsResult.status === 'fulfilled' ? projectsResult.value : { items: [] }
+        const hackathonsPage = hackathonsResult.status === 'fulfilled' ? hackathonsResult.value : { items: [] }
+        const notificationsPage = notificationsResult.status === 'fulfilled' ? notificationsResult.value : { items: [] }
+        setJobs(jobsPage.items)
+        setPagination({
+          jobs: jobsPage,
+          projects: projectsPage,
+          hackathons: hackathonsPage,
+          notifications: notificationsPage,
+          contests: contestsResult.status === 'fulfilled' ? contestsResult.value : {},
+        })
         setHackathons(
-          hackathonsResult.status === 'fulfilled' ? hackathonsResult.value : [],
+          hackathonsPage.items,
         )
         setNotifications(
-          notificationsResult.status === 'fulfilled'
-            ? notificationsResult.value
-            : [],
+          notificationsPage.items,
         )
         const enabledPlatforms = (() => {
           try {
@@ -178,13 +189,19 @@ export function useWorkspaceData(currentUser, activePage) {
             return ['codeforces', 'codechef', 'leetcode']
           }
         })()
-        const rawContestSites =
-          contestsResult.status === 'fulfilled' ? contestsResult.value : []
+        const rawContestItems = contestsResult.status === 'fulfilled' ? contestsResult.value.items : []
+        const rawContestSites = rawContestItems.reduce((sites, contest) => {
+          const id = contest.platformId || 'contests'
+          const site = sites.find((item) => item.id === id)
+          if (site) site.contests.push(contest)
+          else sites.push({ id, name: id, shortName: id.slice(0, 2).toUpperCase(), description: 'Upcoming contests.', contests: [contest] })
+          return sites
+        }, [])
         setContestSites(
           rawContestSites.filter((site) => enabledPlatforms.includes(site.id)),
         )
         setProjects((current) => [
-          ...(projectsResult.status === 'fulfilled' ? projectsResult.value : []),
+          ...projectsPage.items,
           ...current.filter((project) => project.source === 'github'),
         ])
       },
@@ -193,6 +210,30 @@ export function useWorkspaceData(currentUser, activePage) {
       active = false
     }
   }, [currentUser])
+
+  const loadMore = async (type) => {
+    const page = pagination[type]
+    if (!page?.has_more || loadingMore) return
+    setLoadingMore(true)
+    try {
+      const loaders = { jobs: loadJobs, projects: loadProjects, hackathons: loadHackathons, notifications: loadNotifications, contests: loadContests }
+      const next = await loaders[type](page.next_cursor)
+      setPagination((current) => ({ ...current, [type]: next }))
+      if (type === 'jobs') setJobs((current) => [...current, ...next.items])
+      if (type === 'projects') setProjects((current) => [...current.filter((item) => item.source === 'github'), ...next.items])
+      if (type === 'hackathons') setHackathons((current) => [...current, ...next.items])
+      if (type === 'notifications') setNotifications((current) => [...current, ...next.items])
+      if (type === 'contests') setContestSites((current) => {
+        const result = current.map((site) => ({ ...site, contests: [...site.contests] }))
+        next.items.forEach((contest) => {
+          const site = result.find((item) => item.id === contest.platformId)
+          if (site) site.contests.push(contest)
+          else result.push({ id: contest.platformId, name: contest.platformId, shortName: contest.platformId.slice(0, 2).toUpperCase(), description: 'Upcoming contests.', contests: [contest] })
+        })
+        return result
+      })
+    } finally { setLoadingMore(false) }
+  }
 
   // Todos Fetch
   useEffect(() => {
@@ -325,5 +366,8 @@ export function useWorkspaceData(currentUser, activePage) {
     importedIcsEvents,
     setImportedIcsEvents,
     calendarEventIndex,
+    pagination,
+    loadingMore,
+    loadMore,
   }
 }

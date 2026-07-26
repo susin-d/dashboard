@@ -73,6 +73,12 @@ class NotificationUpdate(BaseModel):
     unread: bool
 
 
+class PageResponse(BaseModel):
+    items: list
+    next_cursor: str | None = None
+    has_more: bool = False
+
+
 class JobUpdate(BaseModel):
     company: str | None = Field(default=None, min_length=1, max_length=200)
     role: str | None = Field(default=None, min_length=1, max_length=200)
@@ -108,4 +114,3 @@ class ProjectUpdate(BaseModel):
     technologies: list[str] | None = Field(default=None, max_length=50)
     github_url: str | None = Field(default=None, max_length=2048)
     live_url: str | None = Field(default=None, max_length=2048)
-

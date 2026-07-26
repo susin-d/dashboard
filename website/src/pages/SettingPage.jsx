@@ -190,9 +190,13 @@ export function SettingPage({
     if (onContestSitesChange) {
       try {
         const rawContests = await loadContests()
-        onContestSitesChange(
-          rawContests.filter((site) => nextEnabled.includes(site.id)),
-        )
+        const sites = rawContests.items.reduce((groups, contest) => {
+          const site = groups.find((item) => item.id === contest.platformId)
+          if (site) site.contests.push(contest)
+          else groups.push({ id: contest.platformId, name: contest.platformId, shortName: contest.platformId.slice(0, 2).toUpperCase(), description: 'Upcoming contests.', contests: [contest] })
+          return groups
+        }, [])
+        onContestSitesChange(sites.filter((site) => nextEnabled.includes(site.id)))
       } catch (err) {
         console.error('Could not refresh contest platforms:', err)
       }
@@ -504,7 +508,7 @@ export function SettingPage({
         ),
       )
       const hackathons = await loadHackathons()
-      onHackathonsChange(hackathons)
+      onHackathonsChange(hackathons.items)
       setHackathonSourceMessage(
         `${source.name} ${enabled ? 'connected' : 'turned off'}.`,
       )

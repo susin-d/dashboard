@@ -25,9 +25,13 @@ export function workspaceStateFromPath(pathname) {
   if (page === 'projects' && detailId) {
     return { page: 'project-detail', projectId: detailId }
   }
+  if (page === 'documents' && detailId) {
+    return { page: 'document-opener', documentId: detailId }
+  }
   return {
     page: workspacePages.has(page) ? page : 'dashboard',
     projectId: null,
+    documentId: null,
   }
 }
 
@@ -41,6 +45,9 @@ export function useRouter() {
   const [selectedProjectId, setSelectedProjectId] = useState(
     initialWorkspace.projectId,
   )
+  const [selectedDocumentId, setSelectedDocumentId] = useState(
+    initialWorkspace.documentId,
+  )
 
   useEffect(() => {
     const syncRoute = () => {
@@ -50,6 +57,7 @@ export function useRouter() {
       if (pathname.startsWith('/app')) {
         setActivePage(workspace.page)
         setSelectedProjectId(workspace.projectId)
+        setSelectedDocumentId(workspace.documentId)
       }
     }
 
@@ -67,6 +75,8 @@ export function useRouter() {
     else if (page === 'onboarding') path = '/onboarding'
     else if (page === 'project-detail' && options.projectId) {
       path = `/app/projects/${options.projectId}`
+    } else if (page === 'document-opener' && options.documentId) {
+      path = `/app/documents/${options.documentId}`
     } else if (page === 'competitive-coding') {
       path = '/app/competitive'
     } else if (workspacePages.has(page)) {
@@ -78,7 +88,8 @@ export function useRouter() {
 
     if (path.startsWith('/app')) {
       setActivePage(page)
-      setSelectedProjectId(options.projectId ?? null)
+    setSelectedProjectId(options.projectId ?? null)
+    setSelectedDocumentId(options.documentId ?? null)
     }
   }, [])
 
@@ -89,6 +100,8 @@ export function useRouter() {
     setActivePage,
     selectedProjectId,
     setSelectedProjectId,
+    selectedDocumentId,
+    setSelectedDocumentId,
     navigate,
   }
 }

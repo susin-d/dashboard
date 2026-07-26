@@ -33,6 +33,10 @@ export function loadGoogleDriveFiles() {
   return request('/files')
 }
 
+export function loadGoogleWorkspaceEditor(documentId) {
+  return request(`/editor-url/${encodeURIComponent(documentId)}`)
+}
+
 export function uploadGoogleDriveFile(file) {
   return request('/upload', {
     method: 'POST',

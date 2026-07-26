@@ -3,7 +3,7 @@ import time
 from datetime import datetime, timezone
 
 import httpx
-from fastapi import APIRouter, Depends, HTTPException, Response, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
 from firebase_admin import firestore
 from google.cloud.firestore_v1 import Client
 
@@ -26,7 +26,9 @@ from app.schemas.workspace import (
     ProjectCreate,
     ProjectResponse,
     ProjectUpdate,
+    PageResponse,
 )
+from app.repositories.workspace import decode_cursor, encode_cursor
 from app.services.hackathon_sources import (
     SOURCE_CATALOG,
     SOURCE_IDS,
@@ -34,6 +36,8 @@ from app.services.hackathon_sources import (
 )
 
 router = APIRouter()
+DEFAULT_PAGE_SIZE = 20
+MAX_PAGE_SIZE = 50
 CONTEST_CACHE_TTL = 10 * 60
 _contest_cache: tuple[float, list[dict]] | None = None
 CONTEST_REQUEST_TIMEOUT = httpx.Timeout(8.0, connect=2.0)
@@ -67,13 +71,16 @@ def hackathon_settings_reference(database: Client, user_id: str):
 
 # --- Jobs Routes ---
 
-@router.get("/jobs", response_model=list[JobResponse])
+@router.get("/jobs", response_model=PageResponse)
 def list_jobs(
+    cursor: str | None = None,
+    limit: int = Query(DEFAULT_PAGE_SIZE, ge=1, le=MAX_PAGE_SIZE),
     database: Client = Depends(get_firestore),
     user: dict = Depends(get_current_user),
 ):
     repository = JobRepository(database, user["uid"])
-    return repository.list_all()
+    items, next_cursor, has_more = repository.list_page(cursor, limit)
+    return {"items": items, "next_cursor": next_cursor, "has_more": has_more}
 
 
 @router.post("/jobs", response_model=JobResponse, status_code=201)
@@ -155,8 +162,10 @@ def update_hackathon_source(
     return {"source_id": source_id, "enabled": enabled}
 
 
-@router.get("/hackathons", response_model=list[HackathonResponse])
+@router.get("/hackathons", response_model=PageResponse)
 async def list_hackathons(
+    cursor: str | None = None,
+    limit: int = Query(DEFAULT_PAGE_SIZE, ge=1, le=MAX_PAGE_SIZE),
     database: Client = Depends(get_firestore),
     user: dict = Depends(get_current_user),
 ):
@@ -185,7 +194,11 @@ async def list_hackathons(
         if end and end.astimezone(timezone.utc) >= now:
             manual.append({"id": item.id, "source": "manual", **record})
     connected = await fetch_enabled_hackathons(enabled)
-    return sorted([*manual, *connected], key=lambda item: item["starts_at"])
+    records = sorted([*manual, *connected], key=lambda item: item["starts_at"])
+    offset = int(decode_cursor(cursor) or 0)
+    page = records[offset : offset + limit]
+    next_cursor = encode_cursor(str(offset + limit)) if offset + limit < len(records) else None
+    return {"items": page, "next_cursor": next_cursor, "has_more": next_cursor is not None}
 
 
 @router.post("/hackathons", response_model=HackathonResponse, status_code=201)
@@ -240,13 +253,16 @@ def delete_hackathon(
 
 # --- Projects Routes ---
 
-@router.get("/projects", response_model=list[ProjectResponse])
+@router.get("/projects", response_model=PageResponse)
 def list_projects(
+    cursor: str | None = None,
+    limit: int = Query(DEFAULT_PAGE_SIZE, ge=1, le=MAX_PAGE_SIZE),
     database: Client = Depends(get_firestore),
     user: dict = Depends(get_current_user),
 ):
     repository = ProjectRepository(database, user["uid"])
-    return repository.list_all()
+    items, next_cursor, has_more = repository.list_page(cursor, limit)
+    return {"items": items, "next_cursor": next_cursor, "has_more": has_more}
 
 
 @router.post("/projects", response_model=ProjectResponse, status_code=201)
@@ -288,13 +304,16 @@ def delete_project(
 
 # --- Notifications Routes ---
 
-@router.get("/notifications", response_model=list[NotificationResponse])
+@router.get("/notifications", response_model=PageResponse)
 def list_notifications(
+    cursor: str | None = None,
+    limit: int = Query(DEFAULT_PAGE_SIZE, ge=1, le=MAX_PAGE_SIZE),
     database: Client = Depends(get_firestore),
     user: dict = Depends(get_current_user),
 ):
     repository = NotificationRepository(database, user["uid"])
-    return repository.list_all()
+    items, next_cursor, has_more = repository.list_page(cursor, limit)
+    return {"items": items, "next_cursor": next_cursor, "has_more": has_more}
 
 
 @router.patch("/notifications/{notification_id}", response_model=NotificationResponse)
@@ -487,28 +506,61 @@ async def leetcode_contests(client: httpx.AsyncClient) -> dict | None:
         return None
 
 
-@router.get("/contests")
-async def list_contests():
+@router.get("/contests", response_model=PageResponse)
+async def list_contests(
+    cursor: str | None = None,
+    limit: int = Query(DEFAULT_PAGE_SIZE, ge=1, le=MAX_PAGE_SIZE),
+):
     global _contest_cache
     if _contest_cache and _contest_cache[0] > time.monotonic():
-        return _contest_cache[1]
-    headers = {
-        "User-Agent": (
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-            "AppleWebKit/537.36 Chrome/126 Safari/537.36"
-        ),
-    }
-    async with httpx.AsyncClient(
-        timeout=CONTEST_REQUEST_TIMEOUT,
-        follow_redirects=True,
-        headers=headers,
-    ) as client:
-        platforms = await asyncio.gather(
-            codeforces_contests(client),
-            codechef_contests(client),
-            leetcode_contests(client),
-        )
-    result = [platform for platform in platforms if platform is not None]
-    if result:
-        _contest_cache = (time.monotonic() + CONTEST_CACHE_TTL, result)
+        platforms = _contest_cache[1]
+    else:
+        headers = {
+            "User-Agent": (
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                "AppleWebKit/537.36 Chrome/126 Safari/537.36"
+            ),
+        }
+        async with httpx.AsyncClient(
+            timeout=CONTEST_REQUEST_TIMEOUT,
+            follow_redirects=True,
+            headers=headers,
+        ) as client:
+            platforms = await asyncio.gather(
+                codeforces_contests(client),
+                codechef_contests(client),
+                leetcode_contests(client),
+            )
+        platforms = [platform for platform in platforms if platform is not None]
+        if platforms:
+            _contest_cache = (time.monotonic() + CONTEST_CACHE_TTL, platforms)
+    offset = int(decode_cursor(cursor) or 0)
+    records = []
+    for platform in platforms:
+        records.extend({**contest, "platformId": platform["id"]} for contest in platform["contests"])
+    records.sort(key=lambda contest: contest["startsAt"])
+    page = records[offset : offset + limit]
+    next_cursor = encode_cursor(str(offset + limit)) if offset + limit < len(records) else None
+    return {"items": page, "next_cursor": next_cursor, "has_more": next_cursor is not None}
+
+
+@router.get("/calendar-data")
+async def calendar_data(
+    database: Client = Depends(get_firestore),
+    user: dict = Depends(get_current_user),
+):
+    def load_collections():
+        result = {}
+        for name in ("projects", "jobs", "hackathons"):
+            records = user_collection(database, user["uid"], name).stream()
+            result[name] = [{"id": item.id, **(item.to_dict() or {})} for item in records]
+        return result
+
+    result = await asyncio.to_thread(load_collections)
+    settings = hackathon_settings_reference(database, user["uid"]).get().to_dict() or {}
+    result["hackathons"] = [
+        {"id": item["id"], "source": "manual", **item}
+        for item in result["hackathons"]
+        if item.get("ends_at")
+    ] + await fetch_enabled_hackathons(settings.get("enabled", []))
     return result

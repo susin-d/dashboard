@@ -29,7 +29,7 @@ const emptyJob = {
   notes: '',
 }
 
-export function JobsPage({ jobs, setJobs, documents, createIntent }) {
+export function JobsPage({ jobs, setJobs, documents, createIntent, canLoadMore, loadingMore, onLoadMore }) {
   const [openJobs, setOpenJobs] = useState(() => new Set([jobs[0]?.id]))
   const [formOpen, setFormOpen] = useState(false)
   const [form, setForm] = useState(emptyJob)
@@ -272,6 +272,8 @@ export function JobsPage({ jobs, setJobs, documents, createIntent }) {
           )
         })}
       </div>
+
+      {canLoadMore && <button className="secondary-button" type="button" onClick={onLoadMore} disabled={loadingMore}>{loadingMore ? 'Loading…' : 'Load more jobs'}</button>}
 
       {formOpen && (
         <div className="todo-modal-backdrop" onMouseDown={() => setFormOpen(false)} role="presentation">

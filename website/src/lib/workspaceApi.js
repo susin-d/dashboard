@@ -39,8 +39,9 @@ function mapJob(job) {
   }
 }
 
-export async function loadJobs() {
-  return (await request('/jobs')).map(mapJob)
+export async function loadJobs(cursor = null) {
+  const page = await request(`/jobs?limit=20${cursor ? `&cursor=${encodeURIComponent(cursor)}` : ''}`)
+  return { ...page, items: page.items.map(mapJob) }
 }
 
 export async function createJob(job) {
@@ -92,9 +93,9 @@ export function deleteJob(jobId) {
   return request(`/jobs/${encodeURIComponent(jobId)}`, { method: 'DELETE' })
 }
 
-export async function loadHackathons() {
-  const records = await request('/hackathons')
-  return records.map((record) => ({
+export async function loadHackathons(cursor = null) {
+  const page = await request(`/hackathons?limit=20${cursor ? `&cursor=${encodeURIComponent(cursor)}` : ''}`)
+  return { ...page, items: page.items.map((record) => ({
     id: record.id,
     title: record.title,
     organizer: record.organizer,
@@ -105,7 +106,7 @@ export async function loadHackathons() {
     tags: record.tags,
     url: record.url,
     source: record.source ?? 'manual',
-  }))
+  })) }
 }
 
 export function loadHackathonSources() {
@@ -200,8 +201,9 @@ function mapProject(project) {
   }
 }
 
-export async function loadProjects() {
-  return (await request('/projects')).map(mapProject)
+export async function loadProjects(cursor = null) {
+  const page = await request(`/projects?limit=20${cursor ? `&cursor=${encodeURIComponent(cursor)}` : ''}`)
+  return { ...page, items: page.items.map(mapProject) }
 }
 
 export async function createProject(project) {
@@ -247,8 +249,8 @@ export function deleteProject(projectId) {
   return request(`/projects/${encodeURIComponent(rawId)}`, { method: 'DELETE' })
 }
 
-export function loadNotifications() {
-  return request('/notifications')
+export function loadNotifications(cursor = null) {
+  return request(`/notifications?limit=20${cursor ? `&cursor=${encodeURIComponent(cursor)}` : ''}`)
 }
 
 export function updateNotification(notificationId, unread) {
@@ -268,7 +270,10 @@ export function markAllNotificationsRead() {
   return request('/notifications/mark-all-read', { method: 'POST' })
 }
 
-export function loadContests() {
-  return request('/contests', {}, false)
+export function loadContests(cursor = null) {
+  return request(`/contests?limit=20${cursor ? `&cursor=${encodeURIComponent(cursor)}` : ''}`, {}, false)
 }
 
+export function loadCalendarData() {
+  return request('/calendar-data')
+}

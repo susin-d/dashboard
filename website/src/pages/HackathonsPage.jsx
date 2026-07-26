@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import {
   CalendarDays,
   ChevronDown,
@@ -25,7 +25,7 @@ const emptyHackathon = {
   url: '',
 }
 
-export function HackathonsPage({ hackathons, setHackathons }) {
+export function HackathonsPage({ hackathons, setHackathons, canLoadMore, loadingMore, onLoadMore }) {
   const [openHackathons, setOpenHackathons] = useState(
     () => new Set([hackathons[0]?.id]),
   )
@@ -40,6 +40,20 @@ export function HackathonsPage({ hackathons, setHackathons }) {
   const [editSaving, setEditSaving] = useState(false)
   const [editError, setEditError] = useState('')
   const [deleteId, setDeleteId] = useState(null)
+
+  useEffect(() => {
+    const rawFocus = localStorage.getItem('starwaves.hackathon-focus')
+    if (!rawFocus) return
+
+    try {
+      const { hackathonId } = JSON.parse(rawFocus)
+      if (hackathons.some((hackathon) => hackathon.id === hackathonId)) {
+        setOpenHackathons((current) => new Set([...current, hackathonId]))
+      }
+    } finally {
+      localStorage.removeItem('starwaves.hackathon-focus')
+    }
+  }, [hackathons])
 
   const toggleHackathon = (hackathonId) => {
     setOpenHackathons((current) => {
@@ -313,6 +327,8 @@ export function HackathonsPage({ hackathons, setHackathons }) {
           )
         })}
       </div>
+
+      {canLoadMore && <button className="secondary-button" type="button" onClick={onLoadMore} disabled={loadingMore}>{loadingMore ? 'Loading…' : 'Load more hackathons'}</button>}
 
       {detailModalHackathon && (
         <div className="todo-modal-backdrop" onMouseDown={() => setDetailModalHackathon(null)} role="presentation">

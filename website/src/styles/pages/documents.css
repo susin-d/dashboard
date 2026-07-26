@@ -31,6 +31,20 @@
   color: var(--text-inverse);
 }
 
+.document-title-link { cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
+.document-title-link:hover { color: var(--text-secondary); }
+
+.document-opener-page { display: grid; gap: 18px; }
+.document-opener-back { display: inline-flex; width: fit-content; align-items: center; gap: 7px; border: 0; background: transparent; color: var(--text-secondary); font: inherit; font-size: 11px; font-weight: 750; cursor: pointer; }
+.document-opener-card { display: grid; min-height: 360px; place-content: center; justify-items: center; gap: 10px; padding: 32px; border: 1px solid var(--border-color); border-radius: 15px; background: var(--bg-card); text-align: center; box-shadow: var(--shadow-sm); }
+.document-opener-icon { display: grid; width: 58px; height: 58px; place-items: center; border-radius: 14px; background: var(--color-primary); color: var(--text-inverse); }
+.document-opener-card p { margin: 10px 0 0; color: var(--text-secondary); font-size: 10px; font-weight: 750; text-transform: uppercase; letter-spacing: .08em; }
+.document-opener-card h1 { margin: 0; font-size: clamp(21px, 4vw, 32px); }
+.document-opener-type { color: var(--text-muted); font-size: 10px; font-weight: 750; }
+.document-opener-state { display: grid; justify-items: center; gap: 12px; max-width: 440px; margin-top: 18px; color: var(--text-secondary); font-size: 11px; }
+.document-opener-state strong { color: var(--text-primary); font-size: 14px; }
+.document-opener-state button { display: inline-flex; align-items: center; gap: 6px; padding: 9px 13px; border: 1px solid var(--color-primary); border-radius: 8px; background: var(--color-primary); color: var(--text-inverse); font: inherit; font-size: 10px; font-weight: 800; cursor: pointer; }
+
 .document-detail-content {
   padding-top: 15px;
 }

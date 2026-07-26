@@ -37,7 +37,7 @@ function formatFileSize(bytes) {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
 }
 
-export function DocumentsPage({ documents, setDocuments, createIntent }) {
+export function DocumentsPage({ documents, setDocuments, createIntent, onOpenDocument }) {
   const [openDocuments, setOpenDocuments] = useState(
     () => new Set([documents[0]?.id]),
   )
@@ -290,7 +290,13 @@ export function DocumentsPage({ documents, setDocuments, createIntent }) {
                   <FileText size={18} />
                 </span>
                 <span className="contest-site-copy">
-                  <strong>{document.name}</strong>
+                  <strong
+                    className="document-title-link"
+                    role="link"
+                    tabIndex={0}
+                    onClick={(event) => { event.stopPropagation(); onOpenDocument(document.id) }}
+                    onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); event.stopPropagation(); onOpenDocument(document.id) } }}
+                  >{document.name}</strong>
                   <small>{document.description}</small>
                 </span>
                 <span className="project-status">{document.type}</span>

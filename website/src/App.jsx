@@ -4,6 +4,7 @@ import { CalendarPage } from './pages/CalendarPage'
 import { CompetitiveCodingPage } from './pages/CompetitiveCodingPage'
 import { DashboardPage } from './pages/DashboardPage'
 import { DocumentsPage } from './pages/DocumentsPage'
+import { DocumentOpenerPage } from './pages/DocumentOpenerPage'
 import { HackathonsPage } from './pages/HackathonsPage'
 import { JobsPage } from './pages/JobsPage'
 import { MailsPage } from './pages/MailsPage'
@@ -35,6 +36,7 @@ function App() {
     setActivePage,
     selectedProjectId,
     setSelectedProjectId,
+    selectedDocumentId,
     navigate,
   } = useRouter()
 
@@ -61,6 +63,9 @@ function App() {
     importedIcsEvents,
     setImportedIcsEvents,
     calendarEventIndex,
+    pagination,
+    loadingMore,
+    loadMore,
   } = useWorkspaceData(activeUser, activePage)
 
   const [notificationsOpen, setNotificationsOpen] = useState(false)
@@ -69,6 +74,7 @@ function App() {
   const selectedProject = projects.find(
     (project) => project.id === selectedProjectId,
   )
+  const selectedDocument = documents.find((document) => document.id === selectedDocumentId)
 
   useEffect(() => {
     if (
@@ -204,6 +210,9 @@ function App() {
       <HackathonsPage
         hackathons={hackathons}
         setHackathons={setHackathons}
+        canLoadMore={pagination.hackathons.has_more}
+        loadingMore={loadingMore}
+        onLoadMore={() => loadMore('hackathons')}
       />
     ),
     projects: (
@@ -211,6 +220,9 @@ function App() {
         projects={projects}
         setProjects={setProjects}
         onOpenProject={openProject}
+        canLoadMore={pagination.projects.has_more}
+        loadingMore={loadingMore}
+        onLoadMore={() => loadMore('projects')}
       />
     ),
     jobs: (
@@ -219,10 +231,19 @@ function App() {
         setJobs={setJobs}
         documents={documents}
         createIntent={creationIntent}
+        canLoadMore={pagination.jobs.has_more}
+        loadingMore={loadingMore}
+        onLoadMore={() => loadMore('jobs')}
       />
     ),
     documents: (
-      <DocumentsPage documents={documents} setDocuments={setDocuments} createIntent={creationIntent} />
+      <DocumentsPage documents={documents} setDocuments={setDocuments} createIntent={creationIntent} onOpenDocument={(documentId) => navigate('document-opener', { documentId })} />
+    ),
+    'document-opener': (
+      <DocumentOpenerPage
+        document={selectedDocument}
+        onBack={() => navigateWorkspace('documents')}
+      />
     ),
     'project-detail': selectedProject ? (
       <ProjectDetailPage

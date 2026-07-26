@@ -39,7 +39,7 @@ class TestWorkspaceEndpoints(unittest.TestCase):
 
         response = client.get("/api/v1/jobs")
         self.assertEqual(response.status_code, 200)
-        self.assertIsInstance(response.json(), list)
+        self.assertIsInstance(response.json()["items"], list)
 
     def test_create_job_mocked(self):
         mock_doc_ref = MagicMock()

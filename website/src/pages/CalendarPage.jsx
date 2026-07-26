@@ -584,10 +584,24 @@ export function CalendarPage({ eventsByDate, onNavigate }) {
                       data-record-id={hackathon.id}
                       role="link"
                       tabIndex={0}
-                      onClick={() => onNavigate('hackathons')}
-                      onKeyDown={(event) =>
-                        navigateFromKey(event, 'hackathons')
-                      }
+                        onClick={() => {
+                          localStorage.setItem(
+                            'starwaves.hackathon-focus',
+                            JSON.stringify({ hackathonId: hackathon.id }),
+                          )
+                          onNavigate('hackathons')
+                        }}
+                        onKeyDown={(event) =>
+                          (() => {
+                            if (event.key !== 'Enter' && event.key !== ' ') return
+                            event.preventDefault()
+                            localStorage.setItem(
+                              'starwaves.hackathon-focus',
+                              JSON.stringify({ hackathonId: hackathon.id }),
+                            )
+                            onNavigate('hackathons')
+                          })()
+                        }
                     >
                       <div className="calendar-detail-record-icon">
                         <Rocket size={16} />

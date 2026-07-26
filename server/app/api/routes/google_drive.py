@@ -203,6 +203,55 @@ async def google_drive_files(
         return response.json()
 
 
+@router.get("/editor-url/{document_id}")
+async def google_drive_editor_url(
+    document_id: str,
+    database: Client = Depends(get_firestore),
+    user: dict = Depends(get_current_user),
+):
+    if "/" in document_id or not document_id.strip():
+        raise HTTPException(status_code=400, detail="Invalid document ID.")
+
+    document_reference = database.collection("users").document(user["uid"]).collection("documents").document(document_id)
+    snapshot = await asyncio.to_thread(document_reference.get)
+    if not snapshot.exists:
+        raise HTTPException(status_code=404, detail="Document not found.")
+    document = snapshot.to_dict() or {}
+    drive_file_id = document.get("drive_file_id")
+    if not drive_file_id:
+        raise HTTPException(status_code=409, detail="This document is not linked to Google Drive.")
+
+    token = await access_token(database, user["uid"])
+    async with httpx.AsyncClient(timeout=30) as client:
+        response = await client.get(
+            f"https://www.googleapis.com/drive/v3/files/{quote(drive_file_id, safe='')}",
+            headers={"Authorization": f"Bearer {token}"},
+            params={"fields": "id,name,mimeType,webViewLink"},
+        )
+    if response.status_code == 404:
+        raise HTTPException(status_code=404, detail="The Google Drive file no longer exists.")
+    try:
+        response.raise_for_status()
+    except httpx.HTTPStatusError as error:
+        raise HTTPException(status_code=502, detail="Google Drive could not open this file.") from error
+
+    file = response.json()
+    editor_hosts = {
+        "application/vnd.google-apps.document": "https://docs.google.com/document/d/{id}/edit",
+        "application/vnd.google-apps.spreadsheet": "https://docs.google.com/spreadsheets/d/{id}/edit",
+        "application/vnd.google-apps.presentation": "https://docs.google.com/presentation/d/{id}/edit",
+    }
+    editor_template = editor_hosts.get(file.get("mimeType"))
+    if not editor_template:
+        raise HTTPException(status_code=409, detail="This file type does not have a Google Workspace editor.")
+    return {
+        "id": file["id"],
+        "name": file.get("name", document.get("name", "Untitled document")),
+        "mime_type": file.get("mimeType"),
+        "editor_url": editor_template.format(id=quote(file["id"], safe="")),
+    }
+
+
 @router.post("/upload")
 async def upload_google_drive_file(
     request: Request,
