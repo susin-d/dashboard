@@ -158,6 +158,7 @@ export function HackathonsPage({ hackathons, setHackathons, canLoadMore, loading
         <div>
           <p>Build & collaborate</p>
           <h1>Hackathons</h1>
+          <span className="page-heading-description">Find a room, a team, and a deadline worth building toward.</span>
         </div>
         <div className="page-heading-actions">
           <div className="hackathon-summary">
@@ -168,6 +169,12 @@ export function HackathonsPage({ hackathons, setHackathons, canLoadMore, loading
             <Plus size={16} /> Add hackathon
           </button>
         </div>
+      </div>
+
+      <div className="workspace-insight-grid" aria-label="Hackathon overview">
+        <div className="workspace-insight-card"><span>Opportunities</span><strong>{hackathons.length}</strong><small>in your pipeline</small></div>
+        <div className="workspace-insight-card"><span>Online</span><strong>{hackathons.filter((item) => item.mode === 'Online').length}</strong><small>join from anywhere</small></div>
+        <div className="workspace-insight-card"><span>Next step</span><strong>{hackathons.length ? 'Choose' : 'Add one'}</strong><small>{hackathons.length ? 'a challenge to pursue' : 'your first challenge'}</small></div>
       </div>
 
       <div className="hackathon-list">

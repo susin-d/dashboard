@@ -90,6 +90,7 @@ export function ProjectsPage({ projects, setProjects, onOpenProject, canLoadMore
         <div>
           <p>Work & build</p>
           <h1>Projects</h1>
+          <span className="page-heading-description">Turn ideas into momentum with a clear view of what is moving.</span>
         </div>
         <div className="page-heading-actions">
           <div className="project-summary">
@@ -201,6 +202,12 @@ export function ProjectsPage({ projects, setProjects, onOpenProject, canLoadMore
             </article>
           )
         })}
+      </div>
+
+      <div className="workspace-insight-grid" aria-label="Project overview">
+        <div className="workspace-insight-card"><span>Projects</span><strong>{projects.length}</strong><small>across your workspace</small></div>
+        <div className="workspace-insight-card"><span>In motion</span><strong>{projects.filter((item) => item.status === 'Active').length}</strong><small>active builds</small></div>
+        <div className="workspace-insight-card"><span>Average progress</span><strong>{projects.length ? `${Math.round(projects.reduce((total, item) => total + Number(item.progress || 0), 0) / projects.length)}%` : '—'}</strong><small>across all projects</small></div>
       </div>
 
       {canLoadMore && <button className="secondary-button" type="button" onClick={onLoadMore} disabled={loadingMore}>{loadingMore ? 'Loading…' : 'Load more projects'}</button>}

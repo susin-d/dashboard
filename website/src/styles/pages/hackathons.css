@@ -17,7 +17,7 @@
   width: 100%;
   display: grid;
   gap: 12px;
-  padding-top: 28px;
+  padding-top: 18px;
 }
 
 .hackathon-list-card .contest-site-logo svg {
@@ -161,4 +161,3 @@
   grid-template-columns: repeat(2, 1fr);
   gap: 14px;
 }
-

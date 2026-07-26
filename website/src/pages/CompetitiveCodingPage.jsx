@@ -20,11 +20,18 @@ export function CompetitiveCodingPage({ contestSites }) {
         <div>
           <p>Practice & compete</p>
           <h1>Competitive Coding</h1>
+          <span className="page-heading-description">Keep your next challenge in sight across every platform.</span>
         </div>
         <div className="contest-summary">
           <Trophy size={16} />
           <span>{contestSites.length} platforms</span>
         </div>
+      </div>
+
+      <div className="workspace-insight-grid" aria-label="Competitive coding overview">
+        <div className="workspace-insight-card"><span>Platforms</span><strong>{contestSites.length}</strong><small>connected sources</small></div>
+        <div className="workspace-insight-card"><span>Upcoming</span><strong>{contestSites.reduce((total, site) => total + site.contests.length, 0)}</strong><small>contests to explore</small></div>
+        <div className="workspace-insight-card"><span>Next move</span><strong>{contestSites.some((site) => site.contests.length > 0) ? 'Pick one' : 'Connect'}</strong><small>{contestSites.some((site) => site.contests.length > 0) ? 'and reserve your slot' : 'a contest source in Settings'}</small></div>
       </div>
 
       <div className="contest-site-list">

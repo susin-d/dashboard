@@ -17,7 +17,7 @@
   width: 100%;
   display: grid;
   gap: 12px;
-  padding-top: 28px;
+  padding-top: 18px;
 }
 
 .project-list-card .contest-site-logo svg {
@@ -381,3 +381,8 @@
   }
 }
 
+@media (max-width: 640px) {
+  .workspace-insight-grid {
+    grid-template-columns: 1fr;
+  }
+}
