@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import {
   BriefcaseBusiness,
   CalendarDays,
@@ -10,6 +10,9 @@ import {
   Plus,
   Trash2,
   X,
+  Search,
+  SlidersHorizontal,
+  RotateCcw,
 } from 'lucide-react'
 import { createJob, deleteJob, updateJob } from '../lib/workspaceApi'
 import { ConfirmDialog } from '../components/ui'
@@ -41,6 +44,10 @@ export function JobsPage({ jobs, setJobs, documents, createIntent, canLoadMore, 
   const [editSaving, setEditSaving] = useState(false)
   const [editError, setEditError] = useState('')
   const [deleteId, setDeleteId] = useState(null)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [statusFilter, setStatusFilter] = useState('All')
+  const [workTypeFilter, setWorkTypeFilter] = useState('All')
+  const [sortOrder, setSortOrder] = useState('recent')
 
   useEffect(() => {
     if (createIntent?.type === 'job') setFormOpen(true)
@@ -50,6 +57,26 @@ export function JobsPage({ jobs, setJobs, documents, createIntent, canLoadMore, 
       document.category === 'Career' ||
       document.name.toLowerCase().includes('resume'),
   )
+
+  const jobStatuses = ['Saved', 'Applied', 'Interview', 'Offer', 'Rejected']
+  const workTypes = [...new Set(jobs.map((job) => job.workType).filter(Boolean))]
+  const filteredJobs = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase()
+    return jobs
+      .filter((job) => {
+        const searchable = `${job.role} ${job.company} ${job.location}`.toLowerCase()
+        return (!query || searchable.includes(query)) &&
+          (statusFilter === 'All' || job.status === statusFilter) &&
+          (workTypeFilter === 'All' || job.workType === workTypeFilter)
+      })
+      .sort((a, b) => {
+        if (sortOrder === 'company') return (a.company || '').localeCompare(b.company || '')
+        if (sortOrder === 'deadline') return (a.deadline || '9999').localeCompare(b.deadline || '9999')
+        return (b.updatedAt || b.createdAt || '').localeCompare(a.updatedAt || a.createdAt || '')
+      })
+  }, [jobs, searchQuery, statusFilter, workTypeFilter, sortOrder])
+
+  const activeFilters = statusFilter !== 'All' || workTypeFilter !== 'All' || searchQuery
 
   const toggleJob = (jobId) => {
     setOpenJobs((current) => {
@@ -140,9 +167,10 @@ export function JobsPage({ jobs, setJobs, documents, createIntent, canLoadMore, 
   return (
     <section className="jobs-page">
       <div className="page-heading">
-        <div>
+        <div className="jobs-heading-copy">
           <p>Career tracker</p>
           <h1>Jobs</h1>
+          <span>{jobs.length} opportunities in your pipeline</span>
         </div>
         <button
           className="primary-button jobs-add-button"
@@ -153,8 +181,22 @@ export function JobsPage({ jobs, setJobs, documents, createIntent, canLoadMore, 
         </button>
       </div>
 
+      <div className="jobs-summary" aria-label="Job pipeline summary">
+        {jobStatuses.slice(0, 4).map((status) => (
+          <button key={status} className={`jobs-summary-item ${statusFilter === status ? 'active' : ''}`} onClick={() => setStatusFilter(statusFilter === status ? 'All' : status)}>
+            <strong>{jobs.filter((job) => job.status === status).length}</strong><span>{status}</span>
+          </button>
+        ))}
+        <div className="jobs-summary-item jobs-summary-total"><strong>{jobs.length}</strong><span>Total tracked</span></div>
+      </div>
+
+      <div className="jobs-toolbar">
+        <label className="jobs-search"><Search size={16} /><span className="sr-only">Search jobs</span><input value={searchQuery} onChange={(event) => setSearchQuery(event.target.value)} placeholder="Search role, company, or location" /></label>
+        <div className="jobs-filter-group"><SlidersHorizontal size={15} /><select aria-label="Filter by status" value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}><option>All</option>{jobStatuses.map((status) => <option key={status}>{status}</option>)}</select><select aria-label="Filter by work type" value={workTypeFilter} onChange={(event) => setWorkTypeFilter(event.target.value)}><option>All</option>{workTypes.map((type) => <option key={type}>{type}</option>)}</select><select aria-label="Sort jobs" value={sortOrder} onChange={(event) => setSortOrder(event.target.value)}><option value="recent">Recently updated</option><option value="deadline">Deadline soonest</option><option value="company">Company A–Z</option></select>{activeFilters && <button className="jobs-reset" onClick={() => { setSearchQuery(''); setStatusFilter('All'); setWorkTypeFilter('All') }}><RotateCcw size={13} /> Reset</button>}</div>
+      </div>
+
       <div className="job-list">
-        {jobs.map((job) => {
+        {filteredJobs.map((job) => {
           const isOpen = openJobs.has(job.id)
           const selectedResume = documents.find(
             (document) => document.id === job.resumeId,
@@ -234,7 +276,7 @@ export function JobsPage({ jobs, setJobs, documents, createIntent, canLoadMore, 
                       </a>
                     </div>
                   )}
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '1rem' }}>
+                  <div className="job-detail-actions">
                     {job.jobUrl ? (
                       <a
                         className="job-link"
@@ -247,12 +289,11 @@ export function JobsPage({ jobs, setJobs, documents, createIntent, canLoadMore, 
                       </a>
                     ) : <span />}
 
-                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                    <div className="job-action-buttons">
                       <button
                         className="secondary-button"
                         type="button"
                         onClick={() => openEditModal(job)}
-                        style={{ padding: '0.35rem 0.7rem', fontSize: '0.85rem' }}
                       >
                         <Pencil size={14} /> Edit
                       </button>
@@ -260,7 +301,6 @@ export function JobsPage({ jobs, setJobs, documents, createIntent, canLoadMore, 
                         className="secondary-button"
                         type="button"
                         onClick={() => handleDeleteJob(job.id)}
-                        style={{ padding: '0.35rem 0.7rem', fontSize: '0.85rem' }}
                       >
                         <Trash2 size={14} /> Delete
                       </button>
@@ -271,6 +311,7 @@ export function JobsPage({ jobs, setJobs, documents, createIntent, canLoadMore, 
             </article>
           )
         })}
+        {!filteredJobs.length && <div className="jobs-empty"><Search size={22} /><strong>No jobs match these filters</strong><span>Try a different search or reset your filters.</span>{activeFilters && <button className="secondary-button" onClick={() => { setSearchQuery(''); setStatusFilter('All'); setWorkTypeFilter('All') }}>Clear filters</button>}</div>}
       </div>
 
       {canLoadMore && <button className="secondary-button" type="button" onClick={onLoadMore} disabled={loadingMore}>{loadingMore ? 'Loading…' : 'Load more jobs'}</button>}

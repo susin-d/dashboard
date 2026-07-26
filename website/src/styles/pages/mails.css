@@ -243,6 +243,74 @@
   outline: none;
 }
 
+.mail-all-inboxes {
+  margin-bottom: 8px;
+}
+
+.mail-all-inboxes.active {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+}
+
+.mail-account-menu {
+  position: relative;
+  margin-top: 10px;
+  border-top: 1px solid var(--border-color);
+  padding-top: 10px;
+}
+
+.mail-account-trigger {
+  min-width: 0;
+}
+
+.mail-account-trigger > span:nth-child(2),
+.mail-account-trigger > svg {
+  opacity: 0;
+  transition: opacity 120ms ease;
+}
+
+.mail-folders:hover .mail-account-trigger > span:nth-child(2),
+.mail-folders:hover .mail-account-trigger > svg,
+.mail-folders:focus-within .mail-account-trigger > span:nth-child(2),
+.mail-folders:focus-within .mail-account-trigger > svg {
+  opacity: 1;
+}
+
+.mail-account-avatar {
+  align-items: center;
+  background: var(--color-primary);
+  border-radius: 50%;
+  color: var(--text-inverse);
+  display: inline-flex;
+  flex: 0 0 auto;
+  font-size: 11px;
+  font-weight: 700;
+  height: 24px;
+  justify-content: center;
+  width: 24px;
+}
+
+.mail-account-dropdown {
+  bottom: calc(100% + 8px);
+  position: absolute;
+  left: 0;
+  min-width: 210px;
+  padding: 6px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  box-shadow: var(--shadow-md);
+}
+
+.mail-account-dropdown button {
+  font-size: 12px;
+  padding: 8px;
+}
+
+.mail-account-dropdown button span:nth-child(2) {
+  opacity: 1;
+}
+
 .mail-mobile-compose {
   display: none;
 }

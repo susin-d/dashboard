@@ -1,10 +1,24 @@
-import { useState } from 'react'
-import { CalendarDays, ChevronDown, Clock3, Trophy } from 'lucide-react'
+import { useMemo, useState } from 'react'
+import { CalendarDays, ChevronDown, Clock3, Filter, Search, SlidersHorizontal, Trophy, X } from 'lucide-react'
 import { PageHeader } from '../components/ui'
 
 export function CompetitiveCodingPage({ contestSites }) {
   const [openSites, setOpenSites] = useState(() => new Set(['codeforces']))
   const [showAll, setShowAll] = useState({})
+  const [query, setQuery] = useState('')
+  const [platform, setPlatform] = useState('all')
+  const [timeframe, setTimeframe] = useState('all')
+  const [sortOrder, setSortOrder] = useState('soonest')
+  const allContests = useMemo(() => contestSites.flatMap((site) => site.contests.map((contest) => ({ ...contest, siteId: site.id, siteName: site.name }))), [contestSites])
+  const filteredContests = useMemo(() => {
+    const now = Date.now()
+    const cutoff = timeframe === 'today' ? now + 86400000 : timeframe === 'week' ? now + 604800000 : timeframe === 'month' ? now + 2592000000 : Infinity
+    const search = query.trim().toLowerCase()
+    return allContests.filter((contest) => platform === 'all' || contest.siteId === platform).filter((contest) => !search || contest.name.toLowerCase().includes(search) || contest.siteName.toLowerCase().includes(search)).filter((contest) => new Date(contest.startsAt).getTime() <= cutoff).sort((first, second) => sortOrder === 'latest' ? new Date(second.startsAt) - new Date(first.startsAt) : new Date(first.startsAt) - new Date(second.startsAt))
+  }, [allContests, platform, query, sortOrder, timeframe])
+  const visibleSiteIds = new Set(filteredContests.map((contest) => contest.siteId))
+  const hasFilters = query || platform !== 'all' || timeframe !== 'all' || sortOrder !== 'soonest'
+  const resetFilters = () => { setQuery(''); setPlatform('all'); setTimeframe('all'); setSortOrder('soonest') }
 
   const toggleSite = (siteId) => {
     setOpenSites((current) => {
@@ -29,10 +43,18 @@ export function CompetitiveCodingPage({ contestSites }) {
 
       <div className="workspace-insight-grid" aria-label="Competitive coding overview">
         <div className="workspace-insight-card"><span>Platforms</span><strong>{contestSites.length}</strong><small>connected sources</small></div>
-        <div className="workspace-insight-card"><span>Upcoming</span><strong>{contestSites.reduce((total, site) => total + site.contests.length, 0)}</strong><small>contests to explore</small></div>
+        <div className="workspace-insight-card"><span>Upcoming</span><strong>{allContests.length}</strong><small>contests to explore</small></div>
         <div className="workspace-insight-card"><span>Next move</span><strong>{contestSites.some((site) => site.contests.length > 0) ? 'Pick one' : 'Connect'}</strong><small>{contestSites.some((site) => site.contests.length > 0) ? 'and reserve your slot' : 'a contest source in Settings'}</small></div>
       </div>
 
+      <div className="contest-controls" aria-label="Filter contests">
+        <div className="contest-search"><Search size={16} /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search contests or platforms" aria-label="Search contests or platforms" />{query && <button onClick={() => setQuery('')} aria-label="Clear search"><X size={15} /></button>}</div>
+        <label><Filter size={14} /><span className="sr-only">Platform</span><select value={platform} onChange={(event) => setPlatform(event.target.value)}><option value="all">All platforms</option>{contestSites.map((site) => <option key={site.id} value={site.id}>{site.name}</option>)}</select></label>
+        <label><span className="sr-only">Timeframe</span><select value={timeframe} onChange={(event) => setTimeframe(event.target.value)}><option value="all">Any time</option><option value="today">Next 24 hours</option><option value="week">Next 7 days</option><option value="month">Next 30 days</option></select></label>
+        <label><SlidersHorizontal size={14} /><span className="sr-only">Sort contests</span><select value={sortOrder} onChange={(event) => setSortOrder(event.target.value)}><option value="soonest">Soonest first</option><option value="latest">Latest first</option></select></label>
+        {hasFilters && <button className="contest-reset" onClick={resetFilters}>Reset</button>}
+      </div>
+      <div className="contest-results-meta"><span><strong>{filteredContests.length}</strong> {filteredContests.length === 1 ? 'contest' : 'contests'} shown</span>{hasFilters && <span>Filters are active</span>}</div>
       <div className="contest-site-list">
         {contestSites.length === 0 ? (
           <div className="empty-contest-platforms" style={{ padding: '40px 20px', textAlign: 'center', background: 'var(--bg-secondary, #09090b)', border: '1px solid var(--border-color, #27272a)', borderRadius: '12px' }}>
@@ -42,12 +64,14 @@ export function CompetitiveCodingPage({ contestSites }) {
               All contest platforms are turned off. You can turn on contest details for Codeforces, CodeChef, and LeetCode in Settings.
             </p>
           </div>
+        ) : filteredContests.length === 0 ? (
+          <div className="empty-contest-platforms contest-filter-empty"><Search size={28} /><h3>No contests match</h3><p>Try a different search, platform, or time window.</p><button className="secondary-button" onClick={resetFilters}>Clear filters</button></div>
         ) : (
-          contestSites.map((site) => {
+          contestSites.filter((site) => visibleSiteIds.has(site.id)).map((site) => {
           const isOpen = openSites.has(site.id)
           const visibleContests = showAll[site.id]
-            ? site.contests
-            : site.contests.slice(0, 2)
+            ? filteredContests.filter((contest) => contest.siteId === site.id)
+            : filteredContests.filter((contest) => contest.siteId === site.id).slice(0, 2)
 
           return (
             <article className={`contest-site-card ${isOpen ? 'open' : ''}`} key={site.id}>
@@ -121,7 +145,7 @@ export function CompetitiveCodingPage({ contestSites }) {
                     })}
                   </div>
 
-                  {site.contests.length > 2 && (
+                  {filteredContests.filter((contest) => contest.siteId === site.id).length > 2 && (
                     <button
                       className="contest-show-all"
                       onClick={() =>
@@ -133,7 +157,7 @@ export function CompetitiveCodingPage({ contestSites }) {
                     >
                       {showAll[site.id]
                         ? 'Show latest two'
-                        : `Show all ${site.contests.length} contests`}
+                        : `Show all ${filteredContests.filter((contest) => contest.siteId === site.id).length} contests`}
                     </button>
                   )}
                 </div>

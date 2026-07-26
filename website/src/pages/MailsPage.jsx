@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
-  Archive, ChevronLeft, ChevronRight, ExternalLink, Inbox, LoaderCircle, Mail, MailOpen,
-  MailPlus, RefreshCw, Reply, Search, Send, Star, Trash2, X,
+  Archive, ChevronDown, ChevronLeft, ChevronRight, ExternalLink, Inbox, LoaderCircle, Mail, MailOpen,
+  MailPlus, Plus, RefreshCw, Reply, Search, Send, Star, Trash2, X,
 } from 'lucide-react'
 import {
   hasGmailConnection, loadGoogleMail, loadGoogleMessage,
@@ -58,6 +58,7 @@ export function MailsPage({ onNavigate }) {
   const [pageToken, setPageToken] = useState('')
   const [previousPageTokens, setPreviousPageTokens] = useState([])
   const [nextPageToken, setNextPageToken] = useState('')
+  const [accountMenuOpen, setAccountMenuOpen] = useState(false)
 
   const refresh = useCallback(async (search = query, nextFolder = folder, token = '', keepPage = false, targetAccount = selectedAccountEmail) => {
     setLoading(true)
@@ -241,26 +242,13 @@ export function MailsPage({ onNavigate }) {
           </button>
         </div>
 
-        {accounts.length > 1 && (
-          <div className="mail-account-select">
-            <label htmlFor="gmail-account-picker">Account</label>
-            <select
-              id="gmail-account-picker"
-              value={selectedAccountEmail || account}
-              onChange={(e) => {
-                const newEmail = e.target.value
-                setSelectedAccountEmail(newEmail)
-                refresh(query, folder, '', false, newEmail)
-              }}
-            >
-              {accounts.map((acc) => (
-                <option key={acc.id || acc.email} value={acc.email}>
-                  {acc.email}
-                </option>
-              ))}
-            </select>
-          </div>
-        )}
+        <button
+          className={`mail-all-inboxes ${!selectedAccountEmail ? 'active' : ''}`}
+          onClick={() => { setSelectedAccountEmail(''); setSelected(null); refresh(query, folder, '', false, null) }}
+        >
+          <Inbox size={18} />
+          <span>All inboxes</span>
+        </button>
 
         {FOLDERS.map(({ id, label, icon: Icon }) => (
           <button
@@ -278,7 +266,36 @@ export function MailsPage({ onNavigate }) {
           <ExternalLink size={18} />
           <span>Open Gmail</span>
         </a>
-        {account && <small>{account}</small>}
+        <div className="mail-account-menu">
+          <button
+            className="mail-account-trigger"
+            aria-expanded={accountMenuOpen}
+            onClick={() => setAccountMenuOpen((open) => !open)}
+          >
+            <span className="mail-account-avatar">{(selectedAccountEmail || account || '?')[0].toUpperCase()}</span>
+            <span>{selectedAccountEmail || account || 'Choose account'}</span>
+            <ChevronDown size={15} />
+          </button>
+          {accountMenuOpen && (
+            <div className="mail-account-dropdown" role="menu">
+              {accounts.map((acc) => (
+                <button key={acc.id || acc.email} role="menuitem" onClick={() => {
+                  setSelectedAccountEmail(acc.email)
+                  setAccountMenuOpen(false)
+                  setSelected(null)
+                  refresh(query, folder, '', false, acc.email)
+                }}>
+                  <span className="mail-account-avatar">{acc.email[0].toUpperCase()}</span>
+                  <span>{acc.email}</span>
+                </button>
+              ))}
+              <button role="menuitem" onClick={() => onNavigate('setting')}>
+                <Plus size={16} />
+                <span>Add account</span>
+              </button>
+            </div>
+          )}
+        </div>
       </aside>
 
       {/* Page Heading & Search Toolbar */}

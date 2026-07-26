@@ -3,10 +3,12 @@ import {
   CalendarDays,
   ChevronDown,
   ExternalLink,
+  Filter,
   MapPin,
   Pencil,
   Plus,
   Rocket,
+  Search,
   Trash2,
   Users,
   X,
@@ -40,6 +42,32 @@ export function HackathonsPage({ hackathons, setHackathons, canLoadMore, loading
   const [editSaving, setEditSaving] = useState(false)
   const [editError, setEditError] = useState('')
   const [deleteId, setDeleteId] = useState(null)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [modeFilter, setModeFilter] = useState('All formats')
+  const [sourceFilter, setSourceFilter] = useState('All sources')
+  const [sortOrder, setSortOrder] = useState('Soonest')
+
+  const sourceOptions = [...new Set(hackathons.map((item) => item.source || 'manual'))]
+  const filteredHackathons = hackathons
+    .filter((hackathon) => {
+      const haystack = [hackathon.title, hackathon.organizer, hackathon.mode, ...(Array.isArray(hackathon.tags) ? hackathon.tags : [])]
+        .join(' ')
+        .toLowerCase()
+      return (!searchQuery.trim() || haystack.includes(searchQuery.trim().toLowerCase()))
+        && (modeFilter === 'All formats' || hackathon.mode === modeFilter)
+        && (sourceFilter === 'All sources' || (hackathon.source || 'manual') === sourceFilter)
+    })
+    .sort((first, second) => {
+      const direction = sortOrder === 'Latest' ? -1 : 1
+      return (new Date(first.startsAt).getTime() - new Date(second.startsAt).getTime()) * direction
+    })
+
+  const clearFilters = () => {
+    setSearchQuery('')
+    setModeFilter('All formats')
+    setSourceFilter('All sources')
+    setSortOrder('Soonest')
+  }
 
   useEffect(() => {
     const rawFocus = localStorage.getItem('starwaves.hackathon-focus')
@@ -177,8 +205,32 @@ export function HackathonsPage({ hackathons, setHackathons, canLoadMore, loading
         <div className="workspace-insight-card"><span>Next step</span><strong>{hackathons.length ? 'Choose' : 'Add one'}</strong><small>{hackathons.length ? 'a challenge to pursue' : 'your first challenge'}</small></div>
       </div>
 
+      <div className="hackathon-toolbar" aria-label="Filter hackathons">
+        <label className="hackathon-search">
+          <Search size={16} aria-hidden="true" />
+          <span className="sr-only">Search hackathons</span>
+          <input value={searchQuery} onChange={(event) => setSearchQuery(event.target.value)} placeholder="Search by name, organizer, or skill" />
+        </label>
+        <div className="hackathon-filter-group">
+          <Filter size={15} aria-hidden="true" />
+          <select value={modeFilter} onChange={(event) => setModeFilter(event.target.value)} aria-label="Filter by format">
+            <option>All formats</option><option>Online</option><option>In person</option><option>Hybrid</option>
+          </select>
+          <select value={sourceFilter} onChange={(event) => setSourceFilter(event.target.value)} aria-label="Filter by source">
+            <option>All sources</option>{sourceOptions.map((source) => <option key={source} value={source}>{source === 'manual' ? 'Manual' : source.toUpperCase()}</option>)}
+          </select>
+          <select value={sortOrder} onChange={(event) => setSortOrder(event.target.value)} aria-label="Sort hackathons">
+            <option>Soonest</option><option>Latest</option>
+          </select>
+        </div>
+        {(searchQuery || modeFilter !== 'All formats' || sourceFilter !== 'All sources' || sortOrder !== 'Soonest') && (
+          <button className="text-button" type="button" onClick={clearFilters}>Reset</button>
+        )}
+      </div>
+      <div className="hackathon-results-meta"><span>{filteredHackathons.length} of {hackathons.length} opportunities</span><span>{filteredHackathons.length ? 'Open one to see the details' : 'Try a different filter'}</span></div>
+
       <div className="hackathon-list">
-        {hackathons.map((hackathon) => {
+        {filteredHackathons.map((hackathon) => {
           const startsAt = new Date(hackathon.startsAt)
           const endsAt = new Date(hackathon.endsAt)
           const isOpen = openHackathons.has(hackathon.id)
@@ -333,6 +385,7 @@ export function HackathonsPage({ hackathons, setHackathons, canLoadMore, loading
             </article>
           )
         })}
+        {!filteredHackathons.length && <div className="hackathon-empty-state"><Rocket size={22} /><strong>No hackathons match these filters</strong><span>Adjust your search or reset the filters to see more opportunities.</span><button className="secondary-button" type="button" onClick={clearFilters}>Reset filters</button></div>}
       </div>
 
       {canLoadMore && <button className="secondary-button" type="button" onClick={onLoadMore} disabled={loadingMore}>{loadingMore ? 'Loading…' : 'Load more hackathons'}</button>}
