@@ -1236,6 +1236,13 @@ html.dark-theme .public-nav {
   margin-bottom: 28px;
 }
 
+.auth-info {
+  margin: 8px 0 0;
+  color: var(--text-primary);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
 .auth-heading p {
   margin: 0 0 4px;
   color: var(--text-muted);

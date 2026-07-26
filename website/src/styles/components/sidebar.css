@@ -47,7 +47,7 @@
   display: flex;
   align-items: center;
   justify-content: flex-start;
-  padding: 0 10px 12px;
+  padding: 0 3px 12px;
   color: var(--text-muted);
   font-size: 11px;
   font-weight: 700;
@@ -57,9 +57,62 @@
   white-space: nowrap;
 }
 
+.sidebar.expanded .sidebar-heading {
+  padding: 0 10px 12px;
+}
+
+.sidebar-expand-button {
+  display: grid;
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  place-items: center;
+  margin-left: auto;
+  padding: 0;
+  color: var(--text-secondary);
+  background: transparent;
+  border: 0;
+  border-radius: var(--radius-md);
+}
+
+.sidebar-expand-button:hover {
+  color: var(--text-primary);
+  background: var(--bg-hover);
+}
+
 .sidebar-heading > span {
   opacity: 0;
   transition: opacity 120ms ease;
+}
+
+.sidebar-nav-group {
+  display: grid;
+  gap: 2px;
+}
+
+.sidebar-nav-group + .sidebar-nav-group {
+  margin-top: 9px;
+}
+
+.sidebar-nav-group-label {
+  max-width: 0;
+  height: 0;
+  overflow: hidden;
+  padding-inline: 12px;
+  color: var(--text-muted);
+  opacity: 0;
+  font-size: 9px;
+  font-weight: 750;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  transition: opacity var(--transition-fast);
+}
+
+.sidebar.expanded .sidebar-nav-group-label {
+  max-width: 180px;
+  height: auto;
+  padding-block: 4px;
+  opacity: 1;
 }
 
 .sidebar.expanded .sidebar-heading > span {

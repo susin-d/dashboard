@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Header } from '../components/Header'
 import { Sidebar } from '../components/Sidebar'
+import { NetworkStatus } from '../components/NetworkStatus'
 import '../App.css'
 
 export function AppLayout({
@@ -17,41 +18,23 @@ export function AppLayout({
   onLoadMoreNotifications,
 }) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
-  const [sidebarExpanded, setSidebarExpanded] = useState(false)
+  const [sidebarExpanded, setSidebarExpanded] = useState(
+    () => localStorage.getItem('starwaves.sidebar-expanded') === 'true',
+  )
+  const contentRef = useRef(null)
 
   useEffect(() => {
-    let frameId = null
-    let latestClientX = null
+    localStorage.setItem('starwaves.sidebar-expanded', String(sidebarExpanded))
+  }, [sidebarExpanded])
 
-    const updateSidebarState = () => {
-      frameId = null
-      if (latestClientX === null) return
-
-      const expandedBoundary = activePage === 'mails' ? 470 : 280
-      setSidebarExpanded((expanded) => {
-        const nextExpanded = expanded
-          ? latestClientX <= expandedBoundary
-          : latestClientX <= 96
-        return nextExpanded === expanded ? expanded : nextExpanded
-      })
-    }
-
-    const handlePointerMove = (event) => {
-      if (window.innerWidth <= 760 || event.pointerType === 'touch') return
-
-      latestClientX = event.clientX
-      if (frameId === null) frameId = window.requestAnimationFrame(updateSidebarState)
-    }
-
-    window.addEventListener('pointermove', handlePointerMove)
-    return () => {
-      window.removeEventListener('pointermove', handlePointerMove)
-      if (frameId !== null) window.cancelAnimationFrame(frameId)
-    }
+  useEffect(() => {
+    contentRef.current?.focus({ preventScroll: true })
   }, [activePage])
 
   return (
     <div className={`app-shell ${sidebarExpanded ? 'sidebar-expanded' : ''}`}>
+      <a className="skip-link" href="#main-content">Skip to main content</a>
+      <NetworkStatus />
       <Header
         onMenuOpen={() => setSidebarOpen(true)}
         onNavigate={onNavigate}
@@ -68,10 +51,16 @@ export function AppLayout({
         activePage={activePage}
         isExpanded={sidebarExpanded}
         isOpen={sidebarOpen}
+        onToggleExpanded={() => setSidebarExpanded((expanded) => !expanded)}
         onNavigate={onNavigate}
         onClose={() => setSidebarOpen(false)}
       />
-      <main className={`content ${activePage === 'calendar' ? 'calendar-content' : ''}`}>
+      <main
+        ref={contentRef}
+        id="main-content"
+        className={`content ${activePage === 'calendar' ? 'calendar-content' : ''}`}
+        tabIndex={-1}
+      >
         {children}
       </main>
     </div>

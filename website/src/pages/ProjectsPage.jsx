@@ -124,6 +124,12 @@ export function ProjectsPage({ projects, setProjects, onOpenProject, canLoadMore
         </>}
       />
 
+      <div className="workspace-insight-grid project-insight-grid" aria-label="Project overview">
+        <div className="workspace-insight-card"><span>Projects</span><strong>{projects.length}</strong><small>across your workspace</small></div>
+        <div className="workspace-insight-card"><span>In motion</span><strong>{projects.filter((item) => item.status === 'Active').length}</strong><small>active builds</small></div>
+        <div className="workspace-insight-card"><span>Average progress</span><strong>{projects.length ? `${Math.round(projects.reduce((total, item) => total + Number(item.progress || 0), 0) / projects.length)}%` : '—'}</strong><small>across all projects</small></div>
+      </div>
+
       <div className="project-toolbar" aria-label="Filter projects">
         <label className="project-search"><Search size={16} /><span className="sr-only">Search projects</span><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search projects, tools, or descriptions" />{query && <button type="button" onClick={() => setQuery('')} aria-label="Clear search"><X size={15} /></button>}</label>
         <div className="project-filter-controls"><SlidersHorizontal size={15} aria-hidden="true" /><CustomDropdown value={statusFilter} onChange={setStatusFilter} ariaLabel="Filter by status" options={['All', 'Active', 'Planning', 'On hold', 'Completed'].map((value) => ({ value, label: value === 'All' ? 'All statuses' : value }))} /><CustomDropdown value={sortOrder} onChange={setSortOrder} ariaLabel="Sort projects" options={[{ value: 'updated', label: 'Recently updated' }, { value: 'progress', label: 'Progress' }, { value: 'name', label: 'Name' }]} />{hasFilters && <button className="project-reset" type="button" onClick={resetFilters}><RotateCcw size={13} /> Reset</button>}</div>
@@ -207,7 +213,7 @@ export function ProjectsPage({ projects, setProjects, onOpenProject, canLoadMore
                         <span key={technology}>{technology}</span>
                       ))}
                     </div>
-                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                    <div className="project-card-actions">
                       <button
                         className="secondary-button"
                         type="button"
@@ -231,12 +237,6 @@ export function ProjectsPage({ projects, setProjects, onOpenProject, canLoadMore
         {!filteredProjects.length && <div className="project-empty-state"><Search size={22} /><strong>No projects match these filters</strong><span>Try a different search or status.</span>{hasFilters && <button className="secondary-button" type="button" onClick={resetFilters}>Clear filters</button>}</div>}
       </div>
 
-      <div className="workspace-insight-grid" aria-label="Project overview">
-        <div className="workspace-insight-card"><span>Projects</span><strong>{projects.length}</strong><small>across your workspace</small></div>
-        <div className="workspace-insight-card"><span>In motion</span><strong>{projects.filter((item) => item.status === 'Active').length}</strong><small>active builds</small></div>
-        <div className="workspace-insight-card"><span>Average progress</span><strong>{projects.length ? `${Math.round(projects.reduce((total, item) => total + Number(item.progress || 0), 0) / projects.length)}%` : '—'}</strong><small>across all projects</small></div>
-      </div>
-
       {canLoadMore && <button className="secondary-button" type="button" onClick={onLoadMore} disabled={loadingMore}>{loadingMore ? 'Loading…' : 'Load more projects'}</button>}
 
       {formOpen && (
@@ -244,7 +244,7 @@ export function ProjectsPage({ projects, setProjects, onOpenProject, canLoadMore
           <div className="todo-modal document-modal" role="dialog" aria-modal="true" onMouseDown={(event) => event.stopPropagation()}>
             <div className="todo-modal-heading">
               <div><p>Projects</p><h2>Add project</h2></div>
-              <button className="icon-button" onClick={() => setFormOpen(false)}><X size={18} /></button>
+              <button className="icon-button" onClick={() => setFormOpen(false)} aria-label="Close add project form"><X size={18} /></button>
             </div>
             <form className="project-edit-form" onSubmit={submitProject}>
               {error && <div className="todo-api-error" role="alert">{error}</div>}

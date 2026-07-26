@@ -33,8 +33,15 @@ function ProgressRow({ label, value, total, colorClass = '' }) {
   return (
     <div className="stats-progress-row">
       <div><strong>{label}</strong><span>{stat(value)}</span></div>
-      <div className="stats-progress-track">
-        <i className={colorClass} style={{ width: `${percentage}%` }} />
+      <div
+        className="stats-progress-track"
+        role="progressbar"
+        aria-label={`${label}: ${stat(value)} of ${stat(total)}`}
+        aria-valuemin="0"
+        aria-valuemax={total || 0}
+        aria-valuenow={value || 0}
+      >
+        <i className={colorClass} style={{ width: `${percentage}%` }} aria-hidden="true" />
       </div>
     </div>
   )
@@ -93,9 +100,13 @@ export function StatsPage({
           </header>
           <div className="stats-github-overview">
             <div><strong>{stat(github.contributions)}</strong><span>Contributions this year</span></div>
-            <div className="stats-contribution-chart" aria-label="Weekly contribution activity">
+            <div
+              className="stats-contribution-chart"
+              role="img"
+              aria-label={`${stat(github.contributions)} GitHub contributions this year across ${githubWeeks.length} displayed weeks`}
+            >
               {githubWeeks.map((value, index) => (
-                <i key={`${index}-${value}`} style={{ height: `${Math.max(18, (value / Math.max(...githubWeeks, 1)) * 100)}%` }} />
+                <i key={`${index}-${value}`} style={{ height: `${Math.max(18, (value / Math.max(...githubWeeks, 1)) * 100)}%` }} aria-hidden="true" />
               ))}
             </div>
           </div>
@@ -109,7 +120,7 @@ export function StatsPage({
             {githubLanguages.map((language) => (
               <div key={language.name}>
                 <span><strong>{language.name}</strong><em>{language.percentage}%</em></span>
-                <div className="stats-progress-track"><i style={{ width: `${language.percentage}%` }} /></div>
+                <div className="stats-progress-track" role="progressbar" aria-label={`${language.name}: ${language.percentage}%`} aria-valuemin="0" aria-valuemax="100" aria-valuenow={language.percentage}><i style={{ width: `${language.percentage}%` }} aria-hidden="true" /></div>
               </div>
             ))}
           </div>
@@ -181,7 +192,7 @@ export function StatsPage({
             {projects.map((project) => (
               <div key={project.id}>
                 <div><strong>{project.name}</strong><span>{project.status} · {project.progress}%</span></div>
-                <div className="stats-progress-track"><i style={{ width: `${project.progress}%` }} /></div>
+                <div className="stats-progress-track" role="progressbar" aria-label={`${project.name}: ${project.progress}% complete`} aria-valuemin="0" aria-valuemax="100" aria-valuenow={project.progress}><i style={{ width: `${project.progress}%` }} aria-hidden="true" /></div>
               </div>
             ))}
           </div>

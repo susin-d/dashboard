@@ -79,6 +79,57 @@ button {
   cursor: pointer;
 }
 
+.skip-link {
+  position: fixed;
+  z-index: 1000;
+  top: 10px;
+  left: 10px;
+  padding: 10px 14px;
+  color: var(--text-inverse);
+  background: var(--color-primary);
+  border: 2px solid var(--bg-primary);
+  border-radius: var(--radius-md);
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 750;
+  transform: translateY(-160%);
+  transition: transform var(--transition-fast);
+}
+
+.skip-link:focus {
+  transform: translateY(0);
+}
+
+.network-status {
+  position: fixed;
+  z-index: 950;
+  right: 16px;
+  bottom: 16px;
+  max-width: min(420px, calc(100vw - 32px));
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 11px 14px;
+  color: var(--text-inverse);
+  background: var(--color-primary);
+  border: 1px solid var(--border-heavy);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+:where(button, a, input, select, textarea, [tabindex]):focus-visible {
+  outline: 2px solid var(--text-primary);
+  outline-offset: 3px;
+}
+
+@media (pointer: coarse) {
+  :where(button, a, [role="button"]) {
+    min-height: 44px;
+  }
+}
+
 /* Custom Scrollbars */
 *::-webkit-scrollbar {
   width: 10px;

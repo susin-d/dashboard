@@ -696,11 +696,19 @@ export function SettingPage({
       <div className="page-heading">
         <div>
           <p>Account</p>
-          <h1>Setting</h1>
+          <h1>Settings</h1>
         </div>
       </div>
 
-      <div className="setting-section">
+      <nav className="settings-section-nav" aria-label="Settings sections">
+        <a href="#settings-profile">Profile</a>
+        <a href="#settings-apps">Integrations</a>
+        <a href="#settings-coding">Coding</a>
+        <a href="#settings-hackathons">Hackathons</a>
+        <a href="#settings-account">Account</a>
+      </nav>
+
+      <div className="setting-section" id="settings-profile">
         <div className="section-heading">
           <h2>Profile</h2>
           <p>Your personal information and account role.</p>
@@ -709,7 +717,7 @@ export function SettingPage({
         <ProfileCard user={user} />
       </div>
 
-      <div className="setting-section">
+      <div className="setting-section" id="settings-apps">
         <div className="section-heading">
           <h2>Apps</h2>
           <p>Connect Google Workspace to use cloud files across StarWaves.</p>
@@ -1064,7 +1072,7 @@ export function SettingPage({
         </div>
       </div>
 
-      <div className="setting-section">
+      <div className="setting-section" id="settings-coding">
         <div className="section-heading">
           <h2>Competitive coding</h2>
           <p>Add a username or full profile URL for each coding platform.</p>
@@ -1172,7 +1180,7 @@ export function SettingPage({
         </div>
       </div>
 
-      <div className="setting-section">
+      <div className="setting-section" id="settings-hackathons">
         <div className="section-heading">
           <h2>Hackathons</h2>
           <p>Turn on event sources to combine their active hackathons.</p>
@@ -1224,7 +1232,7 @@ export function SettingPage({
         </div>
       </div>
 
-      <div className="setting-section delete-account-section">
+      <div className="setting-section delete-account-section" id="settings-account">
         <div className="section-heading">
           <h2>Delete account</h2>
           <p>Permanently remove your StarWaves account.</p>

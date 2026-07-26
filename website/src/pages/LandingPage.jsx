@@ -137,7 +137,7 @@ export function LandingPage({ user, onNavigate }) {
   }
 
   return (
-    <main className="public-page">
+    <main id="main-content" className="public-page" tabIndex={-1}>
       {/* Navigation */}
       <nav className="public-nav" aria-label="Public navigation">
         <button className="public-brand" onClick={() => onNavigate('/')}>

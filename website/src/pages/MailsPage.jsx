@@ -8,6 +8,7 @@ import {
   sendGoogleMessage, updateGoogleMessage,
 } from '../lib/googleMail'
 import { getGmailAccounts, getGmailStatus } from '../lib/gmailApi'
+import { ConfirmDialog } from '../components/ui'
 
 const FOLDERS = [
   { id: 'INBOX', label: 'Inbox', icon: Inbox },
@@ -53,6 +54,7 @@ export function MailsPage({ onNavigate }) {
   const [selected, setSelected] = useState(null)
   const [reading, setReading] = useState(false)
   const [compose, setCompose] = useState(null)
+  const [discardRequested, setDiscardRequested] = useState(false)
   const [sending, setSending] = useState(false)
   const [notice, setNotice] = useState('')
   const [pageToken, setPageToken] = useState('')
@@ -204,6 +206,17 @@ export function MailsPage({ onNavigate }) {
     } finally {
       setSending(false)
     }
+  }
+
+  const requestCloseCompose = () => {
+    const hasDraftContent = compose && Object.values(compose).some(
+      (value) => typeof value === 'string' && value.trim(),
+    )
+    if (hasDraftContent) {
+      setDiscardRequested(true)
+      return
+    }
+    setCompose(null)
   }
 
   if (connected === null) {
@@ -429,11 +442,11 @@ export function MailsPage({ onNavigate }) {
 
       {/* Compose Email Modal */}
       {compose && (
-        <div className="mail-modal" role="dialog" aria-modal="true" aria-labelledby="compose-title" onMouseDown={() => setCompose(null)}>
+        <div className="mail-modal" role="dialog" aria-modal="true" aria-labelledby="compose-title" onMouseDown={requestCloseCompose}>
           <form className="mail-card compose-card" onMouseDown={(event) => event.stopPropagation()} onSubmit={sendMessage}>
             <header className="mail-card-header">
               <h3 id="compose-title">{compose.threadId ? 'Reply Message' : 'New Message'}</h3>
-              <button type="button" onClick={() => setCompose(null)} aria-label="Close compose"><X size={16} /></button>
+              <button type="button" onClick={requestCloseCompose} aria-label="Close compose"><X size={16} /></button>
             </header>
             <div className="compose-fields">
               <input value={compose.to} onChange={(event) => setCompose((c) => ({ ...c, to: event.target.value }))} placeholder="To" required />
@@ -443,7 +456,7 @@ export function MailsPage({ onNavigate }) {
               <textarea value={compose.body} onChange={(event) => setCompose((c) => ({ ...c, body: event.target.value }))} placeholder="Write your message…" rows="12" required />
             </div>
             <footer className="compose-footer">
-              <button type="button" onClick={() => setCompose(null)}>Discard</button>
+              <button type="button" onClick={requestCloseCompose}>Discard</button>
               <button className="primary-button" type="submit" disabled={sending}>
                 {sending ? 'Sending…' : <><Send size={15} /> Send</>}
               </button>
@@ -451,6 +464,17 @@ export function MailsPage({ onNavigate }) {
           </form>
         </div>
       )}
+      <ConfirmDialog
+        isOpen={discardRequested}
+        title="Discard draft?"
+        message="Your unsent message will be permanently discarded."
+        confirmLabel="Discard draft"
+        onCancel={() => setDiscardRequested(false)}
+        onConfirm={() => {
+          setDiscardRequested(false)
+          setCompose(null)
+        }}
+      />
     </div>
   )
 }

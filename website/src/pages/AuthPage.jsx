@@ -81,7 +81,7 @@ export function AuthPage({ mode, onNavigate, onAuthenticate }) {
   }
 
   return (
-    <main className="auth-page">
+    <main id="main-content" className="auth-page" tabIndex={-1}>
       <section className="auth-brand-panel">
         <button className="public-brand auth-brand" onClick={() => onNavigate('/')}>
           <StarWavesLogo size={28} /> StarWaves
@@ -145,7 +145,7 @@ export function AuthPage({ mode, onNavigate, onAuthenticate }) {
                 Forgot password?
               </button>
             )}
-            {infoMessage && <p className="auth-info" style={{ color: 'var(--text-primary)', fontSize: '0.85rem', marginTop: '0.5rem' }}>{infoMessage}</p>}
+            {infoMessage && <p className="auth-info" role="status">{infoMessage}</p>}
             {error && <p className="auth-error" role="alert">{error}</p>}
             <button className="auth-submit" type="submit" disabled={submitting}>
               {submitting ? 'Please wait…' : signup ? 'Create account' : 'Log in'}

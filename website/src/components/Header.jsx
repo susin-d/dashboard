@@ -180,8 +180,8 @@ export function Header({
             <Search size={17} />
             <input
               ref={searchInputRef}
-              aria-label="Search pages"
-              placeholder="Search pages"
+              aria-label="Go to page"
+              placeholder="Go to page"
               value={searchQuery}
               onFocus={() => setSearchOpen(true)}
               onChange={(event) => {
@@ -275,7 +275,7 @@ export function Header({
                 </button>
                 <button onClick={() => navigateFromMenu('setting')}>
                   <Settings size={16} />
-                  Setting
+                  Settings
                 </button>
               </div>
             </div>

@@ -29,7 +29,7 @@ export function OnboardingPage({ user, onComplete }) {
   }
 
   return (
-    <main className="onboarding-page">
+    <main id="main-content" className="onboarding-page" tabIndex={-1}>
       <section className="onboarding-card">
         <StarWavesLogo size={36} />
         <div className="onboarding-icon"><UserRound size={23} /></div>

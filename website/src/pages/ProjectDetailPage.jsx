@@ -109,19 +109,23 @@ export function ProjectDetailPage({ project, onBack, onSave }) {
               <Trash2 size={15} />
               Delete
             </button>
-            <a href={project.githubUrl} target="_blank" rel="noreferrer">
-              <GitBranch size={15} />
-              GitHub
-            </a>
-            <a
-              className="live-link"
-              href={project.liveUrl}
-              target="_blank"
-              rel="noreferrer"
-            >
-              <ExternalLink size={15} />
-              Live site
-            </a>
+            {project.githubUrl && (
+              <a href={project.githubUrl} target="_blank" rel="noreferrer">
+                <GitBranch size={15} />
+                GitHub
+              </a>
+            )}
+            {project.liveUrl && (
+              <a
+                className="live-link"
+                href={project.liveUrl}
+                target="_blank"
+                rel="noreferrer"
+              >
+                <ExternalLink size={15} />
+                Live site
+              </a>
+            )}
           </div>
         </div>
       </div>
@@ -176,9 +180,13 @@ export function ProjectDetailPage({ project, onBack, onSave }) {
         <article className="project-overview-card project-tech-card">
           <p className="project-card-label">Technologies</p>
           <div className="project-page-tags">
-            {project.technologies.map((technology) => (
-              <span key={technology}>{technology}</span>
-            ))}
+            {project.technologies.length ? (
+              project.technologies.map((technology) => (
+                <span key={technology}>{technology}</span>
+              ))
+            ) : (
+              <span className="project-no-technologies">No technologies added</span>
+            )}
           </div>
         </article>
       </div>
@@ -239,7 +247,8 @@ export function ProjectDetailPage({ project, onBack, onSave }) {
                     }
                   >
                     <option>Planning</option>
-                    <option>In progress</option>
+                    <option>Active</option>
+                    <option>On hold</option>
                     <option>Completed</option>
                   </select>
                 </label>

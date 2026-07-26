@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { AppLayout } from './layouts/AppLayout'
 import { CalendarPage } from './pages/CalendarPage'
 import { CompetitiveCodingPage } from './pages/CompetitiveCodingPage'
@@ -23,6 +23,26 @@ import { TermsOfServicePage } from './pages/TermsOfServicePage'
 import { updateNotification } from './lib/workspaceApi'
 import { CALENDAR_REMINDER_PREFIX } from './utils/calendarReminders'
 import { useAuth, useRouter, useWorkspaceData } from './hooks'
+import { NetworkStatus } from './components/NetworkStatus'
+
+const routeTitles = {
+  '/': 'StarWaves — Developer productivity workspace',
+  '/login': 'Log in — StarWaves',
+  '/signup': 'Create account — StarWaves',
+  '/onboarding': 'Set up your workspace — StarWaves',
+  '/privacy': 'Privacy policy — StarWaves',
+  '/terms': 'Terms of service — StarWaves',
+}
+
+function publicRoute(content) {
+  return (
+    <>
+      <a className="skip-link" href="#main-content">Skip to main content</a>
+      <NetworkStatus />
+      {content}
+    </>
+  )
+}
 
 function App() {
   const { currentUser, authReady } = useAuth()
@@ -70,11 +90,28 @@ function App() {
 
   const [notificationsOpen, setNotificationsOpen] = useState(false)
   const [creationIntent, setCreationIntent] = useState(null)
+  const previousRouteRef = useRef(route)
 
   const selectedProject = projects.find(
     (project) => project.id === selectedProjectId,
   )
   const selectedDocument = documents.find((document) => document.id === selectedDocumentId)
+
+  useEffect(() => {
+    const pageName = activePage
+      .split('-')
+      .map((part) => part[0]?.toUpperCase() + part.slice(1))
+      .join(' ')
+    document.title = routeTitles[route] ?? `${pageName} — StarWaves`
+
+    if (previousRouteRef.current !== route) {
+      window.requestAnimationFrame(() => {
+        const main = document.getElementById('main-content')
+        main?.focus({ preventScroll: true })
+      })
+      previousRouteRef.current = route
+    }
+  }, [activePage, route])
 
   useEffect(() => {
     if (
@@ -302,33 +339,33 @@ function App() {
     ),
   }
 
-  if (route === '/') return <LandingPage user={activeUser} onNavigate={navigateRoute} />
-  if (route === '/privacy') return <PrivacyPolicyPage onNavigate={navigateRoute} />
-  if (route === '/terms') return <TermsOfServicePage onNavigate={navigateRoute} />
+  if (route === '/') return publicRoute(<LandingPage user={activeUser} onNavigate={navigateRoute} />)
+  if (route === '/privacy') return publicRoute(<PrivacyPolicyPage onNavigate={navigateRoute} />)
+  if (route === '/terms') return publicRoute(<TermsOfServicePage onNavigate={navigateRoute} />)
   if (route === '/login') {
     if (!authReady || activeUser) {
       return <div className="auth-loading">Loading StarWaves…</div>
     }
-    return <AuthPage mode="login" onNavigate={navigateRoute} onAuthenticate={beginOnboarding} />
+    return publicRoute(<AuthPage mode="login" onNavigate={navigateRoute} onAuthenticate={beginOnboarding} />)
   }
   if (route === '/signup') {
     if (!authReady || activeUser) {
       return <div className="auth-loading">Loading StarWaves…</div>
     }
-    return <AuthPage mode="signup" onNavigate={navigateRoute} onAuthenticate={beginOnboarding} />
+    return publicRoute(<AuthPage mode="signup" onNavigate={navigateRoute} onAuthenticate={beginOnboarding} />)
   }
   if (route === '/onboarding') {
     if (!authReady) return <div className="auth-loading">Loading StarWaves…</div>
     if (!activeUser) {
-      return <AuthPage mode="login" onNavigate={navigateRoute} onAuthenticate={beginOnboarding} />
+      return publicRoute(<AuthPage mode="login" onNavigate={navigateRoute} onAuthenticate={beginOnboarding} />)
     }
-    return <OnboardingPage user={activeUser} onComplete={completeOnboarding} />
+    return publicRoute(<OnboardingPage user={activeUser} onComplete={completeOnboarding} />)
   }
   if (!authReady) {
     return <div className="auth-loading">Loading StarWaves…</div>
   }
   if (!activeUser) {
-    return <AuthPage mode="login" onNavigate={navigateRoute} onAuthenticate={beginOnboarding} />
+    return publicRoute(<AuthPage mode="login" onNavigate={navigateRoute} onAuthenticate={beginOnboarding} />)
   }
 
   return (

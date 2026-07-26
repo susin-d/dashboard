@@ -1,3 +1,4 @@
+import { PanelLeftClose, PanelLeftOpen } from 'lucide-react'
 import { useLayoutEffect, useRef, useState } from 'react'
 import { navigationItems } from '../config/navigation'
 
@@ -7,11 +8,15 @@ export function Sidebar({
   isOpen,
   onClose,
   onNavigate,
+  onToggleExpanded,
 }) {
   const sidebarRef = useRef(null)
   const itemRefs = useRef(new Map())
   const [indicatorStyle, setIndicatorStyle] = useState(null)
   const mainNavigation = navigationItems.filter(({ id }) => id !== 'setting')
+  const navigationGroups = Array.from(
+    new Set(mainNavigation.map(({ group }) => group)),
+  )
   const settingItem = navigationItems.find(({ id }) => id === 'setting')
   const SettingIcon = settingItem?.icon
 
@@ -66,20 +71,36 @@ export function Sidebar({
         />
         <div className="sidebar-heading">
           <span>Workspace</span>
+          <button
+            className="sidebar-expand-button"
+            type="button"
+            onClick={onToggleExpanded}
+            aria-label={isExpanded ? 'Collapse navigation' : 'Expand navigation'}
+            aria-pressed={isExpanded}
+          >
+            {isExpanded ? <PanelLeftClose size={17} /> : <PanelLeftOpen size={17} />}
+          </button>
         </div>
 
         <nav aria-label="Main navigation">
-          {mainNavigation.map(({ id, label, icon: Icon }) => (
-            <button
-              key={id}
-              ref={setItemRef(id)}
-              className={`nav-item ${activePage === id ? 'active' : ''}`}
-              onClick={() => handleNavigate(id)}
-              aria-current={activePage === id ? 'page' : undefined}
-            >
-              <Icon size={18} />
-              <span>{label}</span>
-            </button>
+          {navigationGroups.map((group) => (
+            <div className="sidebar-nav-group" key={group}>
+              <span className="sidebar-nav-group-label">{group}</span>
+              {mainNavigation
+                .filter((item) => item.group === group)
+                .map(({ id, label, icon: Icon }) => (
+                  <button
+                    key={id}
+                    ref={setItemRef(id)}
+                    className={`nav-item ${activePage === id ? 'active' : ''}`}
+                    onClick={() => handleNavigate(id)}
+                    aria-current={activePage === id ? 'page' : undefined}
+                  >
+                    <Icon size={18} />
+                    <span>{label}</span>
+                  </button>
+                ))}
+            </div>
           ))}
         </nav>
 

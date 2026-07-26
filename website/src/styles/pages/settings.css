@@ -6,6 +6,43 @@
   padding-bottom: 48px;
 }
 
+.settings-section-nav {
+  position: sticky;
+  z-index: 10;
+  top: 76px;
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding: 8px;
+  background: var(--bg-overlay);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  backdrop-filter: blur(12px);
+}
+
+.settings-section-nav a {
+  min-height: 36px;
+  display: inline-flex;
+  align-items: center;
+  flex: 0 0 auto;
+  padding: 0 12px;
+  color: var(--text-secondary);
+  border-radius: var(--radius-md);
+  text-decoration: none;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.settings-section-nav a:hover,
+.settings-section-nav a:focus-visible {
+  color: var(--text-primary);
+  background: var(--bg-hover);
+}
+
+.setting-section {
+  scroll-margin-top: 136px;
+}
+
 .setting-section {
   display: grid;
   grid-template-columns: minmax(180px, 240px) minmax(0, 1fr);

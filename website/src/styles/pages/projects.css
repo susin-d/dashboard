@@ -16,8 +16,11 @@
 .project-list {
   width: 100%;
   display: grid;
-  gap: 12px;
-  padding-top: 18px;
+  gap: 14px;
+}
+
+.project-insight-grid {
+  margin-top: 0;
 }
 
 .project-toolbar {
@@ -25,8 +28,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  margin-top: 22px;
-  padding: 10px;
+  padding: 11px 12px;
   background: var(--bg-card);
   border: 1px solid var(--border-color);
   border-radius: 12px;
@@ -99,6 +101,34 @@
   color: var(--text-inverse);
 }
 
+.project-list-card {
+  overflow: hidden;
+  border-radius: var(--radius-lg);
+}
+
+.project-list-card .contest-site-header {
+  min-height: 76px;
+  padding: 14px 16px;
+}
+
+.project-list-card .contest-site-copy {
+  gap: 5px;
+}
+
+.project-list-card .contest-site-copy strong {
+  font-size: 13px;
+}
+
+.project-list-card .contest-site-copy small {
+  max-width: 760px;
+  overflow: hidden;
+  color: var(--text-secondary);
+  font-size: 11px;
+  line-height: 1.45;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .project-status {
   padding: 5px 8px;
   color: var(--text-secondary);
@@ -109,7 +139,9 @@
 }
 
 .project-detail-content {
-  padding-top: 15px;
+  padding: 18px 16px 16px;
+  border-top: 1px solid var(--border-color);
+  background: var(--bg-hover-subtle);
 }
 
 .project-progress-heading {
@@ -187,6 +219,12 @@
   padding-top: 14px;
 }
 
+.project-card-actions {
+  display: flex;
+  flex: 0 0 auto;
+  gap: 8px;
+}
+
 .project-tags {
   display: flex;
   flex-wrap: wrap;
@@ -223,7 +261,7 @@
   display: flex;
   align-items: center;
   gap: 15px;
-  padding-bottom: 28px;
+  padding: 4px 0 24px;
   border-bottom: 1px solid var(--border-color);
 }
 
@@ -264,13 +302,17 @@
 }
 
 .project-page-header-actions {
-  display: grid;
-  justify-items: end;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
   gap: 10px;
 }
 
 .project-page-links {
   display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
   gap: 7px;
 }
 
@@ -310,13 +352,13 @@
 
 .project-page-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 14px;
-  padding-top: 28px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
 }
 
 .project-overview-card {
-  padding: 20px;
+  min-height: 168px;
+  padding: var(--layout-card-padding);
   background: var(--bg-card);
   border: 1px solid var(--border-color);
   border-radius: 13px;
@@ -373,7 +415,7 @@
 }
 
 .project-tech-card {
-  grid-column: 1 / -1;
+  grid-column: auto;
 }
 
 .project-page-tags {
@@ -390,6 +432,12 @@
   border-radius: 7px;
   font-size: 10px;
   font-weight: 650;
+}
+
+.project-page-tags .project-no-technologies {
+  color: var(--text-muted);
+  background: transparent;
+  border: 1px dashed var(--border-heavy);
 }
 
 .project-edit-modal {
@@ -448,11 +496,36 @@
   gap: 7px;
 }
 
+@media (max-width: 1100px) {
+  .project-page-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .project-tech-card {
+    grid-column: 1 / -1;
+  }
+}
+
 @media (max-width: 768px) {
   .projects-grid,
   .project-page-layout,
+  .project-page-grid,
   .project-edit-form-row {
     grid-template-columns: 1fr;
+  }
+
+  .project-page-heading {
+    align-items: flex-start;
+  }
+
+  .project-tech-card {
+    grid-column: auto;
+  }
+
+  .project-page-header-actions,
+  .project-page-links {
+    width: 100%;
+    justify-content: flex-start;
   }
 }
 
@@ -463,5 +536,31 @@
   .project-filter-controls .custom-dropdown-trigger { width: 100%; min-width: 0; }
   .workspace-insight-grid {
     grid-template-columns: 1fr;
+  }
+
+  .project-list-card .contest-site-header {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+  }
+
+  .project-list-card .project-status {
+    display: none;
+  }
+
+  .project-detail-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .project-detail-item + .project-detail-item {
+    border-top: 1px solid var(--border-color);
+    border-left: 0;
+  }
+
+  .project-list-footer {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .project-card-actions > button {
+    flex: 1;
   }
 }

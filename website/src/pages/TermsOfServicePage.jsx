@@ -3,7 +3,7 @@ import { StarWavesLogo } from '../components/StarWavesLogo'
 
 export function TermsOfServicePage({ onNavigate }) {
   return (
-    <main className="public-page">
+    <main id="main-content" className="public-page" tabIndex={-1}>
       <nav className="public-nav" aria-label="Public navigation">
         <button className="public-brand" onClick={() => onNavigate('/')}>
           <StarWavesLogo size={28} /> StarWaves

@@ -173,6 +173,18 @@
   margin-inline: auto;
 }
 
+.content :where(button:not(.inline-link), [role="button"]),
+.public-page button:not(.inline-link),
+.auth-page button {
+  min-height: 32px;
+}
+
+.content small,
+.public-page small {
+  font-size: max(12px, 0.75em);
+  line-height: 1.4;
+}
+
 @media (max-width: 1024px) {
   .stats-metric-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));

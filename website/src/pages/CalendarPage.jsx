@@ -11,7 +11,6 @@ import {
   FolderKanban,
   ExternalLink,
   MapPin,
-  Plus,
   Rocket,
   X,
 } from 'lucide-react'
@@ -205,14 +204,12 @@ export function CalendarPage({ eventsByDate, onNavigate }) {
               <ChevronRight size={18} />
             </button>
           </div>
-          <button className="primary-button calendar-add-button">
-            <Plus size={17} />
-            <span>New event</span>
-          </button>
+          <span className="calendar-readonly-note">Events are managed by their source calendars</span>
         </div>
       </div>
 
       {calendarView === 'days' && (
+        <>
         <div className="calendar-grid">
         {weekDays.map((day) => (
           <div className="calendar-weekday" key={day}>
@@ -256,6 +253,44 @@ export function CalendarPage({ eventsByDate, onNavigate }) {
           )
         })}
         </div>
+        <div className="calendar-mobile-agenda" aria-label="Monthly agenda">
+          {days
+            .filter(({ date, isCurrentMonth }) =>
+              isCurrentMonth && (eventsByDate.get(calendarDateKey(date))?.length ?? 0) > 0,
+            )
+            .map(({ date }) => {
+              const dayItems = eventsByDate.get(calendarDateKey(date)) ?? []
+              return (
+                <button
+                  type="button"
+                  className="calendar-agenda-day"
+                  key={date.toISOString()}
+                  onClick={() => setSelectedDate(date)}
+                >
+                  <span>
+                    <strong>{date.getDate()}</strong>
+                    <small>{date.toLocaleDateString(undefined, { month: 'short', weekday: 'short' })}</small>
+                  </span>
+                  <span>
+                    {dayItems.slice(0, 3).map((item) => (
+                      <small key={item.id}>{item.label}</small>
+                    ))}
+                    {dayItems.length > 3 && <small>+{dayItems.length - 3} more</small>}
+                  </span>
+                </button>
+              )
+            })}
+          {!days.some(({ date, isCurrentMonth }) =>
+            isCurrentMonth && (eventsByDate.get(calendarDateKey(date))?.length ?? 0) > 0,
+          ) && (
+            <div className="calendar-agenda-empty">
+              <CalendarDays size={22} />
+              <strong>No activity this month</strong>
+              <span>Tasks, events, contests, and deadlines will appear here.</span>
+            </div>
+          )}
+        </div>
+        </>
       )}
 
       {calendarView === 'months' && (

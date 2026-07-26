@@ -40,6 +40,22 @@
   box-shadow: var(--shadow-md), var(--shadow-inset);
 }
 
+.danger-button {
+  min-height: 40px;
+  padding: 9px 14px;
+  color: var(--text-primary);
+  background: var(--bg-card);
+  border: 2px solid var(--text-primary);
+  border-radius: var(--radius-md);
+  font-size: 13px;
+  font-weight: 750;
+}
+
+.danger-button:hover {
+  color: var(--text-inverse);
+  background: var(--color-primary);
+}
+
 .icon-button {
   display: grid;
   place-items: center;
