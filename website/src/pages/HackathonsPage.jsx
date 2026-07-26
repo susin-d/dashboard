@@ -281,9 +281,6 @@ export function HackathonsPage({ hackathons, setHackathons, canLoadMore, loading
                 <div className="hackathon-card-meta">
                   <span><CalendarDays size={13} />{startsAt.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })} – {endsAt.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}</span>
                 </div>
-                <div className="hackathon-card-footer">
-                  <strong>{hackathon.teamSize || 'Open'} <small>team size</small></strong>
-                </div>
               </div>
 
               <div className="contest-site-content hackathon-detail-content">
@@ -317,7 +314,7 @@ export function HackathonsPage({ hackathons, setHackathons, canLoadMore, loading
                       <Users size={17} />
                       <div>
                         <span>Team size</span>
-                        <strong>{hackathon.teamSize}</strong>
+                      <strong>{hackathon.teamSize || 'Not specified'}</strong>
                       </div>
                     </div>
                   </div>
