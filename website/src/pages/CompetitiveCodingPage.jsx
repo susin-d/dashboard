@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { CalendarDays, ChevronDown, Clock3, Trophy } from 'lucide-react'
+import { PageHeader } from '../components/ui'
 
 export function CompetitiveCodingPage({ contestSites }) {
   const [openSites, setOpenSites] = useState(() => new Set(['codeforces']))
@@ -16,17 +17,15 @@ export function CompetitiveCodingPage({ contestSites }) {
 
   return (
     <section className="competitive-coding-page">
-      <div className="page-heading">
-        <div>
-          <p>Practice & compete</p>
-          <h1>Competitive Coding</h1>
-          <span className="page-heading-description">Keep your next challenge in sight across every platform.</span>
-        </div>
-        <div className="contest-summary">
+      <PageHeader
+        eyebrow="Practice & compete"
+        title="Competitive Coding"
+        description="Keep your next challenge in sight across every platform."
+        actions={<div className="contest-summary">
           <Trophy size={16} />
           <span>{contestSites.length} platforms</span>
-        </div>
-      </div>
+        </div>}
+      />
 
       <div className="workspace-insight-grid" aria-label="Competitive coding overview">
         <div className="workspace-insight-card"><span>Platforms</span><strong>{contestSites.length}</strong><small>connected sources</small></div>

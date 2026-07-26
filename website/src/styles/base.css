@@ -9,7 +9,7 @@ html {
   background: var(--bg-primary);
   color: var(--text-primary);
   color-scheme: light;
-  font-family: var(--font-sans);
+  font-family: var(--font-family);
   -webkit-text-size-adjust: 100%;
 }
 
@@ -31,7 +31,7 @@ body {
   min-height: 100dvh;
   background: var(--bg-primary);
   color: var(--text-primary);
-  font-family: var(--font-sans);
+  font-family: var(--font-family);
   overflow-x: hidden;
   padding-top: var(--safe-area-top);
   padding-bottom: var(--safe-area-bottom);

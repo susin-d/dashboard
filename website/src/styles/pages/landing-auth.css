@@ -956,7 +956,7 @@ html.dark-theme .public-nav {
   border-radius: 6px;
   font-size: 10px;
   font-weight: 700;
-  font-family: monospace;
+  font-family: var(--font-family);
   color: var(--text-secondary);
   background: var(--bg-secondary);
 }

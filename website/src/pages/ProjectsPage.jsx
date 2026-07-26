@@ -9,7 +9,7 @@ import {
   X,
 } from 'lucide-react'
 import { createProject, deleteProject } from '../lib/workspaceApi'
-import { ConfirmDialog } from '../components/ui'
+import { ConfirmDialog, PageHeader } from '../components/ui'
 
 const emptyProject = {
   name: '',
@@ -86,13 +86,11 @@ export function ProjectsPage({ projects, setProjects, onOpenProject, canLoadMore
 
   return (
     <section className="projects-page">
-      <div className="page-heading">
-        <div>
-          <p>Work & build</p>
-          <h1>Projects</h1>
-          <span className="page-heading-description">Turn ideas into momentum with a clear view of what is moving.</span>
-        </div>
-        <div className="page-heading-actions">
+      <PageHeader
+        eyebrow="Work & build"
+        title="Projects"
+        description="Turn ideas into momentum with a clear view of what is moving."
+        actions={<>
           <div className="project-summary">
             <FolderKanban size={16} />
             <span>{projects.length} projects</span>
@@ -100,8 +98,8 @@ export function ProjectsPage({ projects, setProjects, onOpenProject, canLoadMore
           <button className="primary-button" onClick={() => setFormOpen(true)}>
             <Plus size={16} /> Add project
           </button>
-        </div>
-      </div>
+        </>}
+      />
 
       <div className="project-list">
         {projects.map((project) => {
