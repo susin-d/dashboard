@@ -1,7 +1,9 @@
 /* Shared responsive layout refinements. Keep page-specific rules in their page sheets. */
 
 .content {
-  width: min(100%, 1600px);
+  width: auto;
+  max-width: 1600px;
+  min-width: 0;
   margin-right: auto;
   padding-right: clamp(16px, 3vw, 48px);
   padding-left: clamp(16px, 3vw, 48px);
