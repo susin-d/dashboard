@@ -285,10 +285,25 @@
 }
 
 .mail-page-indicator {
+  appearance: textfield;
+  -moz-appearance: textfield;
+  width: 58px;
+  height: 34px;
+  text-align: center;
   font-size: 12px;
   font-weight: 550;
   color: var(--text-primary);
-  padding: 0 8px;
+  padding: 0 6px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background: var(--bg-card);
+  box-shadow: var(--shadow-inset);
+}
+
+.mail-page-indicator::-webkit-inner-spin-button,
+.mail-page-indicator::-webkit-outer-spin-button {
+  margin: 0;
+  appearance: none;
 }
 
 .mail-row {

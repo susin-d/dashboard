@@ -349,9 +349,14 @@ export function MailsPage({ onNavigate }) {
           <button onClick={openNewerMessages} disabled={!previousPageTokens.length || loading} aria-label="Previous page">
             <ChevronLeft size={17} />
           </button>
-          <span className="mail-page-indicator">
-            {previousPageTokens.length ? `Page ${previousPageTokens.length + 1}` : 'Page 1'}
-          </span>
+          <input
+            className="mail-page-indicator"
+            type="number"
+            min="1"
+            value={previousPageTokens.length + 1}
+            readOnly
+            aria-label="Current mail page"
+          />
           <button onClick={openOlderMessages} disabled={!nextPageToken || loading} aria-label="Next page">
             <ChevronRight size={17} />
           </button>
@@ -360,8 +365,8 @@ export function MailsPage({ onNavigate }) {
 
       {/* Message Reader Modal */}
       {selected && (
-        <div className="mail-modal" role="dialog" aria-modal="true" aria-labelledby="message-title">
-          <div className="mail-card">
+        <div className="mail-modal" role="dialog" aria-modal="true" aria-labelledby="message-title" onMouseDown={() => setSelected(null)}>
+          <div className="mail-card" onMouseDown={(event) => event.stopPropagation()}>
             <header className="mail-card-header">
               <div>
                 <span className="mail-avatar" aria-label="Mail" title="Mail">
@@ -413,8 +418,8 @@ export function MailsPage({ onNavigate }) {
 
       {/* Compose Email Modal */}
       {compose && (
-        <div className="mail-modal" role="dialog" aria-modal="true" aria-labelledby="compose-title">
-          <form className="mail-card compose-card" onSubmit={sendMessage}>
+        <div className="mail-modal" role="dialog" aria-modal="true" aria-labelledby="compose-title" onMouseDown={() => setCompose(null)}>
+          <form className="mail-card compose-card" onMouseDown={(event) => event.stopPropagation()} onSubmit={sendMessage}>
             <header className="mail-card-header">
               <h3 id="compose-title">{compose.threadId ? 'Reply Message' : 'New Message'}</h3>
               <button type="button" onClick={() => setCompose(null)} aria-label="Close compose"><X size={16} /></button>
