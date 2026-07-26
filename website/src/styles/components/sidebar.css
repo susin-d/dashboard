@@ -12,9 +12,12 @@
   overscroll-behavior-y: contain;
   padding: 22px 12px 16px;
   background: var(--bg-secondary);
-  border-right: 1px solid var(--border-color);
-  box-shadow: 8px 0 24px rgba(0, 0, 0, 0.045), var(--shadow-inset);
-  scrollbar-width: thin;
+  border-right: 0;
+  box-shadow:
+    inset -1px 0 0 var(--border-color),
+    8px 0 24px rgba(0, 0, 0, 0.045),
+    var(--shadow-inset);
+  scrollbar-width: none;
   scrollbar-color: var(--scrollbar-thumb) transparent;
   transition:
     width 220ms cubic-bezier(0.2, 0.8, 0.2, 1),
@@ -22,6 +25,14 @@
 }
 
 .sidebar::-webkit-scrollbar {
+  width: 0;
+}
+
+.sidebar.expanded {
+  scrollbar-width: thin;
+}
+
+.sidebar.expanded::-webkit-scrollbar {
   width: 7px;
 }
 
