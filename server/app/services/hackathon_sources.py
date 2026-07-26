@@ -28,6 +28,10 @@ SOURCE_CATALOG = [
 ]
 SOURCE_IDS = {source["id"] for source in SOURCE_CATALOG}
 HACKATHON_CACHE_TTL = 10 * 60
+# Keep dashboard requests responsive when a public provider is slow. A failed
+# provider is already treated as optional, so waiting several seconds longer
+# does not improve the response users see.
+HACKATHON_REQUEST_TIMEOUT = httpx.Timeout(4.0, connect=2.0)
 _hackathon_cache: dict[tuple[str, ...], tuple[float, list[dict]]] = {}
 
 
@@ -166,7 +170,7 @@ async def fetch_enabled_hackathons(enabled_sources: list[str]) -> list[dict]:
         return []
 
     async with httpx.AsyncClient(
-        timeout=10,
+        timeout=HACKATHON_REQUEST_TIMEOUT,
         follow_redirects=True,
         headers=headers,
     ) as client:
@@ -178,6 +182,8 @@ async def fetch_enabled_hackathons(enabled_sources: list[str]) -> list[dict]:
 
         batches = await asyncio.gather(*(fetch(source_id) for source_id in cache_key))
     result = [item for batch in batches for item in batch]
+    if not result and cached:
+        return cached[1]
     result.sort(key=lambda item: item["starts_at"])
     _hackathon_cache[cache_key] = (
         time.monotonic() + HACKATHON_CACHE_TTL,

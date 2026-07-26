@@ -36,6 +36,7 @@ from app.services.hackathon_sources import (
 router = APIRouter()
 CONTEST_CACHE_TTL = 10 * 60
 _contest_cache: tuple[float, list[dict]] | None = None
+CONTEST_REQUEST_TIMEOUT = httpx.Timeout(8.0, connect=2.0)
 
 
 def duration_label(seconds: int) -> str:
@@ -498,7 +499,7 @@ async def list_contests():
         ),
     }
     async with httpx.AsyncClient(
-        timeout=20,
+        timeout=CONTEST_REQUEST_TIMEOUT,
         follow_redirects=True,
         headers=headers,
     ) as client:
