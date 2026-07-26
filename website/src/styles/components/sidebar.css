@@ -10,7 +10,7 @@
   overflow-x: hidden;
   overflow-y: auto;
   overscroll-behavior-y: contain;
-  padding: 22px 8px 16px;
+  padding: 22px 12px 16px;
   background: var(--bg-secondary);
   border-right: 1px solid var(--border-color);
   box-shadow: 8px 0 24px rgba(0, 0, 0, 0.045), var(--shadow-inset);
@@ -48,10 +48,10 @@
 .sidebar-active-indicator {
   position: absolute;
   top: 0;
-  left: 8px;
-  right: 8px;
+  left: 12px;
+  right: 12px;
   z-index: 0;
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-lg);
   background: var(--color-primary);
   opacity: 0;
   pointer-events: none;
@@ -158,12 +158,13 @@ nav {
   display: flex;
   align-items: center;
   gap: 11px;
+  height: 48px;
   min-height: 48px;
-  padding: 10px 18px;
+  padding: 10px 14px;
   color: var(--text-secondary);
   background: transparent;
   border: 0;
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-lg);
   text-align: left;
   font-size: 14px;
   font-weight: 550;
