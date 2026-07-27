@@ -37,6 +37,12 @@
   letter-spacing: -0.35px;
 }
 
+.starwaves-logo-icon {
+  display: block;
+  flex: 0 0 auto;
+  border-radius: var(--radius-sm);
+}
+
 .brand-mark {
   display: grid;
   place-items: center;
@@ -615,26 +621,69 @@
   .eve-composer { align-items: stretch; flex-direction: column; }
   .eve-composer .primary-button { justify-content: center; }
 
+  .topbar {
+    padding-right: max(10px, env(safe-area-inset-right));
+    padding-left: max(10px, env(safe-area-inset-left));
+  }
+
   .brand {
     font-size: 15px;
     gap: 6px;
+    min-width: 0;
   }
 
   .brand span {
     display: none;
   }
 
-  .profile-name {
-    display: none;
+  .header-actions {
+    flex: 0 1 auto;
+  }
+
+  .search-container {
+    position: static;
   }
 
   .search {
-    width: 110px;
+    width: 36px;
+    justify-content: center;
+    padding: 0;
+  }
+
+  .search input {
+    width: 0;
+    min-width: 0;
+    opacity: 0;
   }
 
   .search:focus-within,
   .search.open {
-    width: 160px;
+    position: fixed;
+    z-index: 46;
+    top: 66px;
+    right: 12px;
+    left: 12px;
+    width: auto;
+    justify-content: flex-start;
+    padding: 0 10px;
+  }
+
+  .search:focus-within input,
+  .search.open input {
+    width: 100%;
+    opacity: 1;
+  }
+
+  .profile-name {
+    display: none;
+  }
+
+  .profile-button {
+    padding-right: 4px;
+  }
+
+  .profile-button > svg {
+    display: none;
   }
 }
 .notification-target-highlight {

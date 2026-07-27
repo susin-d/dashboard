@@ -60,10 +60,19 @@ async function request(path, options = {}, authenticated = false) {
     headers['Content-Type'] = 'application/json'
   }
 
-  const response = await fetchWithTimeout(`${API_URL}${path}`, {
-    ...options,
-    headers: { ...headers, ...options.headers },
-  })
+  let response
+  try {
+    response = await fetchWithTimeout(`${API_URL}${path}`, {
+      ...options,
+      headers: { ...headers, ...options.headers },
+    })
+  } catch (error) {
+    throw new Error(
+      error.message?.includes('Failed to fetch')
+        ? 'Could not reach the StarWaves API. Start the backend server or set VITE_API_URL to a reachable API URL.'
+        : error.message || 'Could not reach the StarWaves API.',
+    )
+  }
 
   if (!response.ok) {
     const failure = await response.json().catch(() => null)
@@ -143,8 +152,12 @@ export async function beginGoogleOAuth() {
   if (!data?.url) throw new Error('Could not initiate Google authentication.')
 
   const isNativeCapacitor = Boolean(window.Capacitor?.isNativePlatform?.())
-  if (isNativeCapacitor) {
-    // Native WebView popups are often detached from window.opener.
+  const shouldRedirectForOAuth =
+    isNativeCapacitor ||
+    window.matchMedia('(max-width: 768px), (pointer: coarse)').matches
+
+  if (shouldRedirectForOAuth) {
+    // Mobile browsers and native WebViews often block or detach OAuth popups.
     window.location.assign(data.url)
     return new Promise(() => {})
   }
@@ -176,7 +189,9 @@ export async function beginGoogleOAuth() {
       return
     }
 
+    const apiOrigin = new URL(API_URL).origin
     const messageHandler = (event) => {
+      if (event.origin !== apiOrigin) return
       if (event.data?.type === 'STARWAVES_AUTH_SUCCESS' && event.data?.data) {
         window.removeEventListener('message', messageHandler)
         clearInterval(pollTimer)

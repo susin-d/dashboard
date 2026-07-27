@@ -8,7 +8,7 @@ export function TermsOfServicePage({ onNavigate }) {
         <button className="public-brand" onClick={() => onNavigate('/')}>
           <StarWavesLogo size={28} /> StarWaves
         </button>
-        <div>
+        <div className="public-nav-actions">
           <button className="public-login-link" onClick={() => onNavigate('/login')}>
             Log in
           </button>
