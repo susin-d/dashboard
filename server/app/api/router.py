@@ -6,6 +6,7 @@ from app.api.routes import (
     competitive_coding_profile,
     cron,
     documents,
+    eve,
     gmail,
     google_calendar,
     google_drive,
@@ -25,6 +26,7 @@ api_router.include_router(cron.router, tags=["cron"])
 api_router.include_router(notifications.router, tags=["notifications"])
 api_router.include_router(profiles.router, tags=["profiles"])
 api_router.include_router(documents.router, tags=["documents"])
+api_router.include_router(eve.router, tags=["Eve AI assistant"])
 api_router.include_router(gmail.router, tags=["Gmail integration"])
 api_router.include_router(
     competitive_coding_profile.router,

@@ -18,6 +18,7 @@ export function AppLayout({
   notificationsCanLoadMore,
   notificationsLoading,
   onLoadMoreNotifications,
+  onWorkspaceChanged,
 }) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [sidebarExpanded, setSidebarExpanded] = useState(
@@ -90,6 +91,7 @@ export function AppLayout({
         notificationsCanLoadMore={notificationsCanLoadMore}
         notificationsLoading={notificationsLoading}
         onLoadMoreNotifications={onLoadMoreNotifications}
+        onWorkspaceChanged={onWorkspaceChanged}
       />
       <Sidebar
         activePage={activePage}

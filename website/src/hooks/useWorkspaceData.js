@@ -17,7 +17,7 @@ import {
   CALENDAR_REMINDER_PREFIX,
 } from '../utils/calendarReminders'
 
-export function useWorkspaceData(currentUser, activePage) {
+export function useWorkspaceData(currentUser, activePage, refreshKey = 0) {
   const [projects, setProjects] = useState([])
   const [jobs, setJobs] = useState([])
   const [documents, setDocuments] = useState([])
@@ -156,7 +156,7 @@ export function useWorkspaceData(currentUser, activePage) {
     return () => {
       active = false
     }
-  }, [currentUser])
+  }, [currentUser, refreshKey])
 
   // Core Workspace Data Fetch
   useEffect(() => {
@@ -233,7 +233,7 @@ export function useWorkspaceData(currentUser, activePage) {
     return () => {
       active = false
     }
-  }, [currentUser])
+  }, [currentUser, refreshKey])
 
   const loadMore = async (type) => {
     const page = pagination[type]
@@ -279,7 +279,7 @@ export function useWorkspaceData(currentUser, activePage) {
     return () => {
       active = false
     }
-  }, [currentUser])
+  }, [currentUser, refreshKey])
 
   // Competitive Coding Stats Fetch
   useEffect(() => {

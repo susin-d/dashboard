@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import {
   Bell,
+  Bot,
   BriefcaseBusiness,
   CalendarDays,
   CheckCheck,
@@ -20,6 +21,7 @@ import {
 import { navigationItems } from '../config/navigation'
 import { deleteNotification, markAllNotificationsRead } from '../lib/workspaceApi'
 import { StarWavesLogo } from './StarWavesLogo'
+import { EveAssistantModal } from './EveAssistantModal'
 
 export function Header({
   onMenuOpen,
@@ -32,10 +34,12 @@ export function Header({
   notificationsCanLoadMore,
   notificationsLoading,
   onLoadMoreNotifications,
+  onWorkspaceChanged,
 }) {
   const [profileMenuOpen, setProfileMenuOpen] = useState(false)
   const [searchOpen, setSearchOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
+  const [eveOpen, setEveOpen] = useState(false)
   const [darkTheme, setDarkTheme] = useState(
     () => localStorage.getItem('starwaves.theme') === 'dark',
   )
@@ -228,6 +232,15 @@ export function Header({
           )}
         </div>
         <button
+          className="eve-button"
+          type="button"
+          onClick={() => setEveOpen(true)}
+          aria-label="Open Eve AI assistant"
+        >
+          <Bot size={17} />
+          <span>Eve</span>
+        </button>
+        <button
           className="icon-button theme-toggle"
           type="button"
           onClick={() => setDarkTheme((current) => !current)}
@@ -379,6 +392,11 @@ export function Header({
         </div>,
         document.body,
       )}
+      <EveAssistantModal
+        isOpen={eveOpen}
+        onClose={() => setEveOpen(false)}
+        onWorkspaceChanged={onWorkspaceChanged}
+      />
     </>
   )
 }

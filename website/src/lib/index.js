@@ -1,6 +1,7 @@
 export * from './authApi'
 export * from './firebase'
 export * from './documentsApi'
+export * from './eveApi'
 export * from './codingStatsApi'
 export * from './competitiveCodingProfileApi'
 export * from './githubApi'

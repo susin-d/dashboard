@@ -37,6 +37,18 @@ export function clearAuthSession() {
   window.dispatchEvent(new Event('starwaves:auth-change'))
 }
 
+export function consumeAuthTokenFromHash() {
+  const hash = window.location.hash || ''
+  if (!hash.startsWith('#token=')) return false
+
+  const token = decodeURIComponent(hash.slice('#token='.length)).trim()
+  if (!token) return false
+
+  setStoredAuthToken(token, undefined)
+  window.history.replaceState({}, '', window.location.pathname + window.location.search)
+  return true
+}
+
 async function request(path, options = {}, authenticated = false) {
   const headers = {}
   if (authenticated) {
@@ -130,6 +142,13 @@ export async function beginGoogleOAuth() {
   const data = await request('/auth/google/login', { method: 'GET' }, false)
   if (!data?.url) throw new Error('Could not initiate Google authentication.')
 
+  const isNativeCapacitor = Boolean(window.Capacitor?.isNativePlatform?.())
+  if (isNativeCapacitor) {
+    // Native WebView popups are often detached from window.opener.
+    window.location.assign(data.url)
+    return new Promise(() => {})
+  }
+
   return new Promise((resolve, reject) => {
     const width = 500
     const height = 600
@@ -143,7 +162,17 @@ export async function beginGoogleOAuth() {
     )
 
     if (!popup) {
-      reject(new Error('Popup window was blocked by browser.'))
+      // Fallback to full-page redirect when popups are blocked.
+      window.location.assign(data.url)
+      return
+    }
+
+    if (!popup.opener) {
+      popup.opener = window
+    }
+
+    if (popup.closed) {
+      reject(new Error('Google sign-in was cancelled.'))
       return
     }
 

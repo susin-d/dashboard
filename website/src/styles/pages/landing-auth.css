@@ -1588,3 +1588,49 @@ html.dark-theme .public-nav {
   font-size: 12px;
   font-weight: 500;
 }
+
+@media (max-width: 1024px) {
+  .auth-page {
+    grid-template-columns: 1fr;
+  }
+
+  .auth-brand-panel {
+    min-height: auto;
+    gap: 24px;
+    padding: 28px 20px;
+    border-bottom: 1px solid #27272a;
+  }
+
+  .auth-form-panel {
+    min-height: auto;
+    padding: 28px 20px 34px;
+    place-items: start center;
+  }
+}
+
+@media (max-width: 640px) {
+  .auth-brand-panel {
+    padding: 20px 16px;
+  }
+
+  .auth-brand-panel h1 {
+    font-size: 28px;
+    line-height: 1.1;
+  }
+
+  .auth-brand-panel span {
+    font-size: 13px;
+  }
+
+  .auth-form-panel {
+    padding: 20px 16px 28px;
+  }
+
+  .auth-form-shell {
+    width: 100%;
+  }
+
+  .auth-heading h2 {
+    font-size: 22px;
+  }
+}

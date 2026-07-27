@@ -15,7 +15,6 @@ import { ProjectsPage } from './pages/ProjectsPage'
 import { SettingPage } from './pages/SettingPage'
 import { StatsPage } from './pages/StatsPage'
 import { TodoPage } from './pages/TodoPage'
-import { LandingPage } from './pages/LandingPage'
 import { AuthPage } from './pages/AuthPage'
 import { OnboardingPage } from './pages/OnboardingPage'
 import { PrivacyPolicyPage } from './pages/PrivacyPolicyPage'
@@ -62,6 +61,10 @@ function App() {
     navigate,
   } = useRouter()
 
+  const [notificationsOpen, setNotificationsOpen] = useState(false)
+  const [workspaceRefreshKey, setWorkspaceRefreshKey] = useState(0)
+  const [creationIntent, setCreationIntent] = useState(null)
+
   const {
     projects,
     setProjects,
@@ -88,10 +91,8 @@ function App() {
     pagination,
     loadingMore,
     loadMore,
-  } = useWorkspaceData(activeUser, activePage)
+  } = useWorkspaceData(activeUser, activePage, workspaceRefreshKey)
 
-  const [notificationsOpen, setNotificationsOpen] = useState(false)
-  const [creationIntent, setCreationIntent] = useState(null)
   const previousRouteRef = useRef(route)
 
   const selectedProject = projects.find(
@@ -119,7 +120,7 @@ function App() {
     if (
       authReady &&
       activeUser &&
-      (route === '/login' || route === '/signup')
+      (route === '/' || route === '/login' || route === '/signup')
     ) {
       window.history.replaceState({}, '', '/app/dashboard')
       setRoute('/app/dashboard')
@@ -341,7 +342,12 @@ function App() {
     ),
   }
 
-  if (route === '/') return publicRoute(<LandingPage user={activeUser} onNavigate={navigateRoute} />)
+  if (route === '/') {
+    if (!authReady || activeUser) {
+      return <div className="auth-loading">Loading StarWaves…</div>
+    }
+    return publicRoute(<AuthPage mode="login" onNavigate={navigateRoute} onAuthenticate={beginOnboarding} />)
+  }
   if (route === '/privacy') return publicRoute(<PrivacyPolicyPage onNavigate={navigateRoute} />)
   if (route === '/terms') return publicRoute(<TermsOfServicePage onNavigate={navigateRoute} />)
   if (route === '/login') {
@@ -382,6 +388,7 @@ function App() {
       notificationsCanLoadMore={pagination.notifications.has_more}
       notificationsLoading={loadingMore}
       onLoadMoreNotifications={() => loadMore('notifications')}
+      onWorkspaceChanged={() => setWorkspaceRefreshKey((current) => current + 1)}
     >
       {pages[activePage] ?? pages.dashboard}
     </AppLayout>

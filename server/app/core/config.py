@@ -74,6 +74,9 @@ class Settings:
         "starwaves-super-secret-auth-key-change-in-prod",
     )
     cron_secret: str | None = os.getenv("CRON_SECRET")
+    openai_api_key: str | None = os.getenv("OPENAI_API_KEY")
+    openai_url: str | None = os.getenv("OPENAI_URL") or None
+    openai_model: str = os.getenv("OPENAI_MODEL", "gpt-5-mini")
     firestore_database_id: str = os.getenv(
         "FIRESTORE_DATABASE_ID",
         "(default)",

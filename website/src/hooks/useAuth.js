@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { fetchCurrentUser, getStoredUser } from '../lib/authApi'
+import { consumeAuthTokenFromHash, fetchCurrentUser, getStoredUser } from '../lib/authApi'
 
 export function useAuth() {
   const [currentUser, setCurrentUser] = useState(() => getStoredUser())
@@ -9,6 +9,7 @@ export function useAuth() {
     let mounted = true
 
     async function checkAuth() {
+      consumeAuthTokenFromHash()
       const user = await fetchCurrentUser()
       if (mounted) {
         setCurrentUser(user)
