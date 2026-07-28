@@ -194,6 +194,32 @@
   overflow-wrap: anywhere;
 }
 
+.dashboard-record-title-link {
+  max-width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.dashboard-record-title-link:hover strong,
+.dashboard-record-title-link:focus-visible strong,
+.dashboard-project-name:hover strong,
+.dashboard-project-name:focus-visible strong {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.dashboard-record-title-link:focus-visible,
+.dashboard-project-name:focus-visible {
+  outline: 2px solid var(--border-focus);
+  outline-offset: 3px;
+}
+
 .dashboard-record span {
   display: block;
   margin-top: 2px;
@@ -249,9 +275,23 @@
 }
 
 .dashboard-project-name {
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
   color: var(--text-primary);
+  font: inherit;
   font-size: 13px;
   font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: left;
+  cursor: pointer;
+}
+
+.dashboard-project-name strong {
+  display: block;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;

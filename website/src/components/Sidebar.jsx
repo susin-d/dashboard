@@ -1,4 +1,3 @@
-import { PanelLeftClose, PanelLeftOpen } from 'lucide-react'
 import { useLayoutEffect, useRef, useState } from 'react'
 import { navigationItems } from '../config/navigation'
 
@@ -8,7 +7,6 @@ export function Sidebar({
   isOpen,
   onClose,
   onNavigate,
-  onToggleExpanded,
 }) {
   const sidebarRef = useRef(null)
   const itemRefs = useRef(new Map())
@@ -32,7 +30,7 @@ export function Sidebar({
 
       setIndicatorStyle({
         height: itemRect.height,
-        transform: `translateY(${itemRect.top - sidebarRect.top}px)`,
+        transform: `translateY(${itemRect.top - sidebarRect.top + sidebar.scrollTop}px)`,
       })
     }
 
@@ -40,10 +38,12 @@ export function Sidebar({
 
     const resizeObserver = new ResizeObserver(updateIndicator)
     resizeObserver.observe(sidebar)
+    sidebar.addEventListener('scroll', updateIndicator, { passive: true })
     window.addEventListener('resize', updateIndicator)
 
     return () => {
       resizeObserver.disconnect()
+      sidebar.removeEventListener('scroll', updateIndicator)
       window.removeEventListener('resize', updateIndicator)
     }
   }, [activePage, isExpanded, isOpen])
@@ -69,19 +69,6 @@ export function Sidebar({
           style={indicatorStyle ?? undefined}
           aria-hidden="true"
         />
-        <div className="sidebar-heading">
-          <span>Workspace</span>
-          <button
-            className="sidebar-expand-button"
-            type="button"
-            onClick={onToggleExpanded}
-            aria-label={isExpanded ? 'Collapse navigation' : 'Expand navigation'}
-            aria-pressed={isExpanded}
-          >
-            {isExpanded ? <PanelLeftClose size={17} /> : <PanelLeftOpen size={17} />}
-          </button>
-        </div>
-
         <nav aria-label="Main navigation">
           {navigationGroups.map((group) => (
             <div className="sidebar-nav-group" key={group}>

@@ -31,31 +31,59 @@ const formatDate = (value, options = {}) =>
     ...options,
   })
 
-function RecordList({ items, empty = 'Nothing to show.' }) {
+const calendarEventDestinations = {
+  task: 'todo',
+  contest: 'competitive-coding',
+  hackathon: 'hackathons',
+  project: 'projects',
+  job: 'jobs',
+  'google-calendar': 'calendar',
+  'ics-calendar': 'calendar',
+}
+
+function RecordList({ items, empty = 'Nothing to show.', onNavigate, onOpenNotifications }) {
   if (!items.length) return <p className="dashboard-widget-empty">{empty}</p>
   return (
     <div className="dashboard-record-list">
-      {items.map((entry) => (
-        <div className="dashboard-record" key={entry.id}>
-          <div>
-            {entry.url ? (
+      {items.map((entry) => {
+        const title = <strong>{entry.title}</strong>
+        const openDestination = () => {
+          if (entry.notification) {
+            onOpenNotifications?.()
+            return
+          }
+          if (entry.destination) onNavigate?.(entry.destination, entry.destinationId)
+        }
+
+        return (
+          <div className="dashboard-record" key={entry.id}>
+            <div>
+              {entry.url ? (
               <a
                 href={entry.url}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="dashboard-record-title-link"
-                style={{ color: 'inherit', textDecoration: 'none' }}
               >
-                <strong style={{ cursor: 'pointer' }}>{entry.title}</strong>
+                {title}
               </a>
-            ) : (
-              <strong>{entry.title}</strong>
-            )}
-            {entry.meta && <span>{entry.meta}</span>}
+              ) : entry.destination || entry.notification ? (
+                <button
+                  className="dashboard-record-title-link"
+                  type="button"
+                  onClick={openDestination}
+                >
+                  {title}
+                </button>
+              ) : (
+                title
+              )}
+              {entry.meta && <span>{entry.meta}</span>}
+            </div>
+            {entry.badge && <em>{entry.badge}</em>}
           </div>
-          {entry.badge && <em>{entry.badge}</em>}
-        </div>
-      ))}
+        )
+      })}
     </div>
   )
 }
@@ -210,30 +238,47 @@ export function DashboardPage({
     today: {
       total: todayEvents.length,
       body: <RecordList items={todayEvents.slice(0, 3).map((event) => ({
-        id: event.id, title: event.label, badge: event.type,
-      }))} empty="Your day is clear." />,
+        id: event.id,
+        title: event.label,
+        badge: event.type,
+        destination: calendarEventDestinations[event.type] ?? 'calendar',
+      }))} empty="Your day is clear." onNavigate={onNavigate} />,
     },
     todo: {
       total: tasks.filter((task) => !task.completed).length,
       body: <RecordList items={tasks.filter((task) => !task.completed).slice(0, 3).map((task) => ({
-        id: task.id, title: task.title, meta: task.dueDate ? formatDate(`${task.dueDate}T12:00:00`) : 'No due date',
-      }))} empty="All tasks complete." />,
+        id: task.id,
+        title: task.title,
+        meta: task.dueDate ? formatDate(`${task.dueDate}T12:00:00`) : 'No due date',
+        destination: 'todo',
+      }))} empty="All tasks complete." onNavigate={onNavigate} />,
     },
     calendar: {
       total: upcomingEvents.length,
-      body: <RecordList items={upcomingEvents.slice(0, 3)} empty="No upcoming events." />,
+      body: <RecordList items={upcomingEvents.slice(0, 3).map((event) => ({
+        ...event,
+        destination: calendarEventDestinations[event.badge] ?? 'calendar',
+      }))} empty="No upcoming events." onNavigate={onNavigate} />,
     },
     'competitive-coding': {
       total: contests.length,
       body: <RecordList items={contests.slice(0, 3).map((contest) => ({
-        id: contest.id, title: contest.name, meta: contest.site, badge: formatDate(contest.startsAt),
-      }))} />,
+        id: contest.id,
+        title: contest.name,
+        meta: contest.site,
+        badge: formatDate(contest.startsAt),
+        destination: 'competitive-coding',
+      }))} onNavigate={onNavigate} />,
     },
     hackathons: {
       total: hackathons.length,
       body: <RecordList items={hackathons.slice(0, 3).map((hackathon) => ({
-        id: hackathon.id, title: hackathon.title, meta: hackathon.organizer, badge: formatDate(hackathon.startsAt), url: hackathon.url,
-      }))} />,
+        id: hackathon.id,
+        title: hackathon.title,
+        meta: hackathon.organizer,
+        badge: formatDate(hackathon.startsAt),
+        destination: 'hackathons',
+      }))} onNavigate={onNavigate} />,
     },
     projects: {
       total: projects.length,
@@ -242,7 +287,13 @@ export function DashboardPage({
           {projects.slice(0, 3).map((project) => (
             <div key={project.id} className="dashboard-project-item">
               <div className="dashboard-project-info">
-                <strong className="dashboard-project-name">{project.name}</strong>
+                <button
+                  className="dashboard-project-name"
+                  type="button"
+                  onClick={() => onNavigate('project-detail', project.id)}
+                >
+                  <strong>{project.name}</strong>
+                </button>
                 <span className="dashboard-project-percent">{project.progress}%</span>
               </div>
               <div className="dashboard-project-bar-track">
@@ -261,20 +312,32 @@ export function DashboardPage({
     jobs: {
       total: jobs.length,
       body: <RecordList items={jobs.slice(0, 3).map((job) => ({
-        id: job.id, title: job.role, meta: job.company, badge: job.status,
-      }))} />,
+        id: job.id,
+        title: job.role,
+        meta: job.company,
+        badge: job.status,
+        destination: 'jobs',
+      }))} onNavigate={onNavigate} />,
     },
     documents: {
       total: documents.length,
       body: <RecordList items={[...documents].sort((a, b) => new Date(b.modifiedAt) - new Date(a.modifiedAt)).slice(0, 3).map((document) => ({
-        id: document.id, title: document.name, meta: `${document.type} · ${document.size}`, badge: formatDate(document.modifiedAt),
-      }))} />,
+        id: document.id,
+        title: document.name,
+        meta: `${document.type} · ${document.size}`,
+        badge: formatDate(document.modifiedAt),
+        destination: 'documents',
+      }))} onNavigate={onNavigate} />,
     },
     notifications: {
       total: notifications.filter((notification) => notification.unread).length,
       body: <RecordList items={notifications.slice(0, 3).map((notification) => ({
-        id: notification.id, title: notification.title, meta: notification.time, badge: notification.unread ? 'new' : '',
-      }))} empty="You're all caught up." />,
+        id: notification.id,
+        title: notification.title,
+        meta: notification.time,
+        badge: notification.unread ? 'new' : '',
+        notification: true,
+      }))} empty="You're all caught up." onOpenNotifications={onOpenNotifications} />,
     },
   }
 
@@ -314,7 +377,7 @@ export function DashboardPage({
             margin={[16, 16]}
             containerPadding={[0, 0]}
             gridConfig={{ allowOverlap: false, preventCollision: true }}
-            dragConfig={{ enabled: editing, handle: '.dashboard-widget-drag-handle', cancel: 'button', threshold: 4 }}
+            dragConfig={{ enabled: editing, handle: '.dashboard-widget-drag-handle', cancel: 'button,a', threshold: 4 }}
             resizeConfig={{ enabled: editing, handles: ['se', 's', 'e'] }}
             onLayoutChange={(_, nextLayouts) => saveGridLayouts(nextLayouts)}
           >

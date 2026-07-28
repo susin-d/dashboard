@@ -21,27 +21,15 @@ export function AppLayout({
   onWorkspaceChanged,
 }) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
-  const [sidebarExpanded, setSidebarExpanded] = useState(
-    () => localStorage.getItem('starwaves.sidebar-expanded') === 'true',
-  )
   const [sidebarProximityExpanded, setSidebarProximityExpanded] = useState(false)
   const contentRef = useRef(null)
-  const isSidebarExpanded = sidebarExpanded || sidebarProximityExpanded
-
-  useEffect(() => {
-    localStorage.setItem('starwaves.sidebar-expanded', String(sidebarExpanded))
-  }, [sidebarExpanded])
+  const isSidebarExpanded = sidebarProximityExpanded
 
   useEffect(() => {
     contentRef.current?.focus({ preventScroll: true })
   }, [activePage])
 
   useEffect(() => {
-    if (sidebarExpanded) {
-      setSidebarProximityExpanded(false)
-      return undefined
-    }
-
     let frameId = null
     let latestClientX = null
 
@@ -69,12 +57,7 @@ export function AppLayout({
       window.removeEventListener('pointermove', handlePointerMove)
       if (frameId !== null) window.cancelAnimationFrame(frameId)
     }
-  }, [activePage, sidebarExpanded])
-
-  const toggleSidebarExpanded = () => {
-    setSidebarExpanded(!isSidebarExpanded)
-    setSidebarProximityExpanded(false)
-  }
+  }, [activePage])
 
   return (
     <div className={`app-shell ${isSidebarExpanded ? 'sidebar-expanded' : ''}`}>
@@ -97,7 +80,6 @@ export function AppLayout({
         activePage={activePage}
         isExpanded={isSidebarExpanded}
         isOpen={sidebarOpen}
-        onToggleExpanded={toggleSidebarExpanded}
         onNavigate={onNavigate}
         onClose={() => setSidebarOpen(false)}
       />

@@ -20,7 +20,6 @@
   .document-opener-page,
   .hackathons-page,
   .jobs-page,
-  .mail-page,
   .chats-page,
   .profile-page,
   .project-page,
@@ -31,6 +30,20 @@
 ) {
   width: min(100%, var(--layout-max-width));
   margin-inline: auto;
+}
+
+.content > .mail-page {
+  width: calc(100% - 96px);
+  max-width: calc(var(--layout-max-width) - 96px);
+  margin-left: 96px;
+  margin-right: 0;
+}
+
+.content > .mail-page:has(.mail-folders:hover),
+.content > .mail-page:has(.mail-folders:focus-within) {
+  width: calc(100% - 260px);
+  max-width: calc(var(--layout-max-width) - 260px);
+  margin-left: 260px;
 }
 
 :where(
@@ -209,6 +222,14 @@
     margin-left: 0;
     padding-right: var(--layout-gutter);
     padding-left: var(--layout-gutter);
+  }
+
+  .content > .mail-page,
+  .content > .mail-page:has(.mail-folders:hover),
+  .content > .mail-page:has(.mail-folders:focus-within) {
+    width: min(100%, var(--layout-max-width));
+    max-width: var(--layout-max-width);
+    margin-inline: auto;
   }
 
   .page-heading,
