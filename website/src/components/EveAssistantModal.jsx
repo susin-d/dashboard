@@ -1,19 +1,32 @@
 import { useEffect, useId, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { Bot, Maximize2, MoreVertical, Send, X } from 'lucide-react'
-import { sendEveMessage } from '../lib/eveApi'
+import { Bot, Maximize2, MoreVertical, Send, Trash2, X } from 'lucide-react'
+import { deleteEveRecord, sendEveMessage } from '../lib/eveApi'
 
 const STARTER_MESSAGES = [{
   role: 'assistant',
-  content: 'Hi, I’m Eve. I can read, create, and update your tasks, projects, jobs, and documents.',
+  content: 'Hi, I’m Eve. I can read, create, and update your workspace records. Use the Delete button when you need to remove something.',
 }]
 
-export function EveAssistantModal({ isOpen, onClose, onWorkspaceChanged }) {
+const DELETE_RESOURCES = [
+  { value: 'todos', label: 'Todo' },
+  { value: 'projects', label: 'Project' },
+  { value: 'jobs', label: 'Job' },
+  { value: 'hackathons', label: 'Hackathon' },
+  { value: 'documents', label: 'Document' },
+  { value: 'notifications', label: 'Notification' },
+]
+
+export function EveAssistantModal({ isOpen, onClose, onNavigate, onWorkspaceChanged }) {
   const [messages, setMessages] = useState(STARTER_MESSAGES)
   const [draft, setDraft] = useState('')
   const [error, setError] = useState('')
   const [isSending, setIsSending] = useState(false)
   const [isWide, setIsWide] = useState(false)
+  const [deleteOpen, setDeleteOpen] = useState(false)
+  const [deleteResource, setDeleteResource] = useState('todos')
+  const [deleteRecordId, setDeleteRecordId] = useState('')
+  const [isDeleting, setIsDeleting] = useState(false)
   const panelRef = useRef(null)
   const titleId = useId()
   const descriptionId = useId()
@@ -54,10 +67,43 @@ export function EveAssistantModal({ isOpen, onClose, onWorkspaceChanged }) {
       const response = await sendEveMessage(nextMessages)
       setMessages((current) => [...current, { role: 'assistant', content: response.message }])
       if (response.changed_resources.length) onWorkspaceChanged()
+      handleActions(response.actions ?? [])
     } catch (requestError) {
       setError(requestError.message)
     } finally {
       setIsSending(false)
+    }
+  }
+
+  const handleActions = (actions) => {
+    actions.forEach((action) => {
+      if (action.type === 'navigate_page') {
+        onNavigate?.(action.page)
+      } else if (action.type === 'open_record') {
+        if (action.page === 'project-detail') onNavigate?.('project-detail', action.projectId)
+        if (action.page === 'document-opener') onNavigate?.('document-opener', null, action.documentId)
+      } else if (action.type === 'refresh_workspace_data') {
+        onWorkspaceChanged()
+      }
+    })
+  }
+
+  const handleDelete = async (event) => {
+    event.preventDefault()
+    const recordId = deleteRecordId.trim()
+    if (!recordId || isDeleting) return
+    setError('')
+    setIsDeleting(true)
+    try {
+      const response = await deleteEveRecord(deleteResource, recordId)
+      setMessages((current) => [...current, { role: 'assistant', content: response.message }])
+      setDeleteRecordId('')
+      setDeleteOpen(false)
+      if (response.changed_resources.length) onWorkspaceChanged()
+    } catch (requestError) {
+      setError(requestError.message)
+    } finally {
+      setIsDeleting(false)
     }
   }
 
@@ -95,7 +141,29 @@ export function EveAssistantModal({ isOpen, onClose, onWorkspaceChanged }) {
         </header>
 
         <div className="eve-panel-body">
-          <div className="eve-intro"><Bot size={18} aria-hidden="true" /><span>Eve only works with the records in your StarWaves account.</span></div>
+          <div className="eve-intro"><Bot size={18} aria-hidden="true" /><span>Eve can work with local StarWaves workspace records. Connected integrations and secrets stay protected.</span></div>
+          <button className="eve-delete-toggle" type="button" onClick={() => setDeleteOpen((open) => !open)} aria-expanded={deleteOpen}>
+            <Trash2 size={15} /> Delete record
+          </button>
+          {deleteOpen && (
+            <form className="eve-delete-form" onSubmit={handleDelete}>
+              <label>
+                Type
+                <select value={deleteResource} onChange={(event) => setDeleteResource(event.target.value)} disabled={isDeleting}>
+                  {DELETE_RESOURCES.map((resource) => (
+                    <option key={resource.value} value={resource.value}>{resource.label}</option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                Record ID
+                <input value={deleteRecordId} onChange={(event) => setDeleteRecordId(event.target.value)} placeholder="Paste the record id" disabled={isDeleting} />
+              </label>
+              <button className="primary-button" type="submit" disabled={!deleteRecordId.trim() || isDeleting}>
+                <Trash2 size={15} /> Delete
+              </button>
+            </form>
+          )}
           <div className="eve-messages" aria-live="polite" aria-label="Eve conversation">
             {messages.map((message, index) => <p className={`eve-message ${message.role}`} key={`${message.role}-${index}`}>{message.content}</p>)}
             {isSending && <p className="eve-message assistant">Eve is working...</p>}

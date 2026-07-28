@@ -395,6 +395,7 @@ export function Header({
       <EveAssistantModal
         isOpen={eveOpen}
         onClose={() => setEveOpen(false)}
+        onNavigate={onNavigate}
         onWorkspaceChanged={onWorkspaceChanged}
       />
     </>

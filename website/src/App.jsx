@@ -148,8 +148,8 @@ function App() {
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
-  const navigateWorkspace = (page, projectId = null) => {
-    navigate(page, { projectId })
+  const navigateWorkspace = (page, projectId = null, documentId = null) => {
+    navigate(page, { projectId, documentId })
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 

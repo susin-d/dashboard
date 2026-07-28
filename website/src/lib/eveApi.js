@@ -18,3 +18,19 @@ export async function sendEveMessage(messages) {
   }
   return response.json()
 }
+
+export async function deleteEveRecord(resource, recordId) {
+  const token = getStoredAuthToken()
+  if (!token) throw new Error('Sign in to use Eve delete.')
+
+  const response = await fetchWithTimeout(`${API_URL}/eve/delete`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ resource, record_id: recordId }),
+  }, 30_000)
+  if (!response.ok) {
+    const failure = await response.json().catch(() => null)
+    throw new Error(failure?.detail || 'Eve could not delete that record.')
+  }
+  return response.json()
+}

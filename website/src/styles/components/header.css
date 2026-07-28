@@ -165,6 +165,61 @@
   font-size: 12px;
 }
 
+.eve-delete-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin: 0 0 14px;
+  padding: 8px 10px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  background: var(--bg-card);
+  color: var(--text-primary);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.eve-delete-toggle:hover,
+.eve-delete-toggle:focus-visible {
+  border-color: var(--border-heavy);
+  background: var(--bg-hover);
+}
+
+.eve-delete-form {
+  display: grid;
+  gap: 10px;
+  margin: 0 0 16px;
+  padding: 12px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  background: var(--bg-secondary);
+}
+
+.eve-delete-form label {
+  display: grid;
+  gap: 5px;
+  color: var(--text-secondary);
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.eve-delete-form input,
+.eve-delete-form select {
+  width: 100%;
+  min-height: 38px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  background: var(--bg-card);
+  color: var(--text-primary);
+  padding: 0 10px;
+  text-transform: none;
+}
+
+.eve-delete-form .primary-button {
+  justify-content: center;
+}
+
 .eve-messages {
   min-height: 0;
   display: grid;
