@@ -215,110 +215,18 @@
   border-radius: var(--radius-md);
 }
 
-.eve-context-card strong,
-.eve-form-heading strong {
+.eve-context-card strong {
   display: block;
   color: var(--text-primary);
   font-size: 13px;
   font-weight: 800;
 }
 
-.eve-context-card p,
-.eve-form-heading span {
+.eve-context-card p {
   margin: 5px 0 0;
   color: var(--text-secondary);
   font-size: 12px;
   line-height: 1.5;
-}
-
-.eve-section-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 12px;
-  color: var(--text-muted);
-  font-size: 11px;
-  font-weight: 800;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-}
-
-.eve-delete-toggle {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  margin: 0;
-  padding: 7px 9px;
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-md);
-  background: var(--bg-card);
-  color: var(--text-primary);
-  font-size: 12px;
-  font-weight: 800;
-  text-transform: none;
-  letter-spacing: normal;
-}
-
-.eve-delete-toggle svg:last-child {
-  transition: transform var(--transition-fast);
-}
-
-.eve-delete-toggle svg:last-child.is-open {
-  transform: rotate(180deg);
-}
-
-.eve-delete-toggle:hover,
-.eve-delete-toggle:focus-visible {
-  border-color: var(--border-heavy);
-  background: var(--bg-hover);
-}
-
-.eve-delete-form {
-  display: grid;
-  gap: 10px;
-  margin: 0 0 24px;
-  padding: 15px;
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-lg);
-  background: var(--bg-secondary);
-}
-
-.eve-form-heading {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 12px;
-  padding-bottom: 3px;
-}
-
-.eve-form-heading > svg {
-  color: var(--text-secondary);
-}
-
-.eve-delete-form label {
-  display: grid;
-  gap: 5px;
-  color: var(--text-secondary);
-  font-size: 11px;
-  font-weight: 800;
-  text-transform: uppercase;
-}
-
-.eve-delete-form input,
-.eve-delete-form select {
-  width: 100%;
-  min-height: 38px;
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-md);
-  background: var(--bg-card);
-  color: var(--text-primary);
-  padding: 0 10px;
-  text-transform: none;
-}
-
-.eve-delete-form .primary-button {
-  justify-content: center;
 }
 
 .eve-messages {
@@ -384,6 +292,7 @@
 }
 
 .eve-composer-field {
+  position: relative;
   min-width: 0;
   flex: 1;
   padding: 10px 12px 8px;
@@ -391,6 +300,87 @@
   border-radius: var(--radius-lg);
   background: var(--bg-primary);
   transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.eve-skills-menu {
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + 10px);
+  left: 0;
+  z-index: 2;
+  overflow: hidden;
+  padding: 7px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  background: var(--bg-card);
+  box-shadow: var(--shadow-lg);
+}
+
+.eve-skills-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 7px 9px 8px;
+  color: var(--text-secondary);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.eve-skills-heading span {
+  color: var(--text-muted);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: normal;
+  text-transform: none;
+}
+
+.eve-skill-option {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  gap: 11px;
+  padding: 9px;
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  background: transparent;
+  text-align: left;
+}
+
+.eve-skill-option:hover,
+.eve-skill-option:focus-visible {
+  background: var(--bg-hover);
+  outline: 0;
+}
+
+.eve-skill-command {
+  display: grid;
+  width: 31px;
+  height: 31px;
+  place-items: center;
+  flex: 0 0 auto;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  color: var(--text-secondary);
+  background: var(--bg-secondary);
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.eve-skill-option strong,
+.eve-skill-option small {
+  display: block;
+}
+
+.eve-skill-option strong {
+  font-size: 12px;
+}
+
+.eve-skill-option small {
+  margin-top: 2px;
+  color: var(--text-secondary);
+  font-size: 11px;
 }
 
 .eve-composer-field:focus-within {

@@ -1,20 +1,20 @@
 import { useEffect, useId, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { Bot, ChevronDown, Maximize2, MoreVertical, Send, ShieldCheck, Trash2, X } from 'lucide-react'
-import { deleteEveRecord, sendEveMessage } from '../lib/eveApi'
+import { Bot, Maximize2, MoreVertical, Send, ShieldCheck, X } from 'lucide-react'
+import { sendEveMessage } from '../lib/eveApi'
 
 const STARTER_MESSAGES = [{
   role: 'assistant',
   content: 'Hi, I’m Eve. I can read, create, and update your workspace records. Use the Delete button when you need to remove something.',
 }]
 
-const DELETE_RESOURCES = [
-  { value: 'todos', label: 'Todo' },
-  { value: 'projects', label: 'Project' },
-  { value: 'jobs', label: 'Job' },
-  { value: 'hackathons', label: 'Hackathon' },
-  { value: 'documents', label: 'Document' },
-  { value: 'notifications', label: 'Notification' },
+const EVE_SKILLS = [
+  { command: 'today', label: 'Plan my day', description: 'Review tasks, deadlines, and calendar events' },
+  { command: 'tasks', label: 'Manage tasks', description: 'Create, update, or find workspace todos' },
+  { command: 'projects', label: 'Work with projects', description: 'Review project progress and next steps' },
+  { command: 'jobs', label: 'Track applications', description: 'Find or update job application records' },
+  { command: 'documents', label: 'Search documents', description: 'Find workspace documents and notes' },
+  { command: 'calendar', label: 'Check calendar', description: 'Look up events, contests, and deadlines' },
 ]
 
 export function EveAssistantModal({ isOpen, onClose, onNavigate, onWorkspaceChanged }) {
@@ -23,11 +23,8 @@ export function EveAssistantModal({ isOpen, onClose, onNavigate, onWorkspaceChan
   const [error, setError] = useState('')
   const [isSending, setIsSending] = useState(false)
   const [isWide, setIsWide] = useState(false)
-  const [deleteOpen, setDeleteOpen] = useState(false)
-  const [deleteResource, setDeleteResource] = useState('todos')
-  const [deleteRecordId, setDeleteRecordId] = useState('')
-  const [isDeleting, setIsDeleting] = useState(false)
   const panelRef = useRef(null)
+  const composerRef = useRef(null)
   const titleId = useId()
   const descriptionId = useId()
 
@@ -88,23 +85,13 @@ export function EveAssistantModal({ isOpen, onClose, onNavigate, onWorkspaceChan
     })
   }
 
-  const handleDelete = async (event) => {
-    event.preventDefault()
-    const recordId = deleteRecordId.trim()
-    if (!recordId || isDeleting) return
-    setError('')
-    setIsDeleting(true)
-    try {
-      const response = await deleteEveRecord(deleteResource, recordId)
-      setMessages((current) => [...current, { role: 'assistant', content: response.message }])
-      setDeleteRecordId('')
-      setDeleteOpen(false)
-      if (response.changed_resources.length) onWorkspaceChanged()
-    } catch (requestError) {
-      setError(requestError.message)
-    } finally {
-      setIsDeleting(false)
-    }
+  const skillQuery = draft.startsWith('/') ? draft.slice(1).split(/\s/)[0].toLowerCase() : ''
+  const matchingSkills = EVE_SKILLS.filter((skill) =>
+    `${skill.command} ${skill.label}`.includes(skillQuery),
+  )
+  const selectSkill = (skill) => {
+    setDraft(`/${skill.command} `)
+    composerRef.current?.focus()
   }
 
   if (!isOpen) return null
@@ -152,35 +139,6 @@ export function EveAssistantModal({ isOpen, onClose, onNavigate, onWorkspaceChan
               <p>Eve can work with local StarWaves records. Connected integrations and secrets stay protected.</p>
             </div>
           </section>
-          <div className="eve-section-row">
-            <span>Quick actions</span>
-            <button className="eve-delete-toggle" type="button" onClick={() => setDeleteOpen((open) => !open)} aria-expanded={deleteOpen}>
-              <Trash2 size={15} /> Delete record <ChevronDown className={deleteOpen ? 'is-open' : ''} size={14} />
-            </button>
-          </div>
-          {deleteOpen && (
-            <form className="eve-delete-form" onSubmit={handleDelete}>
-              <div className="eve-form-heading">
-                <div><strong>Delete a workspace record</strong><span>This action cannot be undone.</span></div>
-                <Trash2 size={16} aria-hidden="true" />
-              </div>
-              <label>
-                Type
-                <select value={deleteResource} onChange={(event) => setDeleteResource(event.target.value)} disabled={isDeleting}>
-                  {DELETE_RESOURCES.map((resource) => (
-                    <option key={resource.value} value={resource.value}>{resource.label}</option>
-                  ))}
-                </select>
-              </label>
-              <label>
-                Record ID
-                <input value={deleteRecordId} onChange={(event) => setDeleteRecordId(event.target.value)} placeholder="Paste the record id" disabled={isDeleting} />
-              </label>
-              <button className="primary-button" type="submit" disabled={!deleteRecordId.trim() || isDeleting}>
-                <Trash2 size={15} /> Delete
-              </button>
-            </form>
-          )}
           <div className="eve-conversation-label"><span>Conversation</span><span className="eve-conversation-rule" /></div>
           <div className="eve-messages" aria-live="polite" aria-label="Eve conversation">
             {messages.map((message, index) => <p className={`eve-message ${message.role}`} key={`${message.role}-${index}`}>{message.content}</p>)}
@@ -192,7 +150,18 @@ export function EveAssistantModal({ isOpen, onClose, onNavigate, onWorkspaceChan
         <form className="eve-composer" onSubmit={handleSubmit}>
           <div className="eve-composer-field">
             <label className="sr-only" htmlFor="eve-message">Message Eve</label>
-            <textarea id="eve-message" value={draft} onChange={(event) => setDraft(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); event.currentTarget.form?.requestSubmit() } }} placeholder="Ask Eve anything about your workspace…" rows="3" maxLength="4000" disabled={isSending} />
+            {draft.startsWith('/') && matchingSkills.length > 0 && (
+              <div className="eve-skills-menu" role="listbox" aria-label="Eve skills">
+                <div className="eve-skills-heading">Skills <span>Use / to browse</span></div>
+                {matchingSkills.map((skill) => (
+                  <button className="eve-skill-option" type="button" role="option" key={skill.command} onClick={() => selectSkill(skill)}>
+                    <span className="eve-skill-command">/{skill.command}</span>
+                    <span><strong>{skill.label}</strong><small>{skill.description}</small></span>
+                  </button>
+                ))}
+              </div>
+            )}
+            <textarea ref={composerRef} id="eve-message" value={draft} onChange={(event) => setDraft(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); event.currentTarget.form?.requestSubmit() } }} placeholder="Ask Eve anything about your workspace…" rows="3" maxLength="4000" disabled={isSending} />
             <span className="eve-composer-hint">Press Enter to send · Shift + Enter for a new line</span>
           </div>
           <button className="primary-button eve-send-button" type="submit" disabled={!draft.trim() || isSending} aria-label="Send message"><Send size={16} /></button>
