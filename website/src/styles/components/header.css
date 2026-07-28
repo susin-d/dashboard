@@ -91,7 +91,7 @@
 }
 
 .eve-assistant-panel {
-  width: min(486px, 100vw);
+  width: min(560px, 100vw);
   height: 100%;
   display: flex;
   flex-direction: column;
@@ -110,8 +110,30 @@
   align-items: flex-start;
   justify-content: space-between;
   gap: 16px;
-  padding: 18px 16px 14px 24px;
+  padding: 22px 22px 18px;
   border-bottom: 1px solid var(--border-color);
+  background: var(--bg-card);
+}
+
+.eve-panel-heading {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.eve-avatar,
+.eve-context-icon {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  color: var(--text-inverse);
+  background: var(--color-primary);
+}
+
+.eve-avatar {
+  width: 42px;
+  height: 42px;
+  border-radius: var(--radius-lg);
 }
 
 .eve-panel-header p {
@@ -126,8 +148,25 @@
 .eve-panel-header h2 {
   margin: 0;
   color: var(--text-primary);
-  font-size: 20px;
+  font-size: 21px;
   line-height: 1.2;
+}
+
+.eve-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 6px;
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.eve-status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--text-primary);
 }
 
 .eve-panel-controls {
@@ -148,7 +187,8 @@
   min-height: 0;
   flex: 1;
   overflow-y: auto;
-  padding: 18px 16px 18px;
+  padding: 22px;
+  background: var(--bg-primary);
 }
 
 .eve-intro,
@@ -157,26 +197,75 @@
   display: flex;
 }
 
-.eve-intro {
-  align-items: center;
-  gap: 8px;
-  margin: 0 0 18px;
+.eve-context-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin: 0 0 25px;
+  padding: 15px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  background: var(--bg-card);
+  box-shadow: var(--shadow-sm);
+}
+
+.eve-context-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-md);
+}
+
+.eve-context-card strong,
+.eve-form-heading strong {
+  display: block;
+  color: var(--text-primary);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.eve-context-card p,
+.eve-form-heading span {
+  margin: 5px 0 0;
   color: var(--text-secondary);
   font-size: 12px;
+  line-height: 1.5;
+}
+
+.eve-section-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
 }
 
 .eve-delete-toggle {
   display: inline-flex;
   align-items: center;
   gap: 7px;
-  margin: 0 0 14px;
-  padding: 8px 10px;
+  margin: 0;
+  padding: 7px 9px;
   border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
   background: var(--bg-card);
   color: var(--text-primary);
   font-size: 12px;
   font-weight: 800;
+  text-transform: none;
+  letter-spacing: normal;
+}
+
+.eve-delete-toggle svg:last-child {
+  transition: transform var(--transition-fast);
+}
+
+.eve-delete-toggle svg:last-child.is-open {
+  transform: rotate(180deg);
 }
 
 .eve-delete-toggle:hover,
@@ -188,11 +277,23 @@
 .eve-delete-form {
   display: grid;
   gap: 10px;
-  margin: 0 0 16px;
-  padding: 12px;
+  margin: 0 0 24px;
+  padding: 15px;
   border: 1px solid var(--border-color);
   border-radius: var(--radius-lg);
   background: var(--bg-secondary);
+}
+
+.eve-form-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 3px;
+}
+
+.eve-form-heading > svg {
+  color: var(--text-secondary);
 }
 
 .eve-delete-form label {
@@ -225,20 +326,38 @@
   display: grid;
   align-content: start;
   gap: 10px;
-  padding: 4px 0;
+  padding: 0;
+}
+
+.eve-conversation-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 12px;
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.eve-conversation-rule {
+  height: 1px;
+  flex: 1;
+  background: var(--border-color);
 }
 
 .eve-message {
   width: fit-content;
-  max-width: 88%;
+  max-width: 90%;
   margin: 0;
-  padding: 10px 12px;
+  padding: 13px 15px;
   border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
   color: var(--text-primary);
   background: var(--bg-secondary);
-  font-size: 13px;
-  line-height: 1.5;
+  font-size: 14px;
+  line-height: 1.55;
   white-space: pre-wrap;
 }
 
@@ -258,20 +377,49 @@
 
 .eve-composer {
   align-items: flex-end;
-  gap: 8px;
-  padding: 14px 14px 16px;
+  gap: 12px;
+  padding: 16px 22px 20px;
   border-top: 1px solid var(--border-color);
   background: var(--bg-card);
 }
 
-.eve-composer textarea {
-  min-height: 92px;
+.eve-composer-field {
+  min-width: 0;
   flex: 1;
-  resize: none;
+  padding: 10px 12px 8px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  background: var(--bg-primary);
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
 }
 
-.eve-composer .primary-button {
-  min-height: 50px;
+.eve-composer-field:focus-within {
+  border-color: var(--border-heavy);
+  box-shadow: var(--shadow-focus);
+}
+
+.eve-composer textarea {
+  width: 100%;
+  min-height: 58px;
+  padding: 0;
+  resize: none;
+  border: 0;
+  background: transparent;
+  outline: 0;
+}
+
+.eve-composer-hint {
+  display: block;
+  color: var(--text-muted);
+  font-size: 10px;
+}
+
+.eve-send-button {
+  width: 44px;
+  min-height: 44px;
+  justify-content: center;
+  padding: 0;
+  border-radius: var(--radius-lg);
 }
 
 @keyframes eve-panel-in {
@@ -549,6 +697,19 @@
   background: var(--bg-hover-subtle);
 }
 
+.notification-main {
+  min-width: 0;
+  flex: 1;
+  display: flex;
+  align-items: flex-start;
+  gap: 11px;
+  padding: 0;
+  color: inherit;
+  background: transparent;
+  border: 0;
+  text-align: left;
+}
+
 .notification-item:focus-visible {
   outline: 2px solid var(--text-primary);
   outline-offset: -2px;
@@ -586,18 +747,18 @@
 }
 
 .notification-copy strong {
-  font-size: 11px;
+  font-size: 12px;
 }
 
 .notification-copy > span {
   color: var(--text-secondary);
-  font-size: 10px;
+  font-size: 12px;
   line-height: 1.45;
 }
 
 .notification-copy small {
   color: var(--text-muted);
-  font-size: 8px;
+  font-size: 11px;
 }
 
 .notification-unread-dot {

@@ -380,7 +380,7 @@ export function HackathonsPage({ hackathons, setHackathons, canLoadMore, loading
                 <p>Hackathon details</p>
                 <h2>{detailModalHackathon.title}</h2>
               </div>
-              <button className="icon-button" onClick={() => setDetailModalHackathon(null)}><X size={18} /></button>
+                      <button className="icon-button" onClick={() => setDetailModalHackathon(null)} aria-label="Close hackathon details"><X size={18} /></button>
             </div>
             <div className="hackathon-detail-modal-body">
               <div className="hackathon-modal-grid">
@@ -473,7 +473,7 @@ export function HackathonsPage({ hackathons, setHackathons, canLoadMore, loading
           <div className="todo-modal document-modal" role="dialog" aria-modal="true" onMouseDown={(event) => event.stopPropagation()}>
             <div className="todo-modal-heading">
               <div><p>Hackathons</p><h2>Add hackathon</h2></div>
-              <button className="icon-button" onClick={() => setFormOpen(false)}><X size={18} /></button>
+              <button className="icon-button" onClick={() => setFormOpen(false)} aria-label="Close hackathon form"><X size={18} /></button>
             </div>
             <form className="project-edit-form" onSubmit={submitHackathon}>
               {error && <div className="todo-api-error" role="alert">{error}</div>}
@@ -505,7 +505,7 @@ export function HackathonsPage({ hackathons, setHackathons, canLoadMore, loading
           <div className="todo-modal document-modal" role="dialog" aria-modal="true" onMouseDown={(event) => event.stopPropagation()}>
             <div className="todo-modal-heading">
               <div><p>Hackathons</p><h2>Edit hackathon</h2></div>
-              <button className="icon-button" onClick={() => setEditingHackathon(null)}><X size={18} /></button>
+              <button className="icon-button" onClick={() => setEditingHackathon(null)} aria-label="Close hackathon editor"><X size={18} /></button>
             </div>
             <form className="project-edit-form" onSubmit={saveHackathonEdit}>
               {editError && <div className="todo-api-error" role="alert">{editError}</div>}

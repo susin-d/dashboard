@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Header } from '../components/Header'
 import { Sidebar } from '../components/Sidebar'
 import { NetworkStatus } from '../components/NetworkStatus'
+import { navigationItems } from '../config/navigation'
 import '../App.css'
 
 const MOBILE_NAV_BREAKPOINT = 900
@@ -21,50 +22,36 @@ export function AppLayout({
   onWorkspaceChanged,
 }) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
-  const [sidebarProximityExpanded, setSidebarProximityExpanded] = useState(false)
+  const [sidebarExpanded, setSidebarExpanded] = useState(
+    () => localStorage.getItem('starwaves.sidebar-expanded') !== 'false',
+  )
   const contentRef = useRef(null)
-  const isSidebarExpanded = sidebarProximityExpanded
+  const activeItem = navigationItems.find(({ id }) => id === activePage)
+  const isSidebarExpanded = sidebarExpanded
 
   useEffect(() => {
     contentRef.current?.focus({ preventScroll: true })
   }, [activePage])
 
   useEffect(() => {
-    let frameId = null
-    let latestClientX = null
+    localStorage.setItem('starwaves.sidebar-expanded', String(sidebarExpanded))
+  }, [sidebarExpanded])
 
-    const updateProximity = () => {
-      frameId = null
-      if (latestClientX === null) return
-      const expandedBoundary = activePage === 'mails' ? 470 : 280
-      setSidebarProximityExpanded((expanded) =>
-        expanded
-          ? latestClientX <= expandedBoundary
-          : latestClientX <= 96,
-      )
+  const toggleNavigation = () => {
+    if (window.innerWidth <= MOBILE_NAV_BREAKPOINT) {
+      setSidebarOpen(true)
+      return
     }
-
-    const handlePointerMove = (event) => {
-      if (window.innerWidth <= MOBILE_NAV_BREAKPOINT || event.pointerType === 'touch') return
-      latestClientX = event.clientX
-      if (frameId === null) {
-        frameId = window.requestAnimationFrame(updateProximity)
-      }
-    }
-
-    window.addEventListener('pointermove', handlePointerMove)
-    return () => {
-      window.removeEventListener('pointermove', handlePointerMove)
-      if (frameId !== null) window.cancelAnimationFrame(frameId)
-    }
-  }, [activePage])
+    setSidebarExpanded((expanded) => !expanded)
+  }
 
   return (
     <div className={`app-shell ${isSidebarExpanded ? 'sidebar-expanded' : ''}`}>
       <a className="skip-link" href="#main-content">Skip to main content</a>
       <NetworkStatus />
       <Header
-        onMenuOpen={() => setSidebarOpen(true)}
+        onMenuOpen={toggleNavigation}
+        navigationExpanded={isSidebarExpanded}
         onNavigate={onNavigate}
         notifications={notifications}
         setNotifications={setNotifications}
@@ -89,6 +76,13 @@ export function AppLayout({
         className={`content ${activePage === 'calendar' ? 'calendar-content' : ''}`}
         tabIndex={-1}
       >
+        {activeItem && (
+          <nav className="app-breadcrumbs" aria-label="Breadcrumb">
+            <span>Workspace</span>
+            <span aria-hidden="true">/</span>
+            <span aria-current="page">{activeItem.label}</span>
+          </nav>
+        )}
         {children}
       </main>
     </div>

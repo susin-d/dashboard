@@ -1,6 +1,6 @@
 import { useEffect, useId, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { Bot, Maximize2, MoreVertical, Send, Trash2, X } from 'lucide-react'
+import { Bot, ChevronDown, Maximize2, MoreVertical, Send, ShieldCheck, Trash2, X } from 'lucide-react'
 import { deleteEveRecord, sendEveMessage } from '../lib/eveApi'
 
 const STARTER_MESSAGES = [{
@@ -123,9 +123,13 @@ export function EveAssistantModal({ isOpen, onClose, onNavigate, onWorkspaceChan
         onMouseDown={(event) => event.stopPropagation()}
       >
         <header className="eve-panel-header">
-          <div>
-            <p id={descriptionId}>Your workspace copilot</p>
-            <h2 id={titleId}>Eve AI assistant</h2>
+          <div className="eve-panel-heading">
+            <div className="eve-avatar" aria-hidden="true"><Bot size={19} /></div>
+            <div>
+              <p id={descriptionId}>Your workspace copilot</p>
+              <h2 id={titleId}>Eve AI assistant</h2>
+              <span className="eve-status"><span className="eve-status-dot" />Workspace connected</span>
+            </div>
           </div>
           <div className="eve-panel-controls">
             <span className="eve-panel-control-icon" aria-hidden="true">
@@ -141,12 +145,25 @@ export function EveAssistantModal({ isOpen, onClose, onNavigate, onWorkspaceChan
         </header>
 
         <div className="eve-panel-body">
-          <div className="eve-intro"><Bot size={18} aria-hidden="true" /><span>Eve can work with local StarWaves workspace records. Connected integrations and secrets stay protected.</span></div>
-          <button className="eve-delete-toggle" type="button" onClick={() => setDeleteOpen((open) => !open)} aria-expanded={deleteOpen}>
-            <Trash2 size={15} /> Delete record
-          </button>
+          <section className="eve-context-card" aria-label="Eve workspace access">
+            <div className="eve-context-icon"><ShieldCheck size={17} /></div>
+            <div>
+              <strong>Private workspace access</strong>
+              <p>Eve can work with local StarWaves records. Connected integrations and secrets stay protected.</p>
+            </div>
+          </section>
+          <div className="eve-section-row">
+            <span>Quick actions</span>
+            <button className="eve-delete-toggle" type="button" onClick={() => setDeleteOpen((open) => !open)} aria-expanded={deleteOpen}>
+              <Trash2 size={15} /> Delete record <ChevronDown className={deleteOpen ? 'is-open' : ''} size={14} />
+            </button>
+          </div>
           {deleteOpen && (
             <form className="eve-delete-form" onSubmit={handleDelete}>
+              <div className="eve-form-heading">
+                <div><strong>Delete a workspace record</strong><span>This action cannot be undone.</span></div>
+                <Trash2 size={16} aria-hidden="true" />
+              </div>
               <label>
                 Type
                 <select value={deleteResource} onChange={(event) => setDeleteResource(event.target.value)} disabled={isDeleting}>
@@ -164,6 +181,7 @@ export function EveAssistantModal({ isOpen, onClose, onNavigate, onWorkspaceChan
               </button>
             </form>
           )}
+          <div className="eve-conversation-label"><span>Conversation</span><span className="eve-conversation-rule" /></div>
           <div className="eve-messages" aria-live="polite" aria-label="Eve conversation">
             {messages.map((message, index) => <p className={`eve-message ${message.role}`} key={`${message.role}-${index}`}>{message.content}</p>)}
             {isSending && <p className="eve-message assistant">Eve is working...</p>}
@@ -172,9 +190,12 @@ export function EveAssistantModal({ isOpen, onClose, onNavigate, onWorkspaceChan
         </div>
 
         <form className="eve-composer" onSubmit={handleSubmit}>
-          <label className="sr-only" htmlFor="eve-message">Message Eve</label>
-          <textarea id="eve-message" value={draft} onChange={(event) => setDraft(event.target.value)} placeholder="Type / to use skills" rows="3" maxLength="4000" disabled={isSending} />
-          <button className="primary-button" type="submit" disabled={!draft.trim() || isSending}><Send size={15} />Send</button>
+          <div className="eve-composer-field">
+            <label className="sr-only" htmlFor="eve-message">Message Eve</label>
+            <textarea id="eve-message" value={draft} onChange={(event) => setDraft(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); event.currentTarget.form?.requestSubmit() } }} placeholder="Ask Eve anything about your workspace…" rows="3" maxLength="4000" disabled={isSending} />
+            <span className="eve-composer-hint">Press Enter to send · Shift + Enter for a new line</span>
+          </div>
+          <button className="primary-button eve-send-button" type="submit" disabled={!draft.trim() || isSending} aria-label="Send message"><Send size={16} /></button>
         </form>
       </aside>
     </div>,

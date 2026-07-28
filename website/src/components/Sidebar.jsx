@@ -11,12 +11,7 @@ export function Sidebar({
   const sidebarRef = useRef(null)
   const itemRefs = useRef(new Map())
   const [indicatorStyle, setIndicatorStyle] = useState(null)
-  const mainNavigation = navigationItems.filter(({ id }) => id !== 'setting')
-  const navigationGroups = Array.from(
-    new Set(mainNavigation.map(({ group }) => group)),
-  )
-  const settingItem = navigationItems.find(({ id }) => id === 'setting')
-  const SettingIcon = settingItem?.icon
+  const navigationGroups = Array.from(new Set(navigationItems.map(({ group }) => group)))
 
   useLayoutEffect(() => {
     const sidebar = sidebarRef.current
@@ -73,7 +68,7 @@ export function Sidebar({
           {navigationGroups.map((group) => (
             <div className="sidebar-nav-group" key={group}>
               <span className="sidebar-nav-group-label">{group}</span>
-              {mainNavigation
+              {navigationItems
                 .filter((item) => item.group === group)
                 .map(({ id, label, icon: Icon }) => (
                   <button
@@ -91,19 +86,6 @@ export function Sidebar({
           ))}
         </nav>
 
-        {settingItem && (
-          <nav className="sidebar-bottom-nav" aria-label="Settings navigation">
-            <button
-              ref={setItemRef(settingItem.id)}
-              className={`nav-item ${activePage === settingItem.id ? 'active' : ''}`}
-              onClick={() => handleNavigate(settingItem.id)}
-              aria-current={activePage === settingItem.id ? 'page' : undefined}
-            >
-              <SettingIcon size={18} />
-              <span>{settingItem.label}</span>
-            </button>
-          </nav>
-        )}
       </aside>
 
       {isOpen && (

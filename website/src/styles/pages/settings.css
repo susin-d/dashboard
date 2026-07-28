@@ -29,7 +29,7 @@
   color: var(--text-secondary);
   border-radius: var(--radius-md);
   text-decoration: none;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 700;
 }
 
@@ -39,8 +39,32 @@
   background: var(--bg-hover);
 }
 
+.settings-source-summary {
+  display: grid;
+  gap: 6px;
+  padding: 18px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-xl);
+}
+
+.settings-source-summary strong {
+  font-size: 14px;
+}
+
+.settings-source-summary span {
+  color: var(--text-secondary);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
 .setting-section {
   scroll-margin-top: 136px;
+}
+
+.settings-section-nav a:first-child {
+  color: var(--text-primary);
+  background: var(--bg-hover);
 }
 
 .setting-section {

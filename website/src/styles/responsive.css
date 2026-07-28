@@ -9,6 +9,20 @@
   padding-left: clamp(16px, 3vw, 48px);
 }
 
+.app-breadcrumbs {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: -10px 0 18px;
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.app-breadcrumbs [aria-current="page"] {
+  color: var(--text-secondary);
+}
+
 .page-heading > *,
 .dashboard-heading > * {
   min-width: 0;
@@ -45,6 +59,10 @@
     padding-right: 16px;
     padding-bottom: 24px;
     padding-left: 16px;
+  }
+
+  .app-breadcrumbs {
+    margin-top: -4px;
   }
 
   .page-heading,

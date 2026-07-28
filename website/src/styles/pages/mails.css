@@ -380,6 +380,24 @@
   width: 100%;
 }
 
+.mail-row-main {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  color: inherit;
+  display: grid;
+  gap: 12px;
+  grid-column: 2 / -1;
+  grid-template-columns: 155px minmax(0, 1fr) 70px;
+  min-width: 0;
+  padding: 0;
+  text-align: left;
+}
+
+.mail-row-main:focus-visible {
+  outline-offset: -2px;
+}
+
 .mail-row:hover {
   background: var(--bg-hover-subtle);
   box-shadow: inset 3px 0 var(--color-primary);
@@ -405,6 +423,11 @@
 
 .mail-row div {
   display: flex;
+  min-width: 0;
+}
+
+.mail-row-main > span {
+  display: block;
   min-width: 0;
 }
 

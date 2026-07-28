@@ -19,6 +19,7 @@ import {
   FileUp,
 } from 'lucide-react'
 import { ProfileCard } from '../components/ProfileCard'
+import { ConfirmDialog } from '../components/ui'
 import { clearAuthSession } from '../lib/authApi'
 import { clearGmailAuthorization } from '../lib/firebase'
 import {
@@ -153,6 +154,7 @@ export function SettingPage({
   const [accountDeleteMessage, setAccountDeleteMessage] = useState('')
   const [deleteModalOpen, setDeleteModalOpen] = useState(false)
   const [deleteConfirmation, setDeleteConfirmation] = useState('')
+  const [disconnectRequest, setDisconnectRequest] = useState(null)
   const [enabledContestPlatforms, setEnabledContestPlatforms] = useState(() => {
     try {
       return JSON.parse(
@@ -691,6 +693,22 @@ export function SettingPage({
     setAccountDeleteMessage('')
   }
 
+  const requestDisconnect = (kind, item = null) => setDisconnectRequest({ kind, item })
+
+  const confirmDisconnect = async () => {
+    const request = disconnectRequest
+    setDisconnectRequest(null)
+    if (!request) return
+    if (request.kind === 'workspace') return connectWorkspace()
+    if (request.kind === 'github') return toggleGithub()
+    if (request.kind === 'calendar-all') return disconnectAllCalendarAccounts()
+    if (request.kind === 'calendar') return removeCalendarAccount(request.item)
+    if (request.kind === 'gmail-all') return disconnectAllGmailAccounts()
+    if (request.kind === 'gmail') return removeGmailAccount(request.item)
+    if (request.kind === 'chat-all') return disconnectAllGoogleChatAccounts()
+    if (request.kind === 'chat') return removeGoogleChatAccount(request.item)
+  }
+
   return (
     <section className="setting-page">
       <div className="page-heading">
@@ -703,9 +721,9 @@ export function SettingPage({
       <nav className="settings-section-nav" aria-label="Settings sections">
         <a href="#settings-profile">Profile</a>
         <a href="#settings-apps">Integrations</a>
-        <a href="#settings-coding">Coding</a>
-        <a href="#settings-hackathons">Hackathons</a>
-        <a href="#settings-account">Account</a>
+        <a href="#settings-sources">Data sources</a>
+        <a href="#settings-coding">Coding profiles</a>
+        <a href="#settings-account">Account &amp; security</a>
       </nav>
 
       <div className="setting-section" id="settings-profile">
@@ -735,7 +753,7 @@ export function SettingPage({
             </div>
             <button
               className={workspaceConnected ? 'workspace-connected' : ''}
-              onClick={connectWorkspace}
+              onClick={workspaceConnected ? () => requestDisconnect('workspace') : connectWorkspace}
               disabled={connecting}
             >
               {workspaceConnected && <Check size={15} />}
@@ -797,7 +815,7 @@ export function SettingPage({
               </div>
               <button
                 className={calendarConnections.length > 0 ? 'workspace-connected' : ''}
-                onClick={calendarConnections.length > 0 ? disconnectAllCalendarAccounts : addGoogleCalendarAccount}
+                onClick={calendarConnections.length > 0 ? () => requestDisconnect('calendar-all') : addGoogleCalendarAccount}
                 disabled={calendarBusy}
               >
                 {calendarConnections.length > 0 && <Check size={15} />}
@@ -844,7 +862,7 @@ export function SettingPage({
                         </div>
                         <button
                           className="google-calendar-remove"
-                          onClick={() => removeCalendarAccount(connection)}
+                          onClick={() => requestDisconnect('calendar', connection)}
                           aria-label={`Disconnect ${connection.email}`}
                         >
                           <Trash2 size={15} />
@@ -934,7 +952,7 @@ export function SettingPage({
               </div>
               <button
                 className={gmailAccounts.length > 0 ? 'workspace-connected' : ''}
-                onClick={gmailAccounts.length > 0 ? disconnectAllGmailAccounts : addGmailAccount}
+                onClick={gmailAccounts.length > 0 ? () => requestDisconnect('gmail-all') : addGmailAccount}
                 disabled={gmailBusy}
               >
                 {gmailAccounts.length > 0 && <Check size={15} />}
@@ -960,7 +978,7 @@ export function SettingPage({
                       </div>
                       <button
                         className="google-calendar-remove"
-                        onClick={() => removeGmailAccount(acc)}
+                        onClick={() => requestDisconnect('gmail', acc)}
                         aria-label={`Disconnect ${acc.email}`}
                       >
                         <Trash2 size={15} />
@@ -992,7 +1010,7 @@ export function SettingPage({
               </div>
               <button
                 className={googleChatAccounts.length > 0 ? 'workspace-connected' : ''}
-                onClick={googleChatAccounts.length > 0 ? disconnectAllGoogleChatAccounts : addGoogleChatAccount}
+                onClick={googleChatAccounts.length > 0 ? () => requestDisconnect('chat-all') : addGoogleChatAccount}
                 disabled={googleChatBusy}
               >
                 {googleChatAccounts.length > 0 && <Check size={15} />}
@@ -1018,7 +1036,7 @@ export function SettingPage({
                       </div>
                       <button
                         className="google-calendar-remove"
-                        onClick={() => removeGoogleChatAccount(acc)}
+                        onClick={() => requestDisconnect('chat', acc)}
                         aria-label={`Disconnect ${acc.email}`}
                       >
                         <Trash2 size={15} />
@@ -1050,7 +1068,7 @@ export function SettingPage({
             </div>
             <button
               className={githubConnected ? 'workspace-connected' : ''}
-              onClick={toggleGithub}
+              onClick={githubConnected ? () => requestDisconnect('github') : toggleGithub}
               disabled={githubBusy}
             >
               {githubConnected && <Check size={15} />}
@@ -1069,6 +1087,17 @@ export function SettingPage({
             {githubMessage && <strong role="status">{githubMessage}</strong>}
           </div>
           </section>
+        </div>
+      </div>
+
+      <div className="setting-section" id="settings-sources">
+        <div className="section-heading">
+          <h2>Data sources</h2>
+          <p>Manage imported calendars and external activity sources.</p>
+        </div>
+        <div className="settings-source-summary">
+          <strong>Connected sources</strong>
+          <span>Calendar, mail, chat, GitHub, contest, and hackathon connections are managed in this workspace.</span>
         </div>
       </div>
 
@@ -1326,6 +1355,17 @@ export function SettingPage({
           </section>
         </div>
       )}
+
+      <ConfirmDialog
+        isOpen={Boolean(disconnectRequest)}
+        title="Disconnect integration?"
+        message={disconnectRequest?.item?.email
+          ? `Disconnect ${disconnectRequest.item.email} from StarWaves? You can reconnect it later.`
+          : 'Disconnect this integration from StarWaves? You can reconnect it later.'}
+        confirmLabel="Disconnect"
+        onCancel={() => setDisconnectRequest(null)}
+        onConfirm={confirmDisconnect}
+      />
     </section>
   )
 }

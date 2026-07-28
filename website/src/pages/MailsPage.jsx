@@ -339,7 +339,15 @@ export function MailsPage({ onNavigate }) {
       {/* Main Mail List Container */}
       <div className="mail-layout">
         <div className="mail-list">
-          {error && <div className="mail-state error" role="alert">{error}</div>}
+          {error && (
+            <div className="mail-state error" role="alert">
+              <strong>Could not load mail</strong>
+              <span>{error}</span>
+              <button className="secondary-button" type="button" onClick={() => refresh(query, folder, pageToken, true, selectedAccountEmail)} disabled={loading}>
+                <RefreshCw size={15} /> {loading ? 'Retrying…' : 'Try again'}
+              </button>
+            </div>
+          )}
           {loading && !messages.length && <div className="mail-state"><LoaderCircle className="mail-spin" />Loading mail…</div>}
           {!loading && !error && !messages.length && (
             <div className="mail-state">
@@ -349,24 +357,24 @@ export function MailsPage({ onNavigate }) {
             </div>
           )}
           {messages.map((message) => (
-            <button
+            <div
               className={`mail-row ${message.unread ? 'unread' : ''}`}
-              onClick={() => openMessage(message)}
               key={message.id}
             >
-              <span
+              <button
+                type="button"
                 className="mail-star"
                 onClick={(event) => toggleStar(message, event)}
-                role="button"
-                tabIndex="0"
                 aria-label={message.starred ? 'Unstar message' : 'Star message'}
               >
                 <Star size={16} className={message.starred ? 'starred' : ''} />
-              </span>
-              <strong>{message.sender}</strong>
-              <div><b>{message.subject}</b><span> — {message.snippet}</span></div>
-              <time>{formatMailDate(message.date)}</time>
-            </button>
+              </button>
+              <button type="button" className="mail-row-main" onClick={() => openMessage(message)}>
+                <strong>{message.sender}</strong>
+                <span><b>{message.subject}</b><span> — {message.snippet}</span></span>
+                <time>{formatMailDate(message.date)}</time>
+              </button>
+            </div>
           ))}
         </div>
 

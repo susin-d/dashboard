@@ -25,6 +25,7 @@ import { EveAssistantModal } from './EveAssistantModal'
 
 export function Header({
   onMenuOpen,
+  navigationExpanded,
   onNavigate,
   notifications,
   setNotifications,
@@ -170,7 +171,9 @@ export function Header({
         <button
           className="icon-button menu-button"
           onClick={onMenuOpen}
-          aria-label="Open navigation"
+          aria-label={navigationExpanded ? 'Collapse navigation' : 'Expand navigation'}
+          aria-expanded={navigationExpanded}
+          title={navigationExpanded ? 'Collapse navigation' : 'Expand navigation'}
         >
           <Menu size={20} />
         </button>
@@ -346,29 +349,16 @@ export function Header({
                     notificationIcons[notification.type] ?? Bell
 
                   return (
-                    <div
-                      className={`notification-item ${
-                        notification.unread ? 'unread' : ''
-                      }`}
-                      key={notification.id}
-                      onClick={() => openNotification(notification)}
-                      role="button"
-                      tabIndex="0"
-                      onKeyDown={(event) => {
-                        if (event.key === 'Enter' || event.key === ' ') openNotification(notification)
-                      }}
-                    >
-                      <span className="notification-icon">
-                        <NotificationIcon size={17} />
-                      </span>
-                      <span className="notification-copy">
-                        <strong>{notification.title}</strong>
-                        <span>{notification.message}</span>
-                        <small>{notification.time}</small>
-                      </span>
-                      {notification.unread && (
-                        <span className="notification-unread-dot" />
-                      )}
+                    <div className={`notification-item ${notification.unread ? 'unread' : ''}`} key={notification.id}>
+                      <button type="button" className="notification-main" onClick={() => openNotification(notification)}>
+                        <span className="notification-icon"><NotificationIcon size={17} /></span>
+                        <span className="notification-copy">
+                          <strong>{notification.title}</strong>
+                          <span>{notification.message}</span>
+                          <small>{notification.time}</small>
+                        </span>
+                        {notification.unread && <span className="notification-unread-dot" />}
+                      </button>
                       <button
                         type="button"
                         onClick={(e) => handleDeleteNotification(e, notification.id)}

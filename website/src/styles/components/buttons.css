@@ -1,6 +1,7 @@
 /* Button Component Styles */
 
 .primary-button {
+  min-height: 40px;
   padding: 10px 15px;
   color: var(--text-inverse);
   background: var(--color-primary);
@@ -23,6 +24,7 @@
 }
 
 .secondary-button {
+  min-height: 40px;
   padding: 9px 14px;
   color: var(--text-primary);
   background: var(--bg-card);
@@ -66,6 +68,14 @@
   color: var(--text-primary);
   border-radius: var(--radius-md);
   transition: background var(--transition-fast);
+}
+
+@media (pointer: coarse) {
+  .primary-button,
+  .secondary-button,
+  .danger-button {
+    min-height: 44px;
+  }
 }
 
 .icon-button:hover {
