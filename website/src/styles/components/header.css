@@ -295,7 +295,7 @@
   position: relative;
   min-width: 0;
   flex: 1;
-  padding: 10px 12px 8px;
+  padding: 12px 14px 9px;
   border: 1px solid var(--border-color);
   border-radius: var(--radius-lg);
   background: var(--bg-primary);
@@ -390,16 +390,25 @@
 
 .eve-composer textarea {
   width: 100%;
-  min-height: 58px;
+  min-height: 66px;
+  max-height: 150px;
   padding: 0;
   resize: none;
   border: 0;
   background: transparent;
   outline: 0;
+  overflow-y: auto;
+  field-sizing: content;
+  font-size: 14px;
+  line-height: 1.55;
 }
 
 .eve-composer-hint {
-  display: block;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 7px;
   color: var(--text-muted);
   font-size: 10px;
 }

@@ -162,7 +162,7 @@ export function EveAssistantModal({ isOpen, onClose, onNavigate, onWorkspaceChan
               </div>
             )}
             <textarea ref={composerRef} id="eve-message" value={draft} onChange={(event) => setDraft(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); event.currentTarget.form?.requestSubmit() } }} placeholder="Ask Eve anything about your workspace…" rows="3" maxLength="4000" disabled={isSending} />
-            <span className="eve-composer-hint">Press Enter to send · Shift + Enter for a new line</span>
+            <span className="eve-composer-hint"><span>Press Enter to send · Shift + Enter for a new line</span><span>{draft.length}/4000</span></span>
           </div>
           <button className="primary-button eve-send-button" type="submit" disabled={!draft.trim() || isSending} aria-label="Send message"><Send size={16} /></button>
         </form>
