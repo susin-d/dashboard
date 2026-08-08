@@ -29,120 +29,38 @@
   font-weight: 500;
 }
 
-.wave-loader-waves {
+.wave-loader-progress {
   position: relative;
   width: clamp(200px, 56vw, 260px);
-  height: 64px;
+  height: 6px;
   margin: 6px 0;
   overflow: hidden;
   border-radius: var(--radius-full);
-  box-shadow:
-    inset 0 2px 6px rgba(0, 0, 0, 0.12),
-    inset 0 -3px 10px rgba(255, 255, 255, 0.28),
-    0 1px 0 rgba(255, 255, 255, 0.45);
-  animation: wave-bob 3.2s ease-in-out infinite alternate;
+  background: var(--bg-tertiary);
 }
 
-.wave-line {
+.wave-loader-progress-bar {
   position: absolute;
+  top: 0;
   left: -50%;
-  width: 200%;
+  width: 50%;
   height: 100%;
-  border-radius: 45%;
-  animation: wave-drift linear infinite;
-}
-
-.wave-line-back {
-  top: -6px;
+  border-radius: inherit;
   background: var(--color-primary);
-  opacity: 0.3;
-  animation-duration: 4.8s;
+  animation: wave-loader-progress-slide 1.4s ease-in-out infinite;
 }
 
-.wave-line-mid {
-  top: -1px;
-  background: var(--color-primary);
-  opacity: 0.55;
-  animation-duration: 3.6s;
-}
-
-.wave-line-front {
-  top: 4px;
-  background: var(--color-primary);
-  opacity: 0.85;
-  animation-duration: 2.6s;
-}
-
-.wave-line-foam {
-  top: 8px;
-  background: var(--color-foam);
-  opacity: 0.95;
-  animation-duration: 1.9s;
-}
-
-.wave-foam {
-  position: absolute;
-  top: -5px;
-  width: 11px;
-  height: 11px;
-  border-radius: var(--radius-full);
-  background: var(--color-foam);
-  opacity: 0.85;
-  filter: blur(0.5px);
-  animation: foam-bob 2.4s ease-in-out infinite alternate;
-}
-
-.wave-foam-2 {
-  top: -8px;
-  left: 30%;
-  width: 8px;
-  height: 8px;
-  opacity: 0.65;
-  animation-delay: -0.8s;
-  animation-duration: 2s;
-}
-
-.wave-foam-3 {
-  top: -3px;
-  left: 64%;
-  width: 13px;
-  height: 13px;
-  opacity: 0.55;
-  animation-delay: -1.4s;
-  animation-duration: 2.8s;
-}
-
-@keyframes wave-drift {
+@keyframes wave-loader-progress-slide {
   from {
     transform: translateX(0);
   }
   to {
-    transform: translateX(-50%);
-  }
-}
-
-@keyframes wave-bob {
-  from {
-    transform: translateY(-4px);
-  }
-  to {
-    transform: translateY(4px);
-  }
-}
-
-@keyframes foam-bob {
-  from {
-    transform: translateY(-2px);
-  }
-  to {
-    transform: translateY(2px);
+    transform: translateX(300%);
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .wave-loader-waves,
-  .wave-line,
-  .wave-foam {
+  .wave-loader-progress-bar {
     animation: none;
   }
 }

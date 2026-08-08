@@ -171,6 +171,134 @@
   gap: 2px;
 }
 
+/* ── Sessions Bar ── */
+.eve-sessions-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.eve-session-new {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  flex: 0 0 auto;
+  height: 28px;
+  padding: 0 11px;
+  color: var(--text-secondary);
+  background: transparent;
+  border: 1px dashed var(--border-heavy);
+  border-radius: var(--radius-full);
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.eve-session-new:hover,
+.eve-session-new:focus-visible,
+.eve-session-new.active {
+  color: var(--text-inverse);
+  background: var(--color-primary);
+  border-style: solid;
+  outline: 0;
+}
+
+.eve-session-tabs {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.eve-session-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.eve-session-tab {
+  display: inline-flex;
+  align-items: center;
+  flex: 0 0 auto;
+  max-width: 180px;
+  height: 28px;
+  padding: 0 4px 0 12px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-full);
+  color: var(--text-secondary);
+  background: var(--bg-primary);
+  transition: all var(--transition-fast);
+}
+
+.eve-session-tab.active {
+  color: var(--text-primary);
+  background: var(--bg-hover);
+  border-color: var(--border-heavy);
+}
+
+.eve-session-tab-select {
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: left;
+}
+
+.eve-session-tab-select span {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.eve-session-tab-select:focus-visible {
+  outline: 2px solid var(--text-primary);
+  outline-offset: 1px;
+  border-radius: var(--radius-full);
+}
+
+.eve-session-tab-delete {
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  margin-left: 4px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  color: var(--text-muted);
+  background: transparent;
+  cursor: pointer;
+  opacity: 0;
+  transition: all var(--transition-fast);
+}
+
+.eve-session-tab:hover .eve-session-tab-delete,
+.eve-session-tab-delete:focus-visible {
+  opacity: 1;
+}
+
+.eve-session-tab-delete:hover,
+.eve-session-tab-delete:focus-visible {
+  color: var(--text-primary);
+  background: var(--bg-tertiary);
+  outline: 0;
+}
+
+.eve-session-loading {
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 500;
+}
+
 .eve-status {
   display: inline-flex;
   align-items: center;
@@ -251,6 +379,18 @@
   background: var(--bg-secondary);
   border: 1px solid var(--border-color);
   border-left: 3px solid var(--color-primary);
+}
+
+.eve-message-md {
+  color: var(--text-primary);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-left: 3px solid var(--color-primary);
+  border-radius: var(--radius-lg);
+  padding: 12px 16px;
+  font-size: 13.5px;
+  line-height: 1.6;
+  white-space: normal;
 }
 
 .eve-message.user {
@@ -441,6 +581,155 @@
   background: var(--color-primary);
   border-radius: inherit;
   transition: width var(--transition-fast);
+}
+
+/* ── Prompt Queue ── */
+.eve-composer-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.eve-queue-add {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  color: var(--text-secondary);
+  background: var(--bg-card);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.eve-queue-add:hover:not(:disabled),
+.eve-queue-add:focus-visible {
+  color: var(--text-primary);
+  background: var(--bg-hover);
+  border-color: var(--border-heavy);
+}
+
+.eve-queue-add:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.eve-queue-run {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 32px;
+  padding: 0 12px;
+  border: 1px solid var(--color-primary);
+  border-radius: var(--radius-md);
+  color: var(--text-inverse);
+  background: var(--color-primary);
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.eve-queue-run:hover:not(:disabled),
+.eve-queue-run:focus-visible {
+  opacity: 0.9;
+}
+
+.eve-queue-run:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.eve-queue-strip {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-top: 10px;
+  padding: 8px;
+  border: 1px dashed var(--border-heavy);
+  border-radius: var(--radius-md);
+  background: var(--bg-secondary);
+}
+
+.eve-queue-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
+}
+
+.eve-queue-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  background: var(--bg-card);
+}
+
+.eve-queue-item-text {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+
+.eve-queue-item-remove {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  color: var(--text-muted);
+  background: transparent;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.eve-queue-item-remove:hover:not(:disabled),
+.eve-queue-item-remove:focus-visible {
+  color: var(--text-primary);
+  background: var(--bg-hover);
+}
+
+.eve-queue-item-remove:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
+.eve-queue-clear {
+  flex: 0 0 auto;
+  padding: 6px 10px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  color: var(--text-secondary);
+  background: var(--bg-card);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.eve-queue-clear:hover:not(:disabled),
+.eve-queue-clear:focus-visible {
+  color: var(--text-primary);
+  background: var(--bg-hover);
+  border-color: var(--border-heavy);
+}
+
+.eve-queue-clear:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
 }
 
 /* ── Skills Menu ── */

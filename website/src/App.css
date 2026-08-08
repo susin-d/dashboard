@@ -16,6 +16,7 @@
 @import './styles/components/wave-loader.css';
 @import './styles/components/custom-dropdown.css';
 @import './styles/components/calendar-picker.css';
+@import './styles/components/markdown.css';
 
 /* Page Styles */
 @import './styles/pages/dashboard.css';

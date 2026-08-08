@@ -11,6 +11,10 @@ logger = logging.getLogger(__name__)
 TEMPLATES_DIR = Path(__file__).parent.parent / "templates" / "email"
 
 
+class EmailDeliveryError(RuntimeError):
+    pass
+
+
 def render_template(template_name: str, context: dict) -> str:
     template_path = TEMPLATES_DIR / template_name
     if not template_path.exists():
@@ -58,7 +62,7 @@ def send_email(
         return True
     except Exception as exc:
         logger.error("Failed to send SMTP email to %s: %s", to_email, exc)
-        return False
+        raise EmailDeliveryError(str(exc)) from exc
 
 
 def send_welcome_email(to_email: str, user_name: str) -> bool:

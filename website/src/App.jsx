@@ -72,6 +72,7 @@ function App() {
   const [notificationsOpen, setNotificationsOpen] = useState(false)
   const [workspaceRefreshKey, setWorkspaceRefreshKey] = useState(0)
   const [creationIntent, setCreationIntent] = useState(null)
+  const [eveChatKey, setEveChatKey] = useState(0)
 
   const {
     projects,
@@ -296,6 +297,7 @@ function App() {
       <EvePage
         onNavigate={navigateWorkspace}
         onWorkspaceChanged={() => setWorkspaceRefreshKey((current) => current + 1)}
+        chatResetKey={eveChatKey}
       />
     ),
     stats: (
@@ -488,6 +490,7 @@ function App() {
       notificationsLoading={loadingMore}
       onLoadMoreNotifications={() => loadMore('notifications')}
       onWorkspaceChanged={() => setWorkspaceRefreshKey((current) => current + 1)}
+      onEveNewChat={() => setEveChatKey((current) => current + 1)}
     >
       {pages[activePage] ?? pages.dashboard}
     </AppLayout>

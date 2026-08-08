@@ -23,6 +23,28 @@
   color: var(--text-secondary);
 }
 
+.app-breadcrumbs .breadcrumb-action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-left: auto;
+  padding: 0.35rem 0.7rem;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 6px;
+  background: transparent;
+  border: 1px solid var(--border-color, #27272a);
+  color: var(--text-secondary, #71717a);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.app-breadcrumbs .breadcrumb-action-btn:hover {
+  color: var(--text-primary, #ffffff);
+  border-color: var(--border-heavy, #3f3f46);
+  background: var(--bg-tertiary, #1a1a1a);
+}
+
 .page-heading > *,
 .dashboard-heading > * {
   min-width: 0;

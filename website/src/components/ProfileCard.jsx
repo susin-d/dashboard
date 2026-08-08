@@ -212,7 +212,7 @@ export function ProfileCard({ user, onProfileUpdated }) {
               <Mail size={16} />
               <span>Email & Notification Services</span>
             </div>
-            <span className="combined-smtp-tag">SMTP Ready</span>
+            <span className="combined-smtp-tag">Mail Ready</span>
           </div>
           <p className="combined-description">
             Manage email verification, resend welcome notifications, or send a test email.
@@ -268,11 +268,11 @@ export function ProfileCard({ user, onProfileUpdated }) {
               <Link2 size={16} />
               <span>Combined Accounts & Shared Access</span>
             </div>
-            <span className="combined-smtp-tag">SMTP Verification</span>
+            <span className="combined-smtp-tag">Mail Verification</span>
           </div>
 
           <p className="combined-description">
-            Invite another email address to combine accounts. After verifying via SMTP email, multiple accounts can access shared workspace data.
+            Invite another email address to combine accounts. After verifying via email, multiple accounts can access shared workspace data.
           </p>
 
           <form onSubmit={handleRequestCombine} className="combine-account-form">
@@ -287,7 +287,7 @@ export function ProfileCard({ user, onProfileUpdated }) {
               />
             </div>
             <button type="submit" disabled={loadingCombine} className="primary-button combine-submit-btn">
-              {loadingCombine ? 'Sending…' : 'Send SMTP Invite'}
+              {loadingCombine ? 'Sending…' : 'Send Mail Invite'}
             </button>
           </form>
 
@@ -328,7 +328,7 @@ export function ProfileCard({ user, onProfileUpdated }) {
                     <Clock size={15} />
                     <div>
                       <strong>{req.email}</strong>
-                      <small>Verification email sent via SMTP</small>
+                      <small>Verification email sent via Mail</small>
                     </div>
                   </div>
                   <span className="pending-badge">Verification Sent</span>

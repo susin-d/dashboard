@@ -1,6 +1,7 @@
 from urllib.parse import urlencode
 
 import asyncio
+import logging
 import httpx
 from fastapi import APIRouter, Depends, Header, HTTPException, Query, status
 from fastapi.responses import HTMLResponse
@@ -11,7 +12,12 @@ from pydantic import BaseModel, EmailStr
 from app.core.auth import auth_serializer, create_user_token, get_current_user
 from app.core.config import settings
 from app.db import get_firestore
-from app.services.email import send_account_combine_email, send_password_reset_email, send_welcome_email
+from app.services.email import (
+    EmailDeliveryError,
+    send_account_combine_email,
+    send_password_reset_email,
+    send_welcome_email,
+)
 from app.repositories.user_repository import (
     add_pending_combine_request,
     confirm_combine_accounts,
@@ -27,6 +33,15 @@ from app.repositories.user_repository import (
 
 
 router = APIRouter(prefix="/auth")
+
+logger = logging.getLogger(__name__)
+
+
+def _send_welcome_email_best_effort(to_email: str, user_name: str) -> None:
+    try:
+        send_welcome_email(to_email=to_email, user_name=user_name)
+    except EmailDeliveryError as exc:
+        logger.warning("Welcome email to %s could not be delivered: %s", to_email, exc)
 
 
 def state_serializer() -> URLSafeTimedSerializer:
@@ -145,7 +160,7 @@ async def google_callback(
 
     if user_record.get("is_new"):
         await asyncio.to_thread(
-            send_welcome_email,
+            _send_welcome_email_best_effort,
             user_record["email"],
             user_record.get("display_name") or name,
         )
@@ -209,7 +224,7 @@ def signup(
             detail=str(exc),
         ) from None
 
-    send_welcome_email(
+    _send_welcome_email_best_effort(
         to_email=user_record["email"],
         user_name=user_record["display_name"],
     )
@@ -270,7 +285,10 @@ def forgot_password(
     user_record = get_user_by_email(database, payload.email)
     if user_record:
         token = state_serializer().dumps({"uid": user_record["uid"], "action": "reset_password"})
-        send_password_reset_email(user_record["email"], token)
+        try:
+            send_password_reset_email(user_record["email"], token)
+        except EmailDeliveryError as exc:
+            logger.warning("Password reset email to %s could not be delivered: %s", user_record["email"], exc)
     return {"message": "If an account exists with that email, a password reset link has been sent via email."}
 
 
@@ -382,6 +400,11 @@ def request_combine_account(
                 detail=f"Failed to send verification email to {target_email}. Please check SMTP configuration and try again.",
             )
         return {"message": f"Verification email sent to {target_email} via SMTP."}
+    except EmailDeliveryError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail=f"Failed to send verification email to {target_email}: {exc}",
+        ) from exc
     except Exception as exc:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,

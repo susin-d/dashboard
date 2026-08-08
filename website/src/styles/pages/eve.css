@@ -124,33 +124,19 @@
   font-weight: 600;
 }
 
-.eve-reset-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  padding: 0.5rem 0.85rem;
-  font-size: 0.85rem;
-  font-weight: 500;
-  border-radius: 8px;
-  background: transparent;
-  border: 1px solid var(--border-color, #27272a);
-  color: var(--text-muted, #71717a);
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.eve-reset-btn:hover {
-  color: var(--text-primary, #ffffff);
-  border-color: var(--border-color, #3f3f46);
-  background: var(--bg-tertiary, #18181b);
-}
-
 /* ── Content Grid Layout ── */
 .eve-content-grid {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
   gap: 1.5rem;
   width: 100%;
+  align-items: start;
+}
+
+@media (max-width: 1024px) {
+  .eve-content-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 
 /* ── Main Chat Stream Section ── */
@@ -268,6 +254,14 @@
   border: 1px solid var(--color-primary, #18181b);
   font-weight: 500;
   border-top-right-radius: 2px;
+}
+
+.eve-bubble-text.eve-bubble-markdown {
+  white-space: normal;
+}
+
+.eve-bubble-markdown .markdown-renderer {
+  font-size: 0.9rem;
 }
 
 /* Typing Indicator Animation */
@@ -680,4 +674,191 @@
 .eve-shortcut-btn:hover {
   border-color: var(--border-color, #3f3f46);
   background: #202023;
+}
+
+/* ── Sessions & Memory Sidebar Widgets ── */
+.eve-new-session-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  justify-content: center;
+  width: 100%;
+  padding: 0.55rem 0.75rem;
+  border-radius: 6px;
+  background: var(--bg-tertiary, #18181b);
+  border: 1px solid var(--border-color, #27272a);
+  color: var(--text-primary, #ffffff);
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.eve-new-session-btn:hover:not(:disabled) {
+  border-color: var(--border-color, #3f3f46);
+  background: #202023;
+}
+
+.eve-new-session-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.eve-session-list,
+.eve-memory-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.eve-session-list::-webkit-scrollbar,
+.eve-memory-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.eve-session-list::-webkit-scrollbar-thumb,
+.eve-memory-list::-webkit-scrollbar-thumb {
+  background: var(--border-color, #27272a);
+  border-radius: 3px;
+}
+
+.eve-session-item,
+.eve-memory-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.55rem 0.75rem;
+  border-radius: 6px;
+  background: var(--bg-tertiary, #18181b);
+  border: 1px solid var(--border-color, #27272a);
+  transition: all 0.15s ease;
+}
+
+.eve-session-item.active {
+  border-color: var(--border-color, #3f3f46);
+  background: #202023;
+}
+
+.eve-session-open {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  flex: 1;
+  min-width: 0;
+  background: transparent;
+  border: none;
+  padding: 0;
+  text-align: left;
+  cursor: pointer;
+  color: var(--text-primary, #ffffff);
+}
+
+.eve-session-title {
+  font-size: 0.82rem;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.eve-session-preview {
+  font-size: 0.72rem;
+  color: var(--text-muted, #71717a);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.eve-session-delete,
+.eve-memory-delete {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 26px;
+  height: 26px;
+  border-radius: 5px;
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--text-muted, #71717a);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.eve-session-delete:hover:not(:disabled),
+.eve-memory-delete:hover:not(:disabled) {
+  color: var(--text-primary, #ffffff);
+  border-color: var(--border-color, #3f3f46);
+  background: var(--bg-secondary, #121212);
+}
+
+.eve-session-delete:disabled,
+.eve-memory-delete:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.eve-memory-form {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.eve-memory-form input {
+  flex: 1;
+  min-width: 0;
+  padding: 0.55rem 0.75rem;
+  border-radius: 6px;
+  background: var(--bg-tertiary, #18181b);
+  border: 1px solid var(--border-color, #27272a);
+  color: var(--text-primary, #ffffff);
+  font-family: inherit;
+  font-size: 0.82rem;
+  outline: none;
+  transition: border-color 0.15s ease;
+}
+
+.eve-memory-form input:focus {
+  border-color: var(--border-color, #3f3f46);
+}
+
+.eve-memory-form input::placeholder {
+  color: var(--text-muted, #71717a);
+}
+
+.eve-memory-add {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 34px;
+  border-radius: 6px;
+  background: var(--color-primary, #18181b);
+  border: 1px solid var(--color-primary, #18181b);
+  color: var(--text-inverse, #ffffff);
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+}
+
+.eve-memory-add:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.eve-memory-add:hover:not(:disabled) {
+  opacity: 0.9;
+}
+
+.eve-memory-item {
+  align-items: flex-start;
+}
+
+.eve-memory-content {
+  flex: 1;
+  min-width: 0;
+  font-size: 0.8rem;
+  line-height: 1.4;
+  color: var(--text-primary, #ffffff);
+  word-break: break-word;
 }

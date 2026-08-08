@@ -1,7 +1,15 @@
 import { useEffect, useId, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { Bot, Maximize2, Send, ShieldCheck, X } from 'lucide-react'
-import { sendEveMessage } from '../lib/eveApi'
+import { Bot, ListPlus, Maximize2, Play, Plus, Send, ShieldCheck, X } from 'lucide-react'
+import { ConfirmDialog } from './ui/ConfirmDialog'
+import {
+  createEveSession,
+  deleteEveSession,
+  getEveSession,
+  listEveSessions,
+  sendEveMessage,
+} from '../lib/eveApi'
+import { Markdown } from './ui/Markdown'
 
 const STARTER_MESSAGES = [{
   role: 'assistant',
@@ -30,6 +38,19 @@ const EVE_TOOLS_LIST = [
 ]
 
 const MAX_CHARS = 4000
+const MAX_PREVIEW_LENGTH = 60
+
+function previewFor(messages) {
+  for (let index = messages.length - 1; index >= 0; index -= 1) {
+    const content = messages[index].content
+    if (content) {
+      return content.length > MAX_PREVIEW_LENGTH
+        ? `${content.slice(0, MAX_PREVIEW_LENGTH - 1).trimEnd()}\u2026`
+        : content
+    }
+  }
+  return 'New chat'
+}
 
 export function EveAssistantModal({ isOpen, onClose, onNavigate, onWorkspaceChanged }) {
   const [messages, setMessages] = useState(STARTER_MESSAGES)
@@ -37,6 +58,11 @@ export function EveAssistantModal({ isOpen, onClose, onNavigate, onWorkspaceChan
   const [error, setError] = useState('')
   const [isSending, setIsSending] = useState(false)
   const [isWide, setIsWide] = useState(false)
+  const [sessions, setSessions] = useState([])
+  const [activeSessionId, setActiveSessionId] = useState(null)
+  const [isLoadingSessions, setIsLoadingSessions] = useState(false)
+  const [sessionToDelete, setSessionToDelete] = useState(null)
+  const [promptQueue, setPromptQueue] = useState([])
   const panelRef = useRef(null)
   const composerRef = useRef(null)
   const messagesEndRef = useRef(null)
@@ -47,6 +73,40 @@ export function EveAssistantModal({ isOpen, onClose, onNavigate, onWorkspaceChan
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages, isSending])
+
+  /* Load saved sessions when the panel opens */
+  useEffect(() => {
+    if (!isOpen) return undefined
+
+    let cancelled = false
+    setIsLoadingSessions(true)
+    setError('')
+    listEveSessions()
+      .then(({ sessions: savedSessions }) => {
+        if (cancelled) return
+        setSessions(savedSessions)
+        if (savedSessions.length) {
+          setActiveSessionId(savedSessions[0].id)
+          return getEveSession(savedSessions[0].id)
+        }
+        return null
+      })
+      .then((session) => {
+        if (!cancelled) {
+          setMessages(session ? session.messages : STARTER_MESSAGES)
+        }
+      })
+      .catch((loadError) => {
+        if (!cancelled) setError(loadError.message)
+      })
+      .finally(() => {
+        if (!cancelled) setIsLoadingSessions(false)
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [isOpen])
 
   /* Focus management, body lock, and Escape key */
   useEffect(() => {
@@ -72,20 +132,132 @@ export function EveAssistantModal({ isOpen, onClose, onNavigate, onWorkspaceChan
     }
   }, [isOpen, onClose])
 
+  const startNewChat = () => {
+    if (isSending) return
+    setError('')
+    setActiveSessionId(null)
+    setMessages(STARTER_MESSAGES)
+    setDraft('')
+    setPromptQueue([])
+  }
+
+  const selectSession = async (sessionId) => {
+    if (sessionId === activeSessionId || isSending) return
+    setError('')
+    setActiveSessionId(sessionId)
+    try {
+      const session = await getEveSession(sessionId)
+      setMessages(session.messages)
+      setDraft('')
+      setPromptQueue([])
+    } catch (requestError) {
+      setError(requestError.message)
+    }
+  }
+
+  const confirmDeleteSession = async () => {
+    const sessionId = sessionToDelete?.id
+    setSessionToDelete(null)
+    if (!sessionId) return
+    try {
+      await deleteEveSession(sessionId)
+    } catch (requestError) {
+      setError(requestError.message)
+      return
+    }
+    const remaining = sessions.filter((session) => session.id !== sessionId)
+    setSessions(remaining)
+    if (sessionId !== activeSessionId) return
+    if (remaining.length) {
+      const nextSession = remaining[0]
+      setActiveSessionId(nextSession.id)
+      try {
+        const session = await getEveSession(nextSession.id)
+        setMessages(session.messages)
+      } catch {
+        setMessages(STARTER_MESSAGES)
+      }
+    } else {
+      setActiveSessionId(null)
+      setMessages(STARTER_MESSAGES)
+    }
+  }
+
   const handleSubmit = async (event) => {
     event.preventDefault()
     const content = draft.trim()
     if (!content || isSending) return
-    const nextMessages = [...messages, { role: 'user', content }]
-    setMessages(nextMessages)
-    setDraft('')
     setError('')
     setIsSending(true)
     try {
-      const response = await sendEveMessage(nextMessages)
-      setMessages((current) => [...current, { role: 'assistant', content: response.message }])
-      if (response.changed_resources.length) onWorkspaceChanged()
-      handleActions(response.actions ?? [])
+      await sendPrompt(content, messages, activeSessionId)
+    } catch (requestError) {
+      setError(requestError.message)
+    } finally {
+      setIsSending(false)
+    }
+  }
+
+  const sendPrompt = async (content, baseMessages, sessionIdOverride = null) => {
+    const nextMessages = [...baseMessages, { role: 'user', content }]
+    setMessages(nextMessages)
+    setDraft('')
+    setError('')
+    let nextSessionId = sessionIdOverride
+    let sessionTitle = sessions.find((session) => session.id === nextSessionId)?.title ?? 'New chat'
+    if (!nextSessionId) {
+      const created = await createEveSession(nextMessages)
+      nextSessionId = created.session.id
+      sessionTitle = created.session.title
+      setActiveSessionId(nextSessionId)
+      setSessions((current) => [
+        { id: nextSessionId, title: sessionTitle, updated_at: created.session.updated_at, preview: previewFor(nextMessages) },
+        ...current,
+      ])
+    }
+    const response = await sendEveMessage(nextMessages, nextSessionId)
+    const assistantMessage = { role: 'assistant', content: response.message }
+    const finalMessages = [...nextMessages, assistantMessage]
+    setMessages(finalMessages)
+    setSessions((current) => [
+      { id: nextSessionId, title: sessionTitle, updated_at: new Date().toISOString(), preview: previewFor(finalMessages) },
+      ...current.filter((session) => session.id !== nextSessionId),
+    ])
+    if (response.changed_resources.length) onWorkspaceChanged()
+    handleActions(response.actions ?? [])
+    return { messages: finalMessages, sessionId: nextSessionId }
+  }
+
+  const addToQueue = () => {
+    const content = draft.trim()
+    if (!content || isSending) return
+    setPromptQueue((current) => [...current, content])
+    setDraft('')
+    composerRef.current?.focus()
+  }
+
+  const removeFromQueue = (index) => {
+    setPromptQueue((current) => current.filter((_, itemIndex) => itemIndex !== index))
+  }
+
+  const clearQueue = () => {
+    setPromptQueue([])
+  }
+
+  const runQueue = async () => {
+    if (isSending || !promptQueue.length) return
+    const queuedPrompts = [...promptQueue]
+    setPromptQueue([])
+    setError('')
+    setIsSending(true)
+    let conversation = messages
+    let nextSessionId = activeSessionId
+    try {
+      for (const prompt of queuedPrompts) {
+        const result = await sendPrompt(prompt, conversation, nextSessionId)
+        conversation = result.messages
+        nextSessionId = result.sessionId
+      }
     } catch (requestError) {
       setError(requestError.message)
     } finally {
@@ -128,135 +300,239 @@ export function EveAssistantModal({ isOpen, onClose, onNavigate, onWorkspaceChan
 
   const hasUserMessages = messages.some((msg) => msg.role === 'user')
   const charProgress = draft.length / MAX_CHARS
+  const composerDisabled = isSending || isLoadingSessions
 
   if (!isOpen) return null
 
-  return createPortal(
-    <div className="eve-panel-backdrop" onMouseDown={onClose} role="presentation">
-      <aside
-        ref={panelRef}
-        className={`eve-assistant-panel ${isWide ? 'wide' : ''}`}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby={titleId}
-        aria-describedby={descriptionId}
-        data-dialog-managed="true"
-        tabIndex={-1}
-        onMouseDown={(event) => event.stopPropagation()}
-      >
-        {/* ── Header ── */}
-        <header className="eve-panel-header">
-          <div className="eve-panel-heading">
-            <div className="eve-avatar" aria-hidden="true"><Bot size={22} /></div>
-            <div>
-              <h2 id={titleId}>Eve</h2>
-              <p id={descriptionId}>AI workspace copilot</p>
-            </div>
-          </div>
-          <div className="eve-panel-controls">
-            <span className="eve-status"><span className="eve-status-dot" />Connected</span>
-            <button className="icon-button" type="button" onClick={() => setIsWide((wide) => !wide)} aria-label={isWide ? 'Reduce Eve assistant width' : 'Expand Eve assistant'}>
-              <Maximize2 size={16} />
-            </button>
-            <button className="icon-button" type="button" onClick={onClose} aria-label="Close Eve assistant" data-eve-initial-focus>
-              <X size={16} />
-            </button>
-          </div>
-        </header>
-
-        {/* ── Context Banner ── */}
-        <div className="eve-context-banner" aria-label="Eve workspace access">
-          <ShieldCheck size={14} />
-          <span>Private workspace access \u2014 your integrations and secrets stay protected.</span>
-        </div>
-
-        {/* ── Conversation Body ── */}
-        <div className="eve-panel-body">
-          <div className="eve-messages" aria-live="polite" aria-label="Eve conversation">
-            {messages.map((message, index) => (
-              <div className={`eve-message ${message.role}`} key={`${message.role}-${index}`}>
-                <p>{message.content}</p>
+  return (
+    <>
+      {createPortal(
+        <div className="eve-panel-backdrop" onMouseDown={onClose} role="presentation">
+          <aside
+            ref={panelRef}
+            className={`eve-assistant-panel ${isWide ? 'wide' : ''}`}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby={titleId}
+            aria-describedby={descriptionId}
+            data-dialog-managed="true"
+            tabIndex={-1}
+            onMouseDown={(event) => event.stopPropagation()}
+          >
+            {/* ── Header ── */}
+            <header className="eve-panel-header">
+              <div className="eve-panel-heading">
+                <div className="eve-avatar" aria-hidden="true"><Bot size={22} /></div>
+                <div>
+                  <h2 id={titleId}>Eve</h2>
+                  <p id={descriptionId}>AI workspace copilot</p>
+                </div>
               </div>
-            ))}
-            {isSending && (
-              <div className="eve-message assistant">
-                <p>
-                  <span className="eve-typing-dots" aria-label="Eve is thinking">
-                    <span /><span /><span />
-                  </span>
-                </p>
+              <div className="eve-panel-controls">
+                <span className="eve-status"><span className="eve-status-dot" />Connected</span>
+                <button className="icon-button" type="button" onClick={() => setIsWide((wide) => !wide)} aria-label={isWide ? 'Reduce Eve assistant width' : 'Expand Eve assistant'}>
+                  <Maximize2 size={16} />
+                </button>
+                <button className="icon-button" type="button" onClick={onClose} aria-label="Close Eve assistant" data-eve-initial-focus>
+                  <X size={16} />
+                </button>
               </div>
-            )}
-            {error && <p className="eve-error" role="alert">{error}</p>}
-            {!hasUserMessages && (
-              <div className="eve-suggestion-chips">
-                {EVE_PRESET_PROMPTS.map((item) => (
-                  <button className="eve-chip" type="button" key={item.command} onClick={() => selectPrompt(item)}>
-                    {item.label}
-                  </button>
-                ))}
-              </div>
-            )}
-            <div ref={messagesEndRef} aria-hidden="true" />
-          </div>
-        </div>
+            </header>
 
-        {/* ── Composer ── */}
-        <form className="eve-composer" onSubmit={handleSubmit}>
-          <div className="eve-composer-field">
-            <label className="eve-composer-label" htmlFor="eve-message">Message Eve</label>
-
-            {draft.startsWith('@') && matchingTools.length > 0 && (
-              <div className="eve-skills-menu" role="listbox" aria-label="Eve tools">
-                <div className="eve-skills-heading">Tools & Resources <span>Use @ to reference</span></div>
-                {matchingTools.map((tool) => (
-                  <button className="eve-skill-option" type="button" role="option" key={tool.command} onClick={() => selectTool(tool)}>
-                    <span className="eve-skill-command">@{tool.command}</span>
-                    <span><strong>{tool.label}</strong><small>{tool.description}</small></span>
-                  </button>
-                ))}
-              </div>
-            )}
-
-            {draft.startsWith('/') && matchingPrompts.length > 0 && (
-              <div className="eve-skills-menu" role="listbox" aria-label="Eve pre-saved prompts">
-                <div className="eve-skills-heading">Pre-saved Prompts <span>Use / to filter</span></div>
-                {matchingPrompts.map((item) => (
-                  <button className="eve-skill-option" type="button" role="option" key={item.command} onClick={() => selectPrompt(item)}>
-                    <span className="eve-skill-command">/{item.command}</span>
-                    <span><strong>{item.label}</strong><small>{item.description}</small></span>
-                  </button>
-                ))}
-              </div>
-            )}
-
-            <textarea
-              ref={composerRef}
-              id="eve-message"
-              value={draft}
-              onChange={(event) => setDraft(event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key === 'Enter' && !event.shiftKey) {
-                  event.preventDefault()
-                  event.currentTarget.form?.requestSubmit()
-                }
-              }}
-              placeholder="Ask anything… Type @ for tools or / for prompts"
-              rows="2"
-              maxLength={MAX_CHARS}
-              disabled={isSending}
-            />
-            <div className="eve-composer-footer">
-              <span className="eve-composer-hint">\u23CE to send</span>
-              <button className="eve-send-button" type="submit" disabled={!draft.trim() || isSending} aria-label="Send message">
-                <Send size={15} />
+            {/* ── Sessions Bar ── */}
+            <div className="eve-sessions-bar" aria-label="Eve conversations">
+              <button
+                className={`eve-session-new ${activeSessionId === null ? 'active' : ''}`}
+                type="button"
+                onClick={startNewChat}
+                aria-pressed={activeSessionId === null}
+              >
+                <Plus size={14} />
+                <span>New chat</span>
               </button>
+              <div className="eve-session-tabs" role="tablist" aria-label="Saved Eve conversations">
+                {isLoadingSessions ? (
+                  <span className="eve-session-loading">Loading conversations…</span>
+                ) : (
+                  sessions.map((session) => (
+                    <div
+                      className={`eve-session-tab ${session.id === activeSessionId ? 'active' : ''}`}
+                      key={session.id}
+                    >
+                      <button
+                        className="eve-session-tab-select"
+                        type="button"
+                        role="tab"
+                        aria-selected={session.id === activeSessionId}
+                        onClick={() => selectSession(session.id)}
+                        title={session.title}
+                      >
+                        <span>{session.title}</span>
+                      </button>
+                      <button
+                        className="eve-session-tab-delete"
+                        type="button"
+                        onClick={() => setSessionToDelete(session)}
+                        aria-label={`Delete conversation ${session.title}`}
+                      >
+                        <X size={12} />
+                      </button>
+                    </div>
+                  ))
+                )}
+              </div>
             </div>
-            <div className="eve-char-bar" style={{ '--char-progress': charProgress }} />
-          </div>
-        </form>
-      </aside>
-    </div>,
-    document.body,
+
+            {/* ── Context Banner ── */}
+            <div className="eve-context-banner" aria-label="Eve workspace access">
+              <ShieldCheck size={14} />
+              <span>Private workspace access — your integrations and secrets stay protected.</span>
+            </div>
+
+            {/* ── Conversation Body ── */}
+            <div className="eve-panel-body">
+              <div className="eve-messages" aria-live="polite" aria-label="Eve conversation">
+                {messages.map((message, index) => (
+                  <div className={`eve-message ${message.role}`} key={`${message.role}-${index}`}>
+                    {message.role === 'assistant' ? (
+                      <div className="eve-message-md">
+                        <Markdown content={message.content} />
+                      </div>
+                    ) : (
+                      <p>{message.content}</p>
+                    )}
+                  </div>
+                ))}
+                {isSending && (
+                  <div className="eve-message assistant">
+                    <p>
+                      <span className="eve-typing-dots" aria-label="Eve is thinking">
+                        <span /><span /><span />
+                      </span>
+                    </p>
+                  </div>
+                )}
+                {error && <p className="eve-error" role="alert">{error}</p>}
+                {!hasUserMessages && (
+                  <div className="eve-suggestion-chips">
+                    {EVE_PRESET_PROMPTS.map((item) => (
+                      <button className="eve-chip" type="button" key={item.command} onClick={() => selectPrompt(item)}>
+                        {item.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
+                <div ref={messagesEndRef} aria-hidden="true" />
+              </div>
+            </div>
+
+            {/* ── Composer ── */}
+            <form className="eve-composer" onSubmit={handleSubmit}>
+              <div className="eve-composer-field">
+                <label className="eve-composer-label" htmlFor="eve-message">Message Eve</label>
+
+                {draft.startsWith('@') && matchingTools.length > 0 && (
+                  <div className="eve-skills-menu" role="listbox" aria-label="Eve tools">
+                    <div className="eve-skills-heading">Tools & Resources <span>Use @ to reference</span></div>
+                    {matchingTools.map((tool) => (
+                      <button className="eve-skill-option" type="button" role="option" key={tool.command} onClick={() => selectTool(tool)}>
+                        <span className="eve-skill-command">@{tool.command}</span>
+                        <span><strong>{tool.label}</strong><small>{tool.description}</small></span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                {draft.startsWith('/') && matchingPrompts.length > 0 && (
+                  <div className="eve-skills-menu" role="listbox" aria-label="Eve pre-saved prompts">
+                    <div className="eve-skills-heading">Pre-saved Prompts <span>Use / to filter</span></div>
+                    {matchingPrompts.map((item) => (
+                      <button className="eve-skill-option" type="button" role="option" key={item.command} onClick={() => selectPrompt(item)}>
+                        <span className="eve-skill-command">/{item.command}</span>
+                        <span><strong>{item.label}</strong><small>{item.description}</small></span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                <textarea
+                  ref={composerRef}
+                  id="eve-message"
+                  value={draft}
+                  onChange={(event) => setDraft(event.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter' && !event.shiftKey) {
+                      event.preventDefault()
+                      event.currentTarget.form?.requestSubmit()
+                    }
+                  }}
+                  placeholder="Ask anything… Type @ for tools or / for prompts"
+                  rows="2"
+                  maxLength={MAX_CHARS}
+                  disabled={composerDisabled}
+                />
+                <div className="eve-composer-footer">
+                  <span className="eve-composer-hint">⏎ to send</span>
+                  <div className="eve-composer-actions">
+                    {promptQueue.length > 0 && (
+                      <button className="eve-queue-run" type="button" onClick={runQueue} disabled={composerDisabled}>
+                        <Play size={13} />
+                        Run queue ({promptQueue.length})
+                      </button>
+                    )}
+                    <button
+                      className="eve-queue-add"
+                      type="button"
+                      onClick={addToQueue}
+                      disabled={!draft.trim() || composerDisabled}
+                      aria-label="Add message to queue"
+                      title="Add to queue"
+                    >
+                      <ListPlus size={16} />
+                    </button>
+                    <button className="eve-send-button" type="submit" disabled={!draft.trim() || composerDisabled} aria-label="Send message">
+                      <Send size={15} />
+                    </button>
+                  </div>
+                </div>
+                <div className="eve-char-bar" style={{ '--char-progress': charProgress }} />
+              </div>
+              {promptQueue.length > 0 && (
+                <div className="eve-queue-strip" aria-label="Queued messages">
+                  <div className="eve-queue-list">
+                    {promptQueue.map((queuedPrompt, index) => (
+                      <span className="eve-queue-item" key={`${queuedPrompt}-${index}`}>
+                        <span className="eve-queue-item-text">{queuedPrompt}</span>
+                        <button
+                          className="eve-queue-item-remove"
+                          type="button"
+                          onClick={() => removeFromQueue(index)}
+                          disabled={composerDisabled}
+                          aria-label="Remove queued message"
+                        >
+                          <X size={12} />
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                  <button className="eve-queue-clear" type="button" onClick={clearQueue} disabled={composerDisabled}>
+                    Clear queue
+                  </button>
+                </div>
+              )}
+            </form>
+          </aside>
+        </div>,
+        document.body,
+      )}
+      <ConfirmDialog
+        isOpen={Boolean(sessionToDelete)}
+        title="Delete Eve conversation"
+        message={`Delete "${sessionToDelete?.title ?? ''}"? This conversation will be permanently removed.`}
+        confirmLabel="Delete conversation"
+        onConfirm={confirmDeleteSession}
+        onCancel={() => setSessionToDelete(null)}
+      />
+    </>
   )
 }

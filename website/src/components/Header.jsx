@@ -20,6 +20,7 @@ import {
 } from 'lucide-react'
 import { navigationItems } from '../config/navigation'
 import { deleteNotification, markAllNotificationsRead } from '../lib/workspaceApi'
+import { CALENDAR_REMINDER_PREFIX } from '../utils/calendarReminders'
 import { StarWavesLogo } from './StarWavesLogo'
 import { EveAssistantModal } from './EveAssistantModal'
 
@@ -158,7 +159,9 @@ export function Header({
 
   const handleDeleteNotification = (event, notificationId) => {
     event.stopPropagation()
-    deleteNotification(notificationId).catch((err) => console.error(err))
+    if (!notificationId.startsWith(CALENDAR_REMINDER_PREFIX)) {
+      deleteNotification(notificationId).catch((err) => console.error(err))
+    }
     setNotifications((current) =>
       current.filter((notification) => notification.id !== notificationId),
     )

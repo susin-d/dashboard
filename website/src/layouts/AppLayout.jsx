@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { Plus } from 'lucide-react'
 import { Header } from '../components/Header'
 import { Sidebar } from '../components/Sidebar'
 import { NetworkStatus } from '../components/NetworkStatus'
@@ -20,6 +21,7 @@ export function AppLayout({
   notificationsLoading,
   onLoadMoreNotifications,
   onWorkspaceChanged,
+  onEveNewChat,
 }) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [sidebarExpanded, setSidebarExpanded] = useState(
@@ -81,6 +83,17 @@ export function AppLayout({
             <span>Workspace</span>
             <span aria-hidden="true">/</span>
             <span aria-current="page">{activeItem.label}</span>
+            {activePage === 'eve' && (
+              <button
+                type="button"
+                className="breadcrumb-action-btn"
+                onClick={onEveNewChat}
+                title="Start a new conversation with Eve"
+              >
+                <Plus size={14} />
+                <span>New chat</span>
+              </button>
+            )}
           </nav>
         )}
         {children}

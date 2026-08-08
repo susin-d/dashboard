@@ -1,5 +1,4 @@
 import logging
-from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from google.cloud.firestore_v1 import Client
@@ -11,6 +10,7 @@ from app.core.config import settings
 from app.db import get_firestore
 from app.repositories.user_repository import get_user_by_id, mark_email_verified
 from app.services.email import (
+    EmailDeliveryError,
     send_announcement_email,
     send_email,
     send_reminder_email,
@@ -29,6 +29,16 @@ def _ensure_email_sent(sent: bool, target_email: str, email_kind: str) -> None:
             status_code=status.HTTP_502_BAD_GATEWAY,
             detail=f"Failed to send {email_kind} to {target_email}. Please check SMTP configuration and try again.",
         )
+
+
+def _deliver_email(send_func, target_email: str, email_kind: str, **kwargs) -> bool:
+    try:
+        return send_func(**kwargs)
+    except EmailDeliveryError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail=f"Failed to send {email_kind} to {target_email}: {exc}",
+        ) from exc
 
 
 def email_token_serializer() -> URLSafeTimedSerializer:
@@ -97,7 +107,15 @@ def send_test_email(
     """
     body_text = f"StarWaves Mail Test for {user_name}. SMTP service operating normally."
 
-    sent = send_email(target_email, subject, body_html, body_text)
+    sent = _deliver_email(
+        send_email,
+        target_email,
+        "test email",
+        to_email=target_email,
+        subject=subject,
+        body_html=body_html,
+        body_text=body_text,
+    )
     _ensure_email_sent(sent, target_email, "test email")
     return {"message": f"Test email sent to {target_email}.", "sent": True}
 
@@ -114,7 +132,13 @@ def resend_welcome(
         )
     display_name = user.get("name") or target_email.split("@")[0]
 
-    sent = send_welcome_email(target_email, display_name)
+    sent = _deliver_email(
+        send_welcome_email,
+        target_email,
+        "welcome email",
+        to_email=target_email,
+        user_name=display_name,
+    )
     _ensure_email_sent(sent, target_email, "welcome email")
     return {"message": f"Welcome email sent to {target_email}.", "sent": True}
 
@@ -137,7 +161,10 @@ def request_email_verification(
         "action": "verify_email",
     })
 
-    sent = send_verification_email(
+    sent = _deliver_email(
+        send_verification_email,
+        target_email,
+        "verification email",
         to_email=target_email,
         user_name=display_name,
         verification_token=token,
@@ -195,7 +222,10 @@ def send_announcement(
 
     display_name = user.get("name") or target_email.split("@")[0]
 
-    sent = send_announcement_email(
+    sent = _deliver_email(
+        send_announcement_email,
+        target_email,
+        "announcement email",
         to_email=target_email,
         user_name=display_name,
         title=payload.title,
@@ -219,7 +249,10 @@ def send_reminder(
 
     display_name = user.get("name") or target_email.split("@")[0]
 
-    sent = send_reminder_email(
+    sent = _deliver_email(
+        send_reminder_email,
+        target_email,
+        "reminder email",
         to_email=target_email,
         user_name=display_name,
         reminder_title=payload.reminder_title,
@@ -262,7 +295,10 @@ def send_calendar_reminder_test(
 
     description = "Test calendar reminder notification from StarWaves."
 
-    sent = send_reminder_email(
+    sent = _deliver_email(
+        send_reminder_email,
+        target_email,
+        "calendar reminder test email",
         to_email=target_email,
         user_name=display_name,
         reminder_title=event_title,
