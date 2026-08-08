@@ -288,13 +288,6 @@ export function getRegisteredDevices() {
   return request('/notifications/devices')
 }
 
-export function queueNotification(title, body, scheduledAt, data = null) {
-  return request('/notifications/queue', {
-    method: 'POST',
-    body: JSON.stringify({ title, body, scheduled_at: scheduledAt, data }),
-  })
-}
-
 export function sendPushNotification(title, body, data = null, targetDeviceToken = null) {
   return request('/notifications/send', {
     method: 'POST',

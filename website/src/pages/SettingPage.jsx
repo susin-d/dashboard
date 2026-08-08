@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
 import {
+  Bell,
   Check,
   CalendarDays,
-  Clock,
   Code2,
   ExternalLink,
   FileText,
@@ -69,8 +69,8 @@ import {
   registerDeviceToken,
   unregisterDeviceToken,
   sendPushNotification,
-  queueNotification,
 } from '../lib/workspaceApi'
+import { useLocalNotifications } from '../hooks/useLocalNotifications'
 
 const workspaceApps = [
   {
@@ -189,10 +189,16 @@ export function SettingPage({
   const [pushTitle, setPushTitle] = useState('StarWaves Alert')
   const [pushBody, setPushBody] = useState('Your project deadline is approaching!')
   const [pushSending, setPushSending] = useState(false)
-  const [scheduledTitle, setScheduledTitle] = useState('StarWaves Task Reminder')
-  const [scheduledBody, setScheduledBody] = useState('Submit code review report')
-  const [scheduledMinutes, setScheduledMinutes] = useState('5')
-  const [scheduledQueueing, setScheduledQueueing] = useState(false)
+  const [localNotifTitle, setLocalNotifTitle] = useState('StarWaves Task Reminder')
+  const [localNotifBody, setLocalNotifBody] = useState('Submit code review report')
+  const [localNotifMessage, setLocalNotifMessage] = useState('')
+  const {
+    notifications: localNotifications,
+    addNotification,
+    markRead,
+    deleteNotification,
+    clearAll,
+  } = useLocalNotifications()
 
   const fetchRegisteredDevices = async () => {
     setDevicesLoading(true)
@@ -263,29 +269,16 @@ export function SettingPage({
     }
   }
 
-  const handleQueuePush = async (e) => {
+  const handleSendLocalNotification = (e) => {
     e?.preventDefault()
-    if (!scheduledTitle.trim() || !scheduledBody.trim()) {
-      setDeviceMessage('Scheduled title and body are required.')
+    if (!localNotifTitle.trim() || !localNotifBody.trim()) {
+      setLocalNotifMessage('Title and body are required.')
       return
     }
-    setScheduledQueueing(true)
-    setDeviceMessage('')
-    try {
-      const minutes = Math.max(1, parseInt(scheduledMinutes, 10) || 5)
-      const scheduledAt = new Date(Date.now() + minutes * 60 * 1000).toISOString()
-      const res = await queueNotification(
-        scheduledTitle.trim(),
-        scheduledBody.trim(),
-        scheduledAt,
-        { source: 'settings-queued' },
-      )
-      setDeviceMessage(`Notification queued successfully! ID: ${res.id}`)
-    } catch (err) {
-      setDeviceMessage(err.message || 'Failed to queue notification.')
-    } finally {
-      setScheduledQueueing(false)
-    }
+    addNotification(localNotifTitle.trim(), localNotifBody.trim())
+    setLocalNotifTitle('')
+    setLocalNotifBody('')
+    setLocalNotifMessage('Notification delivered instantly to this browser.')
   }
 
   const triggerTestCalendarReminder = async (window = '1h') => {
@@ -1267,9 +1260,9 @@ export function SettingPage({
                 <Mail size={19} />
               </span>
               <div>
-                <h3 style={{ margin: 0, fontSize: '1.05rem', color: 'var(--text-primary, #09090b)' }}>Automated Calendar Email Reminders</h3>
+                <h3 style={{ margin: 0, fontSize: '1.05rem', color: 'var(--text-primary, #09090b)' }}>Calendar Reminder Email Tests</h3>
                 <p style={{ margin: '2px 0 0', fontSize: '0.88rem', color: 'var(--text-muted, #71717a)' }}>
-                  Sends email reminders for all Google Calendar events, tasks, contests, and job deadlines <strong>next day (24h ahead)</strong> and <strong>1 hour before</strong> start time.
+                  Automated email reminders are no longer scheduled. Use these buttons to test the reminder email templates directly.
                 </p>
               </div>
             </div>
@@ -1305,7 +1298,7 @@ export function SettingPage({
       <div className="setting-section" id="settings-push-notifications">
         <div className="section-heading">
           <h2>Push Notifications &amp; Devices</h2>
-          <p>Register device FCM tokens, send real-time push notifications, and schedule queued background alerts.</p>
+          <p>Register device FCM tokens, send real-time push notifications, and deliver instant in-browser notifications stored locally.</p>
         </div>
 
         <div className="workspace-settings-card" style={{ padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
@@ -1471,15 +1464,15 @@ export function SettingPage({
               </button>
             </form>
 
-            <form onSubmit={handleQueuePush} style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            <form onSubmit={handleSendLocalNotification} style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
               <h3 style={{ margin: 0, fontSize: '1.05rem', color: 'var(--text-primary, #09090b)', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <Clock size={18} /> Queue Scheduled Push
+                <Bell size={18} /> Instant Local Notification
               </h3>
               <input
                 type="text"
-                placeholder="Scheduled Title"
-                value={scheduledTitle}
-                onChange={(e) => setScheduledTitle(e.target.value)}
+                placeholder="Notification Title"
+                value={localNotifTitle}
+                onChange={(e) => setLocalNotifTitle(e.target.value)}
                 style={{
                   padding: '8px 12px',
                   borderRadius: '4px',
@@ -1490,9 +1483,9 @@ export function SettingPage({
                 }}
               />
               <textarea
-                placeholder="Scheduled Message Body"
-                value={scheduledBody}
-                onChange={(e) => setScheduledBody(e.target.value)}
+                placeholder="Notification Message Body"
+                value={localNotifBody}
+                onChange={(e) => setLocalNotifBody(e.target.value)}
                 rows={2}
                 style={{
                   padding: '8px 12px',
@@ -1504,36 +1497,100 @@ export function SettingPage({
                   resize: 'none',
                 }}
               />
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span style={{ fontSize: '0.82rem', color: 'var(--text-muted, #71717a)' }}>Send in:</span>
-                <input
-                  type="number"
-                  min="1"
-                  max="1440"
-                  value={scheduledMinutes}
-                  onChange={(e) => setScheduledMinutes(e.target.value)}
-                  style={{
-                    width: '70px',
-                    padding: '6px 8px',
-                    borderRadius: '4px',
-                    border: '1px solid var(--border-color, #27272a)',
-                    backgroundColor: 'var(--bg-input, #09090b)',
-                    color: 'var(--text-primary, #ffffff)',
-                    fontSize: '0.85rem',
-                  }}
-                />
-                <span style={{ fontSize: '0.82rem', color: 'var(--text-muted, #71717a)' }}>minutes</span>
-              </div>
               <button
                 type="submit"
                 className="google-calendar-refresh"
-                disabled={scheduledQueueing}
                 style={{ padding: '8px 16px', fontSize: '0.85rem' }}
               >
-                <Clock size={13} /> Queue Notification
+                <Bell size={13} /> Send Locally Now
               </button>
             </form>
           </div>
+
+          {localNotifMessage && (
+            <p className="hackathon-source-message" role="status" style={{ margin: 0 }}>
+              {localNotifMessage}
+            </p>
+          )}
+
+          {localNotifications.length > 0 && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', flexWrap: 'wrap' }}>
+                <h3 style={{ margin: 0, fontSize: '0.95rem', color: 'var(--text-primary, #09090b)' }}>
+                  Stored in this browser ({localNotifications.length})
+                </h3>
+                <button
+                  type="button"
+                  className="google-calendar-refresh"
+                  onClick={clearAll}
+                  style={{ padding: '6px 12px', fontSize: '0.8rem' }}
+                >
+                  <Trash2 size={13} /> Clear All
+                </button>
+              </div>
+              {localNotifications.map((notification) => (
+                <div
+                  key={notification.id}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: '10px 14px',
+                    borderRadius: '6px',
+                    border: '1px solid var(--border-color, #27272a)',
+                    backgroundColor: 'var(--bg-secondary, #121212)',
+                    gap: '12px',
+                  }}
+                >
+                  <div style={{ minWidth: 0 }}>
+                    <strong style={{ fontSize: '0.9rem', display: 'block', color: 'var(--text-primary, #ffffff)' }}>
+                      {notification.title}
+                      {notification.unread && (
+                        <span style={{ fontSize: '0.72rem', fontWeight: 400, color: 'var(--text-muted, #71717a)' }}>
+                          {' '}&bull; Unread
+                        </span>
+                      )}
+                    </strong>
+                    <p style={{ margin: '2px 0 0', fontSize: '0.8rem', color: 'var(--text-muted, #71717a)' }}>
+                      {notification.body}
+                    </p>
+                    <small style={{ fontSize: '0.72rem', color: 'var(--text-muted, #71717a)' }}>
+                      {new Date(notification.created_at).toLocaleString()}
+                    </small>
+                  </div>
+                  <div style={{ display: 'flex', gap: '8px', flexShrink: 0 }}>
+                    <button
+                      type="button"
+                      className="google-calendar-refresh"
+                      onClick={() => markRead(notification.id)}
+                      disabled={!notification.unread}
+                      style={{ padding: '6px 10px', fontSize: '0.78rem' }}
+                    >
+                      Mark Read
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => deleteNotification(notification.id)}
+                      style={{
+                        background: 'transparent',
+                        border: '1px solid var(--border-color, #27272a)',
+                        color: 'var(--text-primary, #ffffff)',
+                        padding: '6px 10px',
+                        borderRadius: '4px',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        fontSize: '0.8rem',
+                      }}
+                    >
+                      <Trash2 size={13} /> Delete
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
 
           {deviceMessage && (
             <p className="hackathon-source-message" role="status" style={{ margin: 0 }}>

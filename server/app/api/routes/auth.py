@@ -1,7 +1,8 @@
 from urllib.parse import urlencode
 
+import asyncio
 import httpx
-from fastapi import APIRouter, BackgroundTasks, Depends, Header, HTTPException, Query, status
+from fastapi import APIRouter, Depends, Header, HTTPException, Query, status
 from fastapi.responses import HTMLResponse
 from google.cloud.firestore_v1 import Client
 from itsdangerous import BadSignature, SignatureExpired, URLSafeTimedSerializer
@@ -80,7 +81,6 @@ def google_login():
 async def google_callback(
     code: str = Query(...),
     state: str = Query(...),
-    background_tasks: BackgroundTasks = BackgroundTasks(),
     database: Client = Depends(get_firestore),
 ):
     try:
@@ -144,10 +144,10 @@ async def google_callback(
     )
 
     if user_record.get("is_new"):
-        background_tasks.add_task(
+        await asyncio.to_thread(
             send_welcome_email,
-            to_email=user_record["email"],
-            user_name=user_record.get("display_name") or name,
+            user_record["email"],
+            user_record.get("display_name") or name,
         )
 
     token = create_user_token(
@@ -189,7 +189,6 @@ async def google_callback(
 @router.post("/signup")
 def signup(
     payload: SignupRequest,
-    background_tasks: BackgroundTasks = BackgroundTasks(),
     database: Client = Depends(get_firestore),
 ):
     try:
@@ -210,8 +209,7 @@ def signup(
             detail=str(exc),
         ) from None
 
-    background_tasks.add_task(
-        send_welcome_email,
+    send_welcome_email(
         to_email=user_record["email"],
         user_name=user_record["display_name"],
     )
@@ -267,13 +265,12 @@ def login(payload: LoginRequest, database: Client = Depends(get_firestore)):
 @router.post("/forgot-password")
 def forgot_password(
     payload: ForgotPasswordRequest,
-    background_tasks: BackgroundTasks,
     database: Client = Depends(get_firestore),
 ):
     user_record = get_user_by_email(database, payload.email)
     if user_record:
         token = state_serializer().dumps({"uid": user_record["uid"], "action": "reset_password"})
-        background_tasks.add_task(send_password_reset_email, user_record["email"], token)
+        send_password_reset_email(user_record["email"], token)
     return {"message": "If an account exists with that email, a password reset link has been sent via email."}
 
 
@@ -354,7 +351,6 @@ def get_current_user_optional(
 @router.post("/combine-account/request")
 def request_combine_account(
     payload: CombineAccountRequest,
-    background_tasks: BackgroundTasks,
     user: dict = Depends(get_current_user),
     database: Client = Depends(get_firestore),
 ):
@@ -379,7 +375,7 @@ def request_combine_account(
             "owner_email": owner_email,
             "target_email": target_email,
         })
-        background_tasks.add_task(send_account_combine_email, target_email, owner_email, token)
+        send_account_combine_email(target_email, owner_email, token)
         return {"message": f"Verification email sent to {target_email} via SMTP."}
     except Exception as exc:
         raise HTTPException(

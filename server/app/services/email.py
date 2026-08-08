@@ -141,32 +141,6 @@ def send_security_alert_email(
     return send_email(to_email, subject, body_html, body_text)
 
 
-def send_activity_digest_email(
-    to_email: str,
-    user_name: str,
-    summary_text: str,
-    upcoming_events: str,
-) -> bool:
-    subject = "Your Weekly Activity Digest - StarWaves"
-    display_name = user_name or to_email.split("@")[0]
-    body_html = render_template(
-        "activity_digest.html",
-        {
-            "user_name": display_name,
-            "summary_text": summary_text,
-            "upcoming_events": upcoming_events,
-            "app_url": settings.frontend_url,
-        },
-    )
-    body_text = (
-        f"StarWaves Weekly Activity Digest for {display_name}:\n\n"
-        f"Competitive Coding Snapshot:\n{summary_text}\n\n"
-        f"Upcoming Contests & Tasks:\n{upcoming_events}\n\n"
-        f"View Dashboard: {settings.frontend_url}"
-    )
-    return send_email(to_email, subject, body_html, body_text)
-
-
 def send_announcement_email(
     to_email: str,
     user_name: str,
@@ -218,15 +192,4 @@ def send_reminder_email(
         f"Open Workspace: {settings.frontend_url}"
     )
     return send_email(to_email, subject, body_html, body_text)
-
-
-async def async_send_email(
-    to_email: str,
-    subject: str,
-    body_html: str,
-    body_text: str | None = None,
-) -> bool:
-    import asyncio
-
-    return await asyncio.to_thread(send_email, to_email, subject, body_html, body_text)
 

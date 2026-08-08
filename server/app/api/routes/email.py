@@ -1,7 +1,7 @@
 import logging
 from typing import Any
 
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status
 from google.cloud.firestore_v1 import Client
 from itsdangerous import BadSignature, SignatureExpired, URLSafeTimedSerializer
 from pydantic import BaseModel, EmailStr
@@ -11,7 +11,6 @@ from app.core.config import settings
 from app.db import get_firestore
 from app.repositories.user_repository import get_user_by_id, mark_email_verified
 from app.services.email import (
-    send_activity_digest_email,
     send_announcement_email,
     send_email,
     send_reminder_email,
@@ -68,7 +67,6 @@ def get_email_status(user: dict = Depends(get_current_user)):
 def send_test_email(
     payload: TestEmailRequest | None = None,
     user: dict = Depends(get_current_user),
-    background_tasks: BackgroundTasks = BackgroundTasks(),
 ):
     target_email = (payload.to_email if payload and payload.to_email else user.get("email")) or ""
     if not target_email:
@@ -91,14 +89,13 @@ def send_test_email(
     """
     body_text = f"StarWaves Mail Test for {user_name}. SMTP service operating normally."
 
-    background_tasks.add_task(send_email, target_email, subject, body_html, body_text)
-    return {"message": f"Test email queued for delivery to {target_email}."}
+    sent = send_email(target_email, subject, body_html, body_text)
+    return {"message": f"Test email sent to {target_email}.", "sent": sent}
 
 
 @router.post("/resend-welcome")
 def resend_welcome(
     user: dict = Depends(get_current_user),
-    background_tasks: BackgroundTasks = BackgroundTasks(),
 ):
     target_email = user.get("email")
     if not target_email:
@@ -108,14 +105,13 @@ def resend_welcome(
         )
     display_name = user.get("name") or target_email.split("@")[0]
 
-    background_tasks.add_task(send_welcome_email, target_email, display_name)
-    return {"message": f"Welcome email queued for delivery to {target_email}."}
+    sent = send_welcome_email(target_email, display_name)
+    return {"message": f"Welcome email sent to {target_email}.", "sent": sent}
 
 
 @router.post("/send-verification")
 def request_email_verification(
     user: dict = Depends(get_current_user),
-    background_tasks: BackgroundTasks = BackgroundTasks(),
 ):
     target_email = user.get("email")
     if not target_email:
@@ -131,13 +127,12 @@ def request_email_verification(
         "action": "verify_email",
     })
 
-    background_tasks.add_task(
-        send_verification_email,
+    sent = send_verification_email(
         to_email=target_email,
         user_name=display_name,
         verification_token=token,
     )
-    return {"message": f"Verification link email queued for delivery to {target_email}."}
+    return {"message": f"Verification link email sent to {target_email}.", "sent": sent}
 
 
 @router.post("/verify-email/confirm")
@@ -179,7 +174,6 @@ def confirm_email_verification(
 def send_announcement(
     payload: AnnouncementRequest,
     user: dict = Depends(get_current_user),
-    background_tasks: BackgroundTasks = BackgroundTasks(),
 ):
     target_email = payload.to_email or user.get("email") or ""
     if not target_email:
@@ -190,21 +184,19 @@ def send_announcement(
 
     display_name = user.get("name") or target_email.split("@")[0]
 
-    background_tasks.add_task(
-        send_announcement_email,
+    sent = send_announcement_email(
         to_email=target_email,
         user_name=display_name,
         title=payload.title,
         message=payload.message,
     )
-    return {"message": f"Announcement email queued for {target_email}."}
+    return {"message": f"Announcement email sent to {target_email}.", "sent": sent}
 
 
 @router.post("/send-reminder")
 def send_reminder(
     payload: ReminderEmailRequest,
     user: dict = Depends(get_current_user),
-    background_tasks: BackgroundTasks = BackgroundTasks(),
 ):
     target_email = payload.to_email or user.get("email") or ""
     if not target_email:
@@ -215,8 +207,7 @@ def send_reminder(
 
     display_name = user.get("name") or target_email.split("@")[0]
 
-    background_tasks.add_task(
-        send_reminder_email,
+    sent = send_reminder_email(
         to_email=target_email,
         user_name=display_name,
         reminder_title=payload.reminder_title,
@@ -224,7 +215,7 @@ def send_reminder(
         due_time=payload.due_time or "Today",
         description=payload.description or "",
     )
-    return {"message": f"Reminder email queued for {target_email}."}
+    return {"message": f"Reminder email sent to {target_email}.", "sent": sent}
 
 
 class CalendarReminderTestRequest(BaseModel):
@@ -237,7 +228,6 @@ class CalendarReminderTestRequest(BaseModel):
 def send_calendar_reminder_test(
     payload: CalendarReminderTestRequest | None = None,
     user: dict = Depends(get_current_user),
-    background_tasks: BackgroundTasks = BackgroundTasks(),
 ):
     target_email = (payload.to_email if payload and payload.to_email else user.get("email")) or ""
     if not target_email:
@@ -259,8 +249,7 @@ def send_calendar_reminder_test(
 
     description = "Test calendar reminder notification from StarWaves."
 
-    background_tasks.add_task(
-        send_reminder_email,
+    sent = send_reminder_email(
         to_email=target_email,
         user_name=display_name,
         reminder_title=event_title,
@@ -268,6 +257,6 @@ def send_calendar_reminder_test(
         due_time=due_time,
         description=description,
     )
-    return {"message": f"Calendar reminder test email queued for {target_email}."}
+    return {"message": f"Calendar reminder test email sent to {target_email}.", "sent": sent}
 
 

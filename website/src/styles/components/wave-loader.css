@@ -1,0 +1,83 @@
+/* WaveLoader - full-screen StarWaves loading state */
+
+.wave-loader {
+  display: grid;
+  min-height: 100vh;
+  place-items: center;
+  padding: 24px 16px;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+}
+
+.wave-loader-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+
+.wave-loader-title {
+  color: var(--text-primary);
+  font-size: 24px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.wave-loader-label {
+  color: var(--text-muted);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.wave-loader-waves {
+  position: relative;
+  width: clamp(200px, 56vw, 260px);
+  height: 44px;
+  margin: 6px 0;
+  overflow: hidden;
+  border-radius: var(--radius-full);
+}
+
+.wave-line {
+  position: absolute;
+  left: -50%;
+  width: 200%;
+  height: 100%;
+  border-radius: 45%;
+  animation: wave-drift linear infinite;
+}
+
+.wave-line-back {
+  top: -6px;
+  background: var(--color-primary-light);
+  animation-duration: 4.4s;
+}
+
+.wave-line-mid {
+  top: 0;
+  background: var(--color-primary);
+  opacity: 0.5;
+  animation-duration: 3.1s;
+}
+
+.wave-line-front {
+  top: 6px;
+  background: var(--color-primary);
+  opacity: 0.85;
+  animation-duration: 2.2s;
+}
+
+@keyframes wave-drift {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wave-line {
+    animation: none;
+  }
+}

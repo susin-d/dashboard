@@ -48,20 +48,3 @@ export async function sendPushNotification({ title, body, data = null, targetDev
   }
   return response.json()
 }
-
-export async function queuePushNotification({ title, body, scheduledAt, data = null }) {
-  const response = await authFetch('/notifications/queue', {
-    method: 'POST',
-    body: JSON.stringify({
-      title,
-      body,
-      scheduled_at: scheduledAt,
-      data,
-    }),
-  })
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}))
-    throw new Error(errorData.detail || 'Failed to queue notification.')
-  }
-  return response.json()
-}

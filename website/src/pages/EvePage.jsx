@@ -6,6 +6,11 @@ import {
   RotateCcw,
   Sparkles,
   Info,
+  Calendar,
+  FolderKanban,
+  CheckSquare,
+  FileText,
+  Briefcase,
 } from 'lucide-react'
 import { sendEveMessage } from '../lib/eveApi'
 
@@ -14,6 +19,39 @@ const STARTER_MESSAGES = [
     role: 'assistant',
     content:
       'Hello! I’m Eve, your StarWaves AI workspace copilot. I can read, create, update, soft-delete, and restore records across your workspace including tasks, projects, jobs, hackathons, and documents.',
+  },
+]
+
+const EVE_PROMPT_TEMPLATES = [
+  {
+    icon: Calendar,
+    title: 'Plan my day',
+    prompt: 'Plan my day by reviewing tasks, upcoming deadlines, and calendar events.',
+    description: 'Get a prioritized schedule for today',
+  },
+  {
+    icon: CheckSquare,
+    title: 'Audit overdue tasks',
+    prompt: 'Find all overdue tasks and suggest next actions to complete or reschedule them.',
+    description: 'Identify pending todos and roadblocks',
+  },
+  {
+    icon: FolderKanban,
+    title: 'Review project status',
+    prompt: 'List active projects and highlight any that are stale or need attention.',
+    description: 'Summarize active development projects',
+  },
+  {
+    icon: Briefcase,
+    title: 'Job application update',
+    prompt: 'Summarize recent job application statuses and upcoming interview dates.',
+    description: 'Track application progress',
+  },
+  {
+    icon: FileText,
+    title: 'Search documents',
+    prompt: 'Search through workspace documents for notes or drafts that need updates.',
+    description: 'Audit workspace notes and files',
   },
 ]
 

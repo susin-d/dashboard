@@ -29,6 +29,7 @@ import { CALENDAR_REMINDER_PREFIX } from './utils/calendarReminders'
 import { useAuth, useRouter, useWorkspaceData } from './hooks'
 import { applyThemeVariables } from './hooks/useThemeCustomizer'
 import { NetworkStatus } from './components/NetworkStatus'
+import { WaveLoader } from './components/WaveLoader'
 import { useDialogAccessibility } from './hooks/useDialogAccessibility'
 
 const routeTitles = {
@@ -434,7 +435,7 @@ function App() {
 
   if (route === '/') {
     if (!authReady || activeUser) {
-      return <div className="auth-loading">Loading StarWaves…</div>
+      return <WaveLoader />
     }
     return publicRoute(<AuthPage mode="login" onNavigate={navigateRoute} onAuthenticate={beginOnboarding} />)
   }
@@ -442,25 +443,25 @@ function App() {
   if (route === '/terms') return publicRoute(<TermsOfServicePage onNavigate={navigateRoute} />)
   if (route === '/login') {
     if (!authReady || activeUser) {
-      return <div className="auth-loading">Loading StarWaves…</div>
+      return <WaveLoader />
     }
     return publicRoute(<AuthPage mode="login" onNavigate={navigateRoute} onAuthenticate={beginOnboarding} />)
   }
   if (route === '/signup') {
     if (!authReady || activeUser) {
-      return <div className="auth-loading">Loading StarWaves…</div>
+      return <WaveLoader />
     }
     return publicRoute(<AuthPage mode="signup" onNavigate={navigateRoute} onAuthenticate={beginOnboarding} />)
   }
   if (route === '/onboarding') {
-    if (!authReady) return <div className="auth-loading">Loading StarWaves…</div>
+    if (!authReady) return <WaveLoader />
     if (!activeUser) {
       return publicRoute(<AuthPage mode="login" onNavigate={navigateRoute} onAuthenticate={beginOnboarding} />)
     }
     return publicRoute(<OnboardingPage user={activeUser} onComplete={completeOnboarding} />)
   }
   if (!authReady) {
-    return <div className="auth-loading">Loading StarWaves…</div>
+    return <WaveLoader />
   }
   if (!activeUser) {
     return publicRoute(<AuthPage mode="login" onNavigate={navigateRoute} onAuthenticate={beginOnboarding} />)

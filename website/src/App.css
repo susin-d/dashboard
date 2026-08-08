@@ -13,6 +13,7 @@
 @import './styles/components/buttons.css';
 @import './styles/components/modals.css';
 @import './styles/components/forms.css';
+@import './styles/components/wave-loader.css';
 @import './styles/components/custom-dropdown.css';
 @import './styles/components/calendar-picker.css';
 

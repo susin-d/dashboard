@@ -1,22 +1,4 @@
 {
-  "crons": [
-    {
-      "path": "/api/v1/cron/send-notifications",
-      "schedule": "0 9 * * *"
-    },
-    {
-      "path": "/api/v1/cron/send-email-digests",
-      "schedule": "0 9 * * 1"
-    },
-    {
-      "path": "/api/v1/cron/purge-soft-deleted",
-      "schedule": "0 0 * * *"
-    },
-    {
-      "path": "/api/v1/cron/send-calendar-reminders",
-      "schedule": "0 9 * * *"
-    }
-  ],
   "rewrites": [
     {
       "source": "/(.*)",
