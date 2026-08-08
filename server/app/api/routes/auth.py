@@ -1,24 +1,29 @@
 from urllib.parse import urlencode
 
 import httpx
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, status
+from fastapi import APIRouter, BackgroundTasks, Depends, Header, HTTPException, Query, status
 from fastapi.responses import HTMLResponse
 from google.cloud.firestore_v1 import Client
 from itsdangerous import BadSignature, SignatureExpired, URLSafeTimedSerializer
 from pydantic import BaseModel, EmailStr
 
-from app.core.auth import create_user_token, get_current_user
+from app.core.auth import auth_serializer, create_user_token, get_current_user
 from app.core.config import settings
 from app.db import get_firestore
-from app.services.email import send_password_reset_email
+from app.services.email import send_account_combine_email, send_password_reset_email
 from app.repositories.user_repository import (
+    add_pending_combine_request,
+    confirm_combine_accounts,
     create_user_with_password,
+    get_combined_accounts_info,
     get_or_create_google_user,
     get_user_by_email,
     get_user_by_id,
+    remove_combined_account,
     update_user_profile as update_profile_in_db,
     verify_password,
 )
+
 
 router = APIRouter(prefix="/auth")
 
@@ -296,3 +301,132 @@ def update_user_profile(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(exc),
         ) from None
+
+
+class CombineAccountRequest(BaseModel):
+    target_email: EmailStr
+
+
+class VerifyCombineTokenRequest(BaseModel):
+    token: str
+
+
+def combine_token_serializer() -> URLSafeTimedSerializer:
+    return URLSafeTimedSerializer(
+        settings.auth_secret_key,
+        salt="starwaves-combine-account-token",
+    )
+
+
+def get_current_user_optional(
+    authorization: str | None = Header(default=None),
+) -> dict | None:
+    if not authorization or not authorization.startswith("Bearer "):
+        return None
+    token = authorization.removeprefix("Bearer ").strip()
+    try:
+        data = auth_serializer().loads(token, max_age=86400 * 30)
+        if isinstance(data, dict) and "uid" in data:
+            return data
+    except (BadSignature, SignatureExpired):
+        pass
+    return None
+
+
+@router.post("/combine-account/request")
+def request_combine_account(
+    payload: CombineAccountRequest,
+    background_tasks: BackgroundTasks,
+    user: dict = Depends(get_current_user),
+    database: Client = Depends(get_firestore),
+):
+    owner_email = user.get("email")
+    if not owner_email:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Current user email is not available.",
+        )
+
+    target_email = payload.target_email.lower().strip()
+    if target_email == owner_email.lower().strip():
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Cannot combine an account with its own email address.",
+        )
+
+    try:
+        add_pending_combine_request(database, user["uid"], target_email)
+        token = combine_token_serializer().dumps({
+            "owner_uid": user["uid"],
+            "owner_email": owner_email,
+            "target_email": target_email,
+        })
+        background_tasks.add_task(send_account_combine_email, target_email, owner_email, token)
+        return {"message": f"Verification email sent to {target_email} via SMTP."}
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(exc),
+        ) from None
+
+
+@router.post("/combine-account/verify")
+def verify_combine_account(
+    payload: VerifyCombineTokenRequest,
+    user: dict | None = Depends(get_current_user_optional),
+    database: Client = Depends(get_firestore),
+):
+    try:
+        data = combine_token_serializer().loads(payload.token, max_age=86400)
+    except (BadSignature, SignatureExpired):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="The verification link is invalid or has expired.",
+        ) from None
+
+    owner_uid = data["owner_uid"]
+    target_email = data["target_email"]
+    target_uid = user.get("uid") if user else None
+
+    try:
+        result = confirm_combine_accounts(
+            database=database,
+            owner_uid=owner_uid,
+            target_email=target_email,
+            target_uid=target_uid,
+        )
+        return {
+            "message": f"Accounts successfully combined for {target_email}!",
+            "owner_uid": result["owner_uid"],
+            "target_email": result["target_email"],
+        }
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(exc),
+        ) from None
+
+
+@router.get("/combine-account/list")
+def list_combined_accounts(
+    user: dict = Depends(get_current_user),
+    database: Client = Depends(get_firestore),
+):
+    return get_combined_accounts_info(database, user["uid"])
+
+
+@router.delete("/combine-account/unlink")
+def unlink_combined_account(
+    target_identifier: str = Query(...),
+    user: dict = Depends(get_current_user),
+    database: Client = Depends(get_firestore),
+):
+    try:
+        remove_combined_account(database, user["uid"], target_identifier)
+        return {"message": "Account unlinked successfully."}
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(exc),
+        ) from None
+

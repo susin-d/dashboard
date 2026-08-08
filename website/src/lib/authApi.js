@@ -212,3 +212,39 @@ export async function beginGoogleOAuth() {
     }, 500)
   })
 }
+
+export async function requestAccountCombine(targetEmail) {
+  return request(
+    '/auth/combine-account/request',
+    {
+      method: 'POST',
+      body: JSON.stringify({ target_email: targetEmail }),
+    },
+    true,
+  )
+}
+
+export async function verifyAccountCombine(token) {
+  return request(
+    '/auth/combine-account/verify',
+    {
+      method: 'POST',
+      body: JSON.stringify({ token }),
+    },
+    false,
+  )
+}
+
+export async function fetchCombinedAccounts() {
+  return request('/auth/combine-account/list', { method: 'GET' }, true)
+}
+
+export async function unlinkCombinedAccount(targetIdentifier) {
+  return request(
+    `/auth/combine-account/unlink?target_identifier=${encodeURIComponent(targetIdentifier)}`,
+    {
+      method: 'DELETE',
+    },
+    true,
+  )
+}

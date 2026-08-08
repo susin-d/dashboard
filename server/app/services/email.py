@@ -82,6 +82,25 @@ def send_welcome_email(to_email: str, user_name: str) -> bool:
     return send_email(to_email, subject, body_html, body_text)
 
 
+def send_account_combine_email(to_email: str, owner_email: str, token: str) -> bool:
+    verify_url = f"{settings.frontend_url}/#combine-account?token={token}"
+    subject = f"Account Combination Request from {owner_email} - StarWaves"
+    body_html = render_template(
+        "combine_account_invite.html",
+        {
+          "target_email": to_email,
+          "owner_email": owner_email,
+          "verify_url": verify_url,
+        },
+    )
+    body_text = (
+        f"User {owner_email} requested to combine accounts with your email ({to_email}). "
+        f"Verify and link accounts by visiting: {verify_url}"
+    )
+    return send_email(to_email, subject, body_html, body_text)
+
+
+
 async def async_send_email(
     to_email: str,
     subject: str,

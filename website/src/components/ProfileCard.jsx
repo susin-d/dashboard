@@ -1,12 +1,42 @@
 import { useEffect, useState } from 'react'
-import { Mail, ShieldCheck, User, X } from 'lucide-react'
-import { updateUserProfile } from '../lib/authApi'
+import { CheckCircle2, Clock, Link2, Mail, ShieldCheck, Trash2, User, X } from 'lucide-react'
+import {
+  fetchCombinedAccounts,
+  requestAccountCombine,
+  unlinkCombinedAccount,
+  updateUserProfile,
+} from '../lib/authApi'
 
 export function ProfileCard({ user, onProfileUpdated }) {
   const [editing, setEditing] = useState(false)
   const [displayName, setDisplayName] = useState(user?.fullName || '')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+
+  // Combined accounts states
+  const [combinedData, setCombinedData] = useState({ combined_accounts: [], pending_combine_requests: [] })
+  const [combineEmail, setCombineEmail] = useState('')
+  const [loadingCombine, setLoadingCombine] = useState(false)
+  const [combineMsg, setCombineMsg] = useState('')
+  const [combineError, setCombineError] = useState('')
+
+  const loadCombinedAccounts = async () => {
+    try {
+      const res = await fetchCombinedAccounts()
+      if (res) {
+        setCombinedData({
+          combined_accounts: res.combined_accounts || [],
+          pending_combine_requests: res.pending_combine_requests || [],
+        })
+      }
+    } catch (err) {
+      // Non-blocking if unauthenticated
+    }
+  }
+
+  useEffect(() => {
+    loadCombinedAccounts()
+  }, [])
 
   useEffect(() => {
     if (!editing) return undefined
@@ -33,6 +63,34 @@ export function ProfileCard({ user, onProfileUpdated }) {
       setError(err.message || 'Failed to update profile.')
     } finally {
       setSaving(false)
+    }
+  }
+
+  const handleRequestCombine = async (e) => {
+    e.preventDefault()
+    if (!combineEmail.trim()) return
+    setLoadingCombine(true)
+    setCombineMsg('')
+    setCombineError('')
+    try {
+      const res = await requestAccountCombine(combineEmail.trim())
+      setCombineMsg(res.message || `Verification email sent to ${combineEmail}.`)
+      setCombineEmail('')
+      await loadCombinedAccounts()
+    } catch (err) {
+      setCombineError(err.message || 'Failed to send combine request.')
+    } finally {
+      setLoadingCombine(false)
+    }
+  }
+
+  const handleUnlink = async (targetIdentifier) => {
+    if (!confirm('Are you sure you want to unlink this account?')) return
+    try {
+      await unlinkCombinedAccount(targetIdentifier)
+      await loadCombinedAccounts()
+    } catch (err) {
+      alert(err.message || 'Failed to unlink account.')
     }
   }
 
@@ -72,6 +130,83 @@ export function ProfileCard({ user, onProfileUpdated }) {
               <strong>{user.roleLabel}</strong>
             </div>
           </div>
+        </div>
+
+        {/* Combined Accounts & SMTP Access Sharing */}
+        <div className="combined-accounts-section">
+          <div className="combined-accounts-header">
+            <div className="combined-title">
+              <Link2 size={16} />
+              <span>Combined Accounts & Shared Access</span>
+            </div>
+            <span className="combined-smtp-tag">SMTP Verification</span>
+          </div>
+
+          <p className="combined-description">
+            Invite another email address to combine accounts. After verifying via SMTP email, multiple accounts can access shared workspace data.
+          </p>
+
+          <form onSubmit={handleRequestCombine} className="combine-account-form">
+            <div className="combine-input-group">
+              <Mail size={16} />
+              <input
+                type="email"
+                value={combineEmail}
+                onChange={(e) => setCombineEmail(e.target.value)}
+                placeholder="Enter email to combine accounts"
+                required
+              />
+            </div>
+            <button type="submit" disabled={loadingCombine} className="primary-button combine-submit-btn">
+              {loadingCombine ? 'Sending…' : 'Send SMTP Invite'}
+            </button>
+          </form>
+
+          {combineMsg && <p className="combine-feedback success" role="status">{combineMsg}</p>}
+          {combineError && <p className="combine-feedback error" role="alert">{combineError}</p>}
+
+          {combinedData.combined_accounts.length > 0 && (
+            <div className="combined-list">
+              <h4>Linked Accounts</h4>
+              {combinedData.combined_accounts.map((acc, index) => (
+                <div key={acc.uid || acc.email || index} className="combined-item">
+                  <div className="combined-item-info">
+                    <CheckCircle2 size={15} />
+                    <div>
+                      <strong>{acc.email}</strong>
+                      {acc.linked_at && <small>Linked: {acc.linked_at}</small>}
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    className="unlink-account-btn"
+                    onClick={() => handleUnlink(acc.uid || acc.email)}
+                    title="Unlink account"
+                  >
+                    <Trash2 size={14} /> Unlink
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {combinedData.pending_combine_requests.length > 0 && (
+            <div className="combined-list pending">
+              <h4>Pending Email Verifications</h4>
+              {combinedData.pending_combine_requests.map((req, index) => (
+                <div key={req.email || index} className="combined-item pending">
+                  <div className="combined-item-info">
+                    <Clock size={15} />
+                    <div>
+                      <strong>{req.email}</strong>
+                      <small>Verification email sent via SMTP</small>
+                    </div>
+                  </div>
+                  <span className="pending-badge">Verification Sent</span>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </article>
 
@@ -114,4 +249,3 @@ export function ProfileCard({ user, onProfileUpdated }) {
     </>
   )
 }
-

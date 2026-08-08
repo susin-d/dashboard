@@ -20,6 +20,7 @@ import { OnboardingPage } from './pages/OnboardingPage'
 import { PrivacyPolicyPage } from './pages/PrivacyPolicyPage'
 import { TermsOfServicePage } from './pages/TermsOfServicePage'
 import { updateNotification } from './lib/workspaceApi'
+import { verifyAccountCombine } from './lib/authApi'
 import { CALENDAR_REMINDER_PREFIX } from './utils/calendarReminders'
 import { useAuth, useRouter, useWorkspaceData } from './hooks'
 import { NetworkStatus } from './components/NetworkStatus'
@@ -115,6 +116,26 @@ function App() {
       previousRouteRef.current = route
     }
   }, [activePage, route])
+
+  useEffect(() => {
+    const hash = window.location.hash || ''
+    if (hash.includes('#combine-account?token=')) {
+      const token = decodeURIComponent(hash.split('#combine-account?token=')[1] || '').trim()
+      if (token) {
+        verifyAccountCombine(token)
+          .then((res) => {
+            alert(res.message || 'Account verification successful! Accounts combined.')
+            window.history.replaceState({}, '', window.location.pathname + window.location.search)
+            setWorkspaceRefreshKey((prev) => prev + 1)
+          })
+          .catch((err) => {
+            alert(err.message || 'Account combination link invalid or expired.')
+            window.history.replaceState({}, '', window.location.pathname + window.location.search)
+          })
+      }
+    }
+  }, [])
+
 
   useEffect(() => {
     if (
