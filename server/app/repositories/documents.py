@@ -19,7 +19,12 @@ def list_documents(database: Client, user_id: str) -> list[DocumentResponse]:
         "modified_at",
         direction=firestore.Query.DESCENDING,
     )
-    return [_from_snapshot(snapshot) for snapshot in query.stream()]
+    results = []
+    for snapshot in query.stream():
+        data = snapshot.to_dict() or {}
+        if not data.get("deleted"):
+            results.append(_from_snapshot(snapshot))
+    return results
 
 
 def upsert_document(
@@ -51,5 +56,22 @@ def delete_document(database: Client, user_id: str, document_id: str) -> bool:
     reference = _collection(database, user_id).document(document_id)
     if not reference.get().exists:
         return False
-    reference.delete()
+    reference.update({
+        "deleted": True,
+        "deleted_at": datetime.now(timezone.utc).isoformat(),
+        "updated_at": firestore.SERVER_TIMESTAMP,
+    })
     return True
+
+
+def restore_document(database: Client, user_id: str, document_id: str) -> bool:
+    reference = _collection(database, user_id).document(document_id)
+    if not reference.get().exists:
+        return False
+    reference.update({
+        "deleted": False,
+        "deleted_at": None,
+        "updated_at": firestore.SERVER_TIMESTAMP,
+    })
+    return True
+

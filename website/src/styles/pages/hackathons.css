@@ -395,3 +395,73 @@
   grid-template-columns: repeat(2, 1fr);
   gap: 14px;
 }
+
+/* Hackathon Detail Page Styles */
+.hackathon-detail-page {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.hackathon-organizer-subhead {
+  color: var(--text-secondary);
+  font-size: 13px;
+  margin-top: 4px;
+}
+
+.hackathon-organizer-subhead strong {
+  color: var(--text-primary);
+}
+
+.hackathon-detail-insights {
+  margin-top: 0;
+}
+
+.hackathon-detail-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 20px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+}
+
+.hackathon-detail-section h3 {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.hackathon-tag-pill {
+  display: inline-block;
+  padding: 6px 12px;
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.hackathon-detail-empty-tags {
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.hackathon-url-display a {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-primary);
+  word-break: break-all;
+  font-size: 13px;
+  text-decoration: underline;
+}
+
+.hackathon-url-display a:hover {
+  opacity: 0.85;
+}
+

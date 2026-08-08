@@ -277,7 +277,8 @@ export function DashboardPage({
         title: hackathon.title,
         meta: hackathon.organizer,
         badge: formatDate(hackathon.startsAt),
-        destination: 'hackathons',
+        destination: 'hackathon-detail',
+        destinationId: hackathon.id,
       }))} onNavigate={onNavigate} />,
     },
     projects: {

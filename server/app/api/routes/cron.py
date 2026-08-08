@@ -1,5 +1,5 @@
 import hmac
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 from fastapi import APIRouter, Depends, Header, HTTPException, status
 from firebase_admin import firestore
@@ -7,6 +7,7 @@ from google.cloud.firestore_v1 import Client
 
 from app.core.config import settings
 from app.db import get_firestore
+from app.services.calendar_reminders import process_user_calendar_reminders
 from app.services.email import send_activity_digest_email, send_reminder_email
 from app.services.notifications import send_multicast_notification
 
@@ -29,6 +30,18 @@ def _is_due(value: object, now: datetime) -> bool:
     if value.tzinfo is None:
         value = value.replace(tzinfo=timezone.utc)
     return value <= now
+
+
+def _parse_iso_date(value: object) -> datetime | None:
+    if isinstance(value, datetime):
+        return value if value.tzinfo else value.replace(tzinfo=timezone.utc)
+    if isinstance(value, str):
+        try:
+            parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+            return parsed if parsed.tzinfo else parsed.replace(tzinfo=timezone.utc)
+        except ValueError:
+            return None
+    return None
 
 
 @router.post("/send-notifications", dependencies=[Depends(verify_cron_secret)])
@@ -135,3 +148,30 @@ def send_due_email_digests(
 
     return {"processed": processed, "sent": sent, "failed": failed}
 
+
+@router.post("/purge-soft-deleted", dependencies=[Depends(verify_cron_secret)])
+def purge_expired_soft_deleted_records(
+    database: Client = Depends(get_firestore),
+):
+    now = datetime.now(timezone.utc)
+    cutoff = now - timedelta(days=7)
+    purged = 0
+
+    collections_to_check = ["todos", "projects", "jobs", "hackathons", "documents", "notifications"]
+    for coll_name in collections_to_check:
+        for doc in database.collection_group(coll_name).stream():
+            data = doc.to_dict() or {}
+            if data.get("deleted") is True:
+                deleted_at = _parse_iso_date(data.get("deleted_at"))
+                if deleted_at and deleted_at <= cutoff:
+                    doc.reference.delete()
+                    purged += 1
+
+    return {"purged": purged}
+
+
+@router.post("/send-calendar-reminders", dependencies=[Depends(verify_cron_secret)])
+async def send_calendar_reminders(
+    database: Client = Depends(get_firestore),
+):
+    return await process_user_calendar_reminders(database)

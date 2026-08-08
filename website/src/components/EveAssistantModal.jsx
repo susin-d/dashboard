@@ -5,7 +5,7 @@ import { sendEveMessage } from '../lib/eveApi'
 
 const STARTER_MESSAGES = [{
   role: 'assistant',
-  content: 'Hi, I\u2019m Eve. I can read, create, and update your workspace records. Use the Delete button when you need to remove something.',
+  content: 'Hi, I\u2019m Eve. I can read, create, update, delete, and restore your workspace records.',
 }]
 
 const EVE_SKILLS = [

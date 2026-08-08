@@ -1,4 +1,5 @@
 import {
+  Bot,
   BriefcaseBusiness,
   ChartNoAxesCombined,
   CalendarDays,
@@ -9,6 +10,7 @@ import {
   ListTodo,
   Mail,
   MessageSquare,
+  Palette,
   Rocket,
   Settings,
   UserRound,
@@ -16,6 +18,7 @@ import {
 
 export const navigationItems = [
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, group: 'Work' },
+  { id: 'eve', label: 'Eve AI', icon: Bot, group: 'Work' },
   { id: 'todo', label: 'Todo List', icon: ListTodo, group: 'Work' },
   { id: 'projects', label: 'Projects', icon: FolderKanban, group: 'Work' },
   { id: 'documents', label: 'Documents', icon: Files, group: 'Work' },
@@ -27,5 +30,7 @@ export const navigationItems = [
   { id: 'mails', label: 'Mail', icon: Mail, group: 'Communication' },
   { id: 'chats', label: 'Chats', icon: MessageSquare, group: 'Communication' },
   { id: 'profile', label: 'Profile', icon: UserRound, group: 'Account' },
+  { id: 'themes', label: 'Themes', icon: Palette, group: 'Account' },
   { id: 'setting', label: 'Settings', icon: Settings, group: 'Account' },
 ]
+

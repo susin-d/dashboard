@@ -41,7 +41,8 @@ def paginate_collection(collection, order_field: str, cursor: str | None, limit:
     cursor_id = decode_cursor(cursor)
     if cursor_id:
         query = query.start_after(collection.document(cursor_id).get())
-    documents = list(query.limit(limit + 1).stream())
+    raw_documents = list(query.limit(limit * 3 + 1).stream())
+    documents = [d for d in raw_documents if not (d.to_dict() or {}).get("deleted")]
     has_more = len(documents) > limit
     documents = documents[:limit]
     next_cursor = encode_cursor(documents[-1].id) if has_more and documents else None
@@ -88,7 +89,22 @@ class JobRepository:
         reference = self.collection.document(job_id)
         if not reference.get().exists:
             return False
-        reference.delete()
+        reference.update({
+            "deleted": True,
+            "deleted_at": datetime.now(timezone.utc).isoformat(),
+            "updated_at": firestore.SERVER_TIMESTAMP,
+        })
+        return True
+
+    def restore(self, job_id: str) -> bool:
+        reference = self.collection.document(job_id)
+        if not reference.get().exists:
+            return False
+        reference.update({
+            "deleted": False,
+            "deleted_at": None,
+            "updated_at": firestore.SERVER_TIMESTAMP,
+        })
         return True
 
 
@@ -144,7 +160,22 @@ class ProjectRepository:
         reference = self.collection.document(project_id)
         if not reference.get().exists:
             return False
-        reference.delete()
+        reference.update({
+            "deleted": True,
+            "deleted_at": datetime.now(timezone.utc).isoformat(),
+            "updated_at": firestore.SERVER_TIMESTAMP,
+        })
+        return True
+
+    def restore(self, project_id: str) -> bool:
+        reference = self.collection.document(project_id)
+        if not reference.get().exists:
+            return False
+        reference.update({
+            "deleted": False,
+            "deleted_at": None,
+            "updated_at": firestore.SERVER_TIMESTAMP,
+        })
         return True
 
 
@@ -178,7 +209,22 @@ class NotificationRepository:
         reference = self.collection.document(notification_id)
         if not reference.get().exists:
             return False
-        reference.delete()
+        reference.update({
+            "deleted": True,
+            "deleted_at": datetime.now(timezone.utc).isoformat(),
+            "updated_at": firestore.SERVER_TIMESTAMP,
+        })
+        return True
+
+    def restore(self, notification_id: str) -> bool:
+        reference = self.collection.document(notification_id)
+        if not reference.get().exists:
+            return False
+        reference.update({
+            "deleted": False,
+            "deleted_at": None,
+            "updated_at": firestore.SERVER_TIMESTAMP,
+        })
         return True
 
     def mark_all_read(self) -> int:
@@ -193,3 +239,4 @@ class NotificationRepository:
         if count:
             batch.commit()
         return count
+

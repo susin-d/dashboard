@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 
 const workspacePages = new Set([
   'dashboard',
+  'eve',
   'stats',
   'todo',
   'calendar',
@@ -13,25 +14,30 @@ const workspacePages = new Set([
   'jobs',
   'documents',
   'profile',
+  'themes',
   'setting',
 ])
 
 export function workspaceStateFromPath(pathname) {
   const [, root, page, detailId] = pathname.split('/')
-  if (root !== 'app') return { page: 'dashboard', projectId: null }
+  if (root !== 'app') return { page: 'dashboard', projectId: null, documentId: null, hackathonId: null }
   if (page === 'competitive') {
-    return { page: 'competitive-coding', projectId: null }
+    return { page: 'competitive-coding', projectId: null, documentId: null, hackathonId: null }
   }
   if (page === 'projects' && detailId) {
-    return { page: 'project-detail', projectId: detailId }
+    return { page: 'project-detail', projectId: detailId, documentId: null, hackathonId: null }
   }
   if (page === 'documents' && detailId) {
-    return { page: 'document-opener', documentId: detailId }
+    return { page: 'document-opener', projectId: null, documentId: detailId, hackathonId: null }
+  }
+  if (page === 'hackathons' && detailId) {
+    return { page: 'hackathon-detail', projectId: null, documentId: null, hackathonId: detailId }
   }
   return {
     page: workspacePages.has(page) ? page : 'dashboard',
     projectId: null,
     documentId: null,
+    hackathonId: null,
   }
 }
 
@@ -48,6 +54,9 @@ export function useRouter() {
   const [selectedDocumentId, setSelectedDocumentId] = useState(
     initialWorkspace.documentId,
   )
+  const [selectedHackathonId, setSelectedHackathonId] = useState(
+    initialWorkspace.hackathonId,
+  )
 
   useEffect(() => {
     const syncRoute = () => {
@@ -58,6 +67,7 @@ export function useRouter() {
         setActivePage(workspace.page)
         setSelectedProjectId(workspace.projectId)
         setSelectedDocumentId(workspace.documentId)
+        setSelectedHackathonId(workspace.hackathonId)
       }
     }
 
@@ -77,6 +87,8 @@ export function useRouter() {
       path = `/app/projects/${options.projectId}`
     } else if (page === 'document-opener' && options.documentId) {
       path = `/app/documents/${options.documentId}`
+    } else if (page === 'hackathon-detail' && options.hackathonId) {
+      path = `/app/hackathons/${options.hackathonId}`
     } else if (page === 'competitive-coding') {
       path = '/app/competitive'
     } else if (workspacePages.has(page)) {
@@ -88,8 +100,9 @@ export function useRouter() {
 
     if (path.startsWith('/app')) {
       setActivePage(page)
-    setSelectedProjectId(options.projectId ?? null)
-    setSelectedDocumentId(options.documentId ?? null)
+      setSelectedProjectId(options.projectId ?? null)
+      setSelectedDocumentId(options.documentId ?? null)
+      setSelectedHackathonId(options.hackathonId ?? null)
     }
   }, [])
 
@@ -102,6 +115,8 @@ export function useRouter() {
     setSelectedProjectId,
     selectedDocumentId,
     setSelectedDocumentId,
+    selectedHackathonId,
+    setSelectedHackathonId,
     navigate,
   }
 }

@@ -3,8 +3,15 @@ from google.cloud.firestore_v1 import Client
 
 from app.core.auth import get_current_user
 from app.db import get_firestore
-from app.schemas.eve import EveChatRequest, EveChatResponse, EveDeleteRequest, EveDeleteResponse
-from app.services.eve import chat_with_eve, delete_workspace_record
+from app.schemas.eve import (
+    EveChatRequest,
+    EveChatResponse,
+    EveDeleteRequest,
+    EveDeleteResponse,
+    EveRestoreRequest,
+    EveRestoreResponse,
+)
+from app.services.eve import chat_with_eve, delete_workspace_record, restore_workspace_record
 
 router = APIRouter(prefix="/eve")
 
@@ -39,3 +46,22 @@ def delete_record(
     except ValueError as error:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(error)) from error
     return {"message": message, "changed_resources": changed_resources}
+
+
+@router.post("/restore", response_model=EveRestoreResponse)
+def restore_record(
+    payload: EveRestoreRequest,
+    database: Client = Depends(get_firestore),
+    user: dict = Depends(get_current_user),
+):
+    try:
+        message, changed_resources = restore_workspace_record(
+            database,
+            user,
+            payload.resource,
+            payload.record_id,
+        )
+    except ValueError as error:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(error)) from error
+    return {"message": message, "changed_resources": changed_resources}
+

@@ -226,3 +226,48 @@ def send_reminder(
     )
     return {"message": f"Reminder email queued for {target_email}."}
 
+
+class CalendarReminderTestRequest(BaseModel):
+    window: str = "1h"  # "1h" or "next_day"
+    event_title: str = "Team Sync & Code Review"
+    to_email: EmailStr | None = None
+
+
+@router.post("/send-calendar-reminder-test")
+def send_calendar_reminder_test(
+    payload: CalendarReminderTestRequest | None = None,
+    user: dict = Depends(get_current_user),
+    background_tasks: BackgroundTasks = BackgroundTasks(),
+):
+    target_email = (payload.to_email if payload and payload.to_email else user.get("email")) or ""
+    if not target_email:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Recipient email address is required.",
+        )
+
+    display_name = user.get("name") or target_email.split("@")[0]
+    window = payload.window if payload else "1h"
+    event_title = payload.event_title if payload else "Team Sync & Code Review"
+
+    if window == "next_day":
+        reminder_type = "Calendar Reminder - Next Day"
+        due_time = "Tomorrow at 10:00 AM UTC"
+    else:
+        reminder_type = "Calendar Reminder - 1 Hour Away"
+        due_time = "In 60 minutes (10:00 AM UTC)"
+
+    description = "Test calendar reminder notification from StarWaves."
+
+    background_tasks.add_task(
+        send_reminder_email,
+        to_email=target_email,
+        user_name=display_name,
+        reminder_title=event_title,
+        reminder_type=reminder_type,
+        due_time=due_time,
+        description=description,
+    )
+    return {"message": f"Calendar reminder test email queued for {target_email}."}
+
+

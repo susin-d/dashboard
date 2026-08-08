@@ -25,7 +25,12 @@ def list_todos(database: Client, user_id: str) -> list[TodoResponse]:
         "created_at",
         direction=firestore.Query.DESCENDING,
     )
-    return [from_snapshot(snapshot) for snapshot in query.stream()]
+    results = []
+    for snapshot in query.stream():
+        data = snapshot.to_dict() or {}
+        if not data.get("deleted"):
+            results.append(from_snapshot(snapshot))
+    return results
 
 
 def create_todo(
@@ -71,5 +76,22 @@ def delete_todo(database: Client, user_id: str, todo_id: str) -> bool:
     reference = collection(database, user_id).document(todo_id)
     if not reference.get().exists:
         return False
-    reference.delete()
+    reference.update({
+        "deleted": True,
+        "deleted_at": datetime.now(timezone.utc).isoformat(),
+        "updated_at": firestore.SERVER_TIMESTAMP,
+    })
     return True
+
+
+def restore_todo(database: Client, user_id: str, todo_id: str) -> bool:
+    reference = collection(database, user_id).document(todo_id)
+    if not reference.get().exists:
+        return False
+    reference.update({
+        "deleted": False,
+        "deleted_at": None,
+        "updated_at": firestore.SERVER_TIMESTAMP,
+    })
+    return True
+

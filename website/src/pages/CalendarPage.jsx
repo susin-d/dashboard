@@ -525,21 +525,13 @@ export function CalendarPage({ eventsByDate, onNavigate }) {
                       role="link"
                       tabIndex={0}
                         onClick={() => {
-                          localStorage.setItem(
-                            'starwaves.hackathon-focus',
-                            JSON.stringify({ hackathonId: hackathon.id }),
-                          )
-                          onNavigate('hackathons')
+                          onNavigate('hackathon-detail', hackathon.id)
                         }}
                         onKeyDown={(event) =>
                           (() => {
                             if (event.key !== 'Enter' && event.key !== ' ') return
                             event.preventDefault()
-                            localStorage.setItem(
-                              'starwaves.hackathon-focus',
-                              JSON.stringify({ hackathonId: hackathon.id }),
-                            )
-                            onNavigate('hackathons')
+                            onNavigate('hackathon-detail', hackathon.id)
                           })()
                         }
                     >

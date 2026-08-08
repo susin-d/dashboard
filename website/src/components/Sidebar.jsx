@@ -11,6 +11,7 @@ export function Sidebar({
   const sidebarRef = useRef(null)
   const itemRefs = useRef(new Map())
   const [indicatorStyle, setIndicatorStyle] = useState(null)
+  const [hoveredItem, setHoveredItem] = useState(null)
   const navigationGroups = Array.from(new Set(navigationItems.map(({ group }) => group)))
 
   useLayoutEffect(() => {
@@ -51,6 +52,17 @@ export function Sidebar({
   const handleNavigate = (page) => {
     onNavigate(page)
     onClose()
+    setHoveredItem(null)
+  }
+
+  const handleMouseEnter = (e, label) => {
+    if (!isExpanded && window.innerWidth > 900) {
+      const rect = e.currentTarget.getBoundingClientRect()
+      setHoveredItem({
+        label,
+        top: rect.top + rect.height / 2,
+      })
+    }
   }
 
   return (
@@ -58,6 +70,8 @@ export function Sidebar({
       <aside
         ref={sidebarRef}
         className={`sidebar ${isExpanded ? 'expanded' : ''} ${isOpen ? 'open' : ''}`}
+        onScroll={() => setHoveredItem(null)}
+        onMouseLeave={() => setHoveredItem(null)}
       >
         <span
           className={`sidebar-active-indicator ${indicatorStyle ? 'visible' : ''}`}
@@ -76,7 +90,10 @@ export function Sidebar({
                     ref={setItemRef(id)}
                     className={`nav-item ${activePage === id ? 'active' : ''}`}
                     onClick={() => handleNavigate(id)}
+                    onMouseEnter={(e) => handleMouseEnter(e, label)}
+                    onMouseLeave={() => setHoveredItem(null)}
                     aria-current={activePage === id ? 'page' : undefined}
+                    title={!isExpanded ? label : undefined}
                   >
                     <Icon size={18} />
                     <span>{label}</span>
@@ -85,8 +102,17 @@ export function Sidebar({
             </div>
           ))}
         </nav>
-
       </aside>
+
+      {!isExpanded && hoveredItem && (
+        <div
+          className="sidebar-tooltip-pill"
+          style={{ top: `${hoveredItem.top}px` }}
+          role="tooltip"
+        >
+          {hoveredItem.label}
+        </div>
+      )}
 
       {isOpen && (
         <button

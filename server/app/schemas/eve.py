@@ -26,3 +26,16 @@ class EveDeleteRequest(BaseModel):
 class EveDeleteResponse(BaseModel):
     message: str
     changed_resources: list[str] = Field(default_factory=list)
+
+
+class EveRestoreRequest(BaseModel):
+    resource: str = Field(
+        pattern="^(todos|projects|jobs|hackathons|documents|notifications)$",
+    )
+    record_id: str = Field(min_length=1, max_length=300)
+
+
+class EveRestoreResponse(BaseModel):
+    message: str
+    changed_resources: list[str] = Field(default_factory=list)
+

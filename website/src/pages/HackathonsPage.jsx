@@ -27,11 +27,10 @@ const emptyHackathon = {
   url: '',
 }
 
-export function HackathonsPage({ hackathons, setHackathons, canLoadMore, loadingMore, onLoadMore }) {
+export function HackathonsPage({ hackathons, setHackathons, canLoadMore, loadingMore, onLoadMore, onOpenHackathon }) {
   const [cardLayout, setCardLayout] = useState(
     () => window.localStorage.getItem('starwaves-hackathon-layout') || 'compact',
   )
-  const [detailModalHackathon, setDetailModalHackathon] = useState(null)
   const [formOpen, setFormOpen] = useState(false)
 
   useEffect(() => {
@@ -80,11 +79,11 @@ export function HackathonsPage({ hackathons, setHackathons, canLoadMore, loading
     try {
       const { hackathonId } = JSON.parse(rawFocus)
       const focusedHackathon = hackathons.find((hackathon) => hackathon.id === hackathonId)
-      if (focusedHackathon) setDetailModalHackathon(focusedHackathon)
+      if (focusedHackathon) onOpenHackathon?.(focusedHackathon.id)
     } finally {
       localStorage.removeItem('starwaves.hackathon-focus')
     }
-  }, [hackathons])
+  }, [hackathons, onOpenHackathon])
 
   const updateField = (field, value) => {
     setForm((current) => ({ ...current, [field]: value }))
@@ -267,7 +266,7 @@ export function HackathonsPage({ hackathons, setHackathons, canLoadMore, loading
                       className="hackathon-title-clickable"
                       onClick={(event) => {
                         event.stopPropagation()
-                        setDetailModalHackathon(hackathon)
+                        onOpenHackathon?.(hackathon.id)
                       }}
                       title="View hackathon details"
                     >
@@ -329,7 +328,7 @@ export function HackathonsPage({ hackathons, setHackathons, canLoadMore, loading
                       <button
                         className="secondary-button hackathon-card-action"
                         type="button"
-                        onClick={() => setDetailModalHackathon(hackathon)}
+                        onClick={() => onOpenHackathon?.(hackathon.id)}
                       >
                         All details
                       </button>
@@ -371,102 +370,6 @@ export function HackathonsPage({ hackathons, setHackathons, canLoadMore, loading
       </div>
 
       {canLoadMore && <button className="secondary-button" type="button" onClick={onLoadMore} disabled={loadingMore}>{loadingMore ? 'Loading…' : 'Load more hackathons'}</button>}
-
-      {detailModalHackathon && (
-        <div className="todo-modal-backdrop" onMouseDown={() => setDetailModalHackathon(null)} role="presentation">
-          <div className="todo-modal document-modal" role="dialog" aria-modal="true" onMouseDown={(event) => event.stopPropagation()}>
-            <div className="todo-modal-heading">
-              <div>
-                <p>Hackathon details</p>
-                <h2>{detailModalHackathon.title}</h2>
-              </div>
-                      <button className="icon-button" onClick={() => setDetailModalHackathon(null)} aria-label="Close hackathon details"><X size={18} /></button>
-            </div>
-            <div className="hackathon-detail-modal-body">
-              <div className="hackathon-modal-grid">
-                <div className="hackathon-modal-detail-row">
-                  <span>Organizer</span>
-                  <strong>{detailModalHackathon.organizer || 'Not specified'}</strong>
-                </div>
-                <div className="hackathon-modal-detail-row">
-                  <span>Source</span>
-                  <strong>{detailModalHackathon.source ? detailModalHackathon.source.toUpperCase() : 'MANUAL'}</strong>
-                </div>
-                <div className="hackathon-modal-detail-row">
-                  <span>Format</span>
-                  <strong>{detailModalHackathon.mode}</strong>
-                </div>
-                <div className="hackathon-modal-detail-row">
-                  <span>Team Size</span>
-                  <strong>{detailModalHackathon.teamSize || 'Not specified'}</strong>
-                </div>
-                <div className="hackathon-modal-detail-row">
-                  <span>Start Date</span>
-                  <strong>{new Date(detailModalHackathon.startsAt).toLocaleString()}</strong>
-                </div>
-                <div className="hackathon-modal-detail-row">
-                  <span>End Date</span>
-                  <strong>{new Date(detailModalHackathon.endsAt).toLocaleString()}</strong>
-                </div>
-              </div>
-
-              {detailModalHackathon.tags && detailModalHackathon.tags.length > 0 && (
-                <div className="hackathon-modal-detail-row">
-                  <span>Tags</span>
-                  <div className="hackathon-tags" style={{ marginTop: '4px' }}>
-                    {Array.isArray(detailModalHackathon.tags)
-                      ? detailModalHackathon.tags.map((tag) => <span key={tag}>{tag}</span>)
-                      : <span>{detailModalHackathon.tags}</span>}
-                  </div>
-                </div>
-              )}
-            </div>
-
-            <div className="todo-modal-actions">
-              {detailModalHackathon.source === 'manual' && (
-                <>
-                  <button
-                    className="secondary-button"
-                    type="button"
-                    onClick={() => {
-                      const h = detailModalHackathon
-                      setDetailModalHackathon(null)
-                      openEditModal(h)
-                    }}
-                  >
-                    <Pencil size={14} /> Edit
-                  </button>
-                  <button
-                    className="secondary-button"
-                    type="button"
-                    onClick={() => {
-                      const id = detailModalHackathon.id
-                      setDetailModalHackathon(null)
-                      handleDeleteHackathon(id)
-                    }}
-                  >
-                    <Trash2 size={14} /> Delete
-                  </button>
-                </>
-              )}
-              {detailModalHackathon.url ? (
-                <a
-                  className="primary-button"
-                  href={detailModalHackathon.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  Open external page <ExternalLink size={14} />
-                </a>
-              ) : (
-                <button className="primary-button" type="button" onClick={() => setDetailModalHackathon(null)}>
-                  Close
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
 
       {formOpen && (
         <div className="todo-modal-backdrop" onMouseDown={() => setFormOpen(false)} role="presentation">

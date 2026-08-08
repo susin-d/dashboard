@@ -28,7 +28,9 @@
 @import './styles/pages/coding.css';
 @import './styles/pages/jobs.css';
 @import './styles/pages/settings.css';
+@import './styles/pages/themes.css';
 @import './styles/pages/chats.css';
+@import './styles/pages/eve.css';
 @import './styles/pages/landing-auth.css';
 @import './styles/pages/missing-states.css';
 

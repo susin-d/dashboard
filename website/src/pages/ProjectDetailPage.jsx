@@ -6,14 +6,16 @@ import {
   ExternalLink,
   FolderKanban,
   GitBranch,
+  Minus,
   Pencil,
+  Plus,
   Save,
   Trash2,
   Users,
   X,
 } from 'lucide-react'
 import { deleteProject, updateProject } from '../lib/workspaceApi'
-import { ConfirmDialog } from '../components/ui'
+import { ConfirmDialog, CustomDropdown } from '../components/ui'
 
 export function ProjectDetailPage({ project, onBack, onSave }) {
   const [editOpen, setEditOpen] = useState(false)
@@ -30,7 +32,7 @@ export function ProjectDetailPage({ project, onBack, onSave }) {
       status: project.status,
       progress: project.progress,
       members: project.members,
-      technologies: project.technologies.join(', '),
+      technologies: (project.technologies || []).join(', '),
       githubUrl: project.githubUrl,
       liveUrl: project.liveUrl,
     })
@@ -44,6 +46,7 @@ export function ProjectDetailPage({ project, onBack, onSave }) {
   const saveProject = async (event) => {
     event.preventDefault()
     setSaving(true)
+    setError('')
     const updatedPayload = {
       name: form.name,
       description: form.description,
@@ -68,6 +71,28 @@ export function ProjectDetailPage({ project, onBack, onSave }) {
     }
   }
 
+  const handleStatusChange = async (newStatus) => {
+    try {
+      const updated = await updateProject(project.id, { status: newStatus })
+      onSave(updated)
+    } catch (err) {
+      setError(err.message || 'Failed to update status.')
+    }
+  }
+
+  const handleProgressAdjust = async (delta) => {
+    const newProgress = Math.min(
+      100,
+      Math.max(0, (Number(project.progress) || 0) + delta),
+    )
+    try {
+      const updated = await updateProject(project.id, { progress: newProgress })
+      onSave(updated)
+    } catch (err) {
+      setError(err.message || 'Failed to update progress.')
+    }
+  }
+
   const handleDelete = async () => {
     setDeleteRequested(true)
   }
@@ -80,6 +105,31 @@ export function ProjectDetailPage({ project, onBack, onSave }) {
     } catch (err) {
       setError(err.message || 'Failed to delete project.')
     }
+  }
+
+  const renderAvatarStack = (membersCount) => {
+    const count = Math.min(membersCount || 1, 4)
+    const avatars = []
+    const prefixes = ['JD', 'AB', 'SK', 'ML']
+    for (let i = 0; i < count; i++) {
+      avatars.push(
+        <span key={i} className="project-avatar-bubble">
+          {prefixes[i % prefixes.length]}
+        </span>,
+      )
+    }
+    if (membersCount > 4) {
+      avatars.push(
+        <span key="more" className="project-avatar-bubble more">
+          +{membersCount - 4}
+        </span>,
+      )
+    }
+    return (
+      <div className="project-avatar-stack" title={`${membersCount} team members`}>
+        {avatars}
+      </div>
+    )
   }
 
   return (
@@ -99,7 +149,15 @@ export function ProjectDetailPage({ project, onBack, onSave }) {
           <span>{project.description}</span>
         </div>
         <div className="project-page-header-actions">
-          <span className="project-status">{project.status}</span>
+          <CustomDropdown
+            value={project.status}
+            onChange={handleStatusChange}
+            ariaLabel="Change project status"
+            options={['Planning', 'Active', 'On hold', 'Completed'].map((val) => ({
+              value: val,
+              label: val,
+            }))}
+          />
           <div className="project-page-links">
             <button className="project-edit-button" onClick={openEditor}>
               <Pencil size={15} />
@@ -130,8 +188,13 @@ export function ProjectDetailPage({ project, onBack, onSave }) {
         </div>
       </div>
 
+      {error && (
+        <div className="todo-api-error" role="alert" style={{ marginTop: 14 }}>
+          {error}
+        </div>
+      )}
 
-      <div className="project-page-grid">
+      <div className="project-page-grid" style={{ marginTop: 20 }}>
         <article className="project-overview-card">
           <div className="project-overview-heading">
             <div>
@@ -150,6 +213,39 @@ export function ProjectDetailPage({ project, onBack, onSave }) {
           >
             <span style={{ width: `${project.progress}%` }} />
           </div>
+
+          <div
+            className="project-progress-actions"
+            style={{ marginTop: 14, justifyContent: 'flex-start' }}
+          >
+            <button
+              type="button"
+              className="project-quick-progress-btn"
+              onClick={() => handleProgressAdjust(-10)}
+              disabled={project.progress <= 0}
+              title="Decrease progress by 10%"
+            >
+              <Minus size={12} /> -10%
+            </button>
+            <button
+              type="button"
+              className="project-quick-progress-btn"
+              onClick={() => handleProgressAdjust(10)}
+              disabled={project.progress >= 100}
+              title="Increase progress by 10%"
+            >
+              <Plus size={12} /> +10%
+            </button>
+            <button
+              type="button"
+              className="project-quick-progress-btn"
+              onClick={() => handleProgressAdjust(100 - project.progress)}
+              disabled={project.progress >= 100}
+              title="Mark as 100% complete"
+            >
+              Mark complete
+            </button>
+          </div>
         </article>
 
         <article className="project-overview-card">
@@ -157,11 +253,8 @@ export function ProjectDetailPage({ project, onBack, onSave }) {
           <div className="project-page-details">
             <div>
               <Users size={17} />
-              <span>Team</span>
-              <strong>
-                {project.members}{' '}
-                {project.members === 1 ? 'member' : 'members'}
-              </strong>
+              <span>Team ({project.members})</span>
+              {renderAvatarStack(project.members)}
             </div>
             <div>
               <CalendarClock size={17} />
@@ -180,12 +273,14 @@ export function ProjectDetailPage({ project, onBack, onSave }) {
         <article className="project-overview-card project-tech-card">
           <p className="project-card-label">Technologies</p>
           <div className="project-page-tags">
-            {project.technologies.length ? (
+            {project.technologies && project.technologies.length ? (
               project.technologies.map((technology) => (
                 <span key={technology}>{technology}</span>
               ))
             ) : (
-              <span className="project-no-technologies">No technologies added</span>
+              <span className="project-no-technologies">
+                No technologies added
+              </span>
             )}
           </div>
         </article>
@@ -315,7 +410,11 @@ export function ProjectDetailPage({ project, onBack, onSave }) {
                 >
                   Cancel
                 </button>
-                <button className="primary-button project-save-button" type="submit" disabled={saving}>
+                <button
+                  className="primary-button project-save-button"
+                  type="submit"
+                  disabled={saving}
+                >
                   <Save size={16} />
                   {saving ? 'Saving…' : 'Save changes'}
                 </button>
@@ -324,8 +423,12 @@ export function ProjectDetailPage({ project, onBack, onSave }) {
           </div>
         </div>
       )}
-      {error && <div className="todo-api-error" role="alert">{error}</div>}
-      <ConfirmDialog isOpen={deleteRequested} message="Are you sure you want to delete this project?" onCancel={() => setDeleteRequested(false)} onConfirm={confirmDelete} />
+      <ConfirmDialog
+        isOpen={deleteRequested}
+        message="Are you sure you want to delete this project?"
+        onCancel={() => setDeleteRequested(false)}
+        onConfirm={confirmDelete}
+      />
     </section>
   )
 }

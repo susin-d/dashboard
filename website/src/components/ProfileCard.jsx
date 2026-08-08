@@ -103,6 +103,7 @@ export function ProfileCard({ user, onProfileUpdated }) {
       }
     } catch (err) {
       // Non-blocking if unauthenticated
+      console.debug('Could not load combined accounts:', err)
     }
   }
 

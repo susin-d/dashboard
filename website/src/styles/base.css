@@ -3,6 +3,7 @@
   scrollbar-width: thin;
   scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
   -webkit-tap-highlight-color: transparent;
+  font-family: inherit;
 }
 
 html {

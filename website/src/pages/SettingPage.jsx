@@ -17,6 +17,7 @@ import {
   Trash2,
   Upload,
   FileUp,
+  Palette,
 } from 'lucide-react'
 import { ProfileCard } from '../components/ProfileCard'
 import { ConfirmDialog } from '../components/ui'
@@ -59,6 +60,7 @@ import {
   loadHackathons,
   loadHackathonSources,
   setHackathonSourceEnabled,
+  sendCalendarReminderTest,
 } from '../lib/workspaceApi'
 
 const workspaceApps = [
@@ -118,6 +120,7 @@ const CONTEST_PLATFORMS = [
 
 export function SettingPage({
   user,
+  onNavigate,
   onGoogleCalendarsChange,
   onHackathonsChange,
   onContestSitesChange,
@@ -166,6 +169,21 @@ export function SettingPage({
     }
   })
   const [contestPlatformMessage, setContestPlatformMessage] = useState('')
+  const [calendarReminderTestBusy, setCalendarReminderTestBusy] = useState(false)
+  const [calendarReminderTestMessage, setCalendarReminderTestMessage] = useState('')
+
+  const triggerTestCalendarReminder = async (window = '1h') => {
+    setCalendarReminderTestBusy(true)
+    setCalendarReminderTestMessage('')
+    try {
+      const res = await sendCalendarReminderTest(window, 'Calendar Sync & Review')
+      setCalendarReminderTestMessage(res.message || 'Test reminder email dispatched.')
+    } catch (err) {
+      setCalendarReminderTestMessage(err.message || 'Could not send test reminder.')
+    } finally {
+      setCalendarReminderTestBusy(false)
+    }
+  }
 
   const toggleContestPlatform = async (platformId) => {
     const nextEnabled = enabledContestPlatforms.includes(platformId)
@@ -720,6 +738,7 @@ export function SettingPage({
 
       <nav className="settings-section-nav" aria-label="Settings sections">
         <a href="#settings-profile">Profile</a>
+        <a href="#settings-themes">Themes &amp; Appearance</a>
         <a href="#settings-apps">Integrations</a>
         <a href="#settings-sources">Data sources</a>
         <a href="#settings-coding">Coding profiles</a>
@@ -733,6 +752,35 @@ export function SettingPage({
         </div>
 
         <ProfileCard user={user} />
+      </div>
+
+      <div className="setting-section" id="settings-themes">
+        <div className="section-heading">
+          <h2>Themes &amp; Appearance</h2>
+          <p>Customize presets and colors for all UI elements across every page in StarWaves.</p>
+        </div>
+
+        <div className="workspace-settings-card" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 24px', flexWrap: 'wrap', gap: '16px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+            <span className="workspace-google-mark" style={{ background: 'var(--bg-tertiary, #e4e4e7)', color: 'var(--text-primary, #09090b)' }}>
+              <Palette size={20} />
+            </span>
+            <div>
+              <h3 style={{ margin: 0, fontSize: '1.05rem', color: 'var(--text-primary, #09090b)' }}>Color Theme Customizer</h3>
+              <p style={{ margin: '2px 0 0', fontSize: '0.88rem', color: 'var(--text-muted, #71717a)' }}>
+                Customize element backgrounds, card surfaces, text, primary buttons, borders, and scrollbars.
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            className="primary-button"
+            onClick={() => onNavigate && onNavigate('themes')}
+            style={{ padding: '8px 16px', display: 'inline-flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}
+          >
+            <Palette size={16} /> Open Themes Page
+          </button>
+        </div>
       </div>
 
       <div className="setting-section" id="settings-apps">
@@ -1092,12 +1140,48 @@ export function SettingPage({
 
       <div className="setting-section" id="settings-sources">
         <div className="section-heading">
-          <h2>Data sources</h2>
-          <p>Manage imported calendars and external activity sources.</p>
+          <h2>Data sources &amp; Reminders</h2>
+          <p>Manage imported calendars, external activity sources, and automated email reminders.</p>
         </div>
-        <div className="settings-source-summary">
-          <strong>Connected sources</strong>
-          <span>Calendar, mail, chat, GitHub, contest, and hackathon connections are managed in this workspace.</span>
+        <div className="workspace-settings-card" style={{ padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+              <span className="workspace-google-mark">
+                <Mail size={19} />
+              </span>
+              <div>
+                <h3 style={{ margin: 0, fontSize: '1.05rem', color: 'var(--text-primary, #09090b)' }}>Automated Calendar Email Reminders</h3>
+                <p style={{ margin: '2px 0 0', fontSize: '0.88rem', color: 'var(--text-muted, #71717a)' }}>
+                  Sends email reminders for all Google Calendar events, tasks, contests, and job deadlines <strong>next day (24h ahead)</strong> and <strong>1 hour before</strong> start time.
+                </p>
+              </div>
+            </div>
+            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+              <button
+                type="button"
+                className="google-calendar-refresh"
+                onClick={() => triggerTestCalendarReminder('1h')}
+                disabled={calendarReminderTestBusy}
+                style={{ padding: '6px 14px', fontSize: '0.82rem' }}
+              >
+                <Mail size={13} /> Send Test 1-Hour Reminder
+              </button>
+              <button
+                type="button"
+                className="google-calendar-add-account"
+                onClick={() => triggerTestCalendarReminder('next_day')}
+                disabled={calendarReminderTestBusy}
+                style={{ padding: '6px 14px', fontSize: '0.82rem' }}
+              >
+                <Mail size={13} /> Send Test Next-Day Reminder
+              </button>
+            </div>
+          </div>
+          {calendarReminderTestMessage && (
+            <p className="hackathon-source-message" role="status" style={{ margin: 0 }}>
+              {calendarReminderTestMessage}
+            </p>
+          )}
         </div>
       </div>
 

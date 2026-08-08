@@ -3,9 +3,11 @@ import { AppLayout } from './layouts/AppLayout'
 import { CalendarPage } from './pages/CalendarPage'
 import { CompetitiveCodingPage } from './pages/CompetitiveCodingPage'
 import { DashboardPage } from './pages/DashboardPage'
+import { EvePage } from './pages/EvePage'
 import { DocumentsPage } from './pages/DocumentsPage'
 import { DocumentOpenerPage } from './pages/DocumentOpenerPage'
 import { HackathonsPage } from './pages/HackathonsPage'
+import { HackathonDetailPage } from './pages/HackathonDetailPage'
 import { JobsPage } from './pages/JobsPage'
 import { MailsPage } from './pages/MailsPage'
 import { ChatsPage } from './pages/ChatsPage'
@@ -13,6 +15,7 @@ import { ProfilePage } from './pages/ProfilePage'
 import { ProjectDetailPage } from './pages/ProjectDetailPage'
 import { ProjectsPage } from './pages/ProjectsPage'
 import { SettingPage } from './pages/SettingPage'
+import { ThemesPage } from './pages/ThemesPage'
 import { StatsPage } from './pages/StatsPage'
 import { TodoPage } from './pages/TodoPage'
 import { AuthPage } from './pages/AuthPage'
@@ -24,6 +27,7 @@ import { confirmEmailVerification } from './lib/emailApi'
 import { verifyAccountCombine } from './lib/authApi'
 import { CALENDAR_REMINDER_PREFIX } from './utils/calendarReminders'
 import { useAuth, useRouter, useWorkspaceData } from './hooks'
+import { applyThemeVariables } from './hooks/useThemeCustomizer'
 import { NetworkStatus } from './components/NetworkStatus'
 import { useDialogAccessibility } from './hooks/useDialogAccessibility'
 
@@ -60,6 +64,7 @@ function App() {
     selectedProjectId,
     setSelectedProjectId,
     selectedDocumentId,
+    selectedHackathonId,
     navigate,
   } = useRouter()
 
@@ -101,6 +106,7 @@ function App() {
     (project) => project.id === selectedProjectId,
   )
   const selectedDocument = documents.find((document) => document.id === selectedDocumentId)
+  const selectedHackathon = hackathons.find((hackathon) => hackathon.id === selectedHackathonId)
 
   useEffect(() => {
     const pageName = activePage
@@ -147,6 +153,20 @@ function App() {
             alert(err.message || 'Verification link invalid or expired.')
             window.history.replaceState({}, '', window.location.pathname + window.location.search)
           })
+      }
+    }
+  }, [])
+
+  useEffect(() => {
+    const savedTheme = localStorage.getItem('starwaves.custom_theme')
+    if (savedTheme) {
+      try {
+        const parsed = JSON.parse(savedTheme)
+        if (parsed.colors) {
+          applyThemeVariables(parsed.colors)
+        }
+      } catch (err) {
+        console.error('Could not load custom theme:', err)
       }
     }
   }, [])
@@ -271,6 +291,12 @@ function App() {
         onOpenNotifications={() => setNotificationsOpen(true)}
       />
     ),
+    eve: (
+      <EvePage
+        onNavigate={navigateWorkspace}
+        onWorkspaceChanged={() => setWorkspaceRefreshKey((current) => current + 1)}
+      />
+    ),
     stats: (
       <StatsPage
         codingStats={codingStats}
@@ -289,6 +315,32 @@ function App() {
         canLoadMore={pagination.hackathons.has_more}
         loadingMore={loadingMore}
         onLoadMore={() => loadMore('hackathons')}
+        onOpenHackathon={(hackathonId) => navigate('hackathon-detail', { hackathonId })}
+      />
+    ),
+    'hackathon-detail': selectedHackathon ? (
+      <HackathonDetailPage
+        hackathon={selectedHackathon}
+        onBack={() => navigateWorkspace('hackathons')}
+        onSave={(updated) =>
+          setHackathons((current) =>
+            current.map((item) => (item.id === updated.id ? updated : item)),
+          )
+        }
+        onDelete={(deletedId) =>
+          setHackathons((current) =>
+            current.filter((item) => item.id !== deletedId),
+          )
+        }
+      />
+    ) : (
+      <HackathonsPage
+        hackathons={hackathons}
+        setHackathons={setHackathons}
+        canLoadMore={pagination.hackathons.has_more}
+        loadingMore={loadingMore}
+        onLoadMore={() => loadMore('hackathons')}
+        onOpenHackathon={(hackathonId) => navigate('hackathon-detail', { hackathonId })}
       />
     ),
     projects: (
@@ -364,9 +416,11 @@ function App() {
         }
       />
     ),
+    themes: <ThemesPage />,
     setting: (
       <SettingPage
         user={userProfile}
+        onNavigate={navigateWorkspace}
         onGoogleCalendarsChange={setGoogleCalendarEvents}
         onHackathonsChange={setHackathons}
         onContestSitesChange={setContestSites}
@@ -414,7 +468,15 @@ function App() {
 
   return (
     <AppLayout
-      activePage={activePage === 'project-detail' ? 'projects' : activePage}
+      activePage={
+        activePage === 'project-detail'
+          ? 'projects'
+          : activePage === 'hackathon-detail'
+            ? 'hackathons'
+            : activePage === 'document-opener'
+              ? 'documents'
+              : activePage
+      }
       onNavigate={navigateWorkspace}
       notifications={notifications}
       setNotifications={updateNotifications}
