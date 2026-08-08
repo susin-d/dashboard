@@ -18,7 +18,8 @@ import {
 } from 'lucide-react'
 import {
   useThemeCustomizer,
-  THEME_PRESETS,
+  PALETTE_GROUPS,
+  getPresetsByPalette,
   COLOR_VARIABLE_GROUPS,
   FONT_OPTIONS,
   RADIUS_OPTIONS,
@@ -133,51 +134,64 @@ export function ThemesPage() {
       <div className="themes-section">
         <div className="section-heading">
           <h2>1. Theme Presets</h2>
-          <p>Quick start with curated monochrome and vibrant color theme presets.</p>
+          <p>Curated presets grouped by palette size, from monochrome to vibrant tetra color themes.</p>
         </div>
-        <div className="presets-grid">
-          {Object.values(THEME_PRESETS).map((preset) => {
-            const isActive = activePreset === preset.id
-            const bg = preset.colors['--bg-primary'] || '#121212'
-            const cardBg = preset.colors['--bg-card'] || '#1e1e1e'
-            const primaryColor = preset.colors['--color-primary'] || '#ffffff'
-            const textColor = preset.colors['--text-primary'] || '#ffffff'
+        {PALETTE_GROUPS.map((group) => {
+          const presets = getPresetsByPalette(group.id)
 
-            return (
-              <button
-                key={preset.id}
-                type="button"
-                className={`preset-card ${isActive ? 'active' : ''}`}
-                onClick={() => selectPreset(preset.id)}
-              >
-                <div
-                  className="preset-preview-box"
-                  style={{ backgroundColor: bg, borderColor: preset.colors['--border-color'] }}
-                >
-                  <div
-                    className="preset-mini-card"
-                    style={{ backgroundColor: cardBg, color: textColor }}
-                  >
-                    <span
-                      className="preset-mini-dot"
-                      style={{ backgroundColor: primaryColor }}
-                    />
-                    <span className="preset-mini-text" style={{ color: textColor }}>
-                      {preset.name}
-                    </span>
-                  </div>
-                </div>
-                <div className="preset-info">
-                  <div className="preset-title-row">
-                    <strong>{preset.name}</strong>
-                    {isActive && <Check size={15} className="preset-check" />}
-                  </div>
-                  <small>{preset.description}</small>
-                </div>
-              </button>
-            )
-          })}
-        </div>
+          return (
+            <div key={group.id} className="presets-group">
+              <div className="presets-group-heading">
+                <h3>{group.label}</h3>
+                <span className="presets-group-count">{presets.length} presets</span>
+              </div>
+              <p className="presets-group-desc">{group.description}</p>
+              <div className="presets-grid">
+                {presets.map((preset) => {
+                  const isActive = activePreset === preset.id
+                  const bg = preset.colors['--bg-primary'] || '#121212'
+                  const cardBg = preset.colors['--bg-card'] || '#1e1e1e'
+                  const primaryColor = preset.colors['--color-primary'] || '#ffffff'
+                  const textColor = preset.colors['--text-primary'] || '#ffffff'
+
+                  return (
+                    <button
+                      key={preset.id}
+                      type="button"
+                      className={`preset-card ${isActive ? 'active' : ''}`}
+                      onClick={() => selectPreset(preset.id)}
+                    >
+                      <div
+                        className="preset-preview-box"
+                        style={{ backgroundColor: bg, borderColor: preset.colors['--border-color'] }}
+                      >
+                        <div
+                          className="preset-mini-card"
+                          style={{ backgroundColor: cardBg, color: textColor }}
+                        >
+                          <span
+                            className="preset-mini-dot"
+                            style={{ backgroundColor: primaryColor }}
+                          />
+                          <span className="preset-mini-text" style={{ color: textColor }}>
+                            {preset.name}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="preset-info">
+                        <div className="preset-title-row">
+                          <strong>{preset.name}</strong>
+                          {isActive && <Check size={15} className="preset-check" />}
+                        </div>
+                        <small>{preset.description}</small>
+                      </div>
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+          )
+        })}
       </div>
 
       {/* 2. Interface Geometry & UX Controls */}
