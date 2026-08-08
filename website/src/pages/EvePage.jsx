@@ -2,15 +2,8 @@ import { useEffect, useRef, useState } from 'react'
 import {
   Bot,
   Send,
-  ShieldCheck,
   RotateCcw,
-  Sparkles,
   Info,
-  Calendar,
-  FolderKanban,
-  CheckSquare,
-  FileText,
-  Briefcase,
 } from 'lucide-react'
 import { sendEveMessage } from '../lib/eveApi'
 
@@ -19,39 +12,6 @@ const STARTER_MESSAGES = [
     role: 'assistant',
     content:
       'Hello! I’m Eve, your StarWaves AI workspace copilot. I can read, create, update, soft-delete, and restore records across your workspace including tasks, projects, jobs, hackathons, and documents.',
-  },
-]
-
-const EVE_PROMPT_TEMPLATES = [
-  {
-    icon: Calendar,
-    title: 'Plan my day',
-    prompt: 'Plan my day by reviewing tasks, upcoming deadlines, and calendar events.',
-    description: 'Get a prioritized schedule for today',
-  },
-  {
-    icon: CheckSquare,
-    title: 'Audit overdue tasks',
-    prompt: 'Find all overdue tasks and suggest next actions to complete or reschedule them.',
-    description: 'Identify pending todos and roadblocks',
-  },
-  {
-    icon: FolderKanban,
-    title: 'Review project status',
-    prompt: 'List active projects and highlight any that are stale or need attention.',
-    description: 'Summarize active development projects',
-  },
-  {
-    icon: Briefcase,
-    title: 'Job application update',
-    prompt: 'Summarize recent job application statuses and upcoming interview dates.',
-    description: 'Track application progress',
-  },
-  {
-    icon: FileText,
-    title: 'Search documents',
-    prompt: 'Search through workspace documents for notes or drafts that need updates.',
-    description: 'Audit workspace notes and files',
   },
 ]
 
@@ -166,12 +126,6 @@ export function EvePage({ onNavigate, onWorkspaceChanged }) {
       {/* ── Main Content Grid ── */}
         <main className="eve-chat-section">
             <div className="eve-banner-privacy">
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flex: 1 }}>
-                <ShieldCheck size={16} />
-                <span>
-                  Private workspace scope — Eve operates strictly on your signed-in account data with 7-day soft-delete recovery protection.
-                </span>
-              </div>
               <button
                 type="button"
                 className="eve-reset-btn"
@@ -225,35 +179,6 @@ export function EvePage({ onNavigate, onWorkspaceChanged }) {
 
               <div ref={messagesEndRef} />
             </div>
-
-            {/* Quick Prompt Cards inside Chat (if short history) */}
-            {messages.length <= 2 && (
-              <div className="eve-starter-prompts">
-                <span className="eve-section-label">
-                  <Sparkles size={14} /> Quick Start Prompts
-                </span>
-                <div className="eve-prompts-grid">
-                  {EVE_PROMPT_TEMPLATES.map((item, idx) => {
-                    const IconComponent = item.icon
-                    return (
-                      <button
-                        key={idx}
-                        type="button"
-                        className="eve-prompt-card"
-                        onClick={() => sendMessage(item.prompt)}
-                        disabled={isSending}
-                      >
-                        <div className="eve-prompt-card-header">
-                          <IconComponent size={16} />
-                          <strong>{item.title}</strong>
-                        </div>
-                        <p>{item.description}</p>
-                      </button>
-                    )
-                  })}
-                </div>
-              </div>
-            )}
 
             {/* Composer Form */}
             <form className="eve-page-composer" onSubmit={handleSubmit}>

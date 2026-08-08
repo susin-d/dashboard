@@ -21,6 +21,7 @@
   --color-primary: #18181b;
   --color-primary-hover: #09090b;
   --color-primary-light: #e4e4e7;
+  --color-foam: #ffffff;
 
   --border-color: #e4e4e7;
   --border-light: #ececec;
@@ -65,6 +66,7 @@ html.dark-theme {
   --color-primary: #f4f4f5;
   --color-primary-hover: #e4e4e7;
   --color-primary-light: #222222;
+  --color-foam: #ffffff;
 
   --border-color: #27272a;
   --border-light: #1e1e1e;

@@ -10,6 +10,11 @@ export function WaveLoader({ label = 'Loading StarWaves…' }) {
           <span className="wave-line wave-line-back" />
           <span className="wave-line wave-line-mid" />
           <span className="wave-line wave-line-front" />
+          <span className="wave-line wave-line-foam">
+            <span className="wave-foam" />
+            <span className="wave-foam wave-foam-2" />
+            <span className="wave-foam wave-foam-3" />
+          </span>
         </div>
         <span className="wave-loader-label">{label}</span>
       </div>

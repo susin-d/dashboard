@@ -322,66 +322,6 @@
   font-size: 0.85rem;
 }
 
-/* Starter Prompts Grid */
-.eve-starter-prompts {
-  display: flex;
-  flex-direction: column;
-  gap: 0.65rem;
-  margin-top: auto;
-  padding-top: 1rem;
-}
-
-.eve-section-label {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  font-size: 0.78rem;
-  font-weight: 600;
-  color: var(--text-muted, #71717a);
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
-}
-
-.eve-prompts-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 0.65rem;
-}
-
-.eve-prompt-card {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 0.35rem;
-  padding: 0.75rem 0.85rem;
-  border-radius: 8px;
-  background: var(--bg-tertiary, #18181b);
-  border: 1px solid var(--border-color, #27272a);
-  color: var(--text-primary, #ffffff);
-  text-align: left;
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.eve-prompt-card:hover:not(:disabled) {
-  border-color: var(--border-color, #3f3f46);
-  background: #202023;
-  transform: translateY(-1px);
-}
-
-.eve-prompt-card-header {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  font-size: 0.85rem;
-}
-
-.eve-prompt-card p {
-  font-size: 0.75rem;
-  color: var(--text-muted, #71717a);
-  margin: 0;
-}
-
 /* ── Composer Form ── */
 .eve-page-composer {
   margin-top: auto;

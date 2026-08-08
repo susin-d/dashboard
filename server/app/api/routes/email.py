@@ -23,6 +23,14 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/email")
 
 
+def _ensure_email_sent(sent: bool, target_email: str, email_kind: str) -> None:
+    if not sent:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail=f"Failed to send {email_kind} to {target_email}. Please check SMTP configuration and try again.",
+        )
+
+
 def email_token_serializer() -> URLSafeTimedSerializer:
     return URLSafeTimedSerializer(
         settings.auth_secret_key,
@@ -90,7 +98,8 @@ def send_test_email(
     body_text = f"StarWaves Mail Test for {user_name}. SMTP service operating normally."
 
     sent = send_email(target_email, subject, body_html, body_text)
-    return {"message": f"Test email sent to {target_email}.", "sent": sent}
+    _ensure_email_sent(sent, target_email, "test email")
+    return {"message": f"Test email sent to {target_email}.", "sent": True}
 
 
 @router.post("/resend-welcome")
@@ -106,7 +115,8 @@ def resend_welcome(
     display_name = user.get("name") or target_email.split("@")[0]
 
     sent = send_welcome_email(target_email, display_name)
-    return {"message": f"Welcome email sent to {target_email}.", "sent": sent}
+    _ensure_email_sent(sent, target_email, "welcome email")
+    return {"message": f"Welcome email sent to {target_email}.", "sent": True}
 
 
 @router.post("/send-verification")
@@ -132,7 +142,8 @@ def request_email_verification(
         user_name=display_name,
         verification_token=token,
     )
-    return {"message": f"Verification link email sent to {target_email}.", "sent": sent}
+    _ensure_email_sent(sent, target_email, "verification email")
+    return {"message": f"Verification link email sent to {target_email}.", "sent": True}
 
 
 @router.post("/verify-email/confirm")
@@ -190,7 +201,8 @@ def send_announcement(
         title=payload.title,
         message=payload.message,
     )
-    return {"message": f"Announcement email sent to {target_email}.", "sent": sent}
+    _ensure_email_sent(sent, target_email, "announcement email")
+    return {"message": f"Announcement email sent to {target_email}.", "sent": True}
 
 
 @router.post("/send-reminder")
@@ -215,7 +227,8 @@ def send_reminder(
         due_time=payload.due_time or "Today",
         description=payload.description or "",
     )
-    return {"message": f"Reminder email sent to {target_email}.", "sent": sent}
+    _ensure_email_sent(sent, target_email, "reminder email")
+    return {"message": f"Reminder email sent to {target_email}.", "sent": True}
 
 
 class CalendarReminderTestRequest(BaseModel):
@@ -257,6 +270,7 @@ def send_calendar_reminder_test(
         due_time=due_time,
         description=description,
     )
-    return {"message": f"Calendar reminder test email sent to {target_email}.", "sent": sent}
+    _ensure_email_sent(sent, target_email, "calendar reminder test email")
+    return {"message": f"Calendar reminder test email sent to {target_email}.", "sent": True}
 
 

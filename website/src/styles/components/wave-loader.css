@@ -32,10 +32,15 @@
 .wave-loader-waves {
   position: relative;
   width: clamp(200px, 56vw, 260px);
-  height: 44px;
+  height: 64px;
   margin: 6px 0;
   overflow: hidden;
   border-radius: var(--radius-full);
+  box-shadow:
+    inset 0 2px 6px rgba(0, 0, 0, 0.12),
+    inset 0 -3px 10px rgba(255, 255, 255, 0.28),
+    0 1px 0 rgba(255, 255, 255, 0.45);
+  animation: wave-bob 3.2s ease-in-out infinite alternate;
 }
 
 .wave-line {
@@ -49,22 +54,62 @@
 
 .wave-line-back {
   top: -6px;
-  background: var(--color-primary-light);
-  animation-duration: 4.4s;
+  background: var(--color-primary);
+  opacity: 0.3;
+  animation-duration: 4.8s;
 }
 
 .wave-line-mid {
-  top: 0;
+  top: -1px;
   background: var(--color-primary);
-  opacity: 0.5;
-  animation-duration: 3.1s;
+  opacity: 0.55;
+  animation-duration: 3.6s;
 }
 
 .wave-line-front {
-  top: 6px;
+  top: 4px;
   background: var(--color-primary);
   opacity: 0.85;
-  animation-duration: 2.2s;
+  animation-duration: 2.6s;
+}
+
+.wave-line-foam {
+  top: 8px;
+  background: var(--color-foam);
+  opacity: 0.95;
+  animation-duration: 1.9s;
+}
+
+.wave-foam {
+  position: absolute;
+  top: -5px;
+  width: 11px;
+  height: 11px;
+  border-radius: var(--radius-full);
+  background: var(--color-foam);
+  opacity: 0.85;
+  filter: blur(0.5px);
+  animation: foam-bob 2.4s ease-in-out infinite alternate;
+}
+
+.wave-foam-2 {
+  top: -8px;
+  left: 30%;
+  width: 8px;
+  height: 8px;
+  opacity: 0.65;
+  animation-delay: -0.8s;
+  animation-duration: 2s;
+}
+
+.wave-foam-3 {
+  top: -3px;
+  left: 64%;
+  width: 13px;
+  height: 13px;
+  opacity: 0.55;
+  animation-delay: -1.4s;
+  animation-duration: 2.8s;
 }
 
 @keyframes wave-drift {
@@ -76,8 +121,28 @@
   }
 }
 
+@keyframes wave-bob {
+  from {
+    transform: translateY(-4px);
+  }
+  to {
+    transform: translateY(4px);
+  }
+}
+
+@keyframes foam-bob {
+  from {
+    transform: translateY(-2px);
+  }
+  to {
+    transform: translateY(2px);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .wave-line {
+  .wave-loader-waves,
+  .wave-line,
+  .wave-foam {
     animation: none;
   }
 }

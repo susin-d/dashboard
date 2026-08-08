@@ -375,7 +375,12 @@ def request_combine_account(
             "owner_email": owner_email,
             "target_email": target_email,
         })
-        send_account_combine_email(target_email, owner_email, token)
+        sent = send_account_combine_email(target_email, owner_email, token)
+        if not sent:
+            raise HTTPException(
+                status_code=status.HTTP_502_BAD_GATEWAY,
+                detail=f"Failed to send verification email to {target_email}. Please check SMTP configuration and try again.",
+            )
         return {"message": f"Verification email sent to {target_email} via SMTP."}
     except Exception as exc:
         raise HTTPException(
