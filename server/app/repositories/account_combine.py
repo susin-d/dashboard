@@ -1,9 +1,15 @@
 """Account combining: pending requests, confirmation, unlink, and info."""
 
+from datetime import datetime, timezone
+
 from firebase_admin import firestore
 from google.cloud.firestore_v1 import Client
 
 from app.repositories.users import get_user_by_email, get_users_collection
+
+
+def _now_utc() -> datetime:
+    return datetime.now(timezone.utc)
 
 
 def add_pending_combine_request(database: Client, owner_uid: str, target_email: str) -> None:
@@ -18,7 +24,7 @@ def add_pending_combine_request(database: Client, owner_uid: str, target_email: 
     if not any(req.get("email") == normalized_target for req in pending):
         pending.append({
             "email": normalized_target,
-            "requested_at": firestore.SERVER_TIMESTAMP,
+            "requested_at": _now_utc(),
         })
         owner_ref.update({"pending_combine_requests": pending, "updated_at": firestore.SERVER_TIMESTAMP})
 
@@ -48,7 +54,7 @@ def confirm_combine_accounts(
         combined.append({
             "email": normalized_target,
             "uid": target_uid or "",
-            "linked_at": firestore.SERVER_TIMESTAMP,
+            "linked_at": _now_utc(),
         })
 
     # Remove from pending requests
@@ -71,7 +77,7 @@ def confirm_combine_accounts(
                 target_combined.append({
                     "email": owner_email,
                     "uid": owner_uid,
-                    "linked_at": firestore.SERVER_TIMESTAMP,
+                    "linked_at": _now_utc(),
                 })
                 target_ref.update({
                     "combined_accounts": target_combined,
