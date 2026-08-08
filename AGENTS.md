@@ -31,6 +31,22 @@ Instructions and guidelines for AI Coding Agents working in the **Starwaves** co
    - **No Magic Values**: Extract hardcoded magic numbers, string constants, and API URLs into named constants or configuration settings.
    - **Boy Scout Rule**: Always leave the codebase cleaner than you found it. Refactor small code smells encountered while working on a feature.
 
+5. **One File = One Feature**:
+   - Every file must represent **exactly one feature or one responsibility**. Do not mix unrelated features into a single file.
+   - When a module grows beyond its feature, split it into a package where each sub-module owns one feature and the package `__init__.py` only re-exports a combined entry point (e.g. `router`, `__all__`).
+   - Examples of valid feature groupings:
+     - Backend route groups: `app/api/routes/auth/` → `oauth.py`, `credentials.py`, `password.py`, `account.py`, `combine.py`, plus a shared `_shared.py`.
+     - Backend repositories: `app/repositories/` → `password.py`, `users.py`, `account_combine.py`, `account_deletion.py`, `jobs.py`, `projects.py`, `notifications.py`, `pagination.py`.
+     - Frontend pages: a page's feature sections live under `website/src/pages/settings/` (e.g. `ProfileSection.jsx`, `GmailSection.jsx`), and the page shell only composes them.
+   - Shared helpers may live in a `_shared.py` / `index.js` within the feature package so they are not duplicated across files.
+   - Never create a "utils"/"misc" dumping ground for unrelated logic; route each helper to the feature that owns it.
+
+6. **One Function = One Thing**:
+   - Each function must do **one thing** and be named for that thing.
+   - A function that branches on mode flags (e.g. `if (mode === 'reset') ... else ...`) or dispatches across unrelated behaviors must be split into dedicated handlers (e.g. `handleAuthSubmit` / `handleResetSubmit`).
+   - A single dispatcher that routes to many unrelated operations (e.g. `confirmDisconnect` switching over 8 kinds) should be replaced by per-feature handlers that each live next to their feature.
+   - If a function's name needs "and" to describe it, split it.
+
 
 
 ---

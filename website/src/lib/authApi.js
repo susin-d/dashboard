@@ -119,6 +119,21 @@ export async function requestPasswordReset(email) {
   )
 }
 
+export async function resetPassword(token, password) {
+  return request(
+    '/auth/reset-password',
+    {
+      method: 'POST',
+      body: JSON.stringify({ token, password }),
+    },
+    false,
+  )
+}
+
+export async function deleteAccount() {
+  return request('/auth/account', { method: 'DELETE' }, true)
+}
+
 export async function fetchCurrentUser() {
   const token = getStoredAuthToken()
   if (!token) return null

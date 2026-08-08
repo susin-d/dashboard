@@ -57,6 +57,12 @@ function App() {
   const [sessionUser, setSessionUser] = useState(null)
   const activeUser = currentUser || sessionUser
 
+  const resetToken = (() => {
+    const hash = window.location.hash || ''
+    if (!hash.includes('#reset-token=')) return null
+    return decodeURIComponent(hash.split('#reset-token=')[1] || '').trim() || null
+  })()
+
   const {
     route,
     setRoute,
@@ -178,6 +184,7 @@ function App() {
     if (
       authReady &&
       activeUser &&
+      !resetToken &&
       (route === '/' || route === '/login' || route === '/signup')
     ) {
       window.history.replaceState({}, '', '/app/dashboard')
@@ -185,7 +192,7 @@ function App() {
       setActivePage('dashboard')
       setSelectedProjectId(null)
     }
-  }, [authReady, activeUser, route, setRoute, setActivePage, setSelectedProjectId])
+  }, [authReady, activeUser, route, setRoute, setActivePage, setSelectedProjectId, resetToken])
 
   useEffect(() => {
     if (route === '/app') {
@@ -436,7 +443,11 @@ function App() {
   }
 
   if (route === '/') {
-    if (!authReady || activeUser) {
+    if (!authReady) return <WaveLoader />
+    if (resetToken) {
+      return publicRoute(<AuthPage mode="reset" resetToken={resetToken} onNavigate={navigateRoute} onAuthenticate={beginOnboarding} />)
+    }
+    if (activeUser) {
       return <WaveLoader />
     }
     return publicRoute(<AuthPage mode="login" onNavigate={navigateRoute} onAuthenticate={beginOnboarding} />)
@@ -444,13 +455,21 @@ function App() {
   if (route === '/privacy') return publicRoute(<PrivacyPolicyPage onNavigate={navigateRoute} />)
   if (route === '/terms') return publicRoute(<TermsOfServicePage onNavigate={navigateRoute} />)
   if (route === '/login') {
-    if (!authReady || activeUser) {
+    if (!authReady) return <WaveLoader />
+    if (resetToken) {
+      return publicRoute(<AuthPage mode="reset" resetToken={resetToken} onNavigate={navigateRoute} onAuthenticate={beginOnboarding} />)
+    }
+    if (activeUser) {
       return <WaveLoader />
     }
     return publicRoute(<AuthPage mode="login" onNavigate={navigateRoute} onAuthenticate={beginOnboarding} />)
   }
   if (route === '/signup') {
-    if (!authReady || activeUser) {
+    if (!authReady) return <WaveLoader />
+    if (resetToken) {
+      return publicRoute(<AuthPage mode="reset" resetToken={resetToken} onNavigate={navigateRoute} onAuthenticate={beginOnboarding} />)
+    }
+    if (activeUser) {
       return <WaveLoader />
     }
     return publicRoute(<AuthPage mode="signup" onNavigate={navigateRoute} onAuthenticate={beginOnboarding} />)

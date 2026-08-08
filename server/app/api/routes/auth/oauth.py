@@ -1,0 +1,149 @@
+"""Google OAuth authentication: login redirect and callback."""
+
+import asyncio
+from urllib.parse import urlencode
+
+import httpx
+from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi.responses import HTMLResponse
+from google.cloud.firestore_v1 import Client
+from itsdangerous import BadSignature, SignatureExpired
+
+from app.api.routes.auth._shared import _send_welcome_email_best_effort, state_serializer
+from app.core.auth import create_user_token
+from app.core.config import settings
+from app.db import get_firestore
+from app.repositories.users import get_or_create_google_user
+
+router = APIRouter(prefix="/auth")
+
+
+@router.get("/google/login")
+def google_login():
+    if not settings.google_oauth_client_id:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Google OAuth is not configured on the server.",
+        )
+    state = state_serializer().dumps({"action": "google-auth"})
+    query = urlencode(
+        {
+            "client_id": settings.google_oauth_client_id,
+            "redirect_uri": settings.auth_google_callback_url,
+            "response_type": "code",
+            "scope": "openid email profile",
+            "access_type": "online",
+            "state": state,
+            "prompt": "select_account",
+        },
+    )
+    return {"url": f"https://accounts.google.com/o/oauth2/v2/auth?{query}"}
+
+
+@router.get("/google/callback", response_class=HTMLResponse)
+async def google_callback(
+    code: str = Query(...),
+    state: str = Query(...),
+    database: Client = Depends(get_firestore),
+):
+    try:
+        state_serializer().loads(state, max_age=600)
+    except (BadSignature, SignatureExpired):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Google OAuth state token is invalid or expired.",
+        ) from None
+
+    if not settings.google_oauth_client_id or not settings.google_oauth_client_secret:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Google OAuth is not properly configured.",
+        )
+
+    async with httpx.AsyncClient() as client:
+        token_response = await client.post(
+            "https://oauth2.googleapis.com/token",
+            data={
+                "client_id": settings.google_oauth_client_id,
+                "client_secret": settings.google_oauth_client_secret,
+                "code": code,
+                "grant_type": "authorization_code",
+                "redirect_uri": settings.auth_google_callback_url,
+            },
+        )
+        if token_response.status_code != 200:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Failed to exchange authorization code with Google.",
+            )
+        tokens = token_response.json()
+
+        userinfo_response = await client.get(
+            "https://www.googleapis.com/oauth2/v3/userinfo",
+            headers={"Authorization": f"Bearer {tokens['access_token']}"},
+        )
+        if userinfo_response.status_code != 200:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Failed to fetch Google user profile.",
+            )
+        google_user = userinfo_response.json()
+
+    email = google_user.get("email")
+    name = google_user.get("name") or google_user.get("given_name") or (email.split("@")[0] if email else "")
+    picture = google_user.get("picture")
+
+    if not email:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Google account did not return an email address.",
+        )
+
+    user_record = get_or_create_google_user(
+        database=database,
+        email=email,
+        name=name,
+        picture=picture,
+    )
+
+    if user_record.get("is_new"):
+        await asyncio.to_thread(
+            _send_welcome_email_best_effort,
+            user_record["email"],
+            user_record.get("display_name") or name,
+        )
+
+    token = create_user_token(
+        {
+            "uid": user_record["uid"],
+            "email": user_record["email"],
+            "name": user_record.get("display_name") or name,
+        },
+    )
+
+    html_content = f"""
+    <!DOCTYPE html>
+    <html>
+      <head><title>Authentication Successful</title></head>
+      <body>
+        <script>
+          const authData = {{
+            token: "{token}",
+            user: {{
+              uid: "{user_record['uid']}",
+              email: "{user_record['email']}",
+              displayName: "{user_record.get('display_name') or name}"
+            }}
+          }};
+          if (window.opener) {{
+            window.opener.postMessage({{ type: "STARWAVES_AUTH_SUCCESS", data: authData }}, "*");
+            window.close();
+          }} else {{
+            window.location.href = "{settings.frontend_url}/#token=" + encodeURIComponent(token);
+          }}
+        </script>
+        <p>Authentication successful. You can close this window.</p>
+      </body>
+    </html>
+    """
+    return HTMLResponse(content=html_content)

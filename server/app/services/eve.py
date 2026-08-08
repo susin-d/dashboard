@@ -12,7 +12,9 @@ from pydantic import ValidationError
 from app.core.config import settings
 from app.repositories import documents, eve_sessions, todos
 from app.repositories.eve import add_memory, delete_memory, list_memories
-from app.repositories.workspace import JobRepository, NotificationRepository, ProjectRepository
+from app.repositories.jobs import JobRepository
+from app.repositories.notifications import NotificationRepository
+from app.repositories.projects import ProjectRepository
 from app.schemas.document import DocumentUpsert
 from app.schemas.todo import TodoCreate, TodoUpdate
 from app.schemas.workspace import (

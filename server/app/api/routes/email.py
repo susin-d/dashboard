@@ -8,7 +8,7 @@ from pydantic import BaseModel, EmailStr
 from app.core.auth import get_current_user
 from app.core.config import settings
 from app.db import get_firestore
-from app.repositories.user_repository import get_user_by_id, mark_email_verified
+from app.repositories.users import get_user_by_id, mark_email_verified
 from app.services.email import (
     EmailDeliveryError,
     send_announcement_email,
