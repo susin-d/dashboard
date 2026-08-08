@@ -162,8 +162,8 @@ function App() {
     if (savedTheme) {
       try {
         const parsed = JSON.parse(savedTheme)
-        if (parsed.colors) {
-          applyThemeVariables(parsed.colors)
+        if (parsed && typeof parsed === 'object') {
+          applyThemeVariables(parsed)
         }
       } catch (err) {
         console.error('Could not load custom theme:', err)

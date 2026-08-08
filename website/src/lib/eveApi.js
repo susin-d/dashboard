@@ -13,6 +13,9 @@ export async function sendEveMessage(messages) {
     body: JSON.stringify({ messages }),
   }, 60_000)
   if (!response.ok) {
+    if (response.status === 404) {
+      throw new Error(`Eve endpoint not found (404). Please ensure the backend server at ${API_URL} is updated and running.`)
+    }
     const failure = await response.json().catch(() => null)
     throw new Error(failure?.detail || 'Eve is unavailable right now.')
   }
@@ -29,6 +32,9 @@ export async function deleteEveRecord(resource, recordId) {
     body: JSON.stringify({ resource, record_id: recordId }),
   }, 30_000)
   if (!response.ok) {
+    if (response.status === 404) {
+      throw new Error(`Eve endpoint not found (404). Please ensure the backend server at ${API_URL} is updated and running.`)
+    }
     const failure = await response.json().catch(() => null)
     throw new Error(failure?.detail || 'Eve could not delete that record.')
   }

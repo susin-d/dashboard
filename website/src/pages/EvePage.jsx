@@ -5,16 +5,7 @@ import {
   ShieldCheck,
   RotateCcw,
   Sparkles,
-  Calendar,
-  FolderKanban,
-  CheckSquare,
-  FileText,
-  Briefcase,
-  ExternalLink,
-  ChevronRight,
   Info,
-  Clock,
-  Layers,
 } from 'lucide-react'
 import { sendEveMessage } from '../lib/eveApi'
 
@@ -26,54 +17,25 @@ const STARTER_MESSAGES = [
   },
 ]
 
-const EVE_PROMPT_TEMPLATES = [
-  {
-    icon: Calendar,
-    title: 'Plan my day',
-    prompt: 'Plan my day by reviewing tasks, upcoming deadlines, and calendar events.',
-    description: 'Get a prioritized schedule for today',
-  },
-  {
-    icon: CheckSquare,
-    title: 'Audit overdue tasks',
-    prompt: 'Find all overdue tasks and suggest next actions to complete or reschedule them.',
-    description: 'Identify pending todos and roadblocks',
-  },
-  {
-    icon: FolderKanban,
-    title: 'Review project status',
-    prompt: 'List active projects and highlight any that are stale or need attention.',
-    description: 'Summarize active development projects',
-  },
-  {
-    icon: Briefcase,
-    title: 'Job application update',
-    prompt: 'Summarize recent job application statuses and upcoming interview dates.',
-    description: 'Track application progress',
-  },
-  {
-    icon: FileText,
-    title: 'Search documents',
-    prompt: 'Search through workspace documents for notes or drafts that need updates.',
-    description: 'Audit workspace notes and files',
-  },
+const EVE_PRESET_PROMPTS = [
+  { command: 'today', label: 'Plan my day', prompt: 'Plan my day by reviewing tasks, upcoming deadlines, and calendar events.', description: 'Review tasks, deadlines, and calendar events' },
+  { command: 'tasks', label: 'Manage tasks & overdue', prompt: 'Find all overdue tasks and suggest next priority actions.', description: 'Audit overdue tasks and list priority items' },
+  { command: 'projects', label: 'Work with projects', prompt: 'Review project progress, stale projects, and next steps.', description: 'Review project progress and stale projects' },
+  { command: 'jobs', label: 'Track applications', prompt: 'Summarize recent job application statuses and upcoming interview dates.', description: 'Find job application status and interview dates' },
+  { command: 'documents', label: 'Search documents', prompt: 'Search workspace documents and summarize key notes.', description: 'Search documents and notes' },
+  { command: 'calendar', label: 'Check calendar & contests', prompt: 'Look up upcoming calendar events, competitive coding contests, and deadlines.', description: 'Look up events, contests, and deadlines' },
+  { command: 'insights', label: 'Workspace overview', prompt: 'Summarize overall workspace dashboard metrics and suggest next actions.', description: 'Generate overall workspace insights' },
 ]
 
-const EVE_SKILLS = [
-  { command: 'today', label: 'Plan my day', description: 'Review tasks, deadlines, and calendar events' },
-  { command: 'tasks', label: 'Manage tasks', description: 'Create, update, or find workspace todos' },
-  { command: 'projects', label: 'Work with projects', description: 'Review project progress and next steps' },
-  { command: 'jobs', label: 'Track applications', description: 'Find or update job application records' },
-  { command: 'documents', label: 'Search documents', description: 'Find workspace documents and notes' },
-  { command: 'calendar', label: 'Check calendar', description: 'Look up events, contests, and deadlines' },
-]
-
-const WORKSPACE_RESOURCES = [
-  { name: 'Todos', desc: 'Create, update, toggle, soft-delete, or restore task items', icon: CheckSquare, route: 'todo' },
-  { name: 'Projects', desc: 'Manage repositories, tech stacks, milestones, and links', icon: FolderKanban, route: 'projects' },
-  { name: 'Job Applications', desc: 'Track companies, roles, interview dates, and notes', icon: Briefcase, route: 'jobs' },
-  { name: 'Hackathons', desc: 'Track dates, prizes, teams, and submission links', icon: Layers, route: 'hackathons' },
-  { name: 'Documents', desc: 'Read, write, edit, and organize notes and specs', icon: FileText, route: 'documents' },
+const EVE_TOOLS_LIST = [
+  { command: 'todos', name: 'todos', label: 'Tasks & Todos Tool', description: 'Read, create, update, or soft-delete task items' },
+  { command: 'projects', name: 'projects', label: 'Projects Tool', description: 'Access project repositories, milestones, and status' },
+  { command: 'jobs', name: 'jobs', label: 'Job Tracker Tool', description: 'Access job applications, interview dates, and contacts' },
+  { command: 'hackathons', name: 'hackathons', label: 'Hackathons Tool', description: 'Access hackathons, schedules, and prize details' },
+  { command: 'documents', name: 'documents', label: 'Documents Tool', description: 'Access notes, project plans, and drive specs' },
+  { command: 'notifications', name: 'notifications', label: 'Notifications Tool', description: 'Access workspace notifications and reminders' },
+  { command: 'search', name: 'search', label: 'Workspace Search Tool', description: 'Search across all local workspace resources' },
+  { command: 'insight', name: 'insight', label: 'Workspace Insights Tool', description: 'Compute deadlines, overdue tasks, or dashboard summary' },
 ]
 
 const MAX_CHARS = 4000
@@ -83,7 +45,6 @@ export function EvePage({ onNavigate, onWorkspaceChanged }) {
   const [draft, setDraft] = useState('')
   const [isSending, setIsSending] = useState(false)
   const [error, setError] = useState('')
-  const [activeTab, setActiveTab] = useState('chat') // 'chat' | 'capabilities'
 
   const messagesEndRef = useRef(null)
   const composerRef = useRef(null)
@@ -140,13 +101,23 @@ export function EvePage({ onNavigate, onWorkspaceChanged }) {
     setError('')
   }
 
-  const skillQuery = draft.startsWith('/') ? draft.slice(1).split(/\s/)[0].toLowerCase() : ''
-  const matchingSkills = EVE_SKILLS.filter((skill) =>
-    `${skill.command} ${skill.label}`.includes(skillQuery),
+  const toolQuery = draft.startsWith('@') ? draft.slice(1).split(/\s/)[0].toLowerCase() : ''
+  const matchingTools = EVE_TOOLS_LIST.filter((tool) =>
+    `${tool.command} ${tool.label} ${tool.name}`.toLowerCase().includes(toolQuery),
   )
 
-  const selectSkill = (skill) => {
-    setDraft(`/${skill.command} `)
+  const promptQuery = draft.startsWith('/') ? draft.slice(1).split(/\s/)[0].toLowerCase() : ''
+  const matchingPrompts = EVE_PRESET_PROMPTS.filter((item) =>
+    `${item.command} ${item.label}`.toLowerCase().includes(promptQuery),
+  )
+
+  const selectTool = (tool) => {
+    setDraft(`@${tool.command} `)
+    composerRef.current?.focus()
+  }
+
+  const selectPrompt = (item) => {
+    setDraft(item.prompt)
     composerRef.current?.focus()
   }
 
@@ -154,61 +125,24 @@ export function EvePage({ onNavigate, onWorkspaceChanged }) {
 
   return (
     <div className="eve-page-container">
-      {/* ── Header Bar ── */}
-      <header className="eve-header-card">
-        <div className="eve-header-main">
-          <div className="eve-avatar-large">
-            <Bot size={28} />
-          </div>
-          <div className="eve-header-details">
-            <div className="eve-title-row">
-              <h1>Eve AI Copilot</h1>
-              <span className="eve-badge">
-                <span className="eve-pulse-dot" /> Connected
-              </span>
-            </div>
-            <p className="eve-subtitle">
-              Your autonomous StarWaves assistant for tasks, projects, documents, calendar & application management.
-            </p>
-          </div>
-        </div>
-        <div className="eve-header-actions">
-          <button
-            type="button"
-            className={`eve-tab-btn ${activeTab === 'chat' ? 'active' : ''}`}
-            onClick={() => setActiveTab('chat')}
-          >
-            Chat Stream
-          </button>
-          <button
-            type="button"
-            className={`eve-tab-btn ${activeTab === 'capabilities' ? 'active' : ''}`}
-            onClick={() => setActiveTab('capabilities')}
-          >
-            Capabilities & Safety
-          </button>
-          <button
-            type="button"
-            className="eve-reset-btn"
-            onClick={handleReset}
-            title="Reset conversation history"
-          >
-            <RotateCcw size={15} />
-            <span>Reset</span>
-          </button>
-        </div>
-      </header>
-
       {/* ── Main Content Grid ── */}
-      <div className="eve-content-grid">
-        {/* Left / Primary Column: Chat Stream */}
-        {activeTab === 'chat' && (
-          <main className="eve-chat-section">
+        <main className="eve-chat-section">
             <div className="eve-banner-privacy">
-              <ShieldCheck size={16} />
-              <span>
-                Private workspace scope — Eve operates strictly on your signed-in account data with 7-day soft-delete recovery protection.
-              </span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flex: 1 }}>
+                <ShieldCheck size={16} />
+                <span>
+                  Private workspace scope — Eve operates strictly on your signed-in account data with 7-day soft-delete recovery protection.
+                </span>
+              </div>
+              <button
+                type="button"
+                className="eve-reset-btn"
+                onClick={handleReset}
+                title="Reset conversation history"
+              >
+                <RotateCcw size={14} />
+                <span>Reset</span>
+              </button>
             </div>
 
             <div className="eve-messages-feed" role="log" aria-live="polite" aria-label="Eve AI conversation feed">
@@ -286,22 +220,44 @@ export function EvePage({ onNavigate, onWorkspaceChanged }) {
             {/* Composer Form */}
             <form className="eve-page-composer" onSubmit={handleSubmit}>
               <div className="eve-composer-inner">
-                {draft.startsWith('/') && matchingSkills.length > 0 && (
-                  <div className="eve-skills-popup" role="listbox">
+                {draft.startsWith('@') && matchingTools.length > 0 && (
+                  <div className="eve-skills-popup" role="listbox" aria-label="Eve tools">
                     <div className="eve-skills-popup-title">
-                      Available Commands <span>Type / to filter</span>
+                      Workspace Tools & Resources <span>Type @ to reference</span>
                     </div>
-                    {matchingSkills.map((skill) => (
+                    {matchingTools.map((tool) => (
                       <button
                         type="button"
-                        key={skill.command}
+                        key={tool.command}
                         className="eve-skill-item"
-                        onClick={() => selectSkill(skill)}
+                        onClick={() => selectTool(tool)}
                       >
-                        <span className="eve-skill-cmd">/{skill.command}</span>
+                        <span className="eve-skill-cmd">@{tool.command}</span>
                         <div className="eve-skill-desc">
-                          <strong>{skill.label}</strong>
-                          <small>{skill.description}</small>
+                          <strong>{tool.label}</strong>
+                          <small>{tool.description}</small>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                {draft.startsWith('/') && matchingPrompts.length > 0 && (
+                  <div className="eve-skills-popup" role="listbox" aria-label="Eve pre-saved prompts">
+                    <div className="eve-skills-popup-title">
+                      Pre-saved Prompts <span>Type / to filter</span>
+                    </div>
+                    {matchingPrompts.map((item) => (
+                      <button
+                        type="button"
+                        key={item.command}
+                        className="eve-skill-item"
+                        onClick={() => selectPrompt(item)}
+                      >
+                        <span className="eve-skill-cmd">/{item.command}</span>
+                        <div className="eve-skill-desc">
+                          <strong>{item.label}</strong>
+                          <small>{item.description}</small>
                         </div>
                       </button>
                     ))}
@@ -318,7 +274,7 @@ export function EvePage({ onNavigate, onWorkspaceChanged }) {
                       handleSubmit(e)
                     }
                   }}
-                  placeholder="Ask Eve to plan your day, search notes, update projects, or audit tasks… (Press Enter to send)"
+                  placeholder="Ask Eve anything… Type @ to call a tool or / for a pre-saved prompt"
                   rows={3}
                   maxLength={MAX_CHARS}
                   disabled={isSending}
@@ -345,135 +301,6 @@ export function EvePage({ onNavigate, onWorkspaceChanged }) {
               </div>
             </form>
           </main>
-        )}
-
-        {/* Capabilities Tab Content (when active) */}
-        {activeTab === 'capabilities' && (
-          <main className="eve-capabilities-section">
-            <h2>Eve Capabilities & Integration Overview</h2>
-            <p className="eve-cap-intro">
-              Eve connects directly to your StarWaves Firestore workspace. It executes tool calls with strict permission controls, ensuring your integrations and tokens remain secure.
-            </p>
-
-            <div className="eve-cap-cards-grid">
-              {WORKSPACE_RESOURCES.map((res, i) => {
-                const IconComp = res.icon
-                return (
-                  <div key={i} className="eve-cap-card">
-                    <div className="eve-cap-card-header">
-                      <div className="eve-cap-icon">
-                        <IconComp size={20} />
-                      </div>
-                      <div>
-                        <h3>{res.name}</h3>
-                        <span className="eve-cap-badge">Read, Create, Update, Delete</span>
-                      </div>
-                    </div>
-                    <p>{res.desc}</p>
-                    <button
-                      type="button"
-                      className="eve-cap-nav-link"
-                      onClick={() => onNavigate?.(res.route)}
-                    >
-                      Open {res.name} page <ChevronRight size={14} />
-                    </button>
-                  </div>
-                )
-              })}
-            </div>
-
-            <div className="eve-safety-box">
-              <Clock size={20} />
-              <div>
-                <h3>7-Day Recovery Guarantee</h3>
-                <p>
-                  When Eve soft-deletes a task, project, job, hackathon, or document, the record enters a 7-day recovery stage. You can ask Eve at any time to restore deleted records before permanent purge.
-                </p>
-              </div>
-            </div>
-          </main>
-        )}
-
-        {/* Right / Secondary Sidebar Column */}
-        <aside className="eve-sidebar-section">
-          {/* Quick Prompts Box */}
-          <div className="eve-sidebar-card">
-            <h3>
-              <Sparkles size={16} /> Quick Action Prompts
-            </h3>
-            <p className="eve-sidebar-desc">Click any prompt to trigger Eve</p>
-            <div className="eve-sidebar-prompts-list">
-              {EVE_PROMPT_TEMPLATES.map((item, idx) => (
-                <button
-                  key={idx}
-                  type="button"
-                  className="eve-sidebar-prompt-btn"
-                  onClick={() => {
-                    setActiveTab('chat')
-                    sendMessage(item.prompt)
-                  }}
-                  disabled={isSending}
-                >
-                  <span>{item.title}</span>
-                  <ChevronRight size={14} />
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Direct Workspace Navigation Shortcuts */}
-          <div className="eve-sidebar-card">
-            <h3>Workspace Shortcuts</h3>
-            <div className="eve-shortcuts-list">
-              <button
-                type="button"
-                className="eve-shortcut-btn"
-                onClick={() => onNavigate?.('todo')}
-              >
-                <CheckSquare size={16} />
-                <span>Todo List</span>
-                <ExternalLink size={13} />
-              </button>
-              <button
-                type="button"
-                className="eve-shortcut-btn"
-                onClick={() => onNavigate?.('projects')}
-              >
-                <FolderKanban size={16} />
-                <span>Projects</span>
-                <ExternalLink size={13} />
-              </button>
-              <button
-                type="button"
-                className="eve-shortcut-btn"
-                onClick={() => onNavigate?.('documents')}
-              >
-                <FileText size={16} />
-                <span>Documents</span>
-                <ExternalLink size={13} />
-              </button>
-              <button
-                type="button"
-                className="eve-shortcut-btn"
-                onClick={() => onNavigate?.('jobs')}
-              >
-                <Briefcase size={16} />
-                <span>Jobs</span>
-                <ExternalLink size={13} />
-              </button>
-              <button
-                type="button"
-                className="eve-shortcut-btn"
-                onClick={() => onNavigate?.('calendar')}
-              >
-                <Calendar size={16} />
-                <span>Calendar</span>
-                <ExternalLink size={13} />
-              </button>
-            </div>
-          </div>
-        </aside>
-      </div>
     </div>
   )
 }

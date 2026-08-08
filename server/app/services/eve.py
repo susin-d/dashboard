@@ -4,6 +4,7 @@ from typing import Any
 from uuid import uuid4
 
 from fastapi import HTTPException, status
+from google.cloud import firestore
 from google.cloud.firestore_v1 import Client
 from openai import OpenAI, OpenAIError
 from pydantic import ValidationError

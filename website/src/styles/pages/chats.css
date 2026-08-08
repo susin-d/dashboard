@@ -386,8 +386,8 @@
 }
 
 .chat-message-row.self .message-bubble {
-  background: #ffffff;
-  color: #000000;
+  background: var(--color-primary);
+  color: var(--text-inverse);
   border-top-right-radius: 2px;
   font-weight: 450;
 }

@@ -271,6 +271,42 @@ export function markAllNotificationsRead() {
   return request('/notifications/mark-all-read', { method: 'POST' })
 }
 
+export function registerDeviceToken(token, deviceName = null) {
+  return request('/notifications/device-token', {
+    method: 'POST',
+    body: JSON.stringify({ token, device_name: deviceName }),
+  })
+}
+
+export function unregisterDeviceToken(tokenId) {
+  return request(`/notifications/device-token/${encodeURIComponent(tokenId)}`, {
+    method: 'DELETE',
+  })
+}
+
+export function getRegisteredDevices() {
+  return request('/notifications/devices')
+}
+
+export function queueNotification(title, body, scheduledAt, data = null) {
+  return request('/notifications/queue', {
+    method: 'POST',
+    body: JSON.stringify({ title, body, scheduled_at: scheduledAt, data }),
+  })
+}
+
+export function sendPushNotification(title, body, data = null, targetDeviceToken = null) {
+  return request('/notifications/send', {
+    method: 'POST',
+    body: JSON.stringify({
+      title,
+      body,
+      data,
+      target_device_token: targetDeviceToken,
+    }),
+  })
+}
+
 export function loadContests(cursor = null) {
   return request(`/contests?limit=20${cursor ? `&cursor=${encodeURIComponent(cursor)}` : ''}`, {}, false)
 }
@@ -285,4 +321,5 @@ export function sendCalendarReminderTest(window = '1h', eventTitle = 'Team Sync 
     body: JSON.stringify({ window, event_title: eventTitle }),
   })
 }
+
 

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import {
   Check,
   CalendarDays,
+  Clock,
   Code2,
   ExternalLink,
   FileText,
@@ -10,10 +11,13 @@ import {
   Mail,
   MessageSquare,
   GitFork,
+  Plus,
   Presentation,
   RefreshCw,
   Save,
+  Send,
   Sheet,
+  Smartphone,
   Trash2,
   Upload,
   FileUp,
@@ -61,6 +65,11 @@ import {
   loadHackathonSources,
   setHackathonSourceEnabled,
   sendCalendarReminderTest,
+  getRegisteredDevices,
+  registerDeviceToken,
+  unregisterDeviceToken,
+  sendPushNotification,
+  queueNotification,
 } from '../lib/workspaceApi'
 
 const workspaceApps = [
@@ -172,6 +181,113 @@ export function SettingPage({
   const [calendarReminderTestBusy, setCalendarReminderTestBusy] = useState(false)
   const [calendarReminderTestMessage, setCalendarReminderTestMessage] = useState('')
 
+  const [devices, setDevices] = useState([])
+  const [devicesLoading, setDevicesLoading] = useState(false)
+  const [deviceMessage, setDeviceMessage] = useState('')
+  const [deviceTokenInput, setDeviceTokenInput] = useState('')
+  const [deviceNameInput, setDeviceNameInput] = useState('')
+  const [pushTitle, setPushTitle] = useState('StarWaves Alert')
+  const [pushBody, setPushBody] = useState('Your project deadline is approaching!')
+  const [pushSending, setPushSending] = useState(false)
+  const [scheduledTitle, setScheduledTitle] = useState('StarWaves Task Reminder')
+  const [scheduledBody, setScheduledBody] = useState('Submit code review report')
+  const [scheduledMinutes, setScheduledMinutes] = useState('5')
+  const [scheduledQueueing, setScheduledQueueing] = useState(false)
+
+  const fetchRegisteredDevices = async () => {
+    setDevicesLoading(true)
+    try {
+      const data = await getRegisteredDevices()
+      setDevices(data.devices || [])
+    } catch (err) {
+      setDeviceMessage(err.message || 'Could not load devices.')
+    } finally {
+      setDevicesLoading(false)
+    }
+  }
+
+  const handleRegisterDeviceToken = async (e) => {
+    e?.preventDefault()
+    if (!deviceTokenInput.trim()) {
+      setDeviceMessage('Token string is required.')
+      return
+    }
+    setDevicesLoading(true)
+    setDeviceMessage('')
+    try {
+      await registerDeviceToken(deviceTokenInput.trim(), deviceNameInput.trim() || 'My Device')
+      setDeviceMessage('Device token registered successfully.')
+      setDeviceTokenInput('')
+      setDeviceNameInput('')
+      await fetchRegisteredDevices()
+    } catch (err) {
+      setDeviceMessage(err.message || 'Could not register token.')
+    } finally {
+      setDevicesLoading(false)
+    }
+  }
+
+  const handleUnregisterDeviceToken = async (tokenId) => {
+    setDevicesLoading(true)
+    setDeviceMessage('')
+    try {
+      await unregisterDeviceToken(tokenId)
+      setDeviceMessage('Device token unregistered successfully.')
+      await fetchRegisteredDevices()
+    } catch (err) {
+      setDeviceMessage(err.message || 'Could not unregister token.')
+    } finally {
+      setDevicesLoading(false)
+    }
+  }
+
+  const handleSendPush = async (e) => {
+    e?.preventDefault()
+    if (!pushTitle.trim() || !pushBody.trim()) {
+      setDeviceMessage('Push title and body are required.')
+      return
+    }
+    setPushSending(true)
+    setDeviceMessage('')
+    try {
+      const res = await sendPushNotification(
+        pushTitle.trim(),
+        pushBody.trim(),
+        { source: 'settings-test' },
+      )
+      setDeviceMessage(`Push sent successfully! Status: ${res.status || 'sent'}`)
+    } catch (err) {
+      setDeviceMessage(err.message || 'Failed to send push notification.')
+    } finally {
+      setPushSending(false)
+    }
+  }
+
+  const handleQueuePush = async (e) => {
+    e?.preventDefault()
+    if (!scheduledTitle.trim() || !scheduledBody.trim()) {
+      setDeviceMessage('Scheduled title and body are required.')
+      return
+    }
+    setScheduledQueueing(true)
+    setDeviceMessage('')
+    try {
+      const minutes = Math.max(1, parseInt(scheduledMinutes, 10) || 5)
+      const scheduledAt = new Date(Date.now() + minutes * 60 * 1000).toISOString()
+      const res = await queueNotification(
+        scheduledTitle.trim(),
+        scheduledBody.trim(),
+        scheduledAt,
+        { source: 'settings-queued' },
+      )
+      setDeviceMessage(`Notification queued successfully! ID: ${res.id}`)
+    } catch (err) {
+      setDeviceMessage(err.message || 'Failed to queue notification.')
+    } finally {
+      setScheduledQueueing(false)
+    }
+  }
+
   const triggerTestCalendarReminder = async (window = '1h') => {
     setCalendarReminderTestBusy(true)
     setCalendarReminderTestMessage('')
@@ -252,6 +368,7 @@ export function SettingPage({
   useEffect(() => {
     fetchGmailAccounts()
     fetchGoogleChatAccounts()
+    fetchRegisteredDevices()
   }, [user?.uid])
 
   useEffect(() => {
@@ -1180,6 +1297,247 @@ export function SettingPage({
           {calendarReminderTestMessage && (
             <p className="hackathon-source-message" role="status" style={{ margin: 0 }}>
               {calendarReminderTestMessage}
+            </p>
+          )}
+        </div>
+      </div>
+
+      <div className="setting-section" id="settings-push-notifications">
+        <div className="section-heading">
+          <h2>Push Notifications &amp; Devices</h2>
+          <p>Register device FCM tokens, send real-time push notifications, and schedule queued background alerts.</p>
+        </div>
+
+        <div className="workspace-settings-card" style={{ padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px', flexWrap: 'wrap', gap: '8px' }}>
+              <h3 style={{ margin: 0, fontSize: '1.05rem', color: 'var(--text-primary, #09090b)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Smartphone size={18} /> Registered User Devices
+              </h3>
+              <button
+                type="button"
+                className="google-calendar-refresh"
+                onClick={fetchRegisteredDevices}
+                disabled={devicesLoading}
+                style={{ padding: '6px 12px', fontSize: '0.82rem' }}
+              >
+                <RefreshCw size={13} className={devicesLoading ? 'spin' : ''} /> Refresh Devices
+              </button>
+            </div>
+
+            {devices.length === 0 ? (
+              <p style={{ margin: 0, fontSize: '0.88rem', color: 'var(--text-muted, #71717a)' }}>
+                No device tokens registered yet. Register a device FCM token below to receive push notifications.
+              </p>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                {devices.map((dev) => (
+                  <div
+                    key={dev.token_id}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justify: 'space-between',
+                      padding: '10px 14px',
+                      borderRadius: '6px',
+                      border: '1px solid var(--border-color, #27272a)',
+                      backgroundColor: 'var(--bg-secondary, #121212)',
+                    }}
+                  >
+                    <div>
+                      <strong style={{ fontSize: '0.9rem', display: 'block', color: 'var(--text-primary, #ffffff)' }}>
+                        {dev.device_name}
+                      </strong>
+                      <code style={{ fontSize: '0.78rem', color: 'var(--text-muted, #71717a)' }}>
+                        Token: {dev.token_preview}
+                      </code>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleUnregisterDeviceToken(dev.token_id)}
+                      disabled={devicesLoading}
+                      style={{
+                        background: 'transparent',
+                        border: '1px solid var(--border-color, #27272a)',
+                        color: 'var(--text-primary, #ffffff)',
+                        padding: '6px 10px',
+                        borderRadius: '4px',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        fontSize: '0.8rem',
+                      }}
+                    >
+                      <Trash2 size={13} /> Unregister
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <hr style={{ border: 'none', borderTop: '1px solid var(--border-color, #27272a)', margin: '0' }} />
+
+          <form onSubmit={handleRegisterDeviceToken} style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            <h3 style={{ margin: 0, fontSize: '1.05rem', color: 'var(--text-primary, #09090b)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <Plus size={18} /> Register Device Token
+            </h3>
+            <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+              <input
+                type="text"
+                placeholder="Device Name (e.g. Chrome Browser, Android Phone)"
+                value={deviceNameInput}
+                onChange={(e) => setDeviceNameInput(e.target.value)}
+                style={{
+                  flex: '1 1 200px',
+                  padding: '8px 12px',
+                  borderRadius: '4px',
+                  border: '1px solid var(--border-color, #27272a)',
+                  backgroundColor: 'var(--bg-input, #09090b)',
+                  color: 'var(--text-primary, #ffffff)',
+                  fontSize: '0.85rem',
+                }}
+              />
+              <input
+                type="text"
+                placeholder="FCM Device Token String"
+                value={deviceTokenInput}
+                onChange={(e) => setDeviceTokenInput(e.target.value)}
+                style={{
+                  flex: '2 1 300px',
+                  padding: '8px 12px',
+                  borderRadius: '4px',
+                  border: '1px solid var(--border-color, #27272a)',
+                  backgroundColor: 'var(--bg-input, #09090b)',
+                  color: 'var(--text-primary, #ffffff)',
+                  fontSize: '0.85rem',
+                }}
+              />
+              <button
+                type="submit"
+                className="google-calendar-add-account"
+                disabled={devicesLoading}
+                style={{ padding: '8px 16px', fontSize: '0.85rem' }}
+              >
+                <Plus size={14} /> Register Token
+              </button>
+            </div>
+          </form>
+
+          <hr style={{ border: 'none', borderTop: '1px solid var(--border-color, #27272a)', margin: '0' }} />
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '16px' }}>
+            <form onSubmit={handleSendPush} style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              <h3 style={{ margin: 0, fontSize: '1.05rem', color: 'var(--text-primary, #09090b)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Send size={18} /> Instant Push Test
+              </h3>
+              <input
+                type="text"
+                placeholder="Push Title"
+                value={pushTitle}
+                onChange={(e) => setPushTitle(e.target.value)}
+                style={{
+                  padding: '8px 12px',
+                  borderRadius: '4px',
+                  border: '1px solid var(--border-color, #27272a)',
+                  backgroundColor: 'var(--bg-input, #09090b)',
+                  color: 'var(--text-primary, #ffffff)',
+                  fontSize: '0.85rem',
+                }}
+              />
+              <textarea
+                placeholder="Push Message Body"
+                value={pushBody}
+                onChange={(e) => setPushBody(e.target.value)}
+                rows={2}
+                style={{
+                  padding: '8px 12px',
+                  borderRadius: '4px',
+                  border: '1px solid var(--border-color, #27272a)',
+                  backgroundColor: 'var(--bg-input, #09090b)',
+                  color: 'var(--text-primary, #ffffff)',
+                  fontSize: '0.85rem',
+                  resize: 'none',
+                }}
+              />
+              <button
+                type="submit"
+                className="google-calendar-add-account"
+                disabled={pushSending}
+                style={{ padding: '8px 16px', fontSize: '0.85rem' }}
+              >
+                <Send size={13} /> Send Instant Push
+              </button>
+            </form>
+
+            <form onSubmit={handleQueuePush} style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              <h3 style={{ margin: 0, fontSize: '1.05rem', color: 'var(--text-primary, #09090b)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Clock size={18} /> Queue Scheduled Push
+              </h3>
+              <input
+                type="text"
+                placeholder="Scheduled Title"
+                value={scheduledTitle}
+                onChange={(e) => setScheduledTitle(e.target.value)}
+                style={{
+                  padding: '8px 12px',
+                  borderRadius: '4px',
+                  border: '1px solid var(--border-color, #27272a)',
+                  backgroundColor: 'var(--bg-input, #09090b)',
+                  color: 'var(--text-primary, #ffffff)',
+                  fontSize: '0.85rem',
+                }}
+              />
+              <textarea
+                placeholder="Scheduled Message Body"
+                value={scheduledBody}
+                onChange={(e) => setScheduledBody(e.target.value)}
+                rows={2}
+                style={{
+                  padding: '8px 12px',
+                  borderRadius: '4px',
+                  border: '1px solid var(--border-color, #27272a)',
+                  backgroundColor: 'var(--bg-input, #09090b)',
+                  color: 'var(--text-primary, #ffffff)',
+                  fontSize: '0.85rem',
+                  resize: 'none',
+                }}
+              />
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{ fontSize: '0.82rem', color: 'var(--text-muted, #71717a)' }}>Send in:</span>
+                <input
+                  type="number"
+                  min="1"
+                  max="1440"
+                  value={scheduledMinutes}
+                  onChange={(e) => setScheduledMinutes(e.target.value)}
+                  style={{
+                    width: '70px',
+                    padding: '6px 8px',
+                    borderRadius: '4px',
+                    border: '1px solid var(--border-color, #27272a)',
+                    backgroundColor: 'var(--bg-input, #09090b)',
+                    color: 'var(--text-primary, #ffffff)',
+                    fontSize: '0.85rem',
+                  }}
+                />
+                <span style={{ fontSize: '0.82rem', color: 'var(--text-muted, #71717a)' }}>minutes</span>
+              </div>
+              <button
+                type="submit"
+                className="google-calendar-refresh"
+                disabled={scheduledQueueing}
+                style={{ padding: '8px 16px', fontSize: '0.85rem' }}
+              >
+                <Clock size={13} /> Queue Notification
+              </button>
+            </form>
+          </div>
+
+          {deviceMessage && (
+            <p className="hackathon-source-message" role="status" style={{ margin: 0 }}>
+              {deviceMessage}
             </p>
           )}
         </div>

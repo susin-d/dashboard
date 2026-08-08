@@ -8,13 +8,25 @@ const STARTER_MESSAGES = [{
   content: 'Hi, I\u2019m Eve. I can read, create, update, delete, and restore your workspace records.',
 }]
 
-const EVE_SKILLS = [
-  { command: 'today', label: 'Plan my day', description: 'Review tasks, deadlines, and calendar events' },
-  { command: 'tasks', label: 'Manage tasks', description: 'Create, update, or find workspace todos' },
-  { command: 'projects', label: 'Work with projects', description: 'Review project progress and next steps' },
-  { command: 'jobs', label: 'Track applications', description: 'Find or update job application records' },
-  { command: 'documents', label: 'Search documents', description: 'Find workspace documents and notes' },
-  { command: 'calendar', label: 'Check calendar', description: 'Look up events, contests, and deadlines' },
+const EVE_PRESET_PROMPTS = [
+  { command: 'today', label: 'Plan my day', prompt: 'Plan my day by reviewing tasks, upcoming deadlines, and calendar events.', description: 'Review tasks, deadlines, and calendar events' },
+  { command: 'tasks', label: 'Manage tasks & overdue', prompt: 'Find all overdue tasks and suggest next priority actions.', description: 'Audit overdue tasks and list priority items' },
+  { command: 'projects', label: 'Work with projects', prompt: 'Review project progress, stale projects, and next steps.', description: 'Review project progress and stale projects' },
+  { command: 'jobs', label: 'Track applications', prompt: 'Summarize recent job application statuses and upcoming interview dates.', description: 'Find job application status and interview dates' },
+  { command: 'documents', label: 'Search documents', prompt: 'Search workspace documents and summarize key notes.', description: 'Search documents and notes' },
+  { command: 'calendar', label: 'Check calendar & contests', prompt: 'Look up upcoming calendar events, competitive coding contests, and deadlines.', description: 'Look up events, contests, and deadlines' },
+  { command: 'insights', label: 'Workspace overview', prompt: 'Summarize overall workspace dashboard metrics and suggest next actions.', description: 'Generate overall workspace insights' },
+]
+
+const EVE_TOOLS_LIST = [
+  { command: 'todos', name: 'todos', label: 'Tasks & Todos Tool', description: 'Read, create, update, or soft-delete task items' },
+  { command: 'projects', name: 'projects', label: 'Projects Tool', description: 'Access project repositories, milestones, and status' },
+  { command: 'jobs', name: 'jobs', label: 'Job Tracker Tool', description: 'Access job applications, interview dates, and contacts' },
+  { command: 'hackathons', name: 'hackathons', label: 'Hackathons Tool', description: 'Access hackathons, schedules, and prize details' },
+  { command: 'documents', name: 'documents', label: 'Documents Tool', description: 'Access notes, project plans, and drive specs' },
+  { command: 'notifications', name: 'notifications', label: 'Notifications Tool', description: 'Access workspace notifications and reminders' },
+  { command: 'search', name: 'search', label: 'Workspace Search Tool', description: 'Search across all local workspace resources' },
+  { command: 'insight', name: 'insight', label: 'Workspace Insights Tool', description: 'Compute deadlines, overdue tasks, or dashboard summary' },
 ]
 
 const MAX_CHARS = 4000
@@ -94,12 +106,23 @@ export function EveAssistantModal({ isOpen, onClose, onNavigate, onWorkspaceChan
     })
   }
 
-  const skillQuery = draft.startsWith('/') ? draft.slice(1).split(/\s/)[0].toLowerCase() : ''
-  const matchingSkills = EVE_SKILLS.filter((skill) =>
-    `${skill.command} ${skill.label}`.includes(skillQuery),
+  const toolQuery = draft.startsWith('@') ? draft.slice(1).split(/\s/)[0].toLowerCase() : ''
+  const matchingTools = EVE_TOOLS_LIST.filter((tool) =>
+    `${tool.command} ${tool.label} ${tool.name}`.toLowerCase().includes(toolQuery),
   )
-  const selectSkill = (skill) => {
-    setDraft(`/${skill.command} `)
+
+  const promptQuery = draft.startsWith('/') ? draft.slice(1).split(/\s/)[0].toLowerCase() : ''
+  const matchingPrompts = EVE_PRESET_PROMPTS.filter((item) =>
+    `${item.command} ${item.label}`.toLowerCase().includes(promptQuery),
+  )
+
+  const selectTool = (tool) => {
+    setDraft(`@${tool.command} `)
+    composerRef.current?.focus()
+  }
+
+  const selectPrompt = (item) => {
+    setDraft(item.prompt)
     composerRef.current?.focus()
   }
 
@@ -167,9 +190,9 @@ export function EveAssistantModal({ isOpen, onClose, onNavigate, onWorkspaceChan
             {error && <p className="eve-error" role="alert">{error}</p>}
             {!hasUserMessages && (
               <div className="eve-suggestion-chips">
-                {EVE_SKILLS.map((skill) => (
-                  <button className="eve-chip" type="button" key={skill.command} onClick={() => selectSkill(skill)}>
-                    {skill.label}
+                {EVE_PRESET_PROMPTS.map((item) => (
+                  <button className="eve-chip" type="button" key={item.command} onClick={() => selectPrompt(item)}>
+                    {item.label}
                   </button>
                 ))}
               </div>
@@ -182,17 +205,31 @@ export function EveAssistantModal({ isOpen, onClose, onNavigate, onWorkspaceChan
         <form className="eve-composer" onSubmit={handleSubmit}>
           <div className="eve-composer-field">
             <label className="eve-composer-label" htmlFor="eve-message">Message Eve</label>
-            {draft.startsWith('/') && matchingSkills.length > 0 && (
-              <div className="eve-skills-menu" role="listbox" aria-label="Eve skills">
-                <div className="eve-skills-heading">Skills <span>Use / to browse</span></div>
-                {matchingSkills.map((skill) => (
-                  <button className="eve-skill-option" type="button" role="option" key={skill.command} onClick={() => selectSkill(skill)}>
-                    <span className="eve-skill-command">/{skill.command}</span>
-                    <span><strong>{skill.label}</strong><small>{skill.description}</small></span>
+
+            {draft.startsWith('@') && matchingTools.length > 0 && (
+              <div className="eve-skills-menu" role="listbox" aria-label="Eve tools">
+                <div className="eve-skills-heading">Tools & Resources <span>Use @ to reference</span></div>
+                {matchingTools.map((tool) => (
+                  <button className="eve-skill-option" type="button" role="option" key={tool.command} onClick={() => selectTool(tool)}>
+                    <span className="eve-skill-command">@{tool.command}</span>
+                    <span><strong>{tool.label}</strong><small>{tool.description}</small></span>
                   </button>
                 ))}
               </div>
             )}
+
+            {draft.startsWith('/') && matchingPrompts.length > 0 && (
+              <div className="eve-skills-menu" role="listbox" aria-label="Eve pre-saved prompts">
+                <div className="eve-skills-heading">Pre-saved Prompts <span>Use / to filter</span></div>
+                {matchingPrompts.map((item) => (
+                  <button className="eve-skill-option" type="button" role="option" key={item.command} onClick={() => selectPrompt(item)}>
+                    <span className="eve-skill-command">/{item.command}</span>
+                    <span><strong>{item.label}</strong><small>{item.description}</small></span>
+                  </button>
+                ))}
+              </div>
+            )}
+
             <textarea
               ref={composerRef}
               id="eve-message"
@@ -204,7 +241,7 @@ export function EveAssistantModal({ isOpen, onClose, onNavigate, onWorkspaceChan
                   event.currentTarget.form?.requestSubmit()
                 }
               }}
-              placeholder="Ask anything about your workspace\u2026"
+              placeholder="Ask anything… Type @ for tools or / for prompts"
               rows="2"
               maxLength={MAX_CHARS}
               disabled={isSending}

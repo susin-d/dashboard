@@ -147,16 +147,10 @@
 
 /* ── Content Grid Layout ── */
 .eve-content-grid {
-  display: grid;
-  grid-template-columns: 1fr 320px;
+  display: flex;
+  flex-direction: column;
   gap: 1.5rem;
-  align-items: start;
-}
-
-@media (max-width: 992px) {
-  .eve-content-grid {
-    grid-template-columns: 1fr;
-  }
+  width: 100%;
 }
 
 /* ── Main Chat Stream Section ── */
@@ -174,6 +168,8 @@
 .eve-banner-privacy {
   display: flex;
   align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
   gap: 0.6rem;
   padding: 0.65rem 0.85rem;
   border-radius: 8px;
@@ -267,8 +263,9 @@
 }
 
 .eve-chat-bubble.user .eve-bubble-text {
-  background: var(--text-primary, #ffffff);
-  color: #000000;
+  background: var(--color-primary, #18181b);
+  color: var(--text-inverse, #ffffff);
+  border: 1px solid var(--color-primary, #18181b);
   font-weight: 500;
   border-top-right-radius: 2px;
 }
@@ -513,8 +510,8 @@
   font-size: 0.8rem;
   font-weight: 600;
   border-radius: 6px;
-  background: var(--text-primary, #ffffff);
-  color: #000000;
+  background: var(--color-primary, #18181b);
+  color: var(--text-inverse, #ffffff);
   border: none;
   cursor: pointer;
   transition: opacity 0.15s ease;
