@@ -71,6 +71,7 @@ import {
   sendPushNotification,
 } from '../lib/workspaceApi'
 import { useLocalNotifications } from '../hooks/useLocalNotifications'
+import { requestNotificationPermission } from '../utils/browserNotifications'
 
 const workspaceApps = [
   {
@@ -192,6 +193,7 @@ export function SettingPage({
   const [localNotifTitle, setLocalNotifTitle] = useState('StarWaves Task Reminder')
   const [localNotifBody, setLocalNotifBody] = useState('Submit code review report')
   const [localNotifMessage, setLocalNotifMessage] = useState('')
+  const [browserNotifMessage, setBrowserNotifMessage] = useState('')
   const {
     notifications: localNotifications,
     addNotification,
@@ -266,6 +268,20 @@ export function SettingPage({
       setDeviceMessage(err.message || 'Failed to send push notification.')
     } finally {
       setPushSending(false)
+    }
+  }
+
+  const handleEnableBrowserNotifications = async () => {
+    setBrowserNotifMessage('')
+    try {
+      const permission = await requestNotificationPermission()
+      setBrowserNotifMessage(
+        permission === 'granted'
+          ? 'Browser notifications enabled. Reminders will appear when events enter their 1-hour window.'
+          : `Notification permission ${permission}.`,
+      )
+    } catch (err) {
+      setBrowserNotifMessage(err.message || 'Could not enable browser notifications.')
     }
   }
 
@@ -1369,6 +1385,25 @@ export function SettingPage({
               </div>
             )}
           </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', flexWrap: 'wrap' }}>
+            <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-muted, #71717a)' }}>
+              Desktop notifications fire when a task, event, contest, or deadline enters its 1-hour reminder window while the app is open.
+            </p>
+            <button
+              type="button"
+              className="google-calendar-add-account"
+              onClick={handleEnableBrowserNotifications}
+              style={{ padding: '6px 12px', fontSize: '0.8rem' }}
+            >
+              <Bell size={13} /> Enable Browser Notifications
+            </button>
+          </div>
+          {browserNotifMessage && (
+            <p className="hackathon-source-message" role="status" style={{ margin: 0 }}>
+              {browserNotifMessage}
+            </p>
+          )}
 
           <hr style={{ border: 'none', borderTop: '1px solid var(--border-color, #27272a)', margin: '0' }} />
 

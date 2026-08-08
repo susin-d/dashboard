@@ -4,6 +4,8 @@ import { loadPlatformCodingStats } from '../lib/codingStatsApi'
 import { loadGithubData } from '../lib/githubApi'
 import { loadTodos } from '../lib/todosApi'
 import { loadGoogleCalendarData } from '../lib/googleCalendar'
+import { usePersistentState } from './usePersistentState'
+import { notify } from '../utils/browserNotifications'
 import {
   loadContests,
   loadHackathons,
@@ -48,6 +50,10 @@ export function useWorkspaceData(currentUser, activePage, refreshKey = 0) {
       return []
     }
   })
+  const [firedReminderIds, setFiredReminderIds] = usePersistentState(
+    'starwaves.fired_reminders',
+    [],
+  )
 
   useEffect(() => {
     try {
@@ -86,6 +92,22 @@ export function useWorkspaceData(currentUser, activePage, refreshKey = 0) {
     const syncReminders = () => {
       if (document.hidden) return
       const generated = buildCalendarReminders(calendarEventIndex)
+      const activeReminderIds = new Set(generated.map((reminder) => reminder.id))
+      const newHourlyReminders = generated.filter(
+        (reminder) =>
+          reminder.id.endsWith('-1-hour') && !firedReminderIds.includes(reminder.id),
+      )
+      if (newHourlyReminders.length > 0) {
+        newHourlyReminders.forEach((reminder) =>
+          notify(reminder.title, `${reminder.message} (${reminder.time})`, reminder.id),
+        )
+        setFiredReminderIds((current) => [
+          ...new Set([
+            ...current.filter((id) => activeReminderIds.has(id)),
+            ...newHourlyReminders.map((reminder) => reminder.id),
+          ]),
+        ])
+      }
       setNotifications((current) => {
         const existingById = new Map(
           current.map((notification) => [notification.id, notification]),
@@ -125,7 +147,7 @@ export function useWorkspaceData(currentUser, activePage, refreshKey = 0) {
       stopTimer()
       document.removeEventListener('visibilitychange', handleVisibilityChange)
     }
-  }, [calendarEventIndex])
+  }, [calendarEventIndex, firedReminderIds, setFiredReminderIds])
 
   // Google Calendar & Documents Fetch
   useEffect(() => {
