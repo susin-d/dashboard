@@ -112,7 +112,22 @@ def get_or_create_google_user(
         "updated_at": firestore.SERVER_TIMESTAMP,
     }
     get_users_collection(database).document(uid).set(user_data)
+    user_data["is_new"] = True
     return user_data
+
+
+def mark_email_verified(database: Client, uid: str) -> bool:
+    doc_ref = get_users_collection(database).document(uid)
+    doc = doc_ref.get()
+    if not doc.exists:
+        return False
+    doc_ref.update({
+        "email_verified": True,
+        "email_verified_at": firestore.SERVER_TIMESTAMP,
+        "updated_at": firestore.SERVER_TIMESTAMP,
+    })
+    return True
+
 
 
 def update_user_profile(database: Client, uid: str, display_name: str) -> dict:

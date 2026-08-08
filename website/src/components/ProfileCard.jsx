@@ -6,6 +6,12 @@ import {
   unlinkCombinedAccount,
   updateUserProfile,
 } from '../lib/authApi'
+import {
+  resendWelcomeEmail,
+  sendReminderEmail,
+  sendTestEmail,
+  sendVerificationEmail,
+} from '../lib/emailApi'
 
 export function ProfileCard({ user, onProfileUpdated }) {
   const [editing, setEditing] = useState(false)
@@ -13,12 +19,78 @@ export function ProfileCard({ user, onProfileUpdated }) {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
-  // Combined accounts states
+  // Combined accounts & email service states
   const [combinedData, setCombinedData] = useState({ combined_accounts: [], pending_combine_requests: [] })
   const [combineEmail, setCombineEmail] = useState('')
   const [loadingCombine, setLoadingCombine] = useState(false)
   const [combineMsg, setCombineMsg] = useState('')
   const [combineError, setCombineError] = useState('')
+
+  // Mail service actions
+  const [mailMsg, setMailMsg] = useState('')
+  const [mailError, setMailError] = useState('')
+  const [loadingMail, setLoadingMail] = useState(false)
+
+  const handleSendVerification = async () => {
+    setLoadingMail(true)
+    setMailMsg('')
+    setMailError('')
+    try {
+      const res = await sendVerificationEmail()
+      setMailMsg(res.message || 'Verification link sent to your email.')
+    } catch (err) {
+      setMailError(err.message || 'Failed to send verification email.')
+    } finally {
+      setLoadingMail(false)
+    }
+  }
+
+  const handleResendWelcome = async () => {
+    setLoadingMail(true)
+    setMailMsg('')
+    setMailError('')
+    try {
+      const res = await resendWelcomeEmail()
+      setMailMsg(res.message || 'Welcome email dispatched.')
+    } catch (err) {
+      setMailError(err.message || 'Failed to resend welcome email.')
+    } finally {
+      setLoadingMail(false)
+    }
+  }
+
+  const handleSendTest = async () => {
+    setLoadingMail(true)
+    setMailMsg('')
+    setMailError('')
+    try {
+      const res = await sendTestEmail()
+      setMailMsg(res.message || 'Test email dispatched.')
+    } catch (err) {
+      setMailError(err.message || 'Failed to send test email.')
+    } finally {
+      setLoadingMail(false)
+    }
+  }
+
+  const handleSendReminder = async () => {
+    setLoadingMail(true)
+    setMailMsg('')
+    setMailError('')
+    try {
+      const res = await sendReminderEmail({
+        title: 'Project Milestone Review',
+        type: 'Task Reminder',
+        dueTime: 'Today at 5:00 PM UTC',
+        description: 'Review latest StarWaves platform updates and deploy serverless functions.',
+      })
+      setMailMsg(res.message || 'Reminder email dispatched.')
+    } catch (err) {
+      setMailError(err.message || 'Failed to send reminder email.')
+    } finally {
+      setLoadingMail(false)
+    }
+  }
 
   const loadCombinedAccounts = async () => {
     try {
@@ -130,6 +202,62 @@ export function ProfileCard({ user, onProfileUpdated }) {
               <strong>{user.roleLabel}</strong>
             </div>
           </div>
+        </div>
+
+        {/* Email & Notification Services */}
+        <div className="combined-accounts-section">
+          <div className="combined-accounts-header">
+            <div className="combined-title">
+              <Mail size={16} />
+              <span>Email & Notification Services</span>
+            </div>
+            <span className="combined-smtp-tag">SMTP Ready</span>
+          </div>
+          <p className="combined-description">
+            Manage email verification, resend welcome notifications, or send a test email.
+          </p>
+
+          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '12px' }}>
+            <button
+              type="button"
+              onClick={handleSendVerification}
+              disabled={loadingMail}
+              className="secondary-button"
+              style={{ fontSize: '12px', padding: '6px 12px' }}
+            >
+              Verify Email
+            </button>
+            <button
+              type="button"
+              onClick={handleResendWelcome}
+              disabled={loadingMail}
+              className="secondary-button"
+              style={{ fontSize: '12px', padding: '6px 12px' }}
+            >
+              Resend Welcome Email
+            </button>
+            <button
+              type="button"
+              onClick={handleSendTest}
+              disabled={loadingMail}
+              className="secondary-button"
+              style={{ fontSize: '12px', padding: '6px 12px' }}
+            >
+              Send Test Email
+            </button>
+            <button
+              type="button"
+              onClick={handleSendReminder}
+              disabled={loadingMail}
+              className="secondary-button"
+              style={{ fontSize: '12px', padding: '6px 12px' }}
+            >
+              Send Reminder Email
+            </button>
+          </div>
+
+          {mailMsg && <p className="combine-feedback success" style={{ marginTop: '10px' }} role="status">{mailMsg}</p>}
+          {mailError && <p className="combine-feedback error" style={{ marginTop: '10px' }} role="alert">{mailError}</p>}
         </div>
 
         {/* Combined Accounts & SMTP Access Sharing */}

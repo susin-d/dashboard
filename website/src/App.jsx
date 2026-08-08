@@ -20,6 +20,7 @@ import { OnboardingPage } from './pages/OnboardingPage'
 import { PrivacyPolicyPage } from './pages/PrivacyPolicyPage'
 import { TermsOfServicePage } from './pages/TermsOfServicePage'
 import { updateNotification } from './lib/workspaceApi'
+import { confirmEmailVerification } from './lib/emailApi'
 import { verifyAccountCombine } from './lib/authApi'
 import { CALENDAR_REMINDER_PREFIX } from './utils/calendarReminders'
 import { useAuth, useRouter, useWorkspaceData } from './hooks'
@@ -130,6 +131,20 @@ function App() {
           })
           .catch((err) => {
             alert(err.message || 'Account combination link invalid or expired.')
+            window.history.replaceState({}, '', window.location.pathname + window.location.search)
+          })
+      }
+    } else if (hash.includes('#verify-email?token=')) {
+      const token = decodeURIComponent(hash.split('#verify-email?token=')[1] || '').trim()
+      if (token) {
+        confirmEmailVerification(token)
+          .then((res) => {
+            alert(res.message || 'Email address verified successfully!')
+            window.history.replaceState({}, '', window.location.pathname + window.location.search)
+            setWorkspaceRefreshKey((prev) => prev + 1)
+          })
+          .catch((err) => {
+            alert(err.message || 'Verification link invalid or expired.')
             window.history.replaceState({}, '', window.location.pathname + window.location.search)
           })
       }

@@ -6,6 +6,7 @@ from app.api.routes import (
     competitive_coding_profile,
     cron,
     documents,
+    email,
     eve,
     gmail,
     google_calendar,
@@ -21,6 +22,7 @@ from app.api.routes import (
 
 api_router = APIRouter()
 api_router.include_router(auth.router, tags=["auth"])
+api_router.include_router(email.router, tags=["email"])
 api_router.include_router(health.router, tags=["health"])
 api_router.include_router(cron.router, tags=["cron"])
 api_router.include_router(notifications.router, tags=["notifications"])

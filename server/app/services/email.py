@@ -61,6 +61,29 @@ def send_email(
         return False
 
 
+def send_welcome_email(to_email: str, user_name: str) -> bool:
+    subject = "Welcome to StarWaves"
+    display_name = user_name or to_email.split("@")[0]
+    body_html = render_template(
+        "welcome.html",
+        {"user_name": display_name, "app_url": settings.frontend_url},
+    )
+    body_text = f"Welcome to StarWaves, {display_name}! Visit {settings.frontend_url} to get started."
+    return send_email(to_email, subject, body_html, body_text)
+
+
+def send_verification_email(to_email: str, user_name: str, verification_token: str) -> bool:
+    verify_url = f"{settings.frontend_url}/#verify-email?token={verification_token}"
+    subject = "Verify Your Email Address - StarWaves"
+    display_name = user_name or to_email.split("@")[0]
+    body_html = render_template(
+        "email_verification.html",
+        {"user_name": display_name, "verify_url": verify_url},
+    )
+    body_text = f"Verify your StarWaves email address by visiting: {verify_url}"
+    return send_email(to_email, subject, body_html, body_text)
+
+
 def send_password_reset_email(to_email: str, reset_token: str) -> bool:
     reset_url = f"{settings.frontend_url}/#reset-token={reset_token}"
     subject = "Password Reset Request - StarWaves"
@@ -72,25 +95,15 @@ def send_password_reset_email(to_email: str, reset_token: str) -> bool:
     return send_email(to_email, subject, body_html, body_text)
 
 
-def send_welcome_email(to_email: str, user_name: str) -> bool:
-    subject = "Welcome to StarWaves"
-    body_html = render_template(
-        "welcome.html",
-        {"user_name": user_name, "app_url": settings.frontend_url},
-    )
-    body_text = f"Welcome to StarWaves, {user_name}! Visit {settings.frontend_url} to get started."
-    return send_email(to_email, subject, body_html, body_text)
-
-
 def send_account_combine_email(to_email: str, owner_email: str, token: str) -> bool:
     verify_url = f"{settings.frontend_url}/#combine-account?token={token}"
     subject = f"Account Combination Request from {owner_email} - StarWaves"
     body_html = render_template(
         "combine_account_invite.html",
         {
-          "target_email": to_email,
-          "owner_email": owner_email,
-          "verify_url": verify_url,
+            "target_email": to_email,
+            "owner_email": owner_email,
+            "verify_url": verify_url,
         },
     )
     body_text = (
@@ -99,6 +112,112 @@ def send_account_combine_email(to_email: str, owner_email: str, token: str) -> b
     )
     return send_email(to_email, subject, body_html, body_text)
 
+
+def send_security_alert_email(
+    to_email: str,
+    user_name: str,
+    event_type: str,
+    details: str,
+    ip_address: str = "Unknown",
+) -> bool:
+    subject = f"Security Alert: {event_type} - StarWaves"
+    display_name = user_name or to_email.split("@")[0]
+    body_html = render_template(
+        "security_alert.html",
+        {
+            "user_name": display_name,
+            "event_type": event_type,
+            "details": details,
+            "ip_address": ip_address,
+            "app_url": settings.frontend_url,
+        },
+    )
+    body_text = (
+        f"Security Alert for StarWaves account: {event_type}\n"
+        f"Details: {details}\n"
+        f"IP Address: {ip_address}\n"
+        f"Manage settings at: {settings.frontend_url}"
+    )
+    return send_email(to_email, subject, body_html, body_text)
+
+
+def send_activity_digest_email(
+    to_email: str,
+    user_name: str,
+    summary_text: str,
+    upcoming_events: str,
+) -> bool:
+    subject = "Your Weekly Activity Digest - StarWaves"
+    display_name = user_name or to_email.split("@")[0]
+    body_html = render_template(
+        "activity_digest.html",
+        {
+            "user_name": display_name,
+            "summary_text": summary_text,
+            "upcoming_events": upcoming_events,
+            "app_url": settings.frontend_url,
+        },
+    )
+    body_text = (
+        f"StarWaves Weekly Activity Digest for {display_name}:\n\n"
+        f"Competitive Coding Snapshot:\n{summary_text}\n\n"
+        f"Upcoming Contests & Tasks:\n{upcoming_events}\n\n"
+        f"View Dashboard: {settings.frontend_url}"
+    )
+    return send_email(to_email, subject, body_html, body_text)
+
+
+def send_announcement_email(
+    to_email: str,
+    user_name: str,
+    title: str,
+    message: str,
+) -> bool:
+    subject = f"Announcement: {title} - StarWaves"
+    display_name = user_name or to_email.split("@")[0]
+    body_html = render_template(
+        "announcement.html",
+        {
+            "user_name": display_name,
+            "title": title,
+            "message": message,
+            "app_url": settings.frontend_url,
+        },
+    )
+    body_text = f"StarWaves Announcement - {title}\n\n{message}\n\nVisit {settings.frontend_url}"
+    return send_email(to_email, subject, body_html, body_text)
+
+
+def send_reminder_email(
+    to_email: str,
+    user_name: str,
+    reminder_title: str,
+    reminder_type: str = "Task Reminder",
+    due_time: str = "Today",
+    description: str = "",
+) -> bool:
+    subject = f"Reminder: {reminder_title} - StarWaves"
+    display_name = user_name or to_email.split("@")[0]
+    description_block = f"<p><strong>Details:</strong> {description}</p>" if description else ""
+
+    body_html = render_template(
+        "reminder.html",
+        {
+            "user_name": display_name,
+            "reminder_title": reminder_title,
+            "reminder_type": reminder_type,
+            "due_time": due_time,
+            "description_block": description_block,
+            "app_url": settings.frontend_url,
+        },
+    )
+    body_text = (
+        f"StarWaves Reminder ({reminder_type}): {reminder_title}\n"
+        f"Due Time: {due_time}\n"
+        f"{'Details: ' + description if description else ''}\n"
+        f"Open Workspace: {settings.frontend_url}"
+    )
+    return send_email(to_email, subject, body_html, body_text)
 
 
 async def async_send_email(
@@ -110,3 +229,4 @@ async def async_send_email(
     import asyncio
 
     return await asyncio.to_thread(send_email, to_email, subject, body_html, body_text)
+

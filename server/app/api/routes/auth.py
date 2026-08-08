@@ -10,7 +10,7 @@ from pydantic import BaseModel, EmailStr
 from app.core.auth import auth_serializer, create_user_token, get_current_user
 from app.core.config import settings
 from app.db import get_firestore
-from app.services.email import send_account_combine_email, send_password_reset_email
+from app.services.email import send_account_combine_email, send_password_reset_email, send_welcome_email
 from app.repositories.user_repository import (
     add_pending_combine_request,
     confirm_combine_accounts,
@@ -80,6 +80,7 @@ def google_login():
 async def google_callback(
     code: str = Query(...),
     state: str = Query(...),
+    background_tasks: BackgroundTasks = BackgroundTasks(),
     database: Client = Depends(get_firestore),
 ):
     try:
@@ -142,6 +143,13 @@ async def google_callback(
         picture=picture,
     )
 
+    if user_record.get("is_new"):
+        background_tasks.add_task(
+            send_welcome_email,
+            to_email=user_record["email"],
+            user_name=user_record.get("display_name") or name,
+        )
+
     token = create_user_token(
         {
             "uid": user_record["uid"],
@@ -179,7 +187,11 @@ async def google_callback(
 
 
 @router.post("/signup")
-def signup(payload: SignupRequest, database: Client = Depends(get_firestore)):
+def signup(
+    payload: SignupRequest,
+    background_tasks: BackgroundTasks = BackgroundTasks(),
+    database: Client = Depends(get_firestore),
+):
     try:
         user_record = create_user_with_password(
             database=database,
@@ -197,6 +209,12 @@ def signup(payload: SignupRequest, database: Client = Depends(get_firestore)):
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(exc),
         ) from None
+
+    background_tasks.add_task(
+        send_welcome_email,
+        to_email=user_record["email"],
+        user_name=user_record["display_name"],
+    )
 
     token = create_user_token(
         {
