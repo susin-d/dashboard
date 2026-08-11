@@ -138,11 +138,12 @@ function sanitizeEmailHtml(html = '') {
   return html.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
 }
 
-export async function loadGoogleMail(query = '', folder = 'INBOX', pageToken = '', targetEmail = null) {
+export async function loadGoogleMail(query = '', folder = 'INBOX', pageToken = '', targetEmail = null, category = '') {
   const token = await resolveGmailToken(targetEmail)
   const params = new URLSearchParams({ maxResults: '40' })
   if (folder) params.set('labelIds', folder)
-  if (query.trim()) params.set('q', query.trim())
+  const search = [query.trim(), category ? `category:${category}` : ''].filter(Boolean).join(' ')
+  if (search) params.set('q', search)
   if (pageToken) params.set('pageToken', pageToken)
   const [profile, list] = await Promise.all([
     gmailFetch('/profile', token),

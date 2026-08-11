@@ -122,6 +122,10 @@ database id, CORS origins. Loads `.env.prod` before `.env`.
 - Jobs timeline: the `Jobs` page renders an "Application frequency" bar chart
   built from stored `appliedDate` values across the trailing 12 months
   (pure util `src/utils/jobTimeline.js` + `src/utils/__tests__/jobTimeline.test.js`).
+- Gmail inbox tabs: when viewing the Inbox, the Mails page shows
+  Primary/Promotions/Updates/Forums category tabs (persisted via
+  `starwaves.mail.inbox-tab`). `loadGoogleMail` appends `category:<tab>` to the
+  Gmail `q` parameter; tabs are only applied to the Inbox folder.
 - Project lifecycle phases: `idea → design → build → test → ship → maintain`
   pipeline stored as `lifecycle_phase` on each project. Phase stepper +
   phase dots on the Project Detail page (`ProjectLifecycleCard.jsx`), phase

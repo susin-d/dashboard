@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
-  Archive, ChevronDown, ChevronLeft, ChevronRight, Inbox, LoaderCircle, Mail, MailOpen,
-  MailPlus, Plus, RefreshCw, Reply, Search, Send, Star, Trash2, X,
+  Archive, BellRing, ChevronDown, ChevronLeft, ChevronRight, Inbox, LoaderCircle, Mail, MailOpen,
+  MailPlus, Megaphone, MessagesSquare, Plus, RefreshCw, Reply, Search, Send, Star, Trash2, X,
 } from 'lucide-react'
 import {
   hasGmailConnection, loadGoogleMail, loadGoogleMessage,
@@ -17,6 +17,13 @@ const FOLDERS = [
   { id: 'SENT', label: 'Sent', icon: Send },
   { id: 'DRAFT', label: 'Drafts', icon: MailOpen },
   { id: 'TRASH', label: 'Trash', icon: Trash2 },
+]
+
+const INBOX_TABS = [
+  { id: 'primary', label: 'Primary', icon: Inbox },
+  { id: 'promotions', label: 'Promotions', icon: Megaphone },
+  { id: 'updates', label: 'Updates', icon: BellRing },
+  { id: 'forums', label: 'Forums', icon: MessagesSquare },
 ]
 
 function formatMailDate(value, long = false) {
@@ -49,6 +56,7 @@ export function MailsPage({ onNavigate }) {
   const [selectedAccountEmail, setSelectedAccountEmail] = useState('')
   const [query, setQuery] = useState('')
   const [folder, setFolder] = usePersistentState('starwaves.mail.folder', 'INBOX')
+  const [inboxTab, setInboxTab] = usePersistentState('starwaves.mail.inbox-tab', 'primary')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [connected, setConnected] = useState(null)
@@ -67,7 +75,8 @@ export function MailsPage({ onNavigate }) {
     setLoading(true)
     setError('')
     try {
-      const result = await loadGoogleMail(search, nextFolder, token, targetAccount || null)
+      const category = nextFolder === 'INBOX' ? inboxTab : ''
+      const result = await loadGoogleMail(search, nextFolder, token, targetAccount || null, category)
       setMessages(result.messages)
       setAccount(result.email)
       setNextPageToken(result.nextPageToken)
@@ -80,7 +89,7 @@ export function MailsPage({ onNavigate }) {
     } finally {
       setLoading(false)
     }
-  }, [folder, query, selectedAccountEmail])
+  }, [folder, query, selectedAccountEmail, inboxTab])
 
   const openOlderMessages = () => {
     if (!nextPageToken || loading) return
@@ -98,7 +107,7 @@ export function MailsPage({ onNavigate }) {
 
   useEffect(() => {
     if (connected) refresh('', folder, '', false, selectedAccountEmail)
-  }, [connected, folder, selectedAccountEmail]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [connected, folder, inboxTab, selectedAccountEmail]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     let active = true
@@ -337,6 +346,24 @@ export function MailsPage({ onNavigate }) {
       </div>
 
       {/* Main Mail List Container */}
+      {folder === 'INBOX' && (
+        <div className="mail-inbox-tabs" role="tablist" aria-label="Inbox categories">
+          {INBOX_TABS.map(({ id, label, icon: Icon }) => (
+            <button
+              key={id}
+              type="button"
+              role="tab"
+              aria-selected={inboxTab === id}
+              className={inboxTab === id ? 'active' : ''}
+              onClick={() => setInboxTab(id)}
+            >
+              <Icon size={15} />
+              <span>{label}</span>
+            </button>
+          ))}
+        </div>
+      )}
+
       <div className="mail-layout">
         <div className="mail-list">
           {error && (
