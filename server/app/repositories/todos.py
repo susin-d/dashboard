@@ -33,6 +33,20 @@ def list_todos(database: Client, user_id: str) -> list[TodoResponse]:
     return results
 
 
+def get_todo(
+    database: Client,
+    user_id: str,
+    todo_id: str,
+) -> TodoResponse | None:
+    snapshot = collection(database, user_id).document(todo_id).get()
+    if not snapshot.exists:
+        return None
+    data = snapshot.to_dict() or {}
+    if data.get("deleted"):
+        return None
+    return from_snapshot(snapshot)
+
+
 def create_todo(
     database: Client,
     user_id: str,

@@ -7,7 +7,7 @@ document; both participants poll ``GET /calls/{call_id}`` for new messages.
 """
 
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 from firebase_admin import firestore
 from google.cloud.firestore_v1 import Client
@@ -16,6 +16,8 @@ from app.schemas.call import CallUser
 
 CALL_STATUSES = {"ringing", "active", "declined", "ended", "missed"}
 SIGNAL_TYPES = {"offer", "answer", "ice-candidate"}
+MAX_SIGNAL_MESSAGES = 200
+MISSED_AFTER = timedelta(seconds=45)
 
 
 def _now_iso() -> str:
@@ -78,7 +80,44 @@ class CallRepository:
                 "updated_at": _now_iso(),
             },
         )
+        self.prune_messages(call_id)
         return message
+
+    def prune_messages(self, call_id: str) -> None:
+        """Drop the oldest signaling messages so the array stays bounded."""
+        reference = self._document(call_id)
+        snapshot = reference.get()
+        if not snapshot.exists:
+            return
+        messages = snapshot.to_dict().get("messages") or []
+        if len(messages) <= MAX_SIGNAL_MESSAGES:
+            return
+        reference.update(
+            {
+                "messages": messages[-MAX_SIGNAL_MESSAGES:],
+                "updated_at": _now_iso(),
+            },
+        )
+
+    def expire_stale_ringing(self, uid: str) -> None:
+        """Server-side guard: auto-miss ringing calls a responder never picked up."""
+        threshold = datetime.now(timezone.utc) - MISSED_AFTER
+        for call in self._calls_for_user(uid, 50):
+            if call.get("status") != "ringing":
+                continue
+            updated = call.get("updated_at") or call.get("created_at") or ""
+            try:
+                updated_dt = datetime.fromisoformat(updated)
+            except (TypeError, ValueError):
+                updated_dt = datetime.now(timezone.utc)
+            if updated_dt < threshold:
+                reference = self._document(call["id"])
+                reference.update(
+                    {
+                        "status": "missed",
+                        "updated_at": _now_iso(),
+                    },
+                )
 
     def update_status(self, call_id: str, status: str) -> dict | None:
         if status not in CALL_STATUSES:

@@ -134,7 +134,12 @@ database id, CORS origins. Loads `.env.prod` before `.env`.
   (Firestore `calls` collection, polling-based since Vercel is serverless).
   Frontend: `Calls` page (dialer + recent calls), `useCallCenter` hook running
   app-wide, `IncomingCallOverlay` global ring + accept/decline. STUN only; no
-  TURN relay configured.
+  TURN relay configured. Hardening: `CallStatusUpdate` accepts
+  `ringing|active|declined|ended|missed`; signaling messages are pruned to the
+  newest 200 per call doc; a server-side guard auto-marks calls stuck in
+  `ringing` for >45s as `missed` on the incoming/recent list endpoints. Calls
+  also surfaced in the sidebar navigation and landing page "Remind me" CTA
+  routes to signup.
 - Email: templated emails (welcome, verification, password reset, reminders,
   activity digest, announcement, security alert, account combine invite).
 - Android shell via Capacitor (`website/android/`).
@@ -149,8 +154,8 @@ database id, CORS origins. Loads `.env.prod` before `.env`.
   implemented.
 - Calls: signaling is polling-based (2s call poll, 3s incoming poll), so there
   is a short setup delay; calls use public STUN only, so peers behind strict
-  symmetric NAT/firewalls may fail to connect until a TURN relay is added; Ice
-  candidates and signaling messages accumulate in the call doc for the session.
+  symmetric NAT/firewalls may fail to connect until a TURN relay is added.
+  Signaling message backlogs are bounded (see §6).
 - Production frontend build emits a bundle-size advisory.
 
 ## 8. Verification commands

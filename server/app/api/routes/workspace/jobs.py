@@ -24,6 +24,19 @@ def list_jobs(
     return {"items": items, "next_cursor": next_cursor, "has_more": has_more}
 
 
+@router.get("/jobs/{job_id}", response_model=JobResponse)
+def get_job(
+    job_id: str,
+    database: Client = Depends(get_firestore),
+    user: dict = Depends(get_current_user),
+):
+    repository = JobRepository(database, user["uid"])
+    result = repository.get(job_id)
+    if not result:
+        raise HTTPException(status_code=404, detail="Job not found.")
+    return result
+
+
 @router.post("/jobs", response_model=JobResponse, status_code=201)
 def create_job(
     job: JobCreate,
@@ -59,3 +72,18 @@ def delete_job(
     if not repository.delete(job_id):
         raise HTTPException(status_code=404, detail="Job not found.")
     return Response(status_code=204)
+
+
+@router.post("/jobs/{job_id}/restore", response_model=JobResponse)
+def restore_job(
+    job_id: str,
+    database: Client = Depends(get_firestore),
+    user: dict = Depends(get_current_user),
+):
+    repository = JobRepository(database, user["uid"])
+    if not repository.restore(job_id):
+        raise HTTPException(status_code=404, detail="Job not found.")
+    result = repository.get(job_id)
+    if not result:
+        raise HTTPException(status_code=404, detail="Job not found.")
+    return result

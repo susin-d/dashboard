@@ -17,6 +17,18 @@ def list_todos(
     return todos.list_todos(database, user["uid"])
 
 
+@router.get("/{todo_id}", response_model=TodoResponse)
+def get_todo(
+    todo_id: str,
+    database: Client = Depends(get_firestore),
+    user: dict = Depends(get_current_user),
+):
+    todo = todos.get_todo(database, user["uid"], todo_id)
+    if todo is None:
+        raise HTTPException(status_code=404, detail="Todo not found.")
+    return todo
+
+
 @router.post("", response_model=TodoResponse, status_code=status.HTTP_201_CREATED)
 def create_todo(
     todo: TodoCreate,
@@ -48,3 +60,17 @@ def delete_todo(
     if not todos.delete_todo(database, user["uid"], todo_id):
         raise HTTPException(status_code=404, detail="Todo not found.")
     return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+@router.post("/{todo_id}/restore", response_model=TodoResponse)
+def restore_todo(
+    todo_id: str,
+    database: Client = Depends(get_firestore),
+    user: dict = Depends(get_current_user),
+):
+    if not todos.restore_todo(database, user["uid"], todo_id):
+        raise HTTPException(status_code=404, detail="Todo not found.")
+    todo = todos.get_todo(database, user["uid"], todo_id)
+    if todo is None:
+        raise HTTPException(status_code=404, detail="Todo not found.")
+    return todo

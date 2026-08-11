@@ -19,6 +19,15 @@ class JobRepository:
     def list_page(self, cursor: str | None, limit: int):
         return paginate_collection(self.collection, "created_at", cursor, limit)
 
+    def get(self, job_id: str) -> dict[str, Any] | None:
+        snapshot = self.collection.document(job_id).get()
+        if not snapshot.exists:
+            return None
+        data = snapshot.to_dict() or {}
+        if data.get("deleted"):
+            return None
+        return {"id": snapshot.id, **data}
+
     def create(self, job: JobCreate) -> dict[str, Any]:
         reference = self.collection.document()
         now = datetime.now(timezone.utc).isoformat()

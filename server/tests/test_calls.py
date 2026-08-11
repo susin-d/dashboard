@@ -216,6 +216,87 @@ class TestCallEndpoints(unittest.TestCase):
         self.assertEqual(items[0]["id"], "call-3")
         self.assertEqual(items[0]["status"], "ringing")
 
+    def test_list_incoming_marks_stale_ringing_as_missed(self):
+        # A ringing call that has not been updated in over MISSED_AFTER (45s)
+        # must be auto-expired by the server-side guard on the incoming list.
+        from datetime import datetime, timedelta, timezone
+
+        stale_updated_at = (
+            datetime.now(timezone.utc) - timedelta(minutes=5)
+        ).isoformat()
+        collection = mock_db.collection.return_value
+        collection.where.return_value.limit.return_value.stream.return_value = [
+            FakeFirestoreDoc(
+                "call-stale",
+                {
+                    "caller": {"uid": "other", "name": "Other", "email": "other@example.com"},
+                    "callee": {"uid": "test-user-123", "name": "Me", "email": "test@example.com"},
+                    "participants": ["test-user-123", "other"],
+                    "mode": "audio",
+                    "status": "ringing",
+                    "messages": [],
+                    "updated_at": stale_updated_at,
+                },
+            ),
+        ]
+
+        response = self.client.get("/api/v1/calls/incoming")
+        self.assertEqual(response.status_code, 200)
+        # Guard calls update({status: "missed", ...}) on the stale document.
+        update_calls = [
+            c for c in collection.document.return_value.update.call_args_list
+            if c.args[0].get("status") == "missed"
+        ]
+        self.assertEqual(len(update_calls), 1)
+
+    def test_prune_messages_keeps_bounded_array(self):
+        from app.repositories.calls import MAX_SIGNAL_MESSAGES, CallRepository
+
+        repository = CallRepository(mock_db)
+        collection = mock_db.collection.return_value
+        existing = [{"id": f"m{i}", "type": "ice-candidate"} for i in range(MAX_SIGNAL_MESSAGES + 50)]
+        document = collection.document.return_value
+        document.get.return_value.exists = True
+        document.get.return_value.to_dict.return_value = {"messages": existing}
+
+        repository.prune_messages("call-big")
+
+        self.assertTrue(document.update.called)
+        pruned = document.update.call_args.args[0]["messages"]
+        self.assertEqual(len(pruned), MAX_SIGNAL_MESSAGES)
+        self.assertEqual(pruned[0]["id"], "m50")
+        self.assertEqual(pruned[-1]["id"], f"m{MAX_SIGNAL_MESSAGES + 49}")
+
+    def test_expire_stale_ringing_skips_recent_and_non_ringing(self):
+        from datetime import datetime, timedelta, timezone
+        from app.repositories.calls import CallRepository
+
+        repository = CallRepository(mock_db)
+        collection = mock_db.collection.return_value
+        recent_updated = datetime.now(timezone.utc).isoformat()
+        collection.where.return_value.limit.return_value.stream.return_value = [
+            FakeFirestoreDoc(
+                "call-recent",
+                {"status": "ringing", "updated_at": recent_updated, "id": "call-recent"},
+            ),
+            FakeFirestoreDoc(
+                "call-ended",
+                {"status": "ended", "updated_at": "2026-08-12T10:00:00+00:00", "id": "call-ended"},
+            ),
+        ]
+
+        # Reset any prior update records so we only count guard updates here.
+        collection.document.return_value.update.reset_mock()
+        repository.expire_stale_ringing("test-user-123")
+
+        # The ended call is skipped entirely and the recent ringing call is not
+        # stale, so the guard must not issue any "missed" update.
+        missed_updates = [
+            c for c in collection.document.return_value.update.call_args_list
+            if c.args[0].get("status") == "missed"
+        ]
+        self.assertEqual(len(missed_updates), 0)
+
 
 if __name__ == "__main__":
     unittest.main()

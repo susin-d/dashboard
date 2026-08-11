@@ -19,6 +19,15 @@ class NotificationRepository:
     def list_page(self, cursor: str | None, limit: int):
         return paginate_collection(self.collection, "created_at", cursor, limit)
 
+    def get(self, notification_id: str) -> dict[str, Any] | None:
+        snapshot = self.collection.document(notification_id).get()
+        if not snapshot.exists:
+            return None
+        data = snapshot.to_dict() or {}
+        if data.get("deleted"):
+            return None
+        return {"id": snapshot.id, **data}
+
     def update(
         self,
         notification_id: str,

@@ -97,6 +97,8 @@ async def list_hackathons(
     manual = []
     for item in snapshots:
         record = item.to_dict() or {}
+        if record.get("deleted"):
+            continue
         end = record.get("ends_at")
         if isinstance(end, str):
             end = datetime.fromisoformat(end)
@@ -120,11 +122,28 @@ def create_hackathon(
     reference.set(
         {
             **hackathon.model_dump(mode="python"),
+            "deleted": False,
             "created_at": firestore.SERVER_TIMESTAMP,
             "updated_at": firestore.SERVER_TIMESTAMP,
         },
     )
     return {"id": reference.id, **(reference.get().to_dict() or {})}
+
+
+@router.get("/hackathons/{hackathon_id}", response_model=HackathonResponse)
+def get_hackathon(
+    hackathon_id: str,
+    database: Client = Depends(get_firestore),
+    user: dict = Depends(get_current_user),
+):
+    reference = user_collection(database, user["uid"], "hackathons").document(hackathon_id)
+    snapshot = reference.get()
+    if not snapshot.exists:
+        raise HTTPException(status_code=404, detail="Hackathon not found.")
+    data = snapshot.to_dict() or {}
+    if data.get("deleted"):
+        raise HTTPException(status_code=404, detail="Hackathon not found.")
+    return {"id": reference.id, **data}
 
 
 @router.patch("/hackathons/{hackathon_id}", response_model=HackathonResponse)
@@ -156,5 +175,31 @@ def delete_hackathon(
     reference = user_collection(database, user["uid"], "hackathons").document(hackathon_id)
     if not reference.get().exists:
         raise HTTPException(status_code=404, detail="Hackathon not found.")
-    reference.delete()
+    now = datetime.now(timezone.utc)
+    reference.update(
+        {
+            "deleted": True,
+            "deleted_at": now.isoformat(),
+            "updated_at": firestore.SERVER_TIMESTAMP,
+        },
+    )
     return Response(status_code=204)
+
+
+@router.post("/hackathons/{hackathon_id}/restore", response_model=HackathonResponse)
+def restore_hackathon(
+    hackathon_id: str,
+    database: Client = Depends(get_firestore),
+    user: dict = Depends(get_current_user),
+):
+    reference = user_collection(database, user["uid"], "hackathons").document(hackathon_id)
+    if not reference.get().exists:
+        raise HTTPException(status_code=404, detail="Hackathon not found.")
+    reference.update(
+        {
+            "deleted": False,
+            "deleted_at": None,
+            "updated_at": firestore.SERVER_TIMESTAMP,
+        },
+    )
+    return {"id": reference.id, **(reference.get().to_dict() or {})}

@@ -327,7 +327,7 @@ export function LandingPage({ user, onNavigate }) {
                         <strong>Codeforces Round #982 (Div. 2)</strong>
                         <span>Tomorrow • 14:35 UTC</span>
                       </div>
-                      <button className="contest-remind-btn">Remind me</button>
+                      <button className="contest-remind-btn" onClick={() => onNavigate('/signup')}>Remind me</button>
                     </div>
                   </div>
                 </div>

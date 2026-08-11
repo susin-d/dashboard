@@ -2,6 +2,7 @@
 
 import asyncio
 import time
+from typing import Any
 
 import httpx
 from fastapi import APIRouter, Query
@@ -16,6 +17,11 @@ router = APIRouter()
 CONTEST_CACHE_TTL = 10 * 60
 _contest_cache: tuple[float, list[dict]] | None = None
 CONTEST_REQUEST_TIMEOUT = httpx.Timeout(8.0, connect=2.0)
+
+
+def _contest_sort_key(contest: dict[str, Any]) -> tuple[str, str]:
+    """Stable sort key: starts at first, then a tiebreaker per contest id."""
+    return (contest["startsAt"], contest["id"])
 
 
 @router.get("/contests", response_model=PageResponse)
@@ -46,11 +52,28 @@ async def list_contests(
         platforms = [platform for platform in platforms if platform is not None]
         if platforms:
             _contest_cache = (time.monotonic() + CONTEST_CACHE_TTL, platforms)
-    offset = int(decode_cursor(cursor) or 0)
+
     records = []
     for platform in platforms:
-        records.extend({**contest, "platformId": platform["id"]} for contest in platform["contests"])
-    records.sort(key=lambda contest: contest["startsAt"])
-    page = records[offset : offset + limit]
-    next_cursor = encode_cursor(str(offset + limit)) if offset + limit < len(records) else None
-    return {"items": page, "next_cursor": next_cursor, "has_more": next_cursor is not None}
+        records.extend(
+            {**contest, "platformId": platform["id"]} for contest in platform["contests"]
+        )
+    records.sort(key=_contest_sort_key)
+
+    # Stable keyset pagination: the cursor stores the last delivered sort key,
+    # so newly inserted contests do not shift previously-returned pages.
+    page = records
+    if cursor:
+        last_start, last_id = (decode_cursor(cursor) or "\x00").split("\t", 1)
+        page = [
+            contest
+            for contest in records
+            if (contest["startsAt"], contest["id"]) > (last_start, last_id)
+        ]
+
+    items = page[:limit]
+    next_cursor = None
+    if len(page) > limit:
+        final = items[-1]
+        next_cursor = encode_cursor(f"{final['startsAt']}\t{final['id']}")
+    return {"items": items, "next_cursor": next_cursor, "has_more": next_cursor is not None}

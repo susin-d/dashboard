@@ -31,6 +31,7 @@ export const navigationItems = [
   { id: 'mails', label: 'Mail', icon: Mail, group: 'Communication' },
   { id: 'chats', label: 'Chats', icon: MessageSquare, group: 'Communication' },
   { id: 'calls', label: 'Calls', icon: Phone, group: 'Communication' },
+  { id: 'calls', label: 'Calls', icon: Phone, group: 'Communication' },
   { id: 'profile', label: 'Profile', icon: UserRound, group: 'Account' },
   { id: 'themes', label: 'Themes', icon: Palette, group: 'Account' },
   { id: 'setting', label: 'Settings', icon: Settings, group: 'Account' },

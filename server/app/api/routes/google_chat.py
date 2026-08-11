@@ -6,7 +6,7 @@ from urllib.parse import quote, urlencode
 
 import httpx
 from fastapi import APIRouter, Depends, HTTPException, Query
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse
 from firebase_admin import firestore
 from google.cloud.firestore_v1 import Client
 from itsdangerous import BadSignature, SignatureExpired, URLSafeTimedSerializer
@@ -16,13 +16,35 @@ from app.core.auth import get_current_user
 from app.core.config import settings
 from app.db import get_firestore
 from app.services.google_calendar import (
+    decrypt_google_token,
     encrypt_google_token,
+    refresh_google_token,
     require_google_oauth_config,
 )
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/integrations/google-chat")
+
+
+async def resolve_chat_access_token(account: dict) -> str | None:
+    """Return a usable Google Chat access token for an account.
+
+    Prefers refreshing from the stored encrypted refresh token; falls back to
+    the last stored raw access token for token-connect accounts.
+    """
+    encrypted_refresh = account.get("refresh_token")
+    if encrypted_refresh:
+        try:
+            refresh_token = decrypt_google_token(encrypted_refresh)
+            return await refresh_google_token(refresh_token)
+        except Exception as error:
+            logger.warning(
+                "Google Chat token refresh failed for %s: %s",
+                account.get("email"),
+                error,
+            )
+    return account.get("access_token")
 
 
 def format_oauth_error(error: Exception) -> str:
@@ -321,7 +343,7 @@ async def get_google_chat_spaces(
     all_spaces = []
     async with httpx.AsyncClient(timeout=15) as client:
         for acc in accounts:
-            token = acc.get("access_token")
+            token = await resolve_chat_access_token(acc)
             email = acc.get("email")
             if not token:
                 continue
@@ -353,6 +375,7 @@ async def get_google_chat_spaces(
 
                         last_msg = msgs[-1]["content"] if msgs else "No messages yet."
                         last_time = msgs[-1]["time"] if msgs else ""
+                        members_count = s.get("membershipCount")
 
                         all_spaces.append(
                             {
@@ -361,10 +384,11 @@ async def get_google_chat_spaces(
                                 "type": space_type,
                                 "accountEmail": email,
                                 "accountName": acc.get("display_name", email),
-                                "unreadCount": 0,
                                 "lastMessage": last_msg,
                                 "lastTime": last_time,
-                                "membersCount": 2,
+                                "membersCount": (
+                                    members_count if members_count else None
+                                ),
                                 "isPrivate": space_type == "dm",
                                 "messages": msgs,
                             }
@@ -409,7 +433,7 @@ async def send_google_chat_message(
         )
 
     account = accounts[0]
-    token = account.get("access_token")
+    token = await resolve_chat_access_token(account)
     if not token:
         raise HTTPException(
             status_code=401,

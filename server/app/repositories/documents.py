@@ -27,6 +27,20 @@ def list_documents(database: Client, user_id: str) -> list[DocumentResponse]:
     return results
 
 
+def get_document(
+    database: Client,
+    user_id: str,
+    document_id: str,
+) -> DocumentResponse | None:
+    snapshot = _collection(database, user_id).document(document_id).get()
+    if not snapshot.exists:
+        return None
+    data = snapshot.to_dict() or {}
+    if data.get("deleted"):
+        return None
+    return _from_snapshot(snapshot)
+
+
 def upsert_document(
     database: Client,
     user_id: str,

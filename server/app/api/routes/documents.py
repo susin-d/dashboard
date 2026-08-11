@@ -17,6 +17,18 @@ def list_documents(
     return documents.list_documents(database, user["uid"])
 
 
+@router.get("/{document_id}", response_model=DocumentResponse)
+def get_document(
+    document_id: str,
+    database: Client = Depends(get_firestore),
+    user: dict = Depends(get_current_user),
+):
+    document = documents.get_document(database, user["uid"], document_id)
+    if document is None:
+        raise HTTPException(status_code=404, detail="Document not found.")
+    return document
+
+
 @router.put("/{document_id}", response_model=DocumentResponse)
 def save_document(
     document_id: str,
@@ -38,3 +50,17 @@ def delete_document(
     if not documents.delete_document(database, user["uid"], document_id):
         raise HTTPException(status_code=404, detail="Document not found.")
     return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+@router.post("/{document_id}/restore", response_model=DocumentResponse)
+def restore_document(
+    document_id: str,
+    database: Client = Depends(get_firestore),
+    user: dict = Depends(get_current_user),
+):
+    if not documents.restore_document(database, user["uid"], document_id):
+        raise HTTPException(status_code=404, detail="Document not found.")
+    document = documents.get_document(database, user["uid"], document_id)
+    if document is None:
+        raise HTTPException(status_code=404, detail="Document not found.")
+    return document

@@ -136,6 +136,7 @@ async def gmail_callback(
                     "connected": True,
                     "access_token": token_data["access_token"],
                     "refresh_token": encrypted_refresh_token,
+                    "refreshable": True,
                     "updated_at": firestore.SERVER_TIMESTAMP,
                 },
                 merge=True,
@@ -194,6 +195,7 @@ async def connect_gmail(
                 "email": email,
                 "connected": True,
                 "access_token": connection.access_token,
+                "refreshable": False,
                 "updated_at": firestore.SERVER_TIMESTAMP,
             },
             merge=True,
@@ -202,6 +204,7 @@ async def connect_gmail(
     return {
         "connected": True,
         "account": {"id": doc_id, "email": email},
+        "refreshable": False,
     }
 
 
@@ -227,9 +230,17 @@ async def get_gmail_token(
 
     encrypted_refresh_token = data.get("refresh_token")
     if not encrypted_refresh_token:
+        stored_access_token = data.get("access_token")
+        if stored_access_token:
+            return {
+                "email": data.get("email", ""),
+                "access_token": stored_access_token,
+                "expires_in": 3599,
+                "refreshable": False,
+            }
         raise HTTPException(
             status_code=400,
-            detail="No refresh token stored for this Gmail account. Please reconnect.",
+            detail="No refresh token stored for this Gmail account. Please reconnect via the OAuth flow.",
         )
 
     try:

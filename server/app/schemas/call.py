@@ -25,7 +25,7 @@ class CallCreate(BaseModel):
 
 
 class CallStatusUpdate(BaseModel):
-    status: str = Field(pattern="^(active|declined|ended|missed)$")
+    status: str = Field(pattern="^(ringing|active|declined|ended|missed)$")
 
 
 class SignalCreate(BaseModel):

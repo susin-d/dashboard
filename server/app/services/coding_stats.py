@@ -93,6 +93,10 @@ async def parse_leetcode(client: httpx.AsyncClient, value: str) -> dict:
                   submitStats {
                     acSubmissionNum { difficulty count }
                   }
+                  userCalendar {
+                    streak
+                    totalActiveDays
+                  }
                 }
               }
             """,
@@ -171,6 +175,7 @@ async def parse_leetcode(client: httpx.AsyncClient, value: str) -> dict:
         for item in data.get("allQuestionsCount", [])
     }
     ranking = data.get("userContestRanking") or {}
+    calendar = user.get("userCalendar") or {}
     return {
         "configured": True,
         "status": "ok",
@@ -181,7 +186,8 @@ async def parse_leetcode(client: httpx.AsyncClient, value: str) -> dict:
         "easy": solved.get("easy"),
         "medium": solved.get("medium"),
         "hard": solved.get("hard"),
-        "streak": None,
+        "streak": calendar.get("streak") or 0,
+        "totalActiveDays": calendar.get("totalActiveDays"),
         "contestRating": round(ranking["rating"]) if ranking.get("rating") else None,
         "contests": ranking.get("attendedContestsCount"),
         "globalRank": ranking.get("globalRanking"),
@@ -208,6 +214,18 @@ async def parse_codechef(client: httpx.AsyncClient, value: str) -> dict:
     contest_node = soup.select_one(".contest-participated-count")
     highest_text = soup.find(string=re.compile(r"Highest Rating", re.I))
     highest = first_number(highest_text.parent.get_text(" ", strip=True)) if highest_text else None
+
+    rating_change = None
+    rating_history_match = re.search(
+        r"\[\[\d{10,},\s*\d+\][,\s]*(?:\n?\s*\[?\d{10,},\s*\d+\][,\s]*)*\]",
+        response.text,
+    )
+    if rating_history_match:
+        entries = re.findall(r"\[(\d{10,}),\s*(\d+)\]", rating_history_match.group(0))
+        ratings_only = [int(rating) for _, rating in entries]
+        if len(ratings_only) >= 2:
+            rating_change = ratings_only[-1] - ratings_only[-2]
+
     return {
         "configured": True,
         "status": "ok",
@@ -229,7 +247,7 @@ async def parse_codechef(client: httpx.AsyncClient, value: str) -> dict:
             if contest_node
             else None
         ),
-        "ratingChange": None,
+        "ratingChange": rating_change,
     }
 
 

@@ -109,7 +109,18 @@ def send_notification_to_user(
             body=payload.body,
             data=payload.data,
         )
-        return {"status": "multicast_sent", "result": res}
+        pruned = 0
+        invalid_tokens = res.get("invalid_tokens") or []
+        if invalid_tokens:
+            for doc in docs:
+                if doc.to_dict().get("token") in invalid_tokens:
+                    doc.reference.delete()
+                    pruned += 1
+        return {
+            "status": "multicast_sent",
+            "result": {k: v for k, v in res.items() if k != "invalid_tokens"},
+            "pruned_invalid_tokens": pruned,
+        }
     except Exception as exc:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

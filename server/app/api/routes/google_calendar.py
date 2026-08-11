@@ -143,8 +143,11 @@ async def get_google_calendar_data(
 
     async def process_account(snapshot):
         account = snapshot.to_dict()
+        encrypted_refresh = account.get("refresh_token")
+        if not encrypted_refresh:
+            raise ValueError(f"Missing refresh token for {account.get('email')}.")
         access_token = await refresh_google_token(
-            decrypt_google_token(account["refresh_token"]),
+            decrypt_google_token(encrypted_refresh),
         )
         data = await google_calendar_data(access_token)
         await asyncio.to_thread(
@@ -171,16 +174,28 @@ async def get_google_calendar_data(
         ]
         return connection, enriched_events
 
-    try:
+    if len(snapshots) > 1:
         results = await asyncio.gather(
             *(process_account(s) for s in snapshots),
+            return_exceptions=True,
         )
-    except (KeyError, ValueError, httpx.HTTPError) as error:
-        raise HTTPException(status_code=502, detail=str(error)) from None
+    else:
+        try:
+            results = [await process_account(s) for s in snapshots]
+        except (KeyError, ValueError, httpx.HTTPError) as error:
+            raise HTTPException(status_code=502, detail=str(error)) from None
 
-    connections = [r[0] for r in results]
-    events = [e for r in results for e in r[1]]
-    return {"connections": connections, "events": events}
+    connections = []
+    events = []
+    errors = []
+    for result in results:
+        if isinstance(result, Exception):
+            errors.append(str(result))
+            continue
+        connections.append(result[0])
+        events.extend(result[1])
+
+    return {"connections": connections, "events": events, "errors": errors}
 
 
 @router.delete("/accounts/{account_id}", status_code=204)

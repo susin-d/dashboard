@@ -24,6 +24,19 @@ def list_projects(
     return {"items": items, "next_cursor": next_cursor, "has_more": has_more}
 
 
+@router.get("/projects/{project_id}", response_model=ProjectResponse)
+def get_project(
+    project_id: str,
+    database: Client = Depends(get_firestore),
+    user: dict = Depends(get_current_user),
+):
+    repository = ProjectRepository(database, user["uid"])
+    result = repository.get(project_id)
+    if not result:
+        raise HTTPException(status_code=404, detail="Project not found.")
+    return result
+
+
 @router.post("/projects", response_model=ProjectResponse, status_code=201)
 def create_project(
     project: ProjectCreate,
@@ -59,3 +72,18 @@ def delete_project(
     if not repository.delete(project_id):
         raise HTTPException(status_code=404, detail="Project not found.")
     return Response(status_code=204)
+
+
+@router.post("/projects/{project_id}/restore", response_model=ProjectResponse)
+def restore_project(
+    project_id: str,
+    database: Client = Depends(get_firestore),
+    user: dict = Depends(get_current_user),
+):
+    repository = ProjectRepository(database, user["uid"])
+    if not repository.restore(project_id):
+        raise HTTPException(status_code=404, detail="Project not found.")
+    result = repository.get(project_id)
+    if not result:
+        raise HTTPException(status_code=404, detail="Project not found.")
+    return result
