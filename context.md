@@ -119,6 +119,9 @@ database id, CORS origins. Loads `.env.prod` before `.env`.
 ## 6. Current implementation state
 
 - Full persistent CRUD: Projects, Jobs, Hackathons, Documents, Todos.
+- Jobs timeline: the `Jobs` page renders an "Application frequency" bar chart
+  built from stored `appliedDate` values across the trailing 12 months
+  (pure util `src/utils/jobTimeline.js` + `src/utils/__tests__/jobTimeline.test.js`).
 - Project lifecycle phases: `idea → design → build → test → ship → maintain`
   pipeline stored as `lifecycle_phase` on each project. Phase stepper +
   phase dots on the Project Detail page (`ProjectLifecycleCard.jsx`), phase

@@ -17,6 +17,7 @@ import {
 import { usePersistentState } from '../hooks/usePersistentState'
 import { createJob, deleteJob, updateJob } from '../lib/workspaceApi'
 import { ConfirmDialog } from '../components/ui'
+import { buildApplicationTimeline } from '../utils/jobTimeline'
 
 const emptyJob = {
   company: '',
@@ -78,6 +79,8 @@ export function JobsPage({ jobs, setJobs, documents, createIntent, canLoadMore, 
   }, [jobs, searchQuery, statusFilter, workTypeFilter, sortOrder])
 
   const activeFilters = statusFilter !== 'All' || workTypeFilter !== 'All' || searchQuery
+
+  const { months, max, total } = useMemo(() => buildApplicationTimeline(jobs), [jobs])
 
   const toggleJob = (jobId) => {
     setOpenJobs((current) => {
@@ -188,8 +191,32 @@ export function JobsPage({ jobs, setJobs, documents, createIntent, canLoadMore, 
             <strong>{jobs.filter((job) => job.status === status).length}</strong><span>{status}</span>
           </button>
         ))}
-        <div className="jobs-summary-item jobs-summary-total"><strong>{jobs.length}</strong><span>Total tracked</span></div>
+<div className="jobs-summary-item jobs-summary-total"><strong>{jobs.length}</strong><span>Total tracked</span></div>
       </div>
+
+      <article className="jobs-timeline-card" aria-label={`Applications per month over the last 12 months: ${total} applications`}>
+        <header className="jobs-timeline-heading">
+          <div>
+            <p>Activity</p>
+            <h2>Application frequency</h2>
+          </div>
+          <span>{total} applications · 12 months</span>
+        </header>
+        <div className="jobs-timeline-chart" role="img" aria-label={`Bar chart of ${total} job applications across the last 12 months`}>
+          {months.map((month) => (
+            <div className="jobs-timeline-bar-wrap" key={month.key} title={`${month.fullLabel}: ${month.count}`}>
+              <div className="jobs-timeline-bar" style={{ height: max ? `${Math.max(6, Math.round((month.count / max) * 100))}%` : '6%' }}>
+                {month.count > 0 && <span className="jobs-timeline-bar-count">{month.count}</span>}
+              </div>
+            </div>
+          ))}
+        </div>
+        <div className="jobs-timeline-labels" aria-hidden="true">
+          {months.map((month) => (
+            <span key={month.key}>{month.label}</span>
+          ))}
+        </div>
+      </article>
 
       <div className="jobs-toolbar">
         <label className="jobs-search"><Search size={16} /><span className="sr-only">Search jobs</span><input value={searchQuery} onChange={(event) => setSearchQuery(event.target.value)} placeholder="Search role, company, or location" /></label>
