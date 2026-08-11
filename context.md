@@ -56,7 +56,7 @@ Starwaves/
 | Auth | `app/api/routes/auth/` | `oauth`, `credentials`, `password`, `account`, `combine` |
 | Workspace | `app/api/routes/workspace/` | `jobs`, `hackathons`, `projects`, `notifications`, `contests`, `calendar` |
 | Integrations | `google_calendar`, `google_drive`, `gmail`, `github`, `google_chat` | OAuth callbacks under `/integrations/*/callback` |
-| Features | `documents`, `todos`, `profiles`, `notifications`, `email`, `eve` | EVE = AI assistant |
+| Features | `documents`, `todos`, `profiles`, `notifications`, `email`, `eve`, `calls` | EVE = AI assistant; `calls` = WebRTC signaling |
 | Coding | `coding_stats`, `competitive_coding_profile` | Contests + profile stats |
 | Misc | `health` | `/api/v1/health` |
 
@@ -64,7 +64,7 @@ Starwaves/
 
 `password`, `users`, `account_combine`, `account_deletion`, `jobs`, `projects`,
 `notifications`, `pagination`, `documents`, `profiles`, `todos`, `eve`,
-`eve_sessions`.
+`eve_sessions`, `calls`.
 
 ### Services (`server/app/services/`)
 
@@ -86,22 +86,22 @@ database id, CORS origins. Loads `.env.prod` before `.env`.
   `EmptyState`, `CustomDropdown`, `CalendarPicker`, `Markdown`) re-exported via
   `index.js`.
 - **Hooks** (`src/hooks/`): `useAuth`, `useRouter`, `useTheme`,
-  `useThemeCustomizer`, `useWorkspaceData`, `usePersistentState`,
-  `useLocalNotifications`, `useDialogAccessibility`.
+  `useThemeCustomizer`, `useWorkspaceData`, `useCallCenter`, plus
+  `usePersistentState`, `useLocalNotifications`, `useDialogAccessibility`.
 - **API clients** (`src/lib/`): one per backend feature (`todosApi`,
   `workspaceApi`, `gmailApi`, `googleCalendar`, `googleDriveApi`, `eveApi`,
   `emailApi`, `githubApi`, `googleChatApi`, `codingStatsApi`,
-  `competitiveCodingProfileApi`, `documentsApi`, `notificationsApi`), plus
-  shared `request.js`, `firebase.js`, `authApi.js`, `index.js`.
+  `competitiveCodingProfileApi`, `documentsApi`, `notificationsApi`,
+  `callsApi`), plus shared `request.js`, `firebase.js`, `authApi.js` `index.js`.
 - **Utils** (`src/utils/`): `browserNotifications`, `calendarEvents`,
-  `calendarReminders`, `icsParser`, `popupOAuth`.
+  `calendarReminders`, `icsParser`, `popupOAuth`, `projectLifecycle`,
+  `callWebRTC`, `callDisplay`.
 - **Pages** (`src/pages/`): Dashboard, Projects, ProjectDetail, Jobs,
   Hackathons, HackathonDetail, Todo, Documents, DocumentOpener, Mails,
-  Calendar, Chats, CompetitiveCoding, Stats, Eve, Settings, Themes, Profile,
-  Onboarding, Auth, Landing, TermsOfService, PrivacyPolicy.
-- **Utilities** (`src/utils/`): `projectLifecycle` (phase pipeline + helpers),
-  `browserNotifications`, `calendarEvents`, `calendarReminders`, `icsParser`,
-  `popupOAuth`.
+  Calendar, Chats, Calls, CompetitiveCoding, Stats, Eve, Settings, Themes,
+  Profile, Onboarding, Auth, Landing, TermsOfService, PrivacyPolicy.
+- **Call components** (`src/components/calls/`): `CallScreen`,
+  `IncomingCallOverlay`.
 - **Settings sections** (`src/pages/settings/`): Profile, Account, Apps,
   WorkspaceApps, Theme, Calendar, IcsCalendar, Gmail, Github, GoogleChat,
   Coding, HackathonSources, DataSources, PushNotifications.
@@ -129,6 +129,12 @@ database id, CORS origins. Loads `.env.prod` before `.env`.
 - Hackathon discovery with configurable sources + manual entry.
 - Notifications: calendar-derived reminders + push notifications, read/delete.
 - EVE AI assistant (OpenAI) with sessions.
+- Calls: app-wide WebRTC voice/video calls between StarWaves users. Backend
+  signaling lives in `app/api/routes/calls.py` + `app/repositories/calls.py`
+  (Firestore `calls` collection, polling-based since Vercel is serverless).
+  Frontend: `Calls` page (dialer + recent calls), `useCallCenter` hook running
+  app-wide, `IncomingCallOverlay` global ring + accept/decline. STUN only; no
+  TURN relay configured.
 - Email: templated emails (welcome, verification, password reset, reminders,
   activity digest, announcement, security alert, account combine invite).
 - Android shell via Capacitor (`website/android/`).
@@ -141,6 +147,10 @@ database id, CORS origins. Loads `.env.prod` before `.env`.
 - Calendar event creation/editing not implemented.
 - Mail attachments, forwarding, rich-text composition, persistent drafts not
   implemented.
+- Calls: signaling is polling-based (2s call poll, 3s incoming poll), so there
+  is a short setup delay; calls use public STUN only, so peers behind strict
+  symmetric NAT/firewalls may fail to connect until a TURN relay is added; Ice
+  candidates and signaling messages accumulate in the call doc for the session.
 - Production frontend build emits a bundle-size advisory.
 
 ## 8. Verification commands

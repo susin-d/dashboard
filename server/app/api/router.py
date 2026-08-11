@@ -2,6 +2,7 @@ from fastapi import APIRouter
 
 from app.api.routes import (
     auth,
+    calls,
     coding_stats,
     competitive_coding_profile,
     documents,
@@ -21,6 +22,7 @@ from app.api.routes import (
 
 api_router = APIRouter()
 api_router.include_router(auth.router, tags=["auth"])
+api_router.include_router(calls.router, tags=["calls"])
 api_router.include_router(email.router, tags=["email"])
 api_router.include_router(health.router, tags=["health"])
 api_router.include_router(notifications.router, tags=["notifications"])

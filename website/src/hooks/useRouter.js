@@ -8,6 +8,7 @@ const workspacePages = new Set([
   'calendar',
   'mails',
   'chats',
+  'calls',
   'competitive-coding',
   'hackathons',
   'projects',

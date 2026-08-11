@@ -11,6 +11,8 @@ import { HackathonDetailPage } from './pages/HackathonDetailPage'
 import { JobsPage } from './pages/JobsPage'
 import { MailsPage } from './pages/MailsPage'
 import { ChatsPage } from './pages/ChatsPage'
+import { CallsPage } from './pages/CallsPage'
+import { IncomingCallOverlay } from './components/calls/IncomingCallOverlay'
 import { ProfilePage } from './pages/ProfilePage'
 import { ProjectDetailPage } from './pages/ProjectDetailPage'
 import { ProjectsPage } from './pages/ProjectsPage'
@@ -26,7 +28,7 @@ import { updateNotification } from './lib/workspaceApi'
 import { confirmEmailVerification } from './lib/emailApi'
 import { verifyAccountCombine } from './lib/authApi'
 import { CALENDAR_REMINDER_PREFIX } from './utils/calendarReminders'
-import { useAuth, useRouter, useWorkspaceData } from './hooks'
+import { useAuth, useRouter, useWorkspaceData, useCallCenter } from './hooks'
 import { applyThemeVariables } from './hooks/useThemeCustomizer'
 import { NetworkStatus } from './components/NetworkStatus'
 import { WaveLoader } from './components/WaveLoader'
@@ -56,6 +58,7 @@ function App() {
   const { currentUser, authReady } = useAuth()
   const [sessionUser, setSessionUser] = useState(null)
   const activeUser = currentUser || sessionUser
+  const callCenter = useCallCenter({ user: activeUser })
 
   const resetToken = (() => {
     const hash = window.location.hash || ''
@@ -415,6 +418,7 @@ function App() {
     ),
     mails: <MailsPage onNavigate={navigateWorkspace} />,
     chats: <ChatsPage onNavigate={navigateWorkspace} />,
+    calls: <CallsPage callCenter={callCenter} user={userProfile} />,
     profile: (
       <ProfilePage
         user={userProfile}
@@ -489,30 +493,33 @@ function App() {
   }
 
   return (
-    <AppLayout
-      activePage={
-        activePage === 'project-detail'
-          ? 'projects'
-          : activePage === 'hackathon-detail'
-            ? 'hackathons'
-            : activePage === 'document-opener'
-              ? 'documents'
-              : activePage
-      }
-      onNavigate={navigateWorkspace}
-      notifications={notifications}
-      setNotifications={updateNotifications}
-      notificationsOpen={notificationsOpen}
-      setNotificationsOpen={setNotificationsOpen}
-      user={userProfile}
-      notificationsCanLoadMore={pagination.notifications.has_more}
-      notificationsLoading={loadingMore}
-      onLoadMoreNotifications={() => loadMore('notifications')}
-      onWorkspaceChanged={() => setWorkspaceRefreshKey((current) => current + 1)}
-      onEveNewChat={() => setEveChatKey((current) => current + 1)}
-    >
-      {pages[activePage] ?? pages.dashboard}
-    </AppLayout>
+    <>
+      <AppLayout
+        activePage={
+          activePage === 'project-detail'
+            ? 'projects'
+            : activePage === 'hackathon-detail'
+              ? 'hackathons'
+              : activePage === 'document-opener'
+                ? 'documents'
+                : activePage
+        }
+        onNavigate={navigateWorkspace}
+        notifications={notifications}
+        setNotifications={updateNotifications}
+        notificationsOpen={notificationsOpen}
+        setNotificationsOpen={setNotificationsOpen}
+        user={userProfile}
+        notificationsCanLoadMore={pagination.notifications.has_more}
+        notificationsLoading={loadingMore}
+        onLoadMoreNotifications={() => loadMore('notifications')}
+        onWorkspaceChanged={() => setWorkspaceRefreshKey((current) => current + 1)}
+        onEveNewChat={() => setEveChatKey((current) => current + 1)}
+      >
+        {pages[activePage] ?? pages.dashboard}
+      </AppLayout>
+      <IncomingCallOverlay callCenter={callCenter} myUid={userProfile?.uid} />
+    </>
   )
 }
 
