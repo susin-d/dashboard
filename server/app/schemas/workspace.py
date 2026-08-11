@@ -51,6 +51,7 @@ class ProjectCreate(BaseModel):
     technologies: list[str] = Field(default_factory=list, max_length=50)
     github_url: str = Field(default="", max_length=2048)
     live_url: str = Field(default="", max_length=2048)
+    lifecycle_phase: str = Field(default="idea", max_length=40)
 
 
 class ProjectResponse(ProjectCreate):
@@ -114,3 +115,4 @@ class ProjectUpdate(BaseModel):
     technologies: list[str] | None = Field(default=None, max_length=50)
     github_url: str | None = Field(default=None, max_length=2048)
     live_url: str | None = Field(default=None, max_length=2048)
+    lifecycle_phase: str | None = Field(default=None, max_length=40)

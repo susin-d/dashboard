@@ -811,7 +811,7 @@
 
 .project-edit-form-row {
   display: grid;
-  grid-template-columns: 1.2fr 0.8fr 1fr;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 9px;
 }
 
@@ -819,6 +819,238 @@
   display: flex;
   align-items: center;
   gap: 7px;
+}
+
+/* Lifecycle Phases */
+.project-lifecycle-card {
+  margin-top: 16px;
+  padding: var(--layout-card-padding);
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 13px;
+}
+
+.project-lifecycle-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 22px;
+}
+
+.project-lifecycle-heading p {
+  margin: 0 0 5px;
+  color: var(--text-muted);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.project-lifecycle-heading h2 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.project-lifecycle-nav {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.project-lifecycle-nav button {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  color: var(--text-primary);
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 7px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.project-lifecycle-nav button:hover:not(:disabled) {
+  background: var(--bg-tertiary);
+  border-color: var(--border-heavy);
+}
+
+.project-lifecycle-nav button:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.project-lifecycle-track {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.project-lifecycle-node {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  flex: 1 1 0;
+  min-width: 0;
+  position: relative;
+}
+
+.project-lifecycle-node::before {
+  content: "";
+  position: absolute;
+  top: 14px;
+  right: 50%;
+  width: 100%;
+  height: 1px;
+  background: var(--border-color);
+  z-index: 0;
+}
+
+.project-lifecycle-node:first-child::before {
+  display: none;
+}
+
+.project-lifecycle-node button {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  color: var(--text-primary);
+  background: var(--bg-card);
+  border: 1px solid var(--border-heavy);
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.project-lifecycle-node button:hover:not(:disabled) {
+  border-color: var(--color-primary);
+}
+
+.project-lifecycle-node button:disabled {
+  cursor: default;
+}
+
+.project-lifecycle-node-index {
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.project-lifecycle-node.done::before {
+  background: var(--color-primary);
+}
+
+.project-lifecycle-node.done button {
+  color: var(--text-inverse);
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+}
+
+.project-lifecycle-node.current::before {
+  background: var(--color-primary);
+}
+
+.project-lifecycle-node.current button {
+  color: var(--text-primary);
+  background: var(--bg-card);
+  border: 2px solid var(--color-primary);
+  box-shadow: 0 0 0 3px var(--bg-tertiary);
+}
+
+.project-lifecycle-node.upcoming button {
+  color: var(--text-muted);
+  border-style: dashed;
+}
+
+.project-lifecycle-node-label {
+  color: var(--text-secondary);
+  font-size: 9px;
+  font-weight: 700;
+  white-space: nowrap;
+  text-align: center;
+}
+
+.project-lifecycle-node.done .project-lifecycle-node-label {
+  color: var(--text-primary);
+}
+
+.project-lifecycle-node.current .project-lifecycle-node-label {
+  color: var(--text-primary);
+}
+
+.project-lifecycle-description {
+  margin: 20px 0 0;
+  padding-top: 14px;
+  color: var(--text-secondary);
+  border-top: 1px solid var(--border-color);
+  font-size: 11px;
+  line-height: 1.55;
+}
+
+/* Phase Dots Indicator */
+.project-phase-dots {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.project-phase-dots i {
+  width: 7px;
+  height: 7px;
+  background: var(--border-heavy);
+  border-radius: 50%;
+}
+
+.project-phase-dots i.done {
+  background: var(--color-primary);
+}
+
+.project-phase-dots i.current {
+  background: var(--color-primary);
+  box-shadow: 0 0 0 2px var(--bg-tertiary);
+}
+
+.project-grid-phase {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.project-grid-phase strong {
+  color: var(--text-secondary);
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.project-list-phase {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 0;
+  border-top: 1px solid var(--border-color);
+}
+
+.project-list-phase > span {
+  color: var(--text-muted);
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.project-list-phase strong {
+  color: var(--text-secondary);
+  font-size: 10px;
+  font-weight: 700;
 }
 
 @media (max-width: 1100px) {
@@ -887,5 +1119,24 @@
 
   .project-card-actions > button {
     flex: 1;
+  }
+
+  .project-lifecycle-track {
+    justify-content: flex-start;
+    overflow-x: auto;
+    padding-bottom: 4px;
+    scrollbar-width: none;
+  }
+
+  .project-lifecycle-track::-webkit-scrollbar {
+    display: none;
+  }
+
+  .project-lifecycle-node {
+    flex: 0 0 64px;
+  }
+
+  .project-lifecycle-node::before {
+    width: 200%;
   }
 }

@@ -16,11 +16,17 @@ import {
 } from 'lucide-react'
 import { deleteProject, updateProject } from '../lib/workspaceApi'
 import { ConfirmDialog, CustomDropdown } from '../components/ui'
+import { ProjectLifecycleCard } from '../components/ProjectLifecycleCard'
+import {
+  getStatusForPhase,
+  PROJECT_LIFECYCLE_PHASES,
+} from '../utils/projectLifecycle'
 
 export function ProjectDetailPage({ project, onBack, onSave }) {
   const [editOpen, setEditOpen] = useState(false)
   const [form, setForm] = useState({})
   const [saving, setSaving] = useState(false)
+  const [phaseSaving, setPhaseSaving] = useState(false)
   const [deleteRequested, setDeleteRequested] = useState(false)
   const [error, setError] = useState('')
   const updatedAt = new Date(project.updatedAt)
@@ -35,6 +41,7 @@ export function ProjectDetailPage({ project, onBack, onSave }) {
       technologies: (project.technologies || []).join(', '),
       githubUrl: project.githubUrl,
       liveUrl: project.liveUrl,
+      lifecyclePhase: project.lifecyclePhase,
     })
     setEditOpen(true)
   }
@@ -59,6 +66,7 @@ export function ProjectDetailPage({ project, onBack, onSave }) {
         .filter(Boolean),
       githubUrl: form.githubUrl,
       liveUrl: form.liveUrl,
+      lifecyclePhase: form.lifecyclePhase,
     }
     try {
       const updated = await updateProject(project.id, updatedPayload)
@@ -90,6 +98,21 @@ export function ProjectDetailPage({ project, onBack, onSave }) {
       onSave(updated)
     } catch (err) {
       setError(err.message || 'Failed to update progress.')
+    }
+  }
+
+  const handleLifecycleChange = async (newPhase) => {
+    setPhaseSaving(true)
+    try {
+      const updated = await updateProject(project.id, {
+        lifecyclePhase: newPhase,
+        status: getStatusForPhase(newPhase),
+      })
+      onSave(updated)
+    } catch (err) {
+      setError(err.message || 'Failed to update lifecycle phase.')
+    } finally {
+      setPhaseSaving(false)
     }
   }
 
@@ -286,6 +309,12 @@ export function ProjectDetailPage({ project, onBack, onSave }) {
         </article>
       </div>
 
+      <ProjectLifecycleCard
+        phase={project.lifecyclePhase}
+        onPhaseChange={handleLifecycleChange}
+        saving={phaseSaving}
+      />
+
       {editOpen && (
         <div
           className="todo-modal-backdrop"
@@ -345,6 +374,21 @@ export function ProjectDetailPage({ project, onBack, onSave }) {
                     <option>Active</option>
                     <option>On hold</option>
                     <option>Completed</option>
+                  </select>
+                </label>
+                <label>
+                  Lifecycle phase
+                  <select
+                    value={form.lifecyclePhase}
+                    onChange={(event) =>
+                      updateField('lifecyclePhase', event.target.value)
+                    }
+                  >
+                    {PROJECT_LIFECYCLE_PHASES.map((phase) => (
+                      <option key={phase.id} value={phase.id}>
+                        {phase.label}
+                      </option>
+                    ))}
                   </select>
                 </label>
                 <label>

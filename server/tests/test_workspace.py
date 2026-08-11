@@ -84,6 +84,50 @@ class TestWorkspaceEndpoints(unittest.TestCase):
         response = client.delete("/api/v1/jobs/job-999")
         self.assertEqual(response.status_code, 204)
 
+    def test_create_project_mocked_with_lifecycle_phase(self):
+        mock_doc_ref = MagicMock()
+        mock_doc_ref.id = "project-42"
+        mock_collection = MagicMock()
+        mock_collection.document.return_value = mock_doc_ref
+        mock_db.collection.return_value.document.return_value.collection.return_value = mock_collection
+
+        payload = {
+            "name": "StarWaves Web",
+            "status": "Planning",
+            "progress": 10,
+            "members": 2,
+            "technologies": ["React", "FastAPI"],
+            "lifecycle_phase": "design",
+        }
+        response = client.post("/api/v1/projects", json=payload)
+        self.assertEqual(response.status_code, 201)
+        data = response.json()
+        self.assertEqual(data["id"], "project-42")
+        self.assertEqual(data["lifecycle_phase"], "design")
+
+    def test_patch_project_lifecycle_phase_mocked(self):
+        mock_doc_ref = MagicMock()
+        mock_doc_ref.id = "project-42"
+        mock_doc_ref.get.return_value.exists = True
+        mock_doc_ref.get.return_value.to_dict.return_value = {
+            "name": "StarWaves Web",
+            "status": "Active",
+            "progress": 40,
+            "members": 2,
+            "technologies": [],
+            "lifecycle_phase": "build",
+        }
+        mock_collection = MagicMock()
+        mock_collection.document.return_value = mock_doc_ref
+        mock_db.collection.return_value.document.return_value.collection.return_value = mock_collection
+
+        response = client.patch(
+            "/api/v1/projects/project-42",
+            json={"lifecycle_phase": "build", "status": "Active"},
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["lifecycle_phase"], "build")
+
     def test_mark_all_notifications_read(self):
         mock_collection = MagicMock()
         mock_collection.where.return_value.stream.return_value = []

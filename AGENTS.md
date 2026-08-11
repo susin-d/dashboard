@@ -9,19 +9,32 @@ Instructions and guidelines for AI Coding Agents working in the **Starwaves** co
 
 ## 🛑 1. Core Principles & Communication
 
-1. **Ask When in Doubt**:
+1. **Maintain `context.md` as the Living Snapshot**:
+   - `context.md` at the repository root is the authoritative **current state**
+     of the codebase. Read it before starting any task; it may be more recent
+     than stale assumptions.
+   - After any change that alters the implementation — new routes, pages,
+     components, repositories, services, scripts, dependencies, environment
+     variables, features, or architecture — **update `context.md` to match** in
+     the same change.
+   - Update the **`Last updated`** date at the top of `context.md` whenever you
+     modify it.
+   - Remove or amend entries that are no longer true (features, routes, files,
+     scripts, limitations). Never leave `context.md` describing the old state.
+
+2. **Ask When in Doubt**:
    - Never guess user intent, business logic, API schemas, or ambiguous design decisions.
    - If a requirement is unclear or underspecified, **ask the user for clarification** before executing changes.
 
-2. **Prohibition on Deleting Secrets**:
+3. **Prohibition on Deleting Secrets**:
    - **NEVER** delete, clear, wipe, or remove secrets, API keys, credentials, `.env` files, service account JSON files, or sensitive environment variables under any circumstances.
    - If secret rotation or refactoring is required, request explicit user guidance.
 
-3. **Respect System Architecture**:
+4. **Respect System Architecture**:
    - **Frontend (`/website`)**: React 19 + Vite + Vanilla CSS (Monochrome Design System).
    - **Backend (`/server`)**: FastAPI (Python) + Firebase Firestore.
 
-4. **Clean Code Principles**:
+5. **Clean Code Principles**:
    - **DRY (Don't Repeat Yourself)**: Avoid code and style duplication. Extract reusable helper functions, hooks, and UI components instead of copying blocks of code.
    - **KISS (Keep It Simple, Stupid)**: Keep implementation simple, readable, and direct. Avoid premature optimization, over-engineering, or unnecessary abstractions.
    - **Single Responsibility Principle (SRP)**: Each component, module, or function should have a single, well-defined responsibility.
@@ -31,7 +44,7 @@ Instructions and guidelines for AI Coding Agents working in the **Starwaves** co
    - **No Magic Values**: Extract hardcoded magic numbers, string constants, and API URLs into named constants or configuration settings.
    - **Boy Scout Rule**: Always leave the codebase cleaner than you found it. Refactor small code smells encountered while working on a feature.
 
-5. **One File = One Feature**:
+6. **One File = One Feature**:
    - Every file must represent **exactly one feature or one responsibility**. Do not mix unrelated features into a single file.
    - When a module grows beyond its feature, split it into a package where each sub-module owns one feature and the package `__init__.py` only re-exports a combined entry point (e.g. `router`, `__all__`).
    - Examples of valid feature groupings:
@@ -41,7 +54,7 @@ Instructions and guidelines for AI Coding Agents working in the **Starwaves** co
    - Shared helpers may live in a `_shared.py` / `index.js` within the feature package so they are not duplicated across files.
    - Never create a "utils"/"misc" dumping ground for unrelated logic; route each helper to the feature that owns it.
 
-6. **One Function = One Thing**:
+7. **One Function = One Thing**:
    - Each function must do **one thing** and be named for that thing.
    - A function that branches on mode flags (e.g. `if (mode === 'reset') ... else ...`) or dispatches across unrelated behaviors must be split into dedicated handlers (e.g. `handleAuthSubmit` / `handleResetSubmit`).
    - A single dispatcher that routes to many unrelated operations (e.g. `confirmDisconnect` switching over 8 kinds) should be replaced by per-feature handlers that each live next to their feature.
@@ -96,3 +109,13 @@ Instructions and guidelines for AI Coding Agents working in the **Starwaves** co
      - Backend: verify Python syntax and test endpoints in `/server`
 2. **Preserve Comments & API Contracts**:
    - Maintain existing docstrings, API response shapes, and file structure integrity.
+
+3. **Always Push After Completion**:
+   - When a task is completed (code verified, `context.md` updated, files
+     staged/committed with a clear message), **push to the remote** so the
+     repository stays in sync.
+   - Run `git status`, `git add <intended files>`, `git commit`, then
+     `git push` to the current branch's upstream. Never commit secrets or
+     `.env` files, and never force-push.
+   - If a push fails, report the exact error instead of silently leaving the
+     remote behind.

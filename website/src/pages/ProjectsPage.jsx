@@ -18,6 +18,11 @@ import {
 } from 'lucide-react'
 import { createProject, deleteProject, updateProject } from '../lib/workspaceApi'
 import { ConfirmDialog, CustomDropdown, PageHeader } from '../components/ui'
+import { ProjectPhaseDots } from '../components/ProjectLifecycleCard'
+import {
+  getProjectPhase,
+  PROJECT_LIFECYCLE_PHASES,
+} from '../utils/projectLifecycle'
 import { usePersistentState } from '../hooks/usePersistentState'
 
 const emptyProject = {
@@ -29,6 +34,7 @@ const emptyProject = {
   technologies: '',
   githubUrl: '',
   liveUrl: '',
+  lifecyclePhase: 'idea',
 }
 
 const getStatusClass = (status) => {
@@ -464,6 +470,11 @@ export function ProjectsPage({
                   </div>
                 </div>
 
+                <div className="project-grid-phase">
+                  <ProjectPhaseDots phase={project.lifecyclePhase} />
+                  <strong>{getProjectPhase(project.lifecyclePhase).label}</strong>
+                </div>
+
                 {project.technologies && project.technologies.length > 0 && (
                   <div className="project-tags">
                     {project.technologies.map((tech) => (
@@ -589,6 +600,12 @@ export function ProjectsPage({
                       aria-valuenow={project.progress}
                     >
                       <span style={{ width: `${project.progress}%` }} />
+                    </div>
+
+                    <div className="project-list-phase">
+                      <span>Lifecycle</span>
+                      <ProjectPhaseDots phase={project.lifecyclePhase} />
+                      <strong>{getProjectPhase(project.lifecyclePhase).label}</strong>
                     </div>
 
                     <div className="project-detail-grid">
@@ -737,6 +754,21 @@ export function ProjectsPage({
                     <option>Active</option>
                     <option>On hold</option>
                     <option>Completed</option>
+                  </select>
+                </label>
+                <label>
+                  Lifecycle phase
+                  <select
+                    value={form.lifecyclePhase}
+                    onChange={(event) =>
+                      updateField('lifecyclePhase', event.target.value)
+                    }
+                  >
+                    {PROJECT_LIFECYCLE_PHASES.map((phase) => (
+                      <option key={phase.id} value={phase.id}>
+                        {phase.label}
+                      </option>
+                    ))}
                   </select>
                 </label>
                 <label>

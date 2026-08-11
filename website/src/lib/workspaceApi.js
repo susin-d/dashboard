@@ -197,6 +197,7 @@ function mapProject(project) {
     technologies: project.technologies,
     githubUrl: project.github_url,
     liveUrl: project.live_url,
+    lifecyclePhase: project.lifecycle_phase,
     updatedAt: project.updated_at,
     source: 'manual',
   }
@@ -220,6 +221,7 @@ export async function createProject(project) {
         technologies: project.technologies,
         github_url: project.githubUrl,
         live_url: project.liveUrl,
+        lifecycle_phase: project.lifecyclePhase ?? 'idea',
       }),
     }),
   )
@@ -236,6 +238,7 @@ export async function updateProject(projectId, project) {
   if ('technologies' in project) payload.technologies = project.technologies
   if ('githubUrl' in project) payload.github_url = project.githubUrl
   if ('liveUrl' in project) payload.live_url = project.liveUrl
+  if ('lifecyclePhase' in project) payload.lifecycle_phase = project.lifecyclePhase
 
   return mapProject(
     await request(`/projects/${encodeURIComponent(rawId)}`, {
