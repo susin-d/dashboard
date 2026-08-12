@@ -1,0 +1,17 @@
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.coverage
+htmlcov/
+.git/
+.gitignore
+.env
+.env.*
+!.env.example
+*.log
+firebase-secrets*.json
+uvicorn.*.log
+tests/

@@ -15,8 +15,8 @@ applications, tasks, documents, calendars, email, hackathons, competitive
 programming, and an AI assistant into one dashboard.
 
 - **Frontend** (`/website`): React 19 + Vite + Vanilla CSS (monochrome design system).
-- **Backend** (`/server`): FastAPI (Python) + Firebase Firestore.
-- **Auth**: Firebase Authentication; serverless deployment targets Vercel.
+- **Backend** (`/server`): FastAPI (Python) + Firebase Firestore. Containerized with Docker & Nginx.
+- **Auth**: Firebase Authentication; serverless deployment targets Vercel, dockerized server for standalone VM/cloud deployment.
 
 ## 2. Repository structure
 
@@ -38,7 +38,15 @@ Starwaves/
 │   │   ├── schemas/         API request and response models
 │   │   └── services/        External integration services
 │   ├── tests/               Backend unittest suite
-│   └── templates/email/     Email HTML templates
+│   ├── templates/email/     Email HTML templates
+│   ├── Dockerfile           Python 3.12-slim container build
+│   └── .dockerignore        Container build exclusions
+├── nginx/                   Nginx reverse proxy configuration
+│   ├── nginx.conf           Global Nginx configuration (Gzip, buffers, security)
+│   └── conf.d/default.conf  Reverse proxy virtual host (port 80/443, WebSocket, health)
+├── docker-compose.yml       Multi-container orchestration for server & Nginx
+├── .env.docker.example      Docker deployment environment template
+├── DOCKER.md                Container setup & operational documentation
 └── vercel.json              Serverless rewrites
 ```
 
@@ -151,6 +159,7 @@ database id, CORS origins. Loads `.env.prod` before `.env`.
   and triggers browser desktop notifications. Calls are also surfaced in the
   sidebar navigation, Header notification drawer (with dedicated call icons),
   and landing page "Remind me" CTA routes to signup.
+- Docker & Nginx containerization: `/server` containerized using Python 3.12-slim with non-root security context (`appuser`), Uvicorn 4-worker runtime, and container healthchecks. Nginx reverse proxy configured in `nginx/` with Gzip compression, 20MB client upload ceiling, security headers, WebSocket upgrade support, and health route proxying. Orchestrated via root `docker-compose.yml` with `.env.docker.example` and [`DOCKER.md`](file:///c:/project/starwaves/DOCKER.md).
 - Email: templated emails (welcome, verification, password reset, reminders,
   activity digest, announcement, security alert, account combine invite).
 - Android shell via Capacitor (`website/android/`).
@@ -179,4 +188,9 @@ npm test            # Vitest
 
 # Backend (from server/)
 python -m unittest discover tests
+
+# Docker Stack (from repository root)
+docker compose config              # Verify Compose file validity
+docker compose up --build -d       # Build & launch containerized stack
+curl -i http://localhost/health    # Verify Nginx reverse proxy & backend health
 ```

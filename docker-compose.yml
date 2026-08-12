@@ -1,0 +1,51 @@
+version: "3.8"
+
+services:
+  server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    container_name: starwaves-server
+    restart: unless-stopped
+    env_file:
+      - ./server/.env
+    environment:
+      - APP_ENV=production
+      - PORT=8000
+    expose:
+      - "8000"
+    ports:
+      - "8000:8000"
+    networks:
+      - starwaves-network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8000/api/v1/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  nginx:
+    image: nginx:alpine
+    container_name: starwaves-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      - nginx-logs:/var/log/nginx
+    depends_on:
+      server:
+        condition: service_healthy
+    networks:
+      - starwaves-network
+
+networks:
+  starwaves-network:
+    driver: bridge
+
+volumes:
+  nginx-logs:
+    driver: local
