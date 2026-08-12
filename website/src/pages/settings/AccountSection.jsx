@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react'
-import { Trash2 } from 'lucide-react'
+import { LogOut, Trash2 } from 'lucide-react'
 import { clearAuthSession, deleteAccount } from '../../lib/authApi'
 import { clearGmailAuthorization } from '../../lib/firebase'
 
-export function AccountSection({ user }) {
+export function AccountSection({ user, onSignOut }) {
   const [accountDeleting, setAccountDeleting] = useState(false)
   const [accountDeleteMessage, setAccountDeleteMessage] = useState('')
   const [deleteModalOpen, setDeleteModalOpen] = useState(false)
@@ -50,11 +50,35 @@ export function AccountSection({ user }) {
     setAccountDeleteMessage('')
   }
 
+  const handleSignOut = () => {
+    if (onSignOut) {
+      onSignOut()
+    } else {
+      clearAuthSession()
+    }
+  }
+
   return (
     <div className="setting-section delete-account-section" id="settings-account">
       <div className="section-heading">
-        <h2>Delete account</h2>
-        <p>Permanently remove your StarWaves account.</p>
+        <h2>Account &amp; security</h2>
+        <p>Manage session access or permanently remove your account.</p>
+      </div>
+
+      <div className="account-action-card">
+        <div>
+          <h3>Sign out of account</h3>
+          <p>
+            Sign out of your active StarWaves session on this device.
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={handleSignOut}
+        >
+          <LogOut size={15} />
+          Sign out
+        </button>
       </div>
 
       <div className="delete-account-card">

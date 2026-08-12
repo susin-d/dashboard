@@ -16,6 +16,7 @@ export function SettingPage({
   importedIcsCalendars = [],
   setImportedIcsCalendars,
   setImportedIcsEvents,
+  onSignOut,
 }) {
   return (
     <section className="setting-page">
@@ -48,7 +49,7 @@ export function SettingPage({
       <PushNotificationsSection user={user} />
       <CodingSection user={user} onContestSitesChange={onContestSitesChange} />
       <HackathonSourcesSection user={user} onHackathonsChange={onHackathonsChange} />
-      <AccountSection user={user} />
+      <AccountSection user={user} onSignOut={onSignOut} />
     </section>
   )
 }

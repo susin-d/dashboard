@@ -27,7 +27,7 @@ import { PrivacyPolicyPage } from './pages/PrivacyPolicyPage'
 import { TermsOfServicePage } from './pages/TermsOfServicePage'
 import { updateNotification } from './lib/workspaceApi'
 import { confirmEmailVerification } from './lib/emailApi'
-import { verifyAccountCombine } from './lib/authApi'
+import { clearAuthSession, verifyAccountCombine } from './lib/authApi'
 import { CALENDAR_REMINDER_PREFIX } from './utils/calendarReminders'
 import { useAuth, useRouter, useWorkspaceData, useCallCenter } from './hooks'
 import { applyThemeVariables } from './hooks/useThemeCustomizer'
@@ -302,6 +302,12 @@ function App() {
     })
   }
 
+  const handleSignOut = () => {
+    clearAuthSession()
+    setSessionUser(null)
+    navigateRoute('/login')
+  }
+
   const pages = {
     dashboard: (
       <DashboardPage
@@ -444,6 +450,7 @@ function App() {
             displayName: newName,
           }))
         }
+        onSignOut={handleSignOut}
       />
     ),
     themes: <ThemesPage />,
@@ -458,6 +465,7 @@ function App() {
         setImportedIcsCalendars={setImportedIcsCalendars}
         importedIcsEvents={importedIcsEvents}
         setImportedIcsEvents={setImportedIcsEvents}
+        onSignOut={handleSignOut}
       />
     ),
   }
@@ -538,6 +546,7 @@ function App() {
         onLoadMoreNotifications={() => loadMore('notifications')}
         onWorkspaceChanged={() => setWorkspaceRefreshKey((current) => current + 1)}
         onEveNewChat={() => setEveChatKey((current) => current + 1)}
+        onSignOut={handleSignOut}
       >
         {pages[activePage] ?? pages.dashboard}
       </AppLayout>

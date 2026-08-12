@@ -1,6 +1,6 @@
 import { ProfileCard } from '../components/ProfileCard'
 
-export function ProfilePage({ user, onProfileUpdated }) {
+export function ProfilePage({ user, onProfileUpdated, onSignOut }) {
   return (
     <section className="profile-page">
       <div className="page-heading">
@@ -11,7 +11,7 @@ export function ProfilePage({ user, onProfileUpdated }) {
       </div>
 
       <div className="profile-page-content">
-        <ProfileCard user={user} onProfileUpdated={onProfileUpdated} />
+        <ProfileCard user={user} onProfileUpdated={onProfileUpdated} onSignOut={onSignOut} />
       </div>
     </section>
   )

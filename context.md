@@ -4,7 +4,7 @@ Living project snapshot for AI agents. `AGENTS.md` holds the permanent rules;
 this file holds the **current state** of the codebase and must be kept up to
 date whenever the implementation changes.
 
-> **Last updated:** 2026-08-12 (landing page cinematic redesign)
+> **Last updated:** 2026-08-12 (signout button implementation)
 
 ---
 
@@ -157,6 +157,7 @@ database id, CORS origins. Loads `.env.prod` before `.env`.
 - Docker & Nginx containerization: `/server` containerized using Python 3.12-slim with non-root security context (`appuser`), Uvicorn 4-worker runtime, and container healthchecks. Nginx reverse proxy configured in `nginx/` with Gzip compression, 20MB client upload ceiling, security headers, WebSocket upgrade support, and health route proxying. Orchestrated via root `docker-compose.yml` with `.env.docker.example` and [`DOCKER.md`](file:///c:/project/starwaves/DOCKER.md).
 - Global CORS & Exception Middleware: `server/app/main.py` features outer CORS middleware and exception wrapping ensuring proper `Access-Control-Allow-Origin`, `Access-Control-Allow-Credentials`, and allowed header response headers across all HTTP endpoints, preflight `OPTIONS` requests, 4xx/500 status responses, and unhandled server exceptions for local development (`localhost`, `127.0.0.1`, Capacitor `capacitor://localhost`, custom ports) and production (`https://starwaves.susindran.in`, `https://*.susindran.in`, `https://*.vercel.app`).
 - Email & Google OAuth single-account unification: automatic merging of duplicate account records in Firestore (`merge_duplicate_user_accounts`), seamless password attachment to Google OAuth accounts upon signup (`create_user_with_password`), and on-demand `/api/v1/auth/merge-accounts` endpoint.
+- User session signout: explicit Sign Out actions provided in the topbar profile dropdown (`Header.jsx`), Profile Card (`ProfileCard.jsx`), and Account & Security settings (`AccountSection.jsx`). Invoking sign out clears local authentication session tokens via `clearAuthSession()`, resets workspace state, and redirects the user to the `/login` route.
 - Android shell via Capacitor (`website/android/`).
 - Vercel cron hookup: `vercel.json` configures serverless cron job `/api/v1/cron/execute-schedules` scheduled every 15 minutes (`*/15 * * * *`).
 - Cinematic Landing Page: `LandingPage.jsx` redesigned as an immersive, scroll-driven storytelling experience with an animated star-field canvas (WebGL-style particles), IntersectionObserver-based scroll-reveal animations, animated number counters, staggered feature card entrances, a vertical timeline workflow, and a cinematic dark final CTA with radial spotlight gradient. All monochrome. Hero uses `margin-top: -72px` to bleed behind the semi-transparent nav.

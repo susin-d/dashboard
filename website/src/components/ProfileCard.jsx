@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
-import { CheckCircle2, Clock, Link2, Mail, ShieldCheck, Trash2, User, X } from 'lucide-react'
+import { CheckCircle2, Clock, Link2, LogOut, Mail, ShieldCheck, Trash2, User, X } from 'lucide-react'
 import {
+  clearAuthSession,
   fetchCombinedAccounts,
   requestAccountCombine,
   unlinkCombinedAccount,
@@ -13,11 +14,19 @@ import {
   sendVerificationEmail,
 } from '../lib/emailApi'
 
-export function ProfileCard({ user, onProfileUpdated }) {
+export function ProfileCard({ user, onProfileUpdated, onSignOut }) {
   const [editing, setEditing] = useState(false)
   const [displayName, setDisplayName] = useState(user?.fullName || '')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+
+  const handleSignOut = () => {
+    if (onSignOut) {
+      onSignOut()
+    } else {
+      clearAuthSession()
+    }
+  }
 
   // Combined accounts & email service states
   const [combinedData, setCombinedData] = useState({ combined_accounts: [], pending_combine_requests: [] })
@@ -176,16 +185,27 @@ export function ProfileCard({ user, onProfileUpdated }) {
             <h3>{user.fullName}</h3>
             <p>{user.role}</p>
           </div>
-          <button
-            type="button"
-            className="profile-edit-button"
-            onClick={() => {
-              setDisplayName(user.fullName)
-              setEditing(true)
-            }}
-          >
-            Edit profile
-          </button>
+          <div className="profile-card-actions">
+            <button
+              type="button"
+              className="profile-edit-button"
+              onClick={() => {
+                setDisplayName(user.fullName)
+                setEditing(true)
+              }}
+            >
+              Edit profile
+            </button>
+            <button
+              type="button"
+              className="profile-signout-button"
+              onClick={handleSignOut}
+              title="Sign out of account"
+            >
+              <LogOut size={14} />
+              Sign out
+            </button>
+          </div>
         </div>
 
         <div className="profile-details">

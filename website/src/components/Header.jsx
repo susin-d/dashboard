@@ -8,6 +8,7 @@ import {
   CheckCheck,
   ChevronDown,
   FolderKanban,
+  LogOut,
   Menu,
   Moon,
   Phone,
@@ -23,6 +24,7 @@ import {
   X,
 } from 'lucide-react'
 import { navigationItems } from '../config/navigation'
+import { clearAuthSession } from '../lib/authApi'
 import { deleteNotification, markAllNotificationsRead } from '../lib/workspaceApi'
 import { CALENDAR_REMINDER_PREFIX } from '../utils/calendarReminders'
 import { getNotificationPermission, requestNotificationPermission } from '../utils/browserNotifications'
@@ -42,10 +44,20 @@ export function Header({
   notificationsLoading,
   onLoadMoreNotifications,
   onWorkspaceChanged,
+  onSignOut,
 }) {
   const [profileMenuOpen, setProfileMenuOpen] = useState(false)
   const [searchOpen, setSearchOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
+
+  const handleSignOut = () => {
+    setProfileMenuOpen(false)
+    if (onSignOut) {
+      onSignOut()
+    } else {
+      clearAuthSession()
+    }
+  }
   const [eveOpen, setEveOpen] = useState(false)
   const [darkTheme, setDarkTheme] = useState(
     () => localStorage.getItem('starwaves.theme') === 'dark',
@@ -329,6 +341,11 @@ export function Header({
                 <button onClick={() => navigateFromMenu('setting')}>
                   <Settings size={16} />
                   Settings
+                </button>
+                <div className="profile-dropdown-divider" />
+                <button onClick={handleSignOut} className="sign-out-button">
+                  <LogOut size={16} />
+                  Sign out
                 </button>
               </div>
             </div>

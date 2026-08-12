@@ -1323,6 +1323,17 @@
   background: var(--bg-tertiary);
 }
 
+.profile-dropdown-divider {
+  height: 1px;
+  margin: 4px 0;
+  background: var(--border-color);
+}
+
+.profile-dropdown-links .sign-out-button:hover {
+  color: var(--text-primary);
+  background: var(--bg-hover, rgba(255, 255, 255, 0.08));
+}
+
 .avatar,
 .sidebar-avatar {
   display: grid;
