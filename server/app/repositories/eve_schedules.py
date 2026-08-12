@@ -5,6 +5,8 @@ from typing import Any
 from firebase_admin import firestore
 from google.cloud.firestore_v1 import Client
 
+from google.cloud.firestore_v1.base_query import FieldFilter
+
 from app.schemas.eve_schedule import EveScheduleCreate, EveScheduleUpdate
 
 
@@ -149,7 +151,7 @@ def list_all_due_schedules(database: Client) -> list[dict[str, Any]]:
     results = []
     # Stream across user subcollections for active due schedules
     try:
-        query = database.collection_group("eve_schedules").where("enabled", "==", True)
+        query = database.collection_group("eve_schedules").where(filter=FieldFilter("enabled", "==", True))
         for doc in query.stream():
             data = doc.to_dict() or {}
             next_run = data.get("next_run_at")
@@ -163,7 +165,7 @@ def list_all_due_schedules(database: Client) -> list[dict[str, Any]]:
                 database.collection("users")
                 .document(u.id)
                 .collection("eve_schedules")
-                .where("enabled", "==", True)
+                .where(filter=FieldFilter("enabled", "==", True))
                 .stream()
             )
             for s in s_docs:

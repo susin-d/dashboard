@@ -1,5 +1,7 @@
 """Email/password credential authentication: signup and login."""
 
+import logging
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from google.cloud.firestore_v1 import Client
 from pydantic import BaseModel, EmailStr
@@ -11,6 +13,7 @@ from app.repositories.password import verify_password
 from app.repositories.users import create_user_with_password, get_user_by_email
 
 router = APIRouter(prefix="/auth")
+logger = logging.getLogger(__name__)
 
 
 class SignupRequest(BaseModel):
@@ -71,8 +74,9 @@ def signup(
 
 @router.post("/login")
 def login(payload: LoginRequest, database: Client = Depends(get_firestore)):
+    clean_email = payload.email.lower().strip()
     try:
-        user_record = get_user_by_email(database, payload.email)
+        user_record = get_user_by_email(database, clean_email)
     except Exception as exc:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -80,6 +84,7 @@ def login(payload: LoginRequest, database: Client = Depends(get_firestore)):
         ) from exc
 
     if not user_record or not user_record.get("password_hash") or not user_record.get("password_salt"):
+        logger.warning("Login failed for %s: Account record or password credentials missing.", clean_email)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="The email or password is incorrect.",
@@ -87,13 +92,15 @@ def login(payload: LoginRequest, database: Client = Depends(get_firestore)):
 
     try:
         is_valid = verify_password(payload.password, user_record["password_hash"], user_record["password_salt"])
-    except Exception:
+    except Exception as exc:
+        logger.warning("Error verifying password for %s: %s", clean_email, exc)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="The email or password is incorrect.",
         ) from None
 
     if not is_valid:
+        logger.warning("Login failed for %s: Password mismatch.", clean_email)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="The email or password is incorrect.",

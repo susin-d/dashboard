@@ -5,6 +5,8 @@ import uuid
 from firebase_admin import firestore
 from google.cloud.firestore_v1 import Client
 
+from google.cloud.firestore_v1.base_query import FieldFilter
+
 from app.repositories.password import hash_password
 
 
@@ -13,9 +15,15 @@ def get_users_collection(database: Client):
 
 
 def get_user_by_email(database: Client, email: str) -> dict | None:
-    query = get_users_collection(database).where("email", "==", email.lower().strip()).limit(1)
+    normalized_email = email.lower().strip()
+    query = get_users_collection(database).where(filter=FieldFilter("email", "==", normalized_email)).limit(1)
     docs = list(query.stream())
     if not docs:
+        for doc in get_users_collection(database).limit(100).stream():
+            d = doc.to_dict() or {}
+            if (d.get("email") or "").lower().strip() == normalized_email:
+                d["uid"] = doc.id
+                return d
         return None
     data = docs[0].to_dict()
     data["uid"] = docs[0].id
