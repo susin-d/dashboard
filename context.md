@@ -134,7 +134,7 @@ database id, CORS origins. Loads `.env.prod` before `.env`.
 - Integrations: GitHub, Google Calendar, Google Drive, Gmail, Google Chat.
 - Competitive programming: contests + profile stats.
 - Hackathon discovery with configurable sources + manual entry.
-- Notifications: calendar-derived reminders + push notifications, read/delete.
+- Notifications: calendar-derived reminders, call notifications (incoming, missed, declined workspace records & desktop alerts), push notifications, read/delete.
 - EVE AI assistant (OpenAI) with sessions.
 - Calls: app-wide WebRTC voice/video calls between StarWaves users. Backend
   signaling lives in `app/api/routes/calls.py` + `app/repositories/calls.py`
@@ -145,8 +145,12 @@ database id, CORS origins. Loads `.env.prod` before `.env`.
   `ringing|active|declined|ended|missed`; signaling messages are pruned to the
   newest 200 per call doc; a server-side guard auto-marks calls stuck in
   `ringing` for >45s as `missed` on the incoming/recent list endpoints. Calls
-  also surfaced in the sidebar navigation and landing page "Remind me" CTA
-  routes to signup.
+  integrate with notifications: starting a call, missing a call, or declining
+  a call automatically creates workspace notifications in Firestore via
+  `NotificationRepository`, dispatches FCM push notifications to user devices,
+  and triggers browser desktop notifications. Calls are also surfaced in the
+  sidebar navigation, Header notification drawer (with dedicated call icons),
+  and landing page "Remind me" CTA routes to signup.
 - Email: templated emails (welcome, verification, password reset, reminders,
   activity digest, announcement, security alert, account combine invite).
 - Android shell via Capacitor (`website/android/`).

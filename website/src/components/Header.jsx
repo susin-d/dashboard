@@ -10,6 +10,10 @@ import {
   FolderKanban,
   Menu,
   Moon,
+  Phone,
+  PhoneIncoming,
+  PhoneMissed,
+  PhoneOff,
   Search,
   Settings,
   Trophy,
@@ -66,6 +70,10 @@ export function Header({
     contest: Trophy,
     project: FolderKanban,
     job: BriefcaseBusiness,
+    call: Phone,
+    call_incoming: PhoneIncoming,
+    call_missed: PhoneMissed,
+    call_declined: PhoneOff,
   }
   const notificationDestinations = {
     calendar: 'calendar',
@@ -74,6 +82,10 @@ export function Header({
     job: 'jobs',
     hackathon: 'hackathons',
     task: 'todo',
+    call: 'calls',
+    call_incoming: 'calls',
+    call_missed: 'calls',
+    call_declined: 'calls',
   }
 
   useEffect(() => {

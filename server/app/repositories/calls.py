@@ -118,6 +118,22 @@ class CallRepository:
                         "updated_at": _now_iso(),
                     },
                 )
+                try:
+                    from app.services.notifications import send_call_notification
+                    callee_uid = call.get("callee", {}).get("uid")
+                    caller_name = call.get("caller", {}).get("name", "Someone")
+                    mode = call.get("mode", "call")
+                    if callee_uid:
+                        send_call_notification(
+                            database=self.database,
+                            target_user_id=callee_uid,
+                            title="Missed Call",
+                            message=f"Missed {mode} call from {caller_name}",
+                            notification_type="call_missed",
+                            call_id=call["id"],
+                        )
+                except Exception:
+                    pass
 
     def update_status(self, call_id: str, status: str) -> dict | None:
         if status not in CALL_STATUSES:

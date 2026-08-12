@@ -7,6 +7,7 @@ import {
   updateCallStatus,
 } from '../lib/callsApi'
 import { ICE_SERVERS, startRingtone, stopRingtone } from '../utils/callWebRTC'
+import { notify } from '../utils/browserNotifications'
 
 const INCOMING_POLL_MS = 3000
 const CALL_POLL_MS = 2000
@@ -215,10 +216,12 @@ export function useCallCenter({ user }) {
       try {
         const data = await getCall(callId)
         if (data.status === 'declined') {
+          notify('Call Declined', `${data.callee?.name || 'User'} declined your call.`, `call-declined-${callId}`)
           teardown('declined')
           return
         }
         if (data.status === 'missed') {
+          notify('Missed Call', `Missed call from ${data.caller?.name || 'Someone'}.`, `call-missed-${callId}`)
           teardown('missed')
           return
         }
@@ -406,6 +409,11 @@ export function useCallCenter({ user }) {
           setIncomingCall(ringing)
           setMode(ringing.mode === 'video' ? 'video' : 'audio')
           setPhase('incoming')
+          notify(
+            'Incoming Call',
+            `Incoming ${ringing.mode || 'video'} call from ${ringing.caller?.name || 'Someone'}`,
+            `call-incoming-${ringing.id}`,
+          )
           startPollLoop(ringing.id)
         }
       } catch {

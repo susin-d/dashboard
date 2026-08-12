@@ -297,6 +297,36 @@ class TestCallEndpoints(unittest.TestCase):
         ]
         self.assertEqual(len(missed_updates), 0)
 
+    def test_create_call_dispatches_notification(self):
+        stub_caller_record()
+        from unittest.mock import patch
+        with patch("app.api.routes.calls.send_call_notification") as mock_send_notif:
+            response = self.client.post(
+                "/api/v1/calls",
+                json={"callee_identifier": "callee@example.com", "mode": "video"},
+            )
+            self.assertEqual(response.status_code, 201)
+            mock_send_notif.assert_called_once()
+            _, kwargs = mock_send_notif.call_args
+            self.assertEqual(kwargs.get("target_user_id"), "callee-456")
+            self.assertEqual(kwargs.get("notification_type"), "call_incoming")
+            self.assertEqual(kwargs.get("title"), "Incoming Call")
+
+    def test_update_call_status_declined_dispatches_notification(self):
+        stub_call_participant()
+        from unittest.mock import patch
+        with patch("app.api.routes.calls.send_call_notification") as mock_send_notif:
+            response = self.client.patch(
+                "/api/v1/calls/call-1/status",
+                json={"status": "declined"},
+            )
+            self.assertEqual(response.status_code, 200)
+            mock_send_notif.assert_called_once()
+            _, kwargs = mock_send_notif.call_args
+            self.assertEqual(kwargs.get("target_user_id"), "test-user-123")
+            self.assertEqual(kwargs.get("notification_type"), "call_declined")
+            self.assertEqual(kwargs.get("title"), "Call Declined")
+
 
 if __name__ == "__main__":
     unittest.main()

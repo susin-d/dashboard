@@ -19,8 +19,10 @@ from app.schemas.call import (
     CallUser,
     SignalCreate,
 )
+from app.services.notifications import send_call_notification
 
 router = APIRouter(prefix="/calls")
+
 
 RECENT_CALL_LIMIT = 30
 
@@ -96,6 +98,14 @@ def create_call(
         callee=_person(callee_record),
         mode=payload.mode,
     )
+    send_call_notification(
+        database=database,
+        target_user_id=callee_record["uid"],
+        title="Incoming Call",
+        message=f"Incoming {payload.mode} call from {_person(user).name}",
+        notification_type="call_incoming",
+        call_id=call["id"],
+    )
     return _serialize(call)
 
 
@@ -120,6 +130,30 @@ def update_call_status(
     repository = CallRepository(database)
     _require_participant(repository.get(call_id), user["uid"])
     call = repository.update_status(call_id, payload.status)
+    if payload.status == "missed":
+        caller_name = call.get("caller", {}).get("name", "Someone")
+        callee_uid = call.get("callee", {}).get("uid")
+        if callee_uid:
+            send_call_notification(
+                database=database,
+                target_user_id=callee_uid,
+                title="Missed Call",
+                message=f"Missed {call.get('mode', 'call')} from {caller_name}",
+                notification_type="call_missed",
+                call_id=call_id,
+            )
+    elif payload.status == "declined":
+        callee_name = call.get("callee", {}).get("name", "User")
+        caller_uid = call.get("caller", {}).get("uid")
+        if caller_uid:
+            send_call_notification(
+                database=database,
+                target_user_id=caller_uid,
+                title="Call Declined",
+                message=f"{callee_name} declined your call",
+                notification_type="call_declined",
+                call_id=call_id,
+            )
     return _serialize(call)
 
 

@@ -1,5 +1,4 @@
-"""Notification repository: workspace notification CRUD against Firestore."""
-
+import uuid
 from datetime import datetime, timezone
 from typing import Any
 
@@ -15,6 +14,30 @@ class NotificationRepository:
         self.database = database
         self.user_id = user_id
         self.collection = user_collection(database, user_id, "notifications")
+
+    def create(
+        self,
+        type: str,
+        title: str,
+        message: str,
+        time: str | None = None,
+        unread: bool = True,
+    ) -> dict[str, Any]:
+        notification_id = uuid.uuid4().hex
+        now = datetime.now(timezone.utc)
+        time_str = time or now.strftime("%I:%M %p").lstrip("0")
+        data = {
+            "type": type,
+            "title": title,
+            "message": message,
+            "time": time_str,
+            "unread": unread,
+            "deleted": False,
+            "created_at": firestore.SERVER_TIMESTAMP,
+            "updated_at": firestore.SERVER_TIMESTAMP,
+        }
+        self.collection.document(notification_id).set(data)
+        return {"id": notification_id, **data}
 
     def list_page(self, cursor: str | None, limit: int):
         return paginate_collection(self.collection, "created_at", cursor, limit)

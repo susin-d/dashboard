@@ -69,3 +69,41 @@ def send_multicast_notification(
         "failure_count": batch_response.failure_count,
         "invalid_tokens": invalid_tokens,
     }
+
+
+def send_call_notification(
+    database,
+    target_user_id: str,
+    title: str,
+    message: str,
+    notification_type: str = "call_incoming",
+    call_id: str | None = None,
+) -> dict:
+    """Store workspace notification and attempt FCM push to registered user devices."""
+    created = None
+    try:
+        from app.repositories.notifications import NotificationRepository
+        repo = NotificationRepository(database, target_user_id)
+        created = repo.create(type=notification_type, title=title, message=message)
+    except Exception as exc:
+        logger.warning("Could not persist workspace notification for user %s: %s", target_user_id, exc)
+
+    push_result = None
+    try:
+        docs = list(database.collection("users").document(target_user_id).collection("devices").stream())
+        tokens = [doc.to_dict().get("token") for doc in docs if doc.to_dict().get("token")]
+        if tokens:
+            data = {"type": notification_type}
+            if call_id:
+                data["call_id"] = call_id
+            push_result = send_multicast_notification(
+                device_tokens=tokens,
+                title=title,
+                body=message,
+                data=data,
+            )
+    except Exception as exc:
+        logger.info("Push notification not dispatched for call (%s): %s", notification_type, exc)
+
+    return {"notification": created, "push_result": push_result}
+
