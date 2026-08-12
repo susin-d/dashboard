@@ -99,7 +99,7 @@ database id, CORS origins. Loads `.env.prod` before `.env`.
 - **Pages** (`src/pages/`): Dashboard, Projects, ProjectDetail, Jobs,
   Hackathons, HackathonDetail, Todo, Documents, DocumentOpener, Mails,
   Calendar, Chats, Calls, CompetitiveCoding, Stats, Eve, Settings, Themes,
-  Profile, Onboarding, Auth, Landing, TermsOfService, PrivacyPolicy.
+  Profile, Onboarding, Auth, ForgotPassword, Landing, TermsOfService, PrivacyPolicy.
 - **Call components** (`src/components/calls/`): `CallScreen`,
   `IncomingCallOverlay`.
 - **Settings sections** (`src/pages/settings/`): Profile, Account, Apps,
