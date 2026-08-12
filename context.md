@@ -159,6 +159,7 @@ database id, CORS origins. Loads `.env.prod` before `.env`.
 - Email & Google OAuth single-account unification: automatic merging of duplicate account records in Firestore (`merge_duplicate_user_accounts`), seamless password attachment to Google OAuth accounts upon signup (`create_user_with_password`), and on-demand `/api/v1/auth/merge-accounts` endpoint.
 - Android shell via Capacitor (`website/android/`).
 - Vercel cron hookup: `vercel.json` configures serverless cron job `/api/v1/cron/execute-schedules` scheduled every 15 minutes (`*/15 * * * *`).
+- Cinematic Landing Page: `LandingPage.jsx` redesigned as an immersive, scroll-driven storytelling experience with an animated star-field canvas (WebGL-style particles), IntersectionObserver-based scroll-reveal animations, animated number counters, staggered feature card entrances, a vertical timeline workflow, and a cinematic dark final CTA with radial spotlight gradient. All monochrome. Hero uses `margin-top: -72px` to bleed behind the semi-transparent nav.
 
 ## 7. Known limitations
 
