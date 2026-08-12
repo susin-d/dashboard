@@ -132,3 +132,25 @@ def unlink_combined_account(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(exc),
         ) from None
+
+
+@router.post("/merge-accounts")
+def merge_accounts(
+    user: dict = Depends(get_current_user),
+    database: Client = Depends(get_firestore),
+):
+    from app.repositories.users import merge_duplicate_user_accounts
+
+    email = user.get("email")
+    if not email:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Current user email is not available.",
+        )
+
+    merged = merge_duplicate_user_accounts(database, email=email)
+    return {
+        "message": "Duplicate accounts merged successfully into one single account.",
+        "primary_account": merged[0] if merged else user,
+    }
+

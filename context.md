@@ -155,8 +155,7 @@ database id, CORS origins. Loads `.env.prod` before `.env`.
   - Backend: `server/app/api/routes/calls.py` handles `eve-bot` resolution and `/calls/trigger-eve` endpoint; `server/app/services/eve.py` includes the `trigger_eve_call` workspace tool.
   - Calls integrate with notifications: starting a call, missing a call, or declining a call automatically creates workspace notifications in Firestore via `NotificationRepository`, dispatches FCM push notifications to user devices, and triggers browser desktop notifications. Calls are also surfaced in the sidebar navigation, Header notification drawer (with dedicated call icons), and landing page "Remind me" CTA routes to signup.
 - Docker & Nginx containerization: `/server` containerized using Python 3.12-slim with non-root security context (`appuser`), Uvicorn 4-worker runtime, and container healthchecks. Nginx reverse proxy configured in `nginx/` with Gzip compression, 20MB client upload ceiling, security headers, WebSocket upgrade support, and health route proxying. Orchestrated via root `docker-compose.yml` with `.env.docker.example` and [`DOCKER.md`](file:///c:/project/starwaves/DOCKER.md).
-- Email: templated emails (welcome, verification, password reset, reminders,
-  activity digest, announcement, security alert, account combine invite).
+- Email & Google OAuth single-account unification: automatic merging of duplicate account records in Firestore (`merge_duplicate_user_accounts`), seamless password attachment to Google OAuth accounts upon signup (`create_user_with_password`), and on-demand `/api/v1/auth/merge-accounts` endpoint.
 - Android shell via Capacitor (`website/android/`).
 - Vercel cron hookup: `vercel.json` configures serverless cron job `/api/v1/cron/execute-schedules` scheduled every 15 minutes (`*/15 * * * *`).
 

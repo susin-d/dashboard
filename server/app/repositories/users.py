@@ -14,10 +14,92 @@ def get_users_collection(database: Client):
     return database.collection("users")
 
 
+def merge_duplicate_user_accounts(database: Client, email: str | None = None) -> list[dict]:
+    """Merges duplicate user documents sharing the same email into a single primary record."""
+    users_coll = get_users_collection(database)
+    all_docs = list(users_coll.stream())
+
+    email_groups: dict[str, list[dict]] = {}
+    for doc in all_docs:
+        d = doc.to_dict() or {}
+        doc_email = (d.get("email") or "").lower().strip()
+        if not doc_email:
+            continue
+        if email and doc_email != email.lower().strip():
+            continue
+        d["uid"] = doc.id
+        email_groups.setdefault(doc_email, []).append(d)
+
+    merged_primary_users = []
+
+    for _, docs in email_groups.items():
+        if len(docs) <= 1:
+            if docs:
+                merged_primary_users.append(docs[0])
+            continue
+
+        primary = docs[0]
+        for candidate in docs[1:]:
+            if (not primary.get("password_hash") and candidate.get("password_hash")) or \
+               (not primary.get("google_auth") and candidate.get("google_auth")):
+                primary = candidate
+
+        primary_uid = primary["uid"]
+        updates = {"updated_at": firestore.SERVER_TIMESTAMP}
+        combined_accounts = list(primary.get("combined_accounts") or [])
+
+        for second in docs:
+            if second["uid"] == primary_uid:
+                continue
+
+            if not primary.get("password_hash") and second.get("password_hash"):
+                updates["password_hash"] = second["password_hash"]
+                updates["password_salt"] = second.get("password_salt", "")
+                primary["password_hash"] = second["password_hash"]
+                primary["password_salt"] = second.get("password_salt", "")
+
+            if second.get("google_auth"):
+                updates["google_auth"] = True
+                primary["google_auth"] = True
+
+            if not primary.get("display_name") and second.get("display_name"):
+                updates["display_name"] = second["display_name"]
+                primary["display_name"] = second["display_name"]
+
+            if not primary.get("picture") and second.get("picture"):
+                updates["picture"] = second["picture"]
+                primary["picture"] = second["picture"]
+
+            if second.get("email_verified"):
+                updates["email_verified"] = True
+                primary["email_verified"] = True
+
+            for acc in second.get("combined_accounts") or []:
+                if not any(a.get("email") == acc.get("email") or (a.get("uid") and a.get("uid") == acc.get("uid")) for a in combined_accounts):
+                    combined_accounts.append(acc)
+
+            users_coll.document(second["uid"]).delete()
+
+        if combined_accounts != list(primary.get("combined_accounts") or []):
+            updates["combined_accounts"] = combined_accounts
+            primary["combined_accounts"] = combined_accounts
+
+        if len(updates) > 1:
+            users_coll.document(primary_uid).update(updates)
+
+        merged_primary_users.append(primary)
+
+    return merged_primary_users
+
+
 def get_user_by_email(database: Client, email: str) -> dict | None:
     normalized_email = email.lower().strip()
-    query = get_users_collection(database).where(filter=FieldFilter("email", "==", normalized_email)).limit(1)
+    query = get_users_collection(database).where(filter=FieldFilter("email", "==", normalized_email))
     docs = list(query.stream())
+    if len(docs) > 1:
+        merged_list = merge_duplicate_user_accounts(database, email=normalized_email)
+        return merged_list[0] if merged_list else None
+
     if not docs:
         for doc in get_users_collection(database).limit(100).stream():
             d = doc.to_dict() or {}
@@ -47,13 +129,26 @@ def create_user_with_password(
 ) -> dict:
     normalized_email = email.lower().strip()
     existing = get_user_by_email(database, normalized_email)
-    if existing:
-        raise ValueError("An account already exists for this email.")
-
-    uid = str(uuid.uuid4())
     pwd_hash, pwd_salt = hash_password(password)
     display_name = name.strip() if name and name.strip() else normalized_email.split("@")[0]
 
+    if existing:
+        if not existing.get("password_hash"):
+            updates = {
+                "password_hash": pwd_hash,
+                "password_salt": pwd_salt,
+                "updated_at": firestore.SERVER_TIMESTAMP,
+            }
+            if display_name and not existing.get("display_name"):
+                updates["display_name"] = display_name
+                existing["display_name"] = display_name
+            get_users_collection(database).document(existing["uid"]).update(updates)
+            existing.update(updates)
+            return existing
+
+        raise ValueError("An account already exists for this email.")
+
+    uid = str(uuid.uuid4())
     user_data = {
         "uid": uid,
         "email": normalized_email,
@@ -80,7 +175,7 @@ def get_or_create_google_user(
     display_name = name.strip() if name and name.strip() else normalized_email.split("@")[0]
 
     if existing:
-        updates = {"updated_at": firestore.SERVER_TIMESTAMP}
+        updates = {"google_auth": True, "updated_at": firestore.SERVER_TIMESTAMP}
         if picture and not existing.get("picture"):
             updates["picture"] = picture
         if display_name and not existing.get("display_name"):
