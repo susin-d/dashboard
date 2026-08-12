@@ -23,6 +23,7 @@ import {
   sendEveMessage,
 } from '../lib/eveApi'
 import { Markdown } from '../components/ui/Markdown'
+import { EveSchedulesCard } from '../components/eve/EveSchedulesCard'
 
 const STARTER_MESSAGES = [
   {
@@ -109,6 +110,8 @@ export function EvePage({ callCenter, onNavigate, onWorkspaceChanged, chatResetK
         onWorkspaceChanged?.()
       } else if (action.type === 'trigger_eve_call') {
         callCenter?.requestEveCall?.('audio')
+      } else if (action.type === 'refresh_eve_schedules') {
+        refreshSidebar()
       }
     })
   }
@@ -573,6 +576,8 @@ export function EvePage({ callCenter, onNavigate, onWorkspaceChanged, chatResetK
               </div>
             )}
           </div>
+
+          <EveSchedulesCard onScheduleTriggered={refreshSidebar} />
         </aside>
       </div>
     </div>

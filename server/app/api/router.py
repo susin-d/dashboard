@@ -5,9 +5,11 @@ from app.api.routes import (
     calls,
     coding_stats,
     competitive_coding_profile,
+    cron,
     documents,
     email,
     eve,
+    eve_schedules,
     gmail,
     google_calendar,
     google_drive,
@@ -23,12 +25,14 @@ from app.api.routes import (
 api_router = APIRouter()
 api_router.include_router(auth.router, tags=["auth"])
 api_router.include_router(calls.router, tags=["calls"])
+api_router.include_router(cron.router, tags=["cron serverless jobs"])
 api_router.include_router(email.router, tags=["email"])
 api_router.include_router(health.router, tags=["health"])
 api_router.include_router(notifications.router, tags=["notifications"])
 api_router.include_router(profiles.router, tags=["profiles"])
 api_router.include_router(documents.router, tags=["documents"])
 api_router.include_router(eve.router, tags=["Eve AI assistant"])
+api_router.include_router(eve_schedules.router, tags=["Eve automated schedules"])
 api_router.include_router(gmail.router, tags=["Gmail integration"])
 api_router.include_router(
     competitive_coding_profile.router,
@@ -47,3 +51,4 @@ api_router.include_router(
 )
 api_router.include_router(todos.router, tags=["todos"])
 api_router.include_router(workspace.router, tags=["workspace data"])
+

@@ -143,7 +143,11 @@ database id, CORS origins. Loads `.env.prod` before `.env`.
 - Competitive programming: contests + profile stats.
 - Hackathon discovery with configurable sources + manual entry.
 - Notifications: calendar-derived reminders, call notifications (incoming, missed, declined workspace records & desktop alerts), push notifications, read/delete.
-- EVE AI assistant (OpenAI) with sessions, persistent memories, and bidirectional voice calling.
+- EVE AI assistant (OpenAI) with sessions, persistent memories, bidirectional voice calling, and automated schedule/reminder execution.
+- Automated Eve Reminders & Schedules: create one-time or recurring (cron-based) automated prompts or voice calls.
+  - Supports two action types: AI Chat Prompt execution (runs prompt, saves session & notifies user) or Eve Voice Call (automatically initiates an incoming voice call from Eve to user at scheduled time).
+  - Tools added to Eve assistant (`create_eve_schedule`, `list_eve_schedules`, `delete_eve_schedule`) so users can schedule reminders conversationally in chat or via the `EveSchedulesCard` sidebar component.
+  - Vercel Cron Integration: `vercel.json` registers background cron job (`/api/v1/cron/execute-schedules` every 15 minutes `*/15 * * * *`) targeting FastAPI backend route `app/api/routes/cron.py`.
 - Calls & Eve AI Voice Calling: app-wide WebRTC voice/video calls between StarWaves users and bidirectional voice calls with Eve AI Assistant (`eve@starwaves.app` / `eve-bot`).
   - Users can dial `eve` or `eve@starwaves.app`, click quick-action buttons ("Call Eve" / "Receive call from Eve"), or ask Eve in chat ("Eve, call me") to trigger immediate incoming voice calls.
   - Active Eve calls launch a dedicated monochrome AI pulse wave visualizer (`CallScreen.jsx`), integrated Web Speech API STT (Speech-to-Text) voice recognition, and TTS (Text-to-Speech) voice synthesis with real-time speech captions overlay and mute/audio controls.
@@ -153,8 +157,7 @@ database id, CORS origins. Loads `.env.prod` before `.env`.
 - Email: templated emails (welcome, verification, password reset, reminders,
   activity digest, announcement, security alert, account combine invite).
 - Android shell via Capacitor (`website/android/`).
-- Vercel cron hookup: `vercel.json` currently contains only SPA rewrites; no
-  cron jobs registered yet.
+- Vercel cron hookup: `vercel.json` configures serverless cron job `/api/v1/cron/execute-schedules` scheduled every 15 minutes (`*/15 * * * *`).
 
 ## 7. Known limitations
 

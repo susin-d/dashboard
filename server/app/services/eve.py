@@ -314,6 +314,44 @@ EVE_TOOLS = [
         },
         "strict": False,
     },
+    {
+        "type": "function",
+        "name": "create_eve_schedule",
+        "description": "Create an automated scheduled task or reminder that auto-prompts Eve or triggers an incoming voice call from Eve at a specified time or interval.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "title": {"type": "string", "minLength": 1, "maxLength": 120},
+                "prompt": {"type": "string", "minLength": 1, "maxLength": 2000},
+                "schedule_type": {"type": "string", "enum": ["one_time", "recurring"]},
+                "action_type": {"type": "string", "enum": ["chat_prompt", "voice_call"]},
+                "execute_at": {"type": "string"},
+                "cron_expression": {"type": "string"},
+            },
+            "required": ["title", "prompt"],
+            "additionalProperties": False,
+        },
+        "strict": False,
+    },
+    {
+        "type": "function",
+        "name": "list_eve_schedules",
+        "description": "List the user's active automated Eve schedules and reminders.",
+        "parameters": {"type": "object", "properties": {}, "additionalProperties": False},
+        "strict": True,
+    },
+    {
+        "type": "function",
+        "name": "delete_eve_schedule",
+        "description": "Delete or cancel an automated Eve schedule/reminder by its id.",
+        "parameters": {
+            "type": "object",
+            "properties": {"schedule_id": {"type": "string", "minLength": 1}},
+            "required": ["schedule_id"],
+            "additionalProperties": False,
+        },
+        "strict": True,
+    },
 ]
 
 
@@ -615,6 +653,29 @@ def _run_tool(database: Client, user_id: str, name: str, arguments: dict[str, An
         if not removed:
             raise ValueError("Memory not found.")
         return {"message": "Memory removed."}, None, None
+    if name == "create_eve_schedule":
+        from app.repositories.eve_schedules import EveScheduleRepository
+        from app.schemas.eve_schedule import EveScheduleCreate
+        payload = EveScheduleCreate(
+            title=arguments["title"],
+            prompt=arguments["prompt"],
+            schedule_type=arguments.get("schedule_type", "one_time"),
+            action_type=arguments.get("action_type", "chat_prompt"),
+            execute_at=arguments.get("execute_at"),
+            cron_expression=arguments.get("cron_expression"),
+        )
+        created = EveScheduleRepository(database, user_id).create(payload)
+        return {"schedule": created, "message": f"Automated schedule '{created['title']}' created."}, None, {"type": "refresh_eve_schedules"}
+    if name == "list_eve_schedules":
+        from app.repositories.eve_schedules import EveScheduleRepository
+        schedules = EveScheduleRepository(database, user_id).list()
+        return {"schedules": schedules, "total": len(schedules)}, None, None
+    if name == "delete_eve_schedule":
+        from app.repositories.eve_schedules import EveScheduleRepository
+        deleted = EveScheduleRepository(database, user_id).delete(arguments["schedule_id"])
+        if not deleted:
+            raise ValueError("Schedule not found.")
+        return {"message": "Schedule deleted."}, None, {"type": "refresh_eve_schedules"}
     if name == "trigger_eve_call":
         from app.repositories.calls import CallRepository
         from app.repositories.users import get_user_by_id
