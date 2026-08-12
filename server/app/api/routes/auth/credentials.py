@@ -71,26 +71,48 @@ def signup(
 
 @router.post("/login")
 def login(payload: LoginRequest, database: Client = Depends(get_firestore)):
-    user_record = get_user_by_email(database, payload.email)
+    try:
+        user_record = get_user_by_email(database, payload.email)
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Database service unavailable. Could not verify account details.",
+        ) from exc
+
     if not user_record or not user_record.get("password_hash") or not user_record.get("password_salt"):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="The email or password is incorrect.",
         ) from None
 
-    if not verify_password(payload.password, user_record["password_hash"], user_record["password_salt"]):
+    try:
+        is_valid = verify_password(payload.password, user_record["password_hash"], user_record["password_salt"])
+    except Exception:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="The email or password is incorrect.",
         ) from None
 
-    token = create_user_token(
-        {
-            "uid": user_record["uid"],
-            "email": user_record["email"],
-            "name": user_record.get("display_name"),
-        },
-    )
+    if not is_valid:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="The email or password is incorrect.",
+        ) from None
+
+    try:
+        token = create_user_token(
+            {
+                "uid": user_record["uid"],
+                "email": user_record["email"],
+                "name": user_record.get("display_name"),
+            },
+        )
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to generate authentication token.",
+        ) from exc
+
     return {
         "token": token,
         "user": {
