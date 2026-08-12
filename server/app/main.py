@@ -1,4 +1,5 @@
 import logging
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -6,8 +7,25 @@ from fastapi.responses import JSONResponse
 
 from app.api.router import api_router
 from app.core.config import settings
+from app.core.worker import server_worker
 
 logger = logging.getLogger(__name__)
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    logger.info("Initializing %s (env=%s)...", settings.app_name, settings.app_env)
+    # Start long-running server background worker daemon
+    try:
+        server_worker.start()
+    except Exception as err:
+        logger.warning("Could not start background worker daemon: %s", err)
+    yield
+    logger.info("Shutting down %s...", settings.app_name)
+    try:
+        server_worker.stop()
+    except Exception as err:
+        logger.warning("Error stopping background worker daemon: %s", err)
 
 
 def create_app() -> FastAPI:
@@ -16,6 +34,7 @@ def create_app() -> FastAPI:
         version="0.1.0",
         docs_url="/docs",
         redoc_url="/redoc",
+        lifespan=lifespan,
     )
 
     application.add_middleware(
@@ -40,5 +59,6 @@ def create_app() -> FastAPI:
 
 
 app = create_app()
+
 
 

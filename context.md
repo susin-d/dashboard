@@ -52,7 +52,8 @@ Starwaves/
 
 ## 3. Backend (FastAPI)
 
-- **App factory**: `server/app/main.py` → `create_app()` (CORS + `/api/v1` router).
+- **App factory**: `server/app/main.py` → `create_app()` with `@asynccontextmanager` `lifespan` manager (CORS + `/api/v1` router + `ServerBackgroundWorker` daemon thread).
+- **Background Worker Daemon**: `server/app/core/worker.py` -> `ServerBackgroundWorker` runs in long-running server environments (Docker / Uvicorn daemons / systemd) to auto-execute due Eve schedules, trigger voice calls, and expire stale calls every 30s.
 - **Route registry**: `server/app/api/router.py` includes all top-level routers.
 - **Prefix**: `/api/v1` (see `server/app/core/config.py`).
 - **Auth**: Firebase ID tokens via `server/app/core/auth.py`.
