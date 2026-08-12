@@ -111,14 +111,19 @@ async def github_data(
     database: Client = Depends(get_firestore),
     user: dict = Depends(get_current_user),
 ):
-    snapshot = await asyncio.to_thread(reference(database, user["uid"]).get)
-    if not snapshot.exists:
-        return {"connected": False, "github": None, "repositories": []}
     try:
-        token = decrypt_token(snapshot.to_dict()["access_token"])
+        snapshot = await asyncio.to_thread(reference(database, user["uid"]).get)
+        if not snapshot.exists:
+            return {"connected": False, "github": None, "repositories": []}
+        data_dict = snapshot.to_dict() or {}
+        access_token_enc = data_dict.get("access_token")
+        if not access_token_enc:
+            return {"connected": False, "github": None, "repositories": []}
+        token = decrypt_token(access_token_enc)
         return {"connected": True, **(await fetch_github_data(token))}
-    except (KeyError, ValueError, httpx.HTTPError) as error:
-        raise HTTPException(status_code=502, detail=str(error)) from None
+    except Exception as error:
+        logger.warning("GitHub data fetch failed or disabled: %s", error)
+        return {"connected": False, "github": None, "repositories": []}
 
 
 @router.delete("", status_code=204)

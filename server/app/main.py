@@ -1,4 +1,5 @@
 import logging
+import re
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
@@ -10,6 +11,11 @@ from app.core.config import settings
 from app.core.worker import server_worker
 
 logger = logging.getLogger(__name__)
+
+ALLOWED_ORIGIN_REGEX = re.compile(
+    r"^(https?://(localhost|127\.0\.0\.1|\[::1\])(:\d+)?|capacitor://localhost|https://([a-zA-Z0-9-]+\.)*susindran\.in|https://([a-zA-Z0-9-]+\.)*vercel\.app)$",
+    re.IGNORECASE,
+)
 
 
 @asynccontextmanager
@@ -37,9 +43,50 @@ def create_app() -> FastAPI:
         lifespan=lifespan,
     )
 
+    @application.middleware("http")
+    async def global_cors_and_error_middleware(request: Request, call_next):
+        origin = request.headers.get("origin")
+        allowed_origins = settings.cors_origins
+
+        is_allowed = bool(
+            origin
+            and (
+                "*" in allowed_origins
+                or origin in allowed_origins
+                or ALLOWED_ORIGIN_REGEX.match(origin)
+            )
+        )
+
+        if request.method == "OPTIONS":
+            response = JSONResponse(status_code=204, content=None)
+        else:
+            try:
+                response = await call_next(request)
+            except Exception as exc:
+                logger.error("Unhandled exception on %s: %s", request.url.path, exc, exc_info=True)
+                response = JSONResponse(
+                    status_code=500,
+                    content={
+                        "detail": str(exc)
+                        if settings.app_env == "development"
+                        else "An internal server error occurred."
+                    },
+                )
+
+        if is_allowed and origin:
+            response.headers["Access-Control-Allow-Origin"] = origin
+            response.headers["Access-Control-Allow-Credentials"] = "true"
+            response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS, PATCH, HEAD"
+            response.headers["Access-Control-Allow-Headers"] = (
+                "Authorization, Content-Type, Accept, Origin, X-Requested-With, CRON-Secret"
+            )
+            response.headers["Access-Control-Max-Age"] = "86400"
+        return response
+
     application.add_middleware(
         CORSMiddleware,
-        allow_origins=settings.cors_origins,
+        allow_origins=["*"],
+        allow_origin_regex=r"https?://.*|capacitor://.*",
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
@@ -48,10 +95,17 @@ def create_app() -> FastAPI:
     @application.exception_handler(Exception)
     async def global_exception_handler(request: Request, exc: Exception):
         logger.error("Unhandled exception on %s: %s", request.url.path, exc, exc_info=True)
-        return JSONResponse(
+        response = JSONResponse(
             status_code=500,
             content={"detail": str(exc) if settings.app_env == "development" else "An internal server error occurred."},
         )
+        origin = request.headers.get("origin")
+        if origin:
+            response.headers["Access-Control-Allow-Origin"] = origin
+            response.headers["Access-Control-Allow-Credentials"] = "true"
+            response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS, PATCH, HEAD"
+            response.headers["Access-Control-Allow-Headers"] = "*"
+        return response
 
     application.include_router(api_router, prefix=settings.api_v1_prefix)
 

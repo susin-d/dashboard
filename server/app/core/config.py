@@ -3,9 +3,13 @@ from dataclasses import dataclass
 
 from dotenv import load_dotenv
 
-if os.path.exists(".env.prod"):
-    load_dotenv(".env.prod")
-load_dotenv(override=True)
+app_env = os.getenv("APP_ENV", "development").lower()
+if app_env == "production" and os.path.exists(".env.prod"):
+    load_dotenv(".env.prod", override=True)
+elif os.path.exists(".env"):
+    load_dotenv(".env", override=True)
+else:
+    load_dotenv()
 
 
 @dataclass(frozen=True)
@@ -15,7 +19,7 @@ class Settings:
     api_v1_prefix: str = os.getenv("API_V1_PREFIX", "/api/v1")
     cors_origins_raw: str = os.getenv(
         "CORS_ORIGINS",
-        "http://localhost:5173,http://127.0.0.1:5173,http://localhost:5174,http://127.0.0.1:5174,http://localhost:3000,http://127.0.0.1:3000",
+        "http://localhost:5173,http://127.0.0.1:5173,http://localhost:5174,http://127.0.0.1:5174,http://localhost:3000,http://127.0.0.1:3000,http://localhost:8000,http://127.0.0.1:8000,http://localhost,http://127.0.0.1,capacitor://localhost,https://starwaves.susindran.in,https://api.starwaves.susindran.in",
     )
     firebase_project_id: str | None = os.getenv("FIREBASE_PROJECT_ID")
     firebase_private_key: str | None = os.getenv("FIREBASE_PRIVATE_KEY")
