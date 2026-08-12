@@ -9,7 +9,7 @@ import {
 } from '../lib/callsApi'
 import { sendEveMessage } from '../lib/eveApi'
 import { ICE_SERVERS, startRingtone, stopRingtone } from '../utils/callWebRTC'
-import { notify } from '../utils/browserNotifications'
+import { notify, requestNotificationPermission } from '../utils/browserNotifications'
 
 const INCOMING_POLL_MS = 3000
 const CALL_POLL_MS = 2000
@@ -412,6 +412,7 @@ export function useCallCenter({ user }) {
 
   const dial = useCallback(
     async (calleeIdentifier, requestedMode) => {
+      requestNotificationPermission().catch(() => {})
       const requestMode = requestedMode === 'video' ? 'video' : 'audio'
       setError('')
       if (!navigator.mediaDevices?.getUserMedia) {
@@ -453,6 +454,7 @@ export function useCallCenter({ user }) {
   )
 
   const accept = useCallback(async () => {
+    requestNotificationPermission().catch(() => {})
     const callId = callIdRef.current
     const requestedMode = mode
     if (!callId) return

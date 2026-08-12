@@ -7,7 +7,7 @@ import {
   unregisterDeviceToken,
 } from '../../lib/workspaceApi'
 import { useLocalNotifications } from '../../hooks/useLocalNotifications'
-import { requestNotificationPermission } from '../../utils/browserNotifications'
+import { getNotificationPermission, requestNotificationPermission } from '../../utils/browserNotifications'
 
 export function PushNotificationsSection({ user }) {
   const [devices, setDevices] = useState([])
@@ -206,16 +206,37 @@ export function PushNotificationsSection({ user }) {
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', flexWrap: 'wrap' }}>
-          <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-muted, #71717a)' }}>
-            Desktop notifications fire when a task, event, contest, or deadline enters its 1-hour reminder window while the app is open.
-          </p>
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+              <span style={{ fontSize: '0.88rem', fontWeight: 650, color: 'var(--text-primary, #09090b)' }}>
+                Browser Notification Permission:
+              </span>
+              <span
+                style={{
+                  fontSize: '0.75rem',
+                  fontWeight: 700,
+                  padding: '2px 8px',
+                  borderRadius: '12px',
+                  textTransform: 'uppercase',
+                  border: '1px solid var(--border-color, #27272a)',
+                  backgroundColor: 'var(--bg-secondary, #121212)',
+                  color: 'var(--text-primary, #ffffff)',
+                }}
+              >
+                {getNotificationPermission()}
+              </span>
+            </div>
+            <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-muted, #71717a)' }}>
+              Desktop notifications fire when a task, event, contest, or deadline enters its 1-hour reminder window while the app is open.
+            </p>
+          </div>
           <button
             type="button"
             className="google-calendar-add-account"
             onClick={handleEnableBrowserNotifications}
             style={{ padding: '6px 12px', fontSize: '0.8rem' }}
           >
-            <Bell size={13} /> Enable Browser Notifications
+            <Bell size={13} /> {getNotificationPermission() === 'granted' ? 'Re-check Permission' : 'Enable Browser Notifications'}
           </button>
         </div>
         {browserNotifMessage && (

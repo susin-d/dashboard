@@ -25,6 +25,7 @@ import {
 import { navigationItems } from '../config/navigation'
 import { deleteNotification, markAllNotificationsRead } from '../lib/workspaceApi'
 import { CALENDAR_REMINDER_PREFIX } from '../utils/calendarReminders'
+import { getNotificationPermission, requestNotificationPermission } from '../utils/browserNotifications'
 import { StarWavesLogo } from './StarWavesLogo'
 import { EveAssistantModal } from './EveAssistantModal'
 
@@ -49,6 +50,27 @@ export function Header({
   const [darkTheme, setDarkTheme] = useState(
     () => localStorage.getItem('starwaves.theme') === 'dark',
   )
+  const [permissionStatus, setPermissionStatus] = useState(() => getNotificationPermission())
+
+  const handleToggleNotifications = () => {
+    if (!notificationsOpen && getNotificationPermission() === 'default') {
+      requestNotificationPermission()
+        .then((res) => setPermissionStatus(res))
+        .catch(() => setPermissionStatus(getNotificationPermission()))
+    } else {
+      setPermissionStatus(getNotificationPermission())
+    }
+    setNotificationsOpen((current) => !current)
+  }
+
+  const handleRequestPermission = async () => {
+    try {
+      const res = await requestNotificationPermission()
+      setPermissionStatus(res)
+    } catch {
+      setPermissionStatus(getNotificationPermission())
+    }
+  }
   const searchRef = useRef(null)
   const searchInputRef = useRef(null)
   const searchTargets = useMemo(
@@ -273,7 +295,7 @@ export function Header({
           type="button"
           aria-label={`${unreadCount} unread notifications`}
           aria-expanded={notificationsOpen}
-          onClick={() => setNotificationsOpen((current) => !current)}
+          onClick={handleToggleNotifications}
         >
           <Bell size={19} />
           {unreadCount > 0 && <span>{unreadCount}</span>}
@@ -339,6 +361,22 @@ export function Header({
                 <X size={19} />
               </button>
             </div>
+
+            {permissionStatus === 'default' && (
+              <div className="notification-permission-banner">
+                <div className="permission-banner-text">
+                  <Bell size={15} />
+                  <span>Enable desktop alerts for reminders, calls &amp; deadlines.</span>
+                </div>
+                <button
+                  type="button"
+                  className="permission-banner-button"
+                  onClick={handleRequestPermission}
+                >
+                  Enable
+                </button>
+              </div>
+            )}
 
             <div className="notification-toolbar">
               <span>

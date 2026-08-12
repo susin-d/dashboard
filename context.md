@@ -143,7 +143,7 @@ database id, CORS origins. Loads `.env.prod` before `.env`.
 - Integrations: GitHub, Google Calendar, Google Drive, Gmail, Google Chat.
 - Competitive programming: contests + profile stats.
 - Hackathon discovery with configurable sources + manual entry.
-- Notifications: calendar-derived reminders, call notifications (incoming, missed, declined workspace records & desktop alerts), push notifications, read/delete.
+- Notifications: calendar-derived reminders, call notifications (incoming, missed, declined workspace records & desktop alerts), push notifications, read/delete. Proactive notification permission handling (`browserNotifications.js` + `useWorkspaceData.js`) auto-attaches permission prompt triggers to initial user interaction on workspace entry, provides an interactive prompt banner in `Header.jsx`'s notification panel, requests permission on Bell icon clicks & WebRTC call actions, and displays live permission state badges in Settings.
 - EVE AI assistant (OpenAI) with sessions, persistent memories, bidirectional voice calling, and automated schedule/reminder execution.
 - Automated Eve Reminders & Schedules: create one-time or recurring (cron-based) automated prompts or voice calls.
   - Supports two action types: AI Chat Prompt execution (runs prompt, saves session & notifies user) or Eve Voice Call (automatically initiates an incoming voice call from Eve to user at scheduled time).

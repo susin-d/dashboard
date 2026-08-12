@@ -5,7 +5,7 @@ import { loadGithubData } from '../lib/githubApi'
 import { loadTodos } from '../lib/todosApi'
 import { loadGoogleCalendarData } from '../lib/googleCalendar'
 import { usePersistentState } from './usePersistentState'
-import { notify } from '../utils/browserNotifications'
+import { autoPromptNotificationPermission, notify } from '../utils/browserNotifications'
 import {
   loadContests,
   loadHackathons,
@@ -62,6 +62,12 @@ export function useWorkspaceData(currentUser, activePage, refreshKey = 0) {
       // ignore
     }
   }, [importedIcsCalendars])
+
+  useEffect(() => {
+    if (currentUser) {
+      autoPromptNotificationPermission()
+    }
+  }, [currentUser])
 
   useEffect(() => {
     try {
