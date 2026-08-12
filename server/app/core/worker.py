@@ -5,6 +5,7 @@ from datetime import datetime, timezone
 from typing import Any
 
 from google.cloud.firestore_v1 import Client
+from google.cloud.firestore_v1.base_query import FieldFilter
 
 from app.db import get_firestore
 from app.repositories.calls import CallRepository
@@ -139,7 +140,7 @@ class ServerBackgroundWorker:
         # Expire any calls stuck in ringing state across the system
         try:
             now_ts = datetime.now(timezone.utc).timestamp()
-            query = self.database.collection("calls").where("status", "==", "ringing")
+            query = self.database.collection("calls").where(filter=FieldFilter("status", "==", "ringing"))
             for doc in query.stream():
                 data = doc.to_dict() or {}
                 created_at = data.get("created_at")

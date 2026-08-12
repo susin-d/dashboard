@@ -1,6 +1,7 @@
 """Password hashing and verification helpers."""
 
 import hashlib
+import hmac
 import os
 
 ITERATIONS = 100_000
@@ -24,4 +25,5 @@ def hash_password(password: str, salt: str | None = None) -> tuple[str, str]:
 
 def verify_password(password: str, stored_hash: str, stored_salt: str) -> bool:
     pwd_hash, _ = hash_password(password, stored_salt)
-    return hashlib.compare_digest(pwd_hash, stored_hash)
+    return hmac.compare_digest(pwd_hash, stored_hash)
+
