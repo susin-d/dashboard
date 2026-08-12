@@ -119,6 +119,17 @@ export async function requestPasswordReset(email) {
   )
 }
 
+export async function verifyResetCode(email, code) {
+  return request(
+    '/auth/verify-reset-code',
+    {
+      method: 'POST',
+      body: JSON.stringify({ email, code }),
+    },
+    false,
+  )
+}
+
 export async function resetPassword(token, password) {
   return request(
     '/auth/reset-password',
@@ -172,7 +183,6 @@ export async function beginGoogleOAuth() {
     window.matchMedia('(max-width: 768px), (pointer: coarse)').matches
 
   if (shouldRedirectForOAuth) {
-    // Mobile browsers and native WebViews often block or detach OAuth popups.
     window.location.assign(data.url)
     return new Promise(() => {})
   }
@@ -190,7 +200,6 @@ export async function beginGoogleOAuth() {
     )
 
     if (!popup) {
-      // Fallback to full-page redirect when popups are blocked.
       window.location.assign(data.url)
       return
     }

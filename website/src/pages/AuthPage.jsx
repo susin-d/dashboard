@@ -3,7 +3,6 @@ import { useState } from 'react'
 import {
   beginGoogleOAuth,
   loginWithEmail,
-  requestPasswordReset,
   resetPassword,
   signupWithEmail,
 } from '../lib/authApi'
@@ -66,25 +65,6 @@ export function AuthPage({ mode, onNavigate, onAuthenticate, resetToken }) {
       finishAuthentication(user)
     } catch (authError) {
       setError(authError.message || 'Unable to continue. Please try again.')
-    } finally {
-      setSubmitting(false)
-    }
-  }
-
-  const handleForgotPassword = async () => {
-    if (!emailValue.trim()) {
-      setError('Please enter your email address above to reset your password.')
-      setInfoMessage('')
-      return
-    }
-    setError('')
-    setInfoMessage('')
-    setSubmitting(true)
-    try {
-      await requestPasswordReset(emailValue.trim())
-      setInfoMessage('If an account exists with that email, a password reset email has been sent!')
-    } catch (authError) {
-      setError(authError.message || 'Unable to send password reset email.')
     } finally {
       setSubmitting(false)
     }
@@ -190,7 +170,7 @@ export function AuthPage({ mode, onNavigate, onAuthenticate, resetToken }) {
                   </label>
                 )}
                 {!signup && (
-                  <button className="auth-forgot" type="button" onClick={handleForgotPassword} disabled={submitting}>
+                  <button className="auth-forgot" type="button" onClick={() => onNavigate('/forgot-password')} disabled={submitting}>
                     Forgot password?
                   </button>
                 )}
@@ -217,4 +197,3 @@ export function AuthPage({ mode, onNavigate, onAuthenticate, resetToken }) {
     </main>
   )
 }
-

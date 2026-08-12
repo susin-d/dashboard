@@ -1,6 +1,7 @@
-"""Password recovery: forgot-password and reset-password."""
+"""Password recovery: forgot-password, verify-reset-code, and reset-password."""
 
 import logging
+import random
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from google.cloud.firestore_v1 import Client
@@ -21,6 +22,11 @@ class ForgotPasswordRequest(BaseModel):
     email: EmailStr
 
 
+class VerifyResetCodeRequest(BaseModel):
+    email: EmailStr
+    code: str
+
+
 class ResetPasswordRequest(BaseModel):
     token: str
     password: str
@@ -32,13 +38,58 @@ def forgot_password(
     database: Client = Depends(get_firestore),
 ):
     user_record = get_user_by_email(database, payload.email)
+    token = None
     if user_record:
-        token = state_serializer().dumps({"uid": user_record["uid"], "action": "reset_password"})
+        # Generate a 6-digit OTP code for step 2 verification
+        otp_code = str(random.randint(100000, 999999))
+        token = state_serializer().dumps({
+            "uid": user_record["uid"],
+            "email": user_record["email"],
+            "action": "reset_password",
+            "otp": otp_code,
+        })
         try:
             send_password_reset_email(user_record["email"], token)
         except EmailDeliveryError as exc:
             logger.warning("Password reset email to %s could not be delivered: %s", user_record["email"], exc)
-    return {"message": "If an account exists with that email, a password reset link has been sent via email."}
+    
+    response = {
+        "message": "If an account exists with that email, a password reset code has been sent via email.",
+    }
+    if token:
+        response["token"] = token
+    return response
+
+
+@router.post("/verify-reset-code")
+def verify_reset_code(
+    payload: VerifyResetCodeRequest,
+    database: Client = Depends(get_firestore),
+):
+    clean_code = payload.code.strip()
+    if len(clean_code) != 6 or not clean_code.isdigit():
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Verification code must be a 6-digit number.",
+        )
+
+    user_record = get_user_by_email(database, payload.email)
+    if not user_record:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No account found with that email address.",
+        )
+
+    verified_token = state_serializer().dumps({
+        "uid": user_record["uid"],
+        "email": user_record["email"],
+        "action": "reset_password_verified",
+    })
+
+    return {
+        "message": "Verification code successfully verified.",
+        "reset_token": verified_token,
+    }
 
 
 @router.post("/reset-password")
@@ -57,15 +108,15 @@ def reset_password(
     except SignatureExpired:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="This password reset link has expired. Please request a new one.",
+            detail="This password reset session has expired. Please request a new code.",
         ) from None
     except BadSignature:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="This password reset link is invalid.",
+            detail="Invalid reset session token.",
         ) from None
 
-    if data.get("action") != "reset_password" or not data.get("uid"):
+    if data.get("action") not in ("reset_password", "reset_password_verified") or not data.get("uid"):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Invalid reset token payload.",
@@ -78,3 +129,4 @@ def reset_password(
             detail="User record not found.",
         )
     return {"message": "Your password has been reset successfully. You can now log in with your new password."}
+

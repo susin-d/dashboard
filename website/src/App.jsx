@@ -21,6 +21,7 @@ import { ThemesPage } from './pages/ThemesPage'
 import { StatsPage } from './pages/StatsPage'
 import { TodoPage } from './pages/TodoPage'
 import { AuthPage } from './pages/AuthPage'
+import { ForgotPasswordPage } from './pages/ForgotPasswordPage'
 import { OnboardingPage } from './pages/OnboardingPage'
 import { PrivacyPolicyPage } from './pages/PrivacyPolicyPage'
 import { TermsOfServicePage } from './pages/TermsOfServicePage'
@@ -38,6 +39,7 @@ const routeTitles = {
   '/': 'StarWaves — Developer productivity workspace',
   '/login': 'Log in — StarWaves',
   '/signup': 'Create account — StarWaves',
+  '/forgot-password': 'Forgot password — StarWaves',
   '/onboarding': 'Set up your workspace — StarWaves',
   '/privacy': 'Privacy policy — StarWaves',
   '/terms': 'Terms of service — StarWaves',
@@ -188,7 +190,7 @@ function App() {
       authReady &&
       activeUser &&
       !resetToken &&
-      (route === '/' || route === '/login' || route === '/signup')
+      (route === '/' || route === '/login' || route === '/signup' || route === '/forgot-password')
     ) {
       window.history.replaceState({}, '', '/app/dashboard')
       setRoute('/app/dashboard')
@@ -477,6 +479,13 @@ function App() {
       return <WaveLoader />
     }
     return publicRoute(<AuthPage mode="signup" onNavigate={navigateRoute} onAuthenticate={beginOnboarding} />)
+  }
+  if (route === '/forgot-password') {
+    if (!authReady) return <WaveLoader />
+    if (activeUser) {
+      return <WaveLoader />
+    }
+    return publicRoute(<ForgotPasswordPage onNavigate={navigateRoute} />)
   }
   if (route === '/onboarding') {
     if (!authReady) return <WaveLoader />

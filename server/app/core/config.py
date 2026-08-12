@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 
 if os.path.exists(".env.prod"):
     load_dotenv(".env.prod")
-load_dotenv()
+load_dotenv(override=True)
 
 
 @dataclass(frozen=True)
