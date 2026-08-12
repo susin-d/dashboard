@@ -60,10 +60,23 @@ export function autoPromptNotificationPermission() {
   window.addEventListener('touchstart', handleUserInteraction, { once: true })
 }
 
-export function notify(title, body, tag = null) {
+export function notify(title, body, tag = null, options = {}) {
   if (!canNotify()) return false
   try {
-    new window.Notification(title, { body, tag })
+    const notificationOptions = {
+      body,
+      tag,
+      requireInteraction: true,
+      renotify: true,
+      ...options,
+    }
+    const n = new window.Notification(title, notificationOptions)
+    n.onclick = () => {
+      if (typeof window !== 'undefined') {
+        window.focus()
+      }
+      n.close()
+    }
     return true
   } catch {
     return false
