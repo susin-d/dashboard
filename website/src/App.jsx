@@ -23,6 +23,7 @@ import { TodoPage } from './pages/TodoPage'
 import { AuthPage } from './pages/AuthPage'
 import { ForgotPasswordPage } from './pages/ForgotPasswordPage'
 import { OnboardingPage } from './pages/OnboardingPage'
+import { LandingPage } from './pages/LandingPage'
 import { PrivacyPolicyPage } from './pages/PrivacyPolicyPage'
 import { TermsOfServicePage } from './pages/TermsOfServicePage'
 import { updateNotification } from './lib/workspaceApi'
@@ -475,10 +476,7 @@ function App() {
     if (resetToken) {
       return publicRoute(<AuthPage mode="reset" resetToken={resetToken} onNavigate={navigateRoute} onAuthenticate={beginOnboarding} />)
     }
-    if (activeUser) {
-      return <WaveLoader />
-    }
-    return publicRoute(<AuthPage mode="login" onNavigate={navigateRoute} onAuthenticate={beginOnboarding} />)
+    return publicRoute(<LandingPage user={activeUser} onNavigate={navigateRoute} />)
   }
   if (route === '/privacy') return publicRoute(<PrivacyPolicyPage onNavigate={navigateRoute} />)
   if (route === '/terms') return publicRoute(<TermsOfServicePage onNavigate={navigateRoute} />)
