@@ -4,6 +4,8 @@ import smtplib
 from email.message import EmailMessage
 from pathlib import Path
 
+import jinja2
+
 from app.core.config import settings
 
 logger = logging.getLogger(__name__)
@@ -21,10 +23,8 @@ def render_template(template_name: str, context: dict) -> str:
         raise FileNotFoundError(f"Email template not found: {template_path}")
 
     content = template_path.read_text(encoding="utf-8")
-    for key, value in context.items():
-        content = content.replace(f"{{{{ {key} }}}}", str(value))
-        content = content.replace(f"{{{{{key}}}}}", str(value))
-    return content
+    template = jinja2.Template(content)
+    return template.render(**context)
 
 
 def send_email(
