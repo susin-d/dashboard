@@ -3,6 +3,8 @@ import {
   Bot,
   ListPlus,
   MessageSquare,
+  PhoneCall,
+  PhoneIncoming,
   Plus,
   Play,
   Send,
@@ -31,6 +33,7 @@ const STARTER_MESSAGES = [
 ]
 
 const EVE_PRESET_PROMPTS = [
+  { command: 'call', label: 'Call me now', prompt: 'Call me right now on voice to review my workspace status.', description: 'Trigger an immediate incoming voice call from Eve' },
   { command: 'today', label: 'Plan my day', prompt: 'Plan my day by reviewing tasks, upcoming deadlines, and calendar events.', description: 'Review tasks, deadlines, and calendar events' },
   { command: 'tasks', label: 'Manage tasks & overdue', prompt: 'Find all overdue tasks and suggest next priority actions.', description: 'Audit overdue tasks and list priority items' },
   { command: 'projects', label: 'Work with projects', prompt: 'Review project progress, stale projects, and next steps.', description: 'Review project progress and stale projects' },
@@ -53,7 +56,7 @@ const EVE_TOOLS_LIST = [
 
 const MAX_CHARS = 4000
 
-export function EvePage({ onNavigate, onWorkspaceChanged, chatResetKey }) {
+export function EvePage({ callCenter, onNavigate, onWorkspaceChanged, chatResetKey }) {
   const [messages, setMessages] = useState(STARTER_MESSAGES)
   const [draft, setDraft] = useState('')
   const [isSending, setIsSending] = useState(false)
@@ -104,6 +107,8 @@ export function EvePage({ onNavigate, onWorkspaceChanged, chatResetKey }) {
         if (action.page === 'document-opener') onNavigate?.('document-opener', null, action.documentId)
       } else if (action.type === 'refresh_workspace_data') {
         onWorkspaceChanged?.()
+      } else if (action.type === 'trigger_eve_call') {
+        callCenter?.requestEveCall?.('audio')
       }
     })
   }
@@ -264,6 +269,36 @@ export function EvePage({ onNavigate, onWorkspaceChanged, chatResetKey }) {
 
   return (
     <div className="eve-page-container">
+      <div className="eve-header-banner">
+        <div className="eve-header-info">
+          <Bot size={18} />
+          <div>
+            <strong>Eve AI Voice Assistant</strong>
+            <small>Have an interactive real-time voice call with Eve</small>
+          </div>
+        </div>
+        <div className="eve-header-actions">
+          <button
+            type="button"
+            className="secondary-button"
+            onClick={() => callCenter?.dial?.('eve@starwaves.app', 'audio')}
+            title="Start voice call with Eve AI Assistant"
+          >
+            <PhoneCall size={14} />
+            <span>Voice Call Eve</span>
+          </button>
+          <button
+            type="button"
+            className="secondary-button"
+            onClick={() => callCenter?.requestEveCall?.('audio')}
+            title="Have Eve initiate an incoming call to you"
+          >
+            <PhoneIncoming size={14} />
+            <span>Request Eve Call</span>
+          </button>
+        </div>
+      </div>
+
       {/* ── Main Content Grid ── */}
       <div className="eve-content-grid">
         <main className="eve-chat-section">

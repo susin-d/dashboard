@@ -307,6 +307,7 @@ function App() {
     ),
     eve: (
       <EvePage
+        callCenter={callCenter}
         onNavigate={navigateWorkspace}
         onWorkspaceChanged={() => setWorkspaceRefreshKey((current) => current + 1)}
         chatResetKey={eveChatKey}

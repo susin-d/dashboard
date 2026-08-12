@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { AlertCircle, Loader, Phone, RefreshCw, Video } from 'lucide-react'
+import { AlertCircle, Bot, Loader, Phone, PhoneCall, PhoneIncoming, RefreshCw, Video } from 'lucide-react'
 import { CallScreen } from '../components/calls/CallScreen'
 import { getRecentCalls } from '../lib/callsApi'
 import {
@@ -22,7 +22,7 @@ const ACTIVE_CALL_PHASES = [
 
 export function CallsPage({ callCenter, user }) {
   const myUid = user?.uid
-  const { phase, dial } = callCenter
+  const { phase, dial, requestEveCall } = callCenter
   const [calleeIdentifier, setCalleeIdentifier] = useState('')
   const [mode, setMode] = useState('video')
   const [recent, setRecent] = useState([])
@@ -54,6 +54,14 @@ export function CallsPage({ callCenter, user }) {
     dial(targetIdentifier, callMode)
   }
 
+  const handleCallEve = () => {
+    dial('eve@starwaves.app', 'audio')
+  }
+
+  const handleRequestEveCall = () => {
+    requestEveCall?.('audio')
+  }
+
   const inCall = ACTIVE_CALL_PHASES.includes(phase)
 
   return (
@@ -64,6 +72,24 @@ export function CallsPage({ callCenter, user }) {
           <h1>Calls</h1>
         </div>
         <div className="page-heading-actions">
+          <button
+            type="button"
+            className="secondary-button"
+            onClick={handleCallEve}
+            title="Start voice call with Eve AI Assistant"
+          >
+            <PhoneCall size={15} />
+            <span>Call Eve</span>
+          </button>
+          <button
+            type="button"
+            className="secondary-button"
+            onClick={handleRequestEveCall}
+            title="Have Eve initiate an incoming call to you"
+          >
+            <PhoneIncoming size={15} />
+            <span>Eve Call Me</span>
+          </button>
           <button
             className="icon-button"
             onClick={loadRecent}
@@ -85,7 +111,35 @@ export function CallsPage({ callCenter, user }) {
         <div className="calls-dialer-card">
           <div className="calls-dialer-header">
             <h2>Start a call</h2>
-            <p>Call another StarWaves user by email or user id.</p>
+            <p>Call another StarWaves user or Eve AI Assistant (<code>eve</code> or <code>eve@starwaves.app</code>).</p>
+          </div>
+
+          <div className="eve-quick-call-box">
+            <div className="eve-quick-call-title">
+              <Bot size={16} />
+              <span>Eve AI Copilot</span>
+            </div>
+            <p className="eve-quick-call-desc">Have a real-time voice call with your StarWaves AI assistant.</p>
+            <div className="eve-quick-call-buttons">
+              <button
+                type="button"
+                className="primary-button"
+                onClick={handleCallEve}
+                disabled={phase === 'dialing' || phase === 'connecting'}
+              >
+                <PhoneCall size={14} />
+                <span>Call Eve</span>
+              </button>
+              <button
+                type="button"
+                className="secondary-button"
+                onClick={handleRequestEveCall}
+                disabled={phase === 'dialing' || phase === 'connecting'}
+              >
+                <PhoneIncoming size={14} />
+                <span>Receive call from Eve</span>
+              </button>
+            </div>
           </div>
 
           <div className="calls-mode-toggle" role="group" aria-label="Call type">
@@ -117,7 +171,7 @@ export function CallsPage({ callCenter, user }) {
               id="caller-identifier"
               type="text"
               className="form-input"
-              placeholder="name@example.com"
+              placeholder="name@example.com or eve"
               value={calleeIdentifier}
               onChange={(e) => setCalleeIdentifier(e.target.value)}
               autoComplete="email"

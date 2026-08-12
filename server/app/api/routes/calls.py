@@ -27,8 +27,13 @@ router = APIRouter(prefix="/calls")
 RECENT_CALL_LIMIT = 30
 
 
+EVE_BOT_USER = {"uid": "eve-bot", "email": "eve@starwaves.app", "display_name": "Eve AI Assistant"}
+
+
 def _resolve_callee(database: Client, identifier: str, current_user: dict) -> dict:
     cleaned = identifier.strip().lower()
+    if cleaned in ("eve", "eve-bot", "eve@starwaves.app"):
+        return EVE_BOT_USER
     record = get_user_by_email(database, cleaned) or get_user_by_id(database, cleaned)
     if not record:
         raise HTTPException(status_code=404, detail="User not found.")
@@ -82,6 +87,33 @@ def list_recent_calls(
 
 
 @router.post(
+    "/trigger-eve",
+    response_model=CallResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+def trigger_eve_call(
+    mode: str = Query(default="audio"),
+    database: Client = Depends(get_firestore),
+    user: dict = Depends(get_current_user),
+):
+    repository = CallRepository(database)
+    call = repository.create(
+        caller=CallUser(uid=EVE_BOT_USER["uid"], name=EVE_BOT_USER["display_name"], email=EVE_BOT_USER["email"]),
+        callee=_person(user),
+        mode=mode,
+    )
+    send_call_notification(
+        database=database,
+        target_user_id=user["uid"],
+        title="Incoming Eve Call",
+        message="Incoming voice call from Eve AI Assistant",
+        notification_type="call_incoming",
+        call_id=call["id"],
+    )
+    return _serialize(call)
+
+
+@router.post(
     "",
     response_model=CallResponse,
     status_code=status.HTTP_201_CREATED,
@@ -98,14 +130,17 @@ def create_call(
         callee=_person(callee_record),
         mode=payload.mode,
     )
-    send_call_notification(
-        database=database,
-        target_user_id=callee_record["uid"],
-        title="Incoming Call",
-        message=f"Incoming {payload.mode} call from {_person(user).name}",
-        notification_type="call_incoming",
-        call_id=call["id"],
-    )
+    if callee_record["uid"] == EVE_BOT_USER["uid"]:
+        call = repository.update_status(call["id"], "active")
+    else:
+        send_call_notification(
+            database=database,
+            target_user_id=callee_record["uid"],
+            title="Incoming Call",
+            message=f"Incoming {payload.mode} call from {_person(user).name}",
+            notification_type="call_incoming",
+            call_id=call["id"],
+        )
     return _serialize(call)
 
 

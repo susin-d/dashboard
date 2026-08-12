@@ -1,10 +1,15 @@
 import { useEffect, useRef, useState } from 'react'
 import {
+  Bot,
+  Loader,
   Mic,
   MicOff,
   PhoneOff,
+  Sparkles,
   Video,
   VideoOff,
+  Volume2,
+  VolumeX,
   Wifi,
   WifiOff,
 } from 'lucide-react'
@@ -28,10 +33,17 @@ export function CallScreen({ callCenter, myUid }) {
     muted,
     videoOff,
     error,
+    isEveCall,
+    userTranscript,
+    eveTranscript,
+    isEveSpeaking,
+    isEveThinking,
+    ttsEnabled,
     hangUp,
     dismiss,
     toggleMute,
     toggleCamera,
+    toggleTts,
   } = callCenter
 
   const remote = otherParticipant(call || incomingCall, myUid)
@@ -66,17 +78,109 @@ export function CallScreen({ callCenter, myUid }) {
   const hasRemoteVideo = Boolean(
     remoteStream && remoteStream.getVideoTracks().length > 0,
   )
-  const name = participantName(remote)
-  const initials = participantInitials(remote)
+  const name = isEveCall ? 'Eve AI Assistant' : participantName(remote)
+  const initials = isEveCall ? 'EV' : participantInitials(remote)
 
   let statusText = ''
   if (phase === 'dialing') statusText = 'Ringing…'
   else if (phase === 'connecting') statusText = 'Connecting…'
-  else if (phase === 'active') statusText = formatElapsed(elapsed)
-  else if (phase === 'declined') statusText = 'Call declined'
+  else if (phase === 'active') {
+    if (isEveCall) {
+      if (isEveThinking) statusText = 'Thinking…'
+      else if (isEveSpeaking) statusText = 'Speaking…'
+      else if (muted) statusText = 'Microphone muted'
+      else statusText = `Listening… (${formatElapsed(elapsed)})`
+    } else {
+      statusText = formatElapsed(elapsed)
+    }
+  } else if (phase === 'declined') statusText = 'Call declined'
   else if (phase === 'missed') statusText = 'Call missed'
   else if (phase === 'ended') statusText = 'Call ended'
   else if (phase === 'error') statusText = 'Call failed'
+
+  if (isEveCall && inProgress) {
+    return (
+      <div className="call-screen eve-call-screen">
+        <div className="call-screen-stage eve-stage">
+          <div className="eve-visualizer-container">
+            <div
+              className={`eve-pulse-avatar ${isEveSpeaking ? 'speaking' : ''} ${
+                isEveThinking ? 'thinking' : ''
+              }`}
+            >
+              <div className="eve-pulse-ring ring-1" />
+              <div className="eve-pulse-ring ring-2" />
+              <div className="eve-pulse-ring ring-3" />
+              <div className="eve-pulse-core">
+                {isEveThinking ? (
+                  <Loader size={36} className="calls-spin" />
+                ) : (
+                  <Bot size={40} />
+                )}
+              </div>
+            </div>
+            <div className="eve-visualizer-badge">
+              <Sparkles size={14} />
+              <span>Eve AI Copilot Voice Session</span>
+            </div>
+          </div>
+
+          <div className="call-screen-info eve-info">
+            <h3 className="call-screen-name">{name}</h3>
+            <p className="call-screen-status">{statusText}</p>
+            {phase === 'error' && error && (
+              <p className="call-screen-error" role="alert">
+                {error}
+              </p>
+            )}
+          </div>
+
+          {/* Live Captions Box */}
+          <div className="eve-captions-box" role="log" aria-live="polite">
+            {userTranscript && (
+              <div className="eve-caption-row user">
+                <span className="caption-speaker">You:</span>
+                <span className="caption-text">{userTranscript}</span>
+              </div>
+            )}
+            <div className="eve-caption-row assistant">
+              <span className="caption-speaker">Eve:</span>
+              <span className="caption-text">{eveTranscript}</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="call-controls">
+          <button
+            type="button"
+            className={`call-control-button ${muted ? 'active' : ''}`}
+            onClick={toggleMute}
+            aria-pressed={muted}
+            title={muted ? 'Unmute microphone' : 'Mute microphone'}
+          >
+            {muted ? <MicOff size={22} /> : <Mic size={22} />}
+          </button>
+          <button
+            type="button"
+            className={`call-control-button ${!ttsEnabled ? 'active' : ''}`}
+            onClick={toggleTts}
+            aria-pressed={ttsEnabled}
+            title={ttsEnabled ? 'Mute Eve voice' : 'Enable Eve voice'}
+          >
+            {ttsEnabled ? <Volume2 size={22} /> : <VolumeX size={22} />}
+          </button>
+          <button
+            type="button"
+            className="call-control-button call-control-end"
+            onClick={hangUp}
+            title="End call"
+          >
+            <PhoneOff size={22} />
+          </button>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="call-screen">

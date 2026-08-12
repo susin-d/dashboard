@@ -4,8 +4,10 @@ import {
   getCall,
   getIncomingCalls,
   sendCallSignal,
+  triggerEveCall,
   updateCallStatus,
 } from '../lib/callsApi'
+import { sendEveMessage } from '../lib/eveApi'
 import { ICE_SERVERS, startRingtone, stopRingtone } from '../utils/callWebRTC'
 import { notify } from '../utils/browserNotifications'
 
@@ -28,6 +30,13 @@ export function useCallCenter({ user }) {
   const [videoOff, setVideoOff] = useState(false)
   const [error, setError] = useState('')
 
+  // Eve voice conversation state
+  const [userTranscript, setUserTranscript] = useState('')
+  const [eveTranscript, setEveTranscript] = useState('Hello! I’m Eve. How can I help you today?')
+  const [isEveSpeaking, setIsEveSpeaking] = useState(false)
+  const [isEveThinking, setIsEveThinking] = useState(false)
+  const [ttsEnabled, setTtsEnabled] = useState(true)
+
   const phaseRef = useRef('idle')
   const pcRef = useRef(null)
   const remoteOfferRef = useRef(null)
@@ -41,6 +50,21 @@ export function useCallCenter({ user }) {
   const ringTimerRef = useRef(null)
   const userRef = useRef(user)
   userRef.current = user
+
+  const recognitionRef = useRef(null)
+  const ttsEnabledRef = useRef(ttsEnabled)
+  ttsEnabledRef.current = ttsEnabled
+  const isEveThinkingRef = useRef(isEveThinking)
+  isEveThinkingRef.current = isEveThinking
+
+  const activeCallObj = call || incomingCall
+  const isEveCall = Boolean(
+    activeCallObj &&
+      (activeCallObj.callee?.uid === 'eve-bot' ||
+        activeCallObj.caller?.uid === 'eve-bot' ||
+        activeCallObj.callee?.email === 'eve@starwaves.app' ||
+        activeCallObj.caller?.email === 'eve@starwaves.app'),
+  )
 
   useEffect(() => {
     phaseRef.current = phase
@@ -86,6 +110,15 @@ export function useCallCenter({ user }) {
       cleanupPeer()
       stopLocalMedia()
       stopRingtone()
+      if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+        window.speechSynthesis.cancel()
+      }
+      if (recognitionRef.current) {
+        try {
+          recognitionRef.current.stop()
+        } catch {}
+        recognitionRef.current = null
+      }
       callIdRef.current = null
       processedIdsRef.current = new Set()
       remoteOfferRef.current = null
@@ -95,6 +128,10 @@ export function useCallCenter({ user }) {
       setRemoteStream(null)
       setMuted(false)
       setVideoOff(false)
+      setIsEveSpeaking(false)
+      setIsEveThinking(false)
+      setUserTranscript('')
+      setEveTranscript('Hello! I’m Eve. How can I help you today?')
       setPhase(nextPhase)
     },
     [clearCallPoll, cleanupPeer, stopLocalMedia],
@@ -267,6 +304,112 @@ export function useCallCenter({ user }) {
     }, RING_TIMEOUT_MS)
   }, [teardown])
 
+  const speakEveResponse = useCallback((text) => {
+    if (!text) return
+    setEveTranscript(text)
+    if (typeof window === 'undefined' || !('speechSynthesis' in window)) return
+    if (!ttsEnabledRef.current) return
+
+    window.speechSynthesis.cancel()
+    const utterance = new SpeechSynthesisUtterance(text)
+    utterance.rate = 1.0
+    utterance.pitch = 1.0
+    utterance.onstart = () => setIsEveSpeaking(true)
+    utterance.onend = () => setIsEveSpeaking(false)
+    utterance.onerror = () => setIsEveSpeaking(false)
+    window.speechSynthesis.speak(utterance)
+  }, [])
+
+  const sendVoiceToEve = useCallback(
+    async (text) => {
+      if (!text || !text.trim() || isEveThinkingRef.current) return
+      const clean = text.trim()
+      setUserTranscript(clean)
+      setIsEveThinking(true)
+      try {
+        const response = await sendEveMessage([{ role: 'user', content: clean }])
+        const replyText = response?.message || "I heard you, but I couldn't process that request."
+        speakEveResponse(replyText)
+      } catch {
+        setEveTranscript('Sorry, I had trouble reaching the Eve assistant service.')
+      } finally {
+        setIsEveThinking(false)
+      }
+    },
+    [speakEveResponse],
+  )
+
+  useEffect(() => {
+    if (!isEveCall || phase !== 'active' || muted) {
+      if (recognitionRef.current) {
+        try {
+          recognitionRef.current.stop()
+        } catch {}
+        recognitionRef.current = null
+      }
+      return
+    }
+
+    const SpeechRecognition =
+      typeof window !== 'undefined'
+        ? window.SpeechRecognition || window.webkitSpeechRecognition
+        : null
+    if (!SpeechRecognition) return
+
+    let rec = recognitionRef.current
+    if (!rec) {
+      rec = new SpeechRecognition()
+      rec.continuous = true
+      rec.interimResults = true
+      rec.lang = 'en-US'
+
+      rec.onresult = (event) => {
+        let finalResult = ''
+        let interimResult = ''
+        for (let i = event.resultIndex; i < event.results.length; ++i) {
+          if (event.results[i].isFinal) {
+            finalResult += event.results[i][0].transcript
+          } else {
+            interimResult += event.results[i][0].transcript
+          }
+        }
+        if (interimResult) {
+          setUserTranscript(interimResult)
+        }
+        if (finalResult) {
+          setUserTranscript(finalResult)
+          sendVoiceToEve(finalResult)
+        }
+      }
+
+      rec.onerror = () => {
+        // ignore speech errors silently
+      }
+
+      rec.onend = () => {
+        if (phaseRef.current === 'active' && recognitionRef.current) {
+          try {
+            rec.start()
+          } catch {}
+        }
+      }
+
+      recognitionRef.current = rec
+      try {
+        rec.start()
+      } catch {}
+    }
+
+    return () => {
+      if (recognitionRef.current) {
+        try {
+          recognitionRef.current.stop()
+        } catch {}
+        recognitionRef.current = null
+      }
+    }
+  }, [isEveCall, muted, phase, sendVoiceToEve])
+
   const dial = useCallback(
     async (calleeIdentifier, requestedMode) => {
       const requestMode = requestedMode === 'video' ? 'video' : 'audio'
@@ -285,13 +428,21 @@ export function useCallCenter({ user }) {
         remoteOfferRef.current = null
         pendingCandidatesRef.current = []
         setCall(created)
-        setPhase('dialing')
-        const pc = await createPeer()
-        const offer = await pc.createOffer()
-        await pc.setLocalDescription(offer)
-        await sendCallSignal(created.id, 'offer', offer.sdp)
+
+        const targetIsEve =
+          created.callee?.uid === 'eve-bot' ||
+          calleeIdentifier.toLowerCase().includes('eve')
+        if (targetIsEve || created.status === 'active') {
+          setPhase('active')
+        } else {
+          setPhase('dialing')
+          const pc = await createPeer()
+          const offer = await pc.createOffer()
+          await pc.setLocalDescription(offer)
+          await sendCallSignal(created.id, 'offer', offer.sdp)
+          startRingTimeout()
+        }
         startPollLoop(created.id)
-        startRingTimeout()
       } catch (err) {
         stopLocalMedia()
         setError(err.message || 'The call could not be started.')
@@ -314,26 +465,66 @@ export function useCallCenter({ user }) {
     try {
       await requestMedia(requestedMode)
       stopRingtone()
-      setPhase('connecting')
-      await createPeer()
-      if (remoteOfferRef.current) {
-        await pcRef.current.setRemoteDescription({
-          type: 'offer',
-          sdp: remoteOfferRef.current,
-        })
-        const answer = await pcRef.current.createAnswer()
-        await pcRef.current.setLocalDescription(answer)
-        await sendCallSignal(callId, 'answer', answer.sdp)
-        await flushPendingCandidates()
+      const currentCall = call || incomingCall
+      const targetIsEve =
+        currentCall?.caller?.uid === 'eve-bot' || currentCall?.callee?.uid === 'eve-bot'
+      if (targetIsEve) {
+        await updateCallStatus(callId, 'active')
+        setPhase('active')
+      } else {
+        setPhase('connecting')
+        await createPeer()
+        if (remoteOfferRef.current) {
+          await pcRef.current.setRemoteDescription({
+            type: 'offer',
+            sdp: remoteOfferRef.current,
+          })
+          const answer = await pcRef.current.createAnswer()
+          await pcRef.current.setLocalDescription(answer)
+          await sendCallSignal(callId, 'answer', answer.sdp)
+          await flushPendingCandidates()
+        }
+        await updateCallStatus(callId, 'active')
       }
-      await updateCallStatus(callId, 'active')
       startPollLoop(callId)
     } catch (err) {
       stopLocalMedia()
       setError(err.message || 'The call could not be answered.')
       setPhase('error')
     }
-  }, [createPeer, flushPendingCandidates, mode, requestMedia, startPollLoop, stopLocalMedia])
+  }, [
+    createPeer,
+    flushPendingCandidates,
+    mode,
+    requestMedia,
+    startPollLoop,
+    stopLocalMedia,
+    call,
+    incomingCall,
+  ])
+
+  const requestEveCall = useCallback(
+    async (requestedMode = 'audio') => {
+      try {
+        setError('')
+        const created = await triggerEveCall(requestedMode)
+        callIdRef.current = created.id
+        setIncomingCall(created)
+        setMode(requestedMode)
+        setPhase('incoming')
+        notify(
+          'Incoming Eve Call',
+          'Incoming voice call from Eve AI Assistant',
+          `call-incoming-${created.id}`,
+        )
+        startPollLoop(created.id)
+      } catch (err) {
+        setError(err.message || 'Could not request call from Eve.')
+        setPhase('error')
+      }
+    },
+    [startPollLoop],
+  )
 
   const decline = useCallback(async () => {
     const callId = callIdRef.current
@@ -381,6 +572,17 @@ export function useCallCenter({ user }) {
         .forEach((track) => {
           track.enabled = !next
         })
+      return next
+    })
+  }, [])
+
+  const toggleTts = useCallback(() => {
+    setTtsEnabled((current) => {
+      const next = !current
+      if (!next && typeof window !== 'undefined' && 'speechSynthesis' in window) {
+        window.speechSynthesis.cancel()
+        setIsEveSpeaking(false)
+      }
       return next
     })
   }, [])
@@ -441,6 +643,12 @@ export function useCallCenter({ user }) {
     muted,
     videoOff,
     error,
+    isEveCall,
+    userTranscript,
+    eveTranscript,
+    isEveSpeaking,
+    isEveThinking,
+    ttsEnabled,
     dial,
     accept,
     decline,
@@ -448,5 +656,8 @@ export function useCallCenter({ user }) {
     dismiss,
     toggleMute,
     toggleCamera,
+    toggleTts,
+    requestEveCall,
+    sendVoiceToEve,
   }
 }

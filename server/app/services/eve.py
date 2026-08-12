@@ -302,6 +302,18 @@ EVE_TOOLS = [
         },
         "strict": True,
     },
+    {
+        "type": "function",
+        "name": "trigger_eve_call",
+        "description": "Trigger an immediate incoming voice call from Eve AI Assistant to the user.",
+        "parameters": {
+            "type": "object",
+            "properties": {"mode": {"type": "string", "enum": ["audio", "video"]}},
+            "required": [],
+            "additionalProperties": False,
+        },
+        "strict": False,
+    },
 ]
 
 
@@ -603,6 +615,36 @@ def _run_tool(database: Client, user_id: str, name: str, arguments: dict[str, An
         if not removed:
             raise ValueError("Memory not found.")
         return {"message": "Memory removed."}, None, None
+    if name == "trigger_eve_call":
+        from app.repositories.calls import CallRepository
+        from app.repositories.users import get_user_by_id
+        from app.schemas.call import CallUser
+        from app.services.notifications import send_call_notification
+        user_record = get_user_by_id(database, user_id) or {"uid": user_id, "display_name": "User", "email": ""}
+        callee_user = CallUser(
+            uid=user_id,
+            name=user_record.get("display_name") or "User",
+            email=user_record.get("email") or "",
+        )
+        repo = CallRepository(database)
+        call = repo.create(
+            caller=CallUser(uid="eve-bot", name="Eve AI Assistant", email="eve@starwaves.app"),
+            callee=callee_user,
+            mode=arguments.get("mode", "audio"),
+        )
+        send_call_notification(
+            database=database,
+            target_user_id=user_id,
+            title="Incoming Eve Call",
+            message="Incoming voice call from Eve AI Assistant",
+            notification_type="call_incoming",
+            call_id=call["id"],
+        )
+        return {
+            "call_id": call["id"],
+            "status": "ringing",
+            "message": "Eve is initiating a voice call to you now.",
+        }, None, {"type": "trigger_eve_call", "call_id": call["id"]}
     if name == "navigate_page":
         page = arguments["page"]
         if page not in WORKSPACE_PAGES:

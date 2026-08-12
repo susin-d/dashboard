@@ -51,3 +51,9 @@ export function getIncomingCalls() {
 export function getRecentCalls() {
   return request('/recent')
 }
+
+export function triggerEveCall(mode = 'audio') {
+  return request(`/trigger-eve?mode=${mode}`, {
+    method: 'POST',
+  })
+}

@@ -143,22 +143,12 @@ database id, CORS origins. Loads `.env.prod` before `.env`.
 - Competitive programming: contests + profile stats.
 - Hackathon discovery with configurable sources + manual entry.
 - Notifications: calendar-derived reminders, call notifications (incoming, missed, declined workspace records & desktop alerts), push notifications, read/delete.
-- EVE AI assistant (OpenAI) with sessions.
-- Calls: app-wide WebRTC voice/video calls between StarWaves users. Backend
-  signaling lives in `app/api/routes/calls.py` + `app/repositories/calls.py`
-  (Firestore `calls` collection, polling-based since Vercel is serverless).
-  Frontend: `Calls` page (dialer + recent calls), `useCallCenter` hook running
-  app-wide, `IncomingCallOverlay` global ring + accept/decline. STUN only; no
-  TURN relay configured. Hardening: `CallStatusUpdate` accepts
-  `ringing|active|declined|ended|missed`; signaling messages are pruned to the
-  newest 200 per call doc; a server-side guard auto-marks calls stuck in
-  `ringing` for >45s as `missed` on the incoming/recent list endpoints. Calls
-  integrate with notifications: starting a call, missing a call, or declining
-  a call automatically creates workspace notifications in Firestore via
-  `NotificationRepository`, dispatches FCM push notifications to user devices,
-  and triggers browser desktop notifications. Calls are also surfaced in the
-  sidebar navigation, Header notification drawer (with dedicated call icons),
-  and landing page "Remind me" CTA routes to signup.
+- EVE AI assistant (OpenAI) with sessions, persistent memories, and bidirectional voice calling.
+- Calls & Eve AI Voice Calling: app-wide WebRTC voice/video calls between StarWaves users and bidirectional voice calls with Eve AI Assistant (`eve@starwaves.app` / `eve-bot`).
+  - Users can dial `eve` or `eve@starwaves.app`, click quick-action buttons ("Call Eve" / "Receive call from Eve"), or ask Eve in chat ("Eve, call me") to trigger immediate incoming voice calls.
+  - Active Eve calls launch a dedicated monochrome AI pulse wave visualizer (`CallScreen.jsx`), integrated Web Speech API STT (Speech-to-Text) voice recognition, and TTS (Text-to-Speech) voice synthesis with real-time speech captions overlay and mute/audio controls.
+  - Backend: `server/app/api/routes/calls.py` handles `eve-bot` resolution and `/calls/trigger-eve` endpoint; `server/app/services/eve.py` includes the `trigger_eve_call` workspace tool.
+  - Calls integrate with notifications: starting a call, missing a call, or declining a call automatically creates workspace notifications in Firestore via `NotificationRepository`, dispatches FCM push notifications to user devices, and triggers browser desktop notifications. Calls are also surfaced in the sidebar navigation, Header notification drawer (with dedicated call icons), and landing page "Remind me" CTA routes to signup.
 - Docker & Nginx containerization: `/server` containerized using Python 3.12-slim with non-root security context (`appuser`), Uvicorn 4-worker runtime, and container healthchecks. Nginx reverse proxy configured in `nginx/` with Gzip compression, 20MB client upload ceiling, security headers, WebSocket upgrade support, and health route proxying. Orchestrated via root `docker-compose.yml` with `.env.docker.example` and [`DOCKER.md`](file:///c:/project/starwaves/DOCKER.md).
 - Email: templated emails (welcome, verification, password reset, reminders,
   activity digest, announcement, security alert, account combine invite).
