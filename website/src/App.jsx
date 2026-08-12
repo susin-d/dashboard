@@ -64,8 +64,21 @@ function App() {
 
   const resetToken = (() => {
     const hash = window.location.hash || ''
-    if (!hash.includes('#reset-token=')) return null
-    return decodeURIComponent(hash.split('#reset-token=')[1] || '').trim() || null
+    const search = window.location.search || ''
+    const full = hash + search
+    if (full.includes('reset-token=')) {
+      const val = full.split('reset-token=')[1] || ''
+      return decodeURIComponent(val.split('&')[0] || '').trim() || null
+    }
+    if (full.includes('reset_token=')) {
+      const val = full.split('reset_token=')[1] || ''
+      return decodeURIComponent(val.split('&')[0] || '').trim() || null
+    }
+    if (search.includes('token=')) {
+      const val = search.split('token=')[1] || ''
+      return decodeURIComponent(val.split('&')[0] || '').trim() || null
+    }
+    return null
   })()
 
   const {
