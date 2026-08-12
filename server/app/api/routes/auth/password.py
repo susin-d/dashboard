@@ -25,6 +25,7 @@ class ForgotPasswordRequest(BaseModel):
 class VerifyResetCodeRequest(BaseModel):
     email: EmailStr
     code: str
+    token: str | None = None
 
 
 class ResetPasswordRequest(BaseModel):
@@ -49,7 +50,7 @@ def forgot_password(
             "otp": otp_code,
         })
         try:
-            send_password_reset_email(user_record["email"], token)
+            send_password_reset_email(user_record["email"], token, otp_code)
         except EmailDeliveryError as exc:
             logger.warning("Password reset email to %s could not be delivered: %s", user_record["email"], exc)
     
@@ -79,6 +80,27 @@ def verify_reset_code(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="No account found with that email address.",
         )
+
+    # Validate that the entered OTP code matches the token's embedded OTP
+    if payload.token:
+        try:
+            data = state_serializer().loads(payload.token, max_age=3600)
+            expected_otp = data.get("otp")
+            if expected_otp and clean_code != expected_otp:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Invalid verification code. Please check your email and try again.",
+                )
+        except SignatureExpired:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Verification code has expired. Please request a new code.",
+            ) from None
+        except BadSignature:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid verification session token.",
+            ) from None
 
     verified_token = state_serializer().dumps({
         "uid": user_record["uid"],

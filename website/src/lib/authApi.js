@@ -119,12 +119,12 @@ export async function requestPasswordReset(email) {
   )
 }
 
-export async function verifyResetCode(email, code) {
+export async function verifyResetCode(email, code, token = '') {
   return request(
     '/auth/verify-reset-code',
     {
       method: 'POST',
-      body: JSON.stringify({ email, code }),
+      body: JSON.stringify({ email, code, token }),
     },
     false,
   )

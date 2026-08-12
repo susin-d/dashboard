@@ -101,7 +101,7 @@ export function ForgotPasswordPage({ onNavigate }) {
     setInfoMessage('')
     setSubmitting(true)
     try {
-      const response = await verifyResetCode(email.trim(), fullCode)
+      const response = await verifyResetCode(email.trim(), fullCode, resetToken)
       if (response?.reset_token) {
         setResetToken(response.reset_token)
       }

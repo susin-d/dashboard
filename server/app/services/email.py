@@ -47,7 +47,12 @@ def send_email(
     msg.add_alternative(body_html, subtype="html")
 
     try:
-        if settings.smtp_use_tls:
+        if getattr(settings, "smtp_use_ssl", False) or settings.smtp_port == 465:
+            with smtplib.SMTP_SSL(settings.smtp_host, settings.smtp_port, timeout=10) as server:
+                if settings.smtp_user and settings.smtp_password:
+                    server.login(settings.smtp_user, settings.smtp_password)
+                server.send_message(msg)
+        elif settings.smtp_use_tls:
             with smtplib.SMTP(settings.smtp_host, settings.smtp_port, timeout=10) as server:
                 server.starttls()
                 if settings.smtp_user and settings.smtp_password:
@@ -88,14 +93,15 @@ def send_verification_email(to_email: str, user_name: str, verification_token: s
     return send_email(to_email, subject, body_html, body_text)
 
 
-def send_password_reset_email(to_email: str, reset_token: str) -> bool:
+def send_password_reset_email(to_email: str, reset_token: str, otp_code: str = "") -> bool:
     reset_url = f"{settings.frontend_url}/#reset-token={reset_token}"
     subject = "Password Reset Request - StarWaves"
     body_html = render_template(
         "password_reset.html",
-        {"reset_url": reset_url},
+        {"reset_url": reset_url, "otp_code": otp_code},
     )
-    body_text = f"Reset your StarWaves password using this link: {reset_url}"
+    code_msg = f"Your 6-digit verification code is: {otp_code}\n\n" if otp_code else ""
+    body_text = f"{code_msg}Reset your StarWaves password using this link: {reset_url}"
     return send_email(to_email, subject, body_html, body_text)
 
 
