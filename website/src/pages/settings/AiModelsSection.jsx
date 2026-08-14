@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Bot, Save } from 'lucide-react'
+import { Bot, Check, Eye, EyeOff, Key, Lock, Save } from 'lucide-react'
 import {
   loadAiModels,
   saveAiModelPreference,
@@ -10,9 +10,10 @@ const DEFAULT_PROVIDER = 'openai'
 
 export function AiModelsSection() {
   const [providers, setProviders] = useState([])
-  const [savedPreference, setSavedPreference] = useState(null)
   const [selectedProvider, setSelectedProvider] = useState(DEFAULT_PROVIDER)
   const [selectedModel, setSelectedModel] = useState('')
+  const [apiKey, setApiKey] = useState('')
+  const [showApiKey, setShowApiKey] = useState(false)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState('')
@@ -22,22 +23,24 @@ export function AiModelsSection() {
     loadAiModels()
       .then((data) => {
         if (!active) return
-        const available = (data.providers || []).filter((provider) => provider.available)
-        setProviders(available)
+        const catalog = data.providers || []
+        setProviders(catalog)
         const preference = data.preference || null
-        setSavedPreference(preference)
 
+        const defaultProv = data.default_provider || DEFAULT_PROVIDER
         const preselected =
-          available.find((provider) => provider.id === (preference?.provider || '')) ||
-          available[0] ||
+          catalog.find((provider) => provider.id === (preference?.provider || '')) ||
+          catalog.find((provider) => provider.id === defaultProv) ||
+          catalog[0] ||
           null
+
         if (preselected) {
           setSelectedProvider(preselected.id)
           const models = preselected.models || []
           setSelectedModel(
             models.some((model) => model.id === preference?.model)
               ? preference.model
-              : models[0]?.id || '',
+              : preselected.default_model || models[0]?.id || '',
           )
         }
       })
@@ -56,14 +59,21 @@ export function AiModelsSection() {
     (provider) => provider.id === selectedProvider,
   )
 
+  const isEnvProvider = Boolean(selectedProviderDescriptor?.env_configured)
+  const hasUserKey = Boolean(selectedProviderDescriptor?.has_user_key)
+
   const providerOptions = providers.map((provider) => ({
     value: provider.id,
-    label: provider.label,
+    label: provider.env_configured
+      ? `${provider.label} (Default)`
+      : provider.label,
   }))
 
   const modelOptions = (selectedProviderDescriptor?.models || []).map((model) => ({
     value: model.id,
-    label: model.label,
+    label: model.is_default
+      ? `${model.label} (Default)`
+      : model.label,
   }))
 
   const handleProviderChange = (providerId) => {
@@ -73,8 +83,9 @@ export function AiModelsSection() {
     setSelectedModel(
       nextModels.some((model) => model.id === selectedModel)
         ? selectedModel
-        : nextModels[0]?.id || '',
+        : nextProvider?.default_model || nextModels[0]?.id || '',
     )
+    setApiKey('')
     setMessage('')
   }
 
@@ -89,14 +100,27 @@ export function AiModelsSection() {
       setMessage('Pick a provider and a model before saving.')
       return
     }
+
+    if (!isEnvProvider && !hasUserKey && !apiKey.trim()) {
+      setMessage(`Please provide an API key for ${selectedProviderDescriptor?.label || 'the selected provider'}.`)
+      return
+    }
+
     setSaving(true)
     setMessage('')
     try {
-      const data = await saveAiModelPreference({
+      const payload = {
         provider: selectedProvider,
         model: selectedModel,
-      })
-      setSavedPreference(data.preference || null)
+      }
+      if (apiKey.trim()) {
+        payload.api_key = apiKey.trim()
+      }
+      const data = await saveAiModelPreference(payload)
+      if (data.providers) {
+        setProviders(data.providers)
+      }
+      setApiKey('')
       setMessage('AI model preference saved. Eve will use this model.')
     } catch (error) {
       setMessage(error.message)
@@ -104,10 +128,6 @@ export function AiModelsSection() {
       setSaving(false)
     }
   }
-
-  const hasUnavailableProvidersWarning =
-    savedPreference &&
-    !(providers || []).some((provider) => provider.id === savedPreference.provider)
 
   return (
     <div className="setting-section" id="settings-ai-models">
@@ -132,7 +152,7 @@ export function AiModelsSection() {
             </p>
           ) : providers.length === 0 ? (
             <p className="hackathon-source-message" role="status" style={{ padding: '18px 22px' }}>
-              No AI provider is configured on the server. Add <code>OPENAI_API_KEY</code>,{' '}
+              No AI provider available. Add <code>OPENAI_API_KEY</code>,{' '}
               <code>ANTHROPIC_API_KEY</code>, or <code>GEMINI_API_KEY</code> to enable EVE.
             </p>
           ) : (
@@ -162,14 +182,64 @@ export function AiModelsSection() {
                     ariaLabel="AI model"
                   />
                 </label>
-              </div>
 
-              {hasUnavailableProvidersWarning && (
-                <p className="hackathon-source-message" role="status" style={{ padding: '0 22px 12px', margin: 0 }}>
-                  Your saved provider has no API key configured on the server, so EVE will fall
-                  back to the default provider.
-                </p>
-              )}
+                {isEnvProvider ? (
+                  <div className="ai-models-env-row">
+                    <span>
+                      <strong>Provider authentication</strong>
+                      <small>Server environment status</small>
+                    </span>
+                    <div className="ai-models-env-pill">
+                      <Lock size={13} />
+                      <span>Using server environment key (Default)</span>
+                    </div>
+                  </div>
+                ) : (
+                  <label className="ai-models-key-row">
+                    <span>
+                      <strong>API Key</strong>
+                      <small>
+                        {hasUserKey
+                          ? `Saved key active. Enter a new key to update.`
+                          : `Enter your ${selectedProviderDescriptor?.label || 'provider'} API key.`}
+                      </small>
+                    </span>
+                    <div className="ai-models-key-wrapper">
+                      <div className="ai-models-key-input-container">
+                        <Key size={14} className="ai-models-key-icon" />
+                        <input
+                          type={showApiKey ? 'text' : 'password'}
+                          value={apiKey}
+                          onChange={(e) => {
+                            setApiKey(e.target.value)
+                            setMessage('')
+                          }}
+                          placeholder={
+                            hasUserKey
+                              ? '•••••••••••••••• (API key configured)'
+                              : `Enter ${selectedProviderDescriptor?.label || 'API'} key`
+                          }
+                          autoComplete="off"
+                          spellCheck={false}
+                        />
+                        <button
+                          type="button"
+                          className="ai-models-key-toggle"
+                          onClick={() => setShowApiKey((prev) => !prev)}
+                          aria-label={showApiKey ? 'Hide API key' : 'Show API key'}
+                        >
+                          {showApiKey ? <EyeOff size={14} /> : <Eye size={14} />}
+                        </button>
+                      </div>
+                      {hasUserKey && (
+                        <span className="ai-models-key-status">
+                          <Check size={12} /> Key configured
+                        </span>
+                      )}
+                    </div>
+                  </label>
+                )}
+              </div>
 
               <div className="coding-settings-footer">
                 {message && <p role="status">{message}</p>}

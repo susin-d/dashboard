@@ -1,10 +1,12 @@
 from app.services.ai_models._shared import (
     AI_MODELS_SETTINGS_DOC,
+    AI_PROVIDERS,
     AIServiceError,
     AiConfig,
     DEFAULT_PROVIDER,
     MAX_TOOL_ROUNDS,
     ProviderClient,
+    _provider_key_set,
     any_provider_available,
     build_ai_config,
     load_ai_preference,
@@ -25,12 +27,14 @@ PROVIDER_CLIENTS = {
 
 __all__ = [
     "AI_MODELS_SETTINGS_DOC",
+    "AI_PROVIDERS",
     "AIServiceError",
     "AiConfig",
     "DEFAULT_PROVIDER",
     "MAX_TOOL_ROUNDS",
     "PROVIDER_CLIENTS",
     "ProviderClient",
+    "_provider_key_set",
     "any_provider_available",
     "build_ai_config",
     "load_ai_preference",

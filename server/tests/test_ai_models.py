@@ -59,24 +59,45 @@ class TestAiModelsSettings(unittest.TestCase):
         self.assertIsNone(data["preference"])
 
     def test_get_ai_models_returns_saved_preference(self):
-        self._mock_settings_snapshot({"provider": "anthropic", "model": "claude-sonnet-4-5"})
+        self._mock_settings_snapshot({
+            "provider": "anthropic",
+            "model": "claude-sonnet-4-5",
+            "api_keys": {"anthropic": "sk-ant-test"},
+        })
 
         response = client.get("/api/v1/settings/ai-models")
         self.assertEqual(response.status_code, 200)
         data = response.json()
-        self.assertEqual(
-            data["preference"],
-            {"provider": "anthropic", "model": "claude-sonnet-4-5"},
-        )
+        self.assertEqual(data["preference"]["provider"], "anthropic")
+        self.assertEqual(data["preference"]["model"], "claude-sonnet-4-5")
+        self.assertTrue(data["preference"]["has_api_key"])
+        self.assertIn("default_provider", data)
 
-    def test_put_ai_models_saves_preference(self):
+    def test_put_ai_models_saves_openai_preference(self):
         document = self._mock_settings_snapshot()
 
-        payload = {"provider": "gemini", "model": "gemini-2.5-flash"}
+        payload = {"provider": "openai", "model": "gpt-5-mini"}
         response = client.put("/api/v1/settings/ai-models", json=payload)
         self.assertEqual(response.status_code, 200)
         data = response.json()
-        self.assertEqual(data["preference"], payload)
+        self.assertEqual(data["preference"]["provider"], "openai")
+        self.assertEqual(data["preference"]["model"], "gpt-5-mini")
+        document.set.assert_called_once()
+
+    def test_put_ai_models_saves_custom_provider_with_api_key(self):
+        document = self._mock_settings_snapshot()
+
+        payload = {
+            "provider": "anthropic",
+            "model": "claude-sonnet-4-5",
+            "api_key": "sk-ant-test-key-12345",
+        }
+        response = client.put("/api/v1/settings/ai-models", json=payload)
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertEqual(data["preference"]["provider"], "anthropic")
+        self.assertEqual(data["preference"]["model"], "claude-sonnet-4-5")
+        self.assertTrue(data["preference"]["has_api_key"])
         document.set.assert_called_once()
 
     def test_put_ai_models_rejects_unknown_provider(self):
