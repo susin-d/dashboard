@@ -2,11 +2,18 @@
 
 .card,
 .profile-card,
-.workspace-settings-card,
-.coding-settings-card,
 .hackathon-source-settings,
 .project-overview-card {
   overflow: hidden;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-surface), var(--shadow-inset);
+}
+
+.workspace-settings-card,
+.coding-settings-card {
+  overflow: visible;
   background: var(--bg-card);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-xl);

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { CheckCircle2, Clock, Link2, LogOut, Mail, Trash2, User, X } from 'lucide-react'
+import { CheckCircle2, Clock, Link2, LogOut, Mail, ShieldCheck, Trash2, User, X } from 'lucide-react'
 import {
   clearAuthSession,
   fetchCombinedAccounts,
@@ -133,70 +133,23 @@ export function ProfileCard({ user, onProfileUpdated, onSignOut }) {
   return (
     <>
       <article className="profile-card">
-        <div className="profile-hero">
-        <div className="profile-avatar-large">
-          <User size={36} />
-        </div>
-        <div className="profile-hero-info">
-          <h2>{user.fullName}</h2>
-          <p>{user.email}</p>
-        </div>
-      </div>
-
-      <div className="profile-body">
-        <div className="profile-actions-bar">
-          {editing ? (
-            <form onSubmit={handleSave} className="profile-edit-form">
-              <input
-                type="text"
-                value={displayName}
-                onChange={(e) => setDisplayName(e.target.value)}
-                placeholder="Display Name"
-                disabled={saving}
-                autoFocus
-              />
-              <div className="profile-edit-buttons">
-                <button
-                  type="submit"
-                  className="primary-button"
-                  disabled={saving}
-                >
-                  {saving ? 'Saving...' : 'Save'}
-                </button>
-                <button
-                  type="button"
-                  className="secondary-button"
-                  onClick={() => {
-                    setDisplayName(user.fullName || '')
-                    setEditing(false)
-                  }}
-                >
-                  <X size={14} />
-                  Cancel
-                </button>
-              </div>
-            </form>
-          ) : (
-            <div className="profile-display-info">
-              <div>
-                <span className="profile-name-label">Display Name</span>
-                <span className="profile-display-name">
-                  {user.fullName}
-                </span>
-              </div>
-              <button
-                type="button"
-                className="secondary-button"
-                onClick={() => setEditing(true)}
-              >
-                Edit name
-              </button>
-            </div>
-          )}
-
-          {error && <p className="profile-error" role="alert">{error}</p>}
-
-          <div className="profile-signout-row">
+        <div className="profile-card-header">
+          <div className="profile-card-avatar">{user.initials}</div>
+          <div>
+            <h3>{user.fullName}</h3>
+            <p>{user.role}</p>
+          </div>
+          <div className="profile-card-actions">
+            <button
+              type="button"
+              className="profile-edit-button"
+              onClick={() => {
+                setDisplayName(user.fullName)
+                setEditing(true)
+              }}
+            >
+              Edit profile
+            </button>
             <button
               type="button"
               className="profile-signout-button"
@@ -206,6 +159,23 @@ export function ProfileCard({ user, onProfileUpdated, onSignOut }) {
               <LogOut size={14} />
               Sign out
             </button>
+          </div>
+        </div>
+
+        <div className="profile-details">
+          <div className="profile-detail">
+            <Mail size={17} />
+            <div>
+              <strong>{user.email}</strong>
+              <span>Email</span>
+            </div>
+          </div>
+          <div className="profile-detail">
+            <ShieldCheck size={17} />
+            <div>
+              <strong>{user.roleLabel}</strong>
+              <span>Role</span>
+            </div>
           </div>
         </div>
 
@@ -336,8 +306,7 @@ export function ProfileCard({ user, onProfileUpdated, onSignOut }) {
             </div>
           )}
         </div>
-      </div>
-    </article>
+      </article>
 
       {editing && (
         <div className="modal-backdrop" onClick={() => setEditing(false)}>

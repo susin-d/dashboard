@@ -109,7 +109,14 @@
 
 /* Card Shells */
 .workspace-settings-card,
-.coding-settings-card,
+.coding-settings-card {
+  overflow: visible;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-xl, 14px);
+  box-shadow: var(--shadow-sm);
+}
+
 .hackathon-source-settings {
   overflow: hidden;
   background: var(--bg-card);
@@ -132,6 +139,8 @@
   gap: 16px;
   padding: 20px 22px;
   border-bottom: 1px solid var(--border-color);
+  border-top-left-radius: calc(var(--radius-xl, 14px) - 1px);
+  border-top-right-radius: calc(var(--radius-xl, 14px) - 1px);
 }
 
 .workspace-settings-header > div {
@@ -147,6 +156,8 @@
   gap: 14px;
   padding: 20px 22px;
   border-bottom: 1px solid var(--border-color);
+  border-top-left-radius: calc(var(--radius-xl, 14px) - 1px);
+  border-top-right-radius: calc(var(--radius-xl, 14px) - 1px);
 }
 
 .workspace-google-mark,
@@ -728,6 +739,8 @@
   gap: 16px;
   padding: 16px 22px;
   background: var(--bg-card, #ffffff);
+  border-bottom-left-radius: calc(var(--radius-xl, 14px) - 1px);
+  border-bottom-right-radius: calc(var(--radius-xl, 14px) - 1px);
 }
 
 .coding-settings-footer p {

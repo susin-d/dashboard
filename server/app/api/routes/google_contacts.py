@@ -45,7 +45,7 @@ def authorize_google_contacts(user: dict = Depends(get_current_user)):
     except RuntimeError as error:
         raise HTTPException(status_code=503, detail=str(error)) from None
     url = build_google_authorize_url(
-        settings.google_oauth_callback_url,
+        settings.google_contacts_oauth_callback_url,
         GOOGLE_CONTACTS_SCOPES,
         state,
     )
