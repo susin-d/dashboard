@@ -4,7 +4,7 @@ Living project snapshot for AI agents. `AGENTS.md` holds the permanent rules;
 this file holds the **current state** of the codebase and must be kept up to
 date whenever the implementation changes.
 
-> **Last updated:** 2026-08-14 (Replaced occurrences of 'copilot' with 'assistant' across Eve, Calls, and modal components)
+> **Last updated:** 2026-08-14 (Redesigned Eve chat composer with top queued messages panel, individual run/edit/delete actions, and modern bottom control bar)
 
 ---
 
