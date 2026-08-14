@@ -4,7 +4,7 @@ Living project snapshot for AI agents. `AGENTS.md` holds the permanent rules;
 this file holds the **current state** of the codebase and must be kept up to
 date whenever the implementation changes.
 
-> **Last updated:** 2026-08-14 (Fixed Google Contacts OAuth callback 400 Bad Request token exchange by explicitly passing google_contacts_oauth_callback_url)
+> **Last updated:** 2026-08-14 (Extracted reusable `TabNav` component with sliding indicator animation from `SettingPage` into `components/ui/TabNav.jsx` + `styles/components/tab-nav.css`; refactored `SettingPage` and `MailsPage` inbox tabs to use it; removed duplicate CSS from `settings.css` and `mails.css`)
 
 ---
 
@@ -118,7 +118,8 @@ SMTP, Firestore database id, CORS origins. Loads `.env.prod` before `.env`.
 - **Layout**: `website/src/layouts/AppLayout.jsx` (Header, Sidebar, network status).
 - **UI primitives**: `website/src/components/ui/` (`Avatar`, `Badge`, `Modal`,
   `MailModal`, `ModalHeader`, `ModalActions`, `ConfirmDialog`, `FormField`,
-  `PageHeader`, `EmptyState`, `CustomDropdown`, `CalendarPicker`, `Markdown`)
+  `PageHeader`, `EmptyState`, `CustomDropdown`, `CalendarPicker`, `Markdown`,
+  `TabNav`)
   re-exported via `index.js`. Dialogs across pages use the shared `Modal` /
   `MailModal` primitives (Portal-based, Escape + backdrop dismissal, focus
   management, `data-modal-initial-focus` support); destructive confirmations
