@@ -4,7 +4,7 @@ Living project snapshot for AI agents. `AGENTS.md` holds the permanent rules;
 this file holds the **current state** of the codebase and must be kept up to
 date whenever the implementation changes.
 
-> **Last updated:** 2026-08-14 (Ensured all HTTPException, validation, and error responses preserve status codes and reflect Access-Control-Allow-Origin headers across all client origins)
+> **Last updated:** 2026-08-14 (Updated CORS_ORIGINS configuration to https://starwaves.susindran.in,http://localhost:5173,http://127.0.0.1:5173 across config, .env, and .env.example)
 
 ---
 

@@ -19,7 +19,7 @@ class Settings:
     api_v1_prefix: str = os.getenv("API_V1_PREFIX", "/api/v1")
     cors_origins_raw: str = os.getenv(
         "CORS_ORIGINS",
-        "http://localhost:5173,http://127.0.0.1:5173,http://localhost:5174,http://127.0.0.1:5174,http://localhost:3000,http://127.0.0.1:3000,http://localhost:8000,http://127.0.0.1:8000,http://localhost,http://127.0.0.1,capacitor://localhost,https://starwaves.susindran.in,https://api.starwaves.susindran.in",
+        "https://starwaves.susindran.in,http://localhost:5173,http://127.0.0.1:5173",
     )
     firebase_project_id: str | None = os.getenv("FIREBASE_PROJECT_ID")
     firebase_private_key: str | None = os.getenv("FIREBASE_PRIVATE_KEY")
