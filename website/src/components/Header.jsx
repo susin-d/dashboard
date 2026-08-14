@@ -86,10 +86,7 @@ export function Header({
   const searchRef = useRef(null)
   const searchInputRef = useRef(null)
   const searchTargets = useMemo(
-    () => [
-      ...navigationItems,
-      { id: 'profile', label: 'Profile', icon: UserRound },
-    ],
+    () => navigationItems,
     [],
   )
   const searchResults = searchTargets.filter(({ id, label }) => {
