@@ -839,13 +839,16 @@ export function useCallCenter({ user }) {
     }
   }, [teardown, user])
 
+  const handleCallEventRef = useRef(handleCallEvent)
+  handleCallEventRef.current = handleCallEvent
+
   // WebSocket subscription: replaces both the incoming-call scanner and the
   // in-call signal poll. The server pushes events whenever a write occurs.
+  const userUid = user?.uid
   useEffect(() => {
-    if (!user) return undefined
+    if (!userUid) return undefined
 
-    callsSocket.connect()
-    const unsubscribe = callsSocket.onMessage(async (event) => {
+    const unsubscribe = callsSocket.subscribe(async (event) => {
       if (event.type === 'incoming_call') {
         const ringing = event.call
         if (!BUSY_PHASES.includes(phaseRef.current) && ringing.id !== callIdRef.current) {
@@ -866,16 +869,13 @@ export function useCallCenter({ user }) {
       } else if (event.type === 'call_signal' || event.type === 'call_updated') {
         const callData = event.call
         if (callData.id === callIdRef.current) {
-          await handleCallEvent(callData)
+          await handleCallEventRef.current(callData)
         }
       }
     })
 
-    return () => {
-      unsubscribe()
-      callsSocket.disconnect()
-    }
-  }, [handleCallEvent, user])
+    return unsubscribe
+  }, [userUid])
 
   return {
     phase,

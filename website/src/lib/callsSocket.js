@@ -29,12 +29,29 @@ class CallsSocket {
     this._handlers = new Set()
     this._backoffMs = BACKOFF_INITIAL_MS
     this._reconnectTimer = null
+    this._subscribers = 0
     this._active = false
 
     this._handleVisibility = () => {
       if (document.visibilityState === 'visible' && this._active && !this._isOpen()) {
         this._clearReconnectTimer()
         this._connect()
+      }
+    }
+  }
+
+  /** Subscribe to call events. Returns an unsubscribe function. */
+  subscribe(handler) {
+    this._handlers.add(handler)
+    this._subscribers += 1
+    if (this._subscribers === 1) {
+      this.connect()
+    }
+    return () => {
+      this._handlers.delete(handler)
+      this._subscribers = Math.max(0, this._subscribers - 1)
+      if (this._subscribers === 0) {
+        this.disconnect()
       }
     }
   }
@@ -52,21 +69,35 @@ class CallsSocket {
     this._active = false
     document.removeEventListener('visibilitychange', this._handleVisibility)
     this._clearReconnectTimer()
-    if (this._ws) {
-      this._ws.onclose = null
-      this._ws.close()
-      this._ws = null
-    }
+    this._closeSocket()
   }
 
   /** Register a handler for incoming server events. Returns an unsubscribe fn. */
   onMessage(handler) {
-    this._handlers.add(handler)
-    return () => this._handlers.delete(handler)
+    return this.subscribe(handler)
   }
 
   _isOpen() {
     return this._ws?.readyState === WebSocket.OPEN
+  }
+
+  _closeSocket() {
+    if (!this._ws) return
+    const ws = this._ws
+    this._ws = null
+    ws.onmessage = null
+    ws.onerror = null
+    ws.onclose = null
+    if (ws.readyState === WebSocket.OPEN) {
+      ws.close()
+    } else if (ws.readyState === WebSocket.CONNECTING) {
+      // Avoid browser 'WebSocket closed before connection established' warning
+      ws.onopen = () => {
+        try {
+          ws.close()
+        } catch {}
+      }
+    }
   }
 
   _connect() {
