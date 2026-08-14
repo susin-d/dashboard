@@ -4,7 +4,7 @@ Living project snapshot for AI agents. `AGENTS.md` holds the permanent rules;
 this file holds the **current state** of the codebase and must be kept up to
 date whenever the implementation changes.
 
-> **Last updated:** 2026-08-14 (Removed Push Notifications & Devices section from Settings)
+> **Last updated:** 2026-08-14 (Removed test/welcome/reminder email buttons and dynamic Verified email status badge in Profile)
 
 ---
 
