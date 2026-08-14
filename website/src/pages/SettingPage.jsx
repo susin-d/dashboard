@@ -1,4 +1,5 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { TabNav } from '../components/ui'
 import { AccountSection } from './settings/AccountSection'
 import { AiModelsSection } from './settings/AiModelsSection'
 import { AppsSection } from './settings/AppsSection'
@@ -30,10 +31,7 @@ export function SettingPage({
   setImportedIcsEvents,
   onSignOut,
 }) {
-  const navRef = useRef(null)
-  const itemRefs = useRef(new Map())
   const [activeSection, setActiveSection] = useState('settings-profile')
-  const [indicatorStyle, setIndicatorStyle] = useState(null)
   const isClickScrollingRef = useRef(false)
   const clickTimeoutRef = useRef(null)
 
@@ -68,35 +66,7 @@ export function SettingPage({
     }
   }, [])
 
-  useLayoutEffect(() => {
-    const nav = navRef.current
-    const activeItem = itemRefs.current.get(activeSection)
-
-    if (!nav || !activeItem) return
-
-    const updateIndicator = () => {
-      setIndicatorStyle({
-        width: `${activeItem.offsetWidth}px`,
-        height: `${activeItem.offsetHeight}px`,
-        transform: `translate3d(${activeItem.offsetLeft}px, ${activeItem.offsetTop}px, 0)`,
-      })
-    }
-
-    updateIndicator()
-
-    const resizeObserver = new ResizeObserver(updateIndicator)
-    resizeObserver.observe(nav)
-    resizeObserver.observe(activeItem)
-    window.addEventListener('resize', updateIndicator)
-
-    return () => {
-      resizeObserver.disconnect()
-      window.removeEventListener('resize', updateIndicator)
-    }
-  }, [activeSection])
-
-  const handleNavClick = (e, sectionId) => {
-    e.preventDefault()
+  const handleNavClick = (sectionId) => {
     isClickScrollingRef.current = true
     setActiveSection(sectionId)
 
@@ -121,27 +91,13 @@ export function SettingPage({
         </div>
       </div>
 
-      <nav ref={navRef} className="settings-section-nav" aria-label="Settings sections">
-        <span
-          className={`settings-nav-active-indicator ${indicatorStyle ? 'visible' : ''}`}
-          style={indicatorStyle ?? undefined}
-          aria-hidden="true"
-        />
-        {SETTINGS_SECTIONS.map((section) => (
-          <a
-            key={section.id}
-            ref={(node) => {
-              if (node) itemRefs.current.set(section.id, node)
-              else itemRefs.current.delete(section.id)
-            }}
-            href={section.href}
-            className={activeSection === section.id ? 'active' : ''}
-            onClick={(e) => handleNavClick(e, section.id)}
-          >
-            {section.label}
-          </a>
-        ))}
-      </nav>
+      <TabNav
+        tabs={SETTINGS_SECTIONS}
+        activeTab={activeSection}
+        onChange={handleNavClick}
+        className="sticky-nav"
+        ariaLabel="Settings sections"
+      />
 
       <ProfileSection user={user} />
       <ThemeSection onNavigate={onNavigate} />

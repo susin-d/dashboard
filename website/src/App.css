@@ -16,6 +16,7 @@
 @import './styles/components/custom-dropdown.css';
 @import './styles/components/calendar-picker.css';
 @import './styles/components/markdown.css';
+@import './styles/components/tab-nav.css';
 
 /* Page Styles */
 @import './styles/pages/dashboard.css';

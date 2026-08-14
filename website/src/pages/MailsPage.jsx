@@ -8,7 +8,7 @@ import {
   sendGoogleMessage, updateGoogleMessage,
 } from '../lib/googleMail'
 import { getGmailAccounts, getGmailStatus } from '../lib/gmailApi'
-import { ConfirmDialog, MailModal } from '../components/ui'
+import { ConfirmDialog, MailModal, TabNav } from '../components/ui'
 import { usePersistentState } from '../hooks/usePersistentState'
 
 const FOLDERS = [
@@ -349,21 +349,13 @@ export function MailsPage({ onNavigate }) {
 
       {/* Main Mail List Container */}
       {folder === 'INBOX' && (
-        <div className="mail-inbox-tabs" role="tablist" aria-label="Inbox categories">
-          {INBOX_TABS.map(({ id, label, icon: Icon }) => (
-            <button
-              key={id}
-              type="button"
-              role="tab"
-              aria-selected={inboxTab === id}
-              className={inboxTab === id ? 'active' : ''}
-              onClick={() => setInboxTab(id)}
-            >
-              <Icon size={15} />
-              <span>{label}</span>
-            </button>
-          ))}
-        </div>
+        <TabNav
+          tabs={INBOX_TABS}
+          activeTab={inboxTab}
+          onChange={setInboxTab}
+          className="mail-inbox-tabs"
+          ariaLabel="Inbox categories"
+        />
       )}
 
       <div className="mail-layout">
