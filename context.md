@@ -4,7 +4,7 @@ Living project snapshot for AI agents. `AGENTS.md` holds the permanent rules;
 this file holds the **current state** of the codebase and must be kept up to
 date whenever the implementation changes.
 
-> **Last updated:** 2026-08-14 (Configured standard ASGI CORSMiddleware with dynamic origin patterns and exception handler reflection for preflight and API requests)
+> **Last updated:** 2026-08-14 (Audited and aligned all backend environment variables across .env, .env.prod, and .env.example)
 
 ---
 
