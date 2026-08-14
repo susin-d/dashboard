@@ -90,8 +90,8 @@ export function EveVoiceSection() {
           )
         }
       })
-      .catch((error) => {
-        if (active) setMessage(error.message)
+      .catch(() => {
+        // Fall back gracefully to browser Web Speech API when server providers are unavailable
       })
       .finally(() => {
         if (active) setLoadingProviders(false)

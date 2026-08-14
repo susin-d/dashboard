@@ -4,7 +4,7 @@ const BASE_PATH = '/eve/schedules'
 const ERROR_MESSAGE = 'Eve schedule request failed.'
 const TOKEN_MESSAGE = 'Sign in to manage Eve schedules.'
 
-function request(path, options = {}) {
+function request(path = '', options = {}) {
   return apiRequest(path, {
     basePath: BASE_PATH,
     errorMessage: ERROR_MESSAGE,
