@@ -73,10 +73,21 @@ class TestAiModelsSettings(unittest.TestCase):
         self.assertTrue(data["preference"]["has_api_key"])
         self.assertIn("default_provider", data)
 
+    def test_put_ai_models_saves_default_preference(self):
+        document = self._mock_settings_snapshot()
+
+        payload = {"provider": "default", "model": "default"}
+        response = client.put("/api/v1/settings/ai-models", json=payload)
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertEqual(data["preference"]["provider"], "default")
+        self.assertEqual(data["preference"]["model"], "default")
+        document.set.assert_called_once()
+
     def test_put_ai_models_saves_openai_preference(self):
         document = self._mock_settings_snapshot()
 
-        payload = {"provider": "openai", "model": "gpt-5-mini"}
+        payload = {"provider": "openai", "model": "gpt-5-mini", "api_key": "sk-openai-key-test"}
         response = client.put("/api/v1/settings/ai-models", json=payload)
         self.assertEqual(response.status_code, 200)
         data = response.json()

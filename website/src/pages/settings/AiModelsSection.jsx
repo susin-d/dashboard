@@ -6,12 +6,10 @@ import {
 } from '../../lib/aiModelsApi'
 import { CustomDropdown } from '../../components/ui/CustomDropdown'
 
-const DEFAULT_PROVIDER = 'openai'
-
 export function AiModelsSection() {
   const [providers, setProviders] = useState([])
-  const [selectedProvider, setSelectedProvider] = useState(DEFAULT_PROVIDER)
-  const [selectedModel, setSelectedModel] = useState('')
+  const [selectedProvider, setSelectedProvider] = useState('default')
+  const [selectedModel, setSelectedModel] = useState('default')
   const [apiKey, setApiKey] = useState('')
   const [showApiKey, setShowApiKey] = useState(false)
   const [loading, setLoading] = useState(true)
@@ -27,21 +25,21 @@ export function AiModelsSection() {
         setProviders(catalog)
         const preference = data.preference || null
 
-        const defaultProv = data.default_provider || DEFAULT_PROVIDER
-        const preselected =
-          catalog.find((provider) => provider.id === (preference?.provider || '')) ||
-          catalog.find((provider) => provider.id === defaultProv) ||
-          catalog[0] ||
-          null
+        const chosenProviderId = preference?.provider || 'default'
+        const matchedProvider = catalog.find((p) => p.id === chosenProviderId) || catalog[0]
 
-        if (preselected) {
-          setSelectedProvider(preselected.id)
-          const models = preselected.models || []
-          setSelectedModel(
-            models.some((model) => model.id === preference?.model)
-              ? preference.model
-              : preselected.default_model || models[0]?.id || '',
-          )
+        if (matchedProvider) {
+          setSelectedProvider(matchedProvider.id)
+          const models = matchedProvider.models || []
+          if (matchedProvider.id === 'default') {
+            setSelectedModel('default')
+          } else {
+            setSelectedModel(
+              models.some((m) => m.id === preference?.model)
+                ? preference.model
+                : matchedProvider.default_model || models[0]?.id || '',
+            )
+          }
         }
       })
       .catch((error) => {
@@ -55,36 +53,34 @@ export function AiModelsSection() {
     }
   }, [])
 
+  const isDefault = selectedProvider === 'default'
   const selectedProviderDescriptor = providers.find(
     (provider) => provider.id === selectedProvider,
   )
 
-  const isEnvProvider = Boolean(selectedProviderDescriptor?.env_configured)
   const hasUserKey = Boolean(selectedProviderDescriptor?.has_user_key)
 
   const providerOptions = providers.map((provider) => ({
     value: provider.id,
-    label: provider.env_configured
-      ? `${provider.label} (Default)`
-      : provider.label,
+    label: provider.label,
   }))
 
-  const modelOptions = (selectedProviderDescriptor?.models || []).map((model) => ({
-    value: model.id,
-    label: model.is_default
-      ? `${model.label} (Default)`
-      : model.label,
-  }))
+  const modelOptions = isDefault
+    ? [{ value: 'default', label: 'Default' }]
+    : (selectedProviderDescriptor?.models || []).map((model) => ({
+        value: model.id,
+        label: model.label,
+      }))
 
   const handleProviderChange = (providerId) => {
-    const nextProvider = providers.find((provider) => provider.id === providerId)
-    const nextModels = nextProvider?.models || []
     setSelectedProvider(providerId)
-    setSelectedModel(
-      nextModels.some((model) => model.id === selectedModel)
-        ? selectedModel
-        : nextProvider?.default_model || nextModels[0]?.id || '',
-    )
+    if (providerId === 'default') {
+      setSelectedModel('default')
+    } else {
+      const nextProvider = providers.find((provider) => provider.id === providerId)
+      const nextModels = nextProvider?.models || []
+      setSelectedModel(nextProvider?.default_model || nextModels[0]?.id || '')
+    }
     setApiKey('')
     setMessage('')
   }
@@ -101,7 +97,7 @@ export function AiModelsSection() {
       return
     }
 
-    if (!isEnvProvider && !hasUserKey && !apiKey.trim()) {
+    if (!isDefault && !hasUserKey && !apiKey.trim()) {
       setMessage(`Please provide an API key for ${selectedProviderDescriptor?.label || 'the selected provider'}.`)
       return
     }
@@ -111,9 +107,9 @@ export function AiModelsSection() {
     try {
       const payload = {
         provider: selectedProvider,
-        model: selectedModel,
+        model: isDefault ? 'default' : selectedModel,
       }
-      if (apiKey.trim()) {
+      if (!isDefault && apiKey.trim()) {
         payload.api_key = apiKey.trim()
       }
       const data = await saveAiModelPreference(payload)
@@ -180,18 +176,19 @@ export function AiModelsSection() {
                     options={modelOptions}
                     onChange={handleModelChange}
                     ariaLabel="AI model"
+                    disabled={isDefault}
                   />
                 </label>
 
-                {isEnvProvider ? (
+                {isDefault ? (
                   <div className="ai-models-env-row">
                     <span>
-                      <strong>Provider authentication</strong>
-                      <small>Server environment status</small>
+                      <strong>API Key</strong>
+                      <small>Provider credentials</small>
                     </span>
                     <div className="ai-models-env-pill">
                       <Lock size={13} />
-                      <span>Using server environment key (Default)</span>
+                      <span>Default</span>
                     </div>
                   </div>
                 ) : (

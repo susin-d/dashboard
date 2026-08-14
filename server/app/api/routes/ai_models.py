@@ -45,8 +45,8 @@ def _extract_user_keys(preference: dict | None) -> dict[str, str]:
 def _preference_payload(preference: dict | None, user_keys: dict[str, str]) -> dict | None:
     if not preference:
         return None
-    provider = preference.get("provider") or DEFAULT_PROVIDER
-    model = preference.get("model") or ""
+    provider = preference.get("provider") or "default"
+    model = preference.get("model") or "default"
     return {
         "provider": provider,
         "model": model,
@@ -84,20 +84,21 @@ def save_ai_models(
 
     current_pref = load_ai_preference(database, user["uid"])
     user_keys = _extract_user_keys(current_pref)
+    is_default = payload.provider == "default"
     provider_descriptor = AI_PROVIDERS.get(payload.provider, {})
-    provider_label = provider_descriptor.get("label", payload.provider)
-    has_env = _provider_key_set(payload.provider)
+    provider_label = "Default" if is_default else provider_descriptor.get("label", payload.provider)
+    has_env = is_default or _provider_key_set(payload.provider)
 
     api_key_to_save = payload.api_key.strip() if payload.api_key else None
 
-    # If provider is not configured in env, require user API key (either in payload or existing saved key)
+    # If provider is not default/env-configured, require user API key
     if not has_env and not api_key_to_save and not user_keys.get(payload.provider):
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail=f"API key is required for {provider_label}.",
         )
 
-    if api_key_to_save:
+    if api_key_to_save and not is_default:
         user_keys[payload.provider] = api_key_to_save
 
     update_payload = {

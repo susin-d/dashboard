@@ -144,13 +144,31 @@ def any_provider_available() -> bool:
 
 def provider_catalog(user_api_keys: dict[str, str] | None = None) -> list[dict[str, Any]]:
     keys = user_api_keys or {}
-    return [
+    catalog = [
         {
+            "id": "default",
+            "label": "Default",
+            "available": any_provider_available(),
+            "env_configured": True,
+            "is_default": True,
+            "has_user_key": False,
+            "default_model": "default",
+            "models": [
+                {
+                    "id": "default",
+                    "label": "Default",
+                    "is_default": True,
+                }
+            ],
+        }
+    ]
+    for provider_id, descriptor in AI_PROVIDERS.items():
+        catalog.append({
             "id": provider_id,
             "label": descriptor["label"],
-            "available": _provider_key_set(provider_id) or bool(keys.get(provider_id)),
-            "env_configured": _provider_key_set(provider_id),
-            "is_default": provider_id == DEFAULT_PROVIDER,
+            "available": bool(keys.get(provider_id)),
+            "env_configured": False,
+            "is_default": False,
             "has_user_key": bool(keys.get(provider_id)),
             "default_model": descriptor["default_model"],
             "models": [
@@ -161,12 +179,13 @@ def provider_catalog(user_api_keys: dict[str, str] | None = None) -> list[dict[s
                 }
                 for item in descriptor["models"]
             ],
-        }
-        for provider_id, descriptor in AI_PROVIDERS.items()
-    ]
+        })
+    return catalog
 
 
 def validate_preference(provider: str, model: str) -> bool:
+    if provider == "default":
+        return model in ("default", "", None)
     descriptor = AI_PROVIDERS.get(provider)
     if not descriptor:
         return False
@@ -178,11 +197,15 @@ def build_ai_config(
     model: str | None = None,
     user_api_key: str | None = None,
 ) -> AiConfig:
-    if provider not in AI_PROVIDERS or (not _provider_key_set(provider) and not user_api_key):
+    if provider in ("default", "", None) or provider not in AI_PROVIDERS:
         provider = DEFAULT_PROVIDER
         user_api_key = None
+    elif not user_api_key and not _provider_key_set(provider):
+        provider = DEFAULT_PROVIDER
+        user_api_key = None
+
     descriptor = AI_PROVIDERS[provider]
-    if not model or not any(item["id"] == model for item in descriptor["models"]):
+    if not model or model == "default" or not any(item["id"] == model for item in descriptor["models"]):
         model = descriptor["default_model"]
     return AiConfig(
         provider=provider,
@@ -209,20 +232,23 @@ def load_ai_preference(database: Client, user_uid: str) -> dict[str, Any] | None
 
 def resolve_ai_config(database: Client, user_uid: str) -> AiConfig:
     """Resolve a user's AI provider/model choice, falling back to the server default."""
-    provider = DEFAULT_PROVIDER
-    model = None
-    user_api_key = None
     preference = load_ai_preference(database, user_uid)
-    if preference:
-        chosen_provider = preference.get("provider") or DEFAULT_PROVIDER
-        model = preference.get("model")
-        api_keys = preference.get("api_keys") or {}
-        if isinstance(api_keys, dict) and chosen_provider in api_keys:
-            user_api_key = api_keys.get(chosen_provider)
-        elif preference.get("api_key") and preference.get("provider") == chosen_provider:
-            user_api_key = preference.get("api_key")
-        provider = chosen_provider
-    return build_ai_config(provider, model, user_api_key=user_api_key)
+    if not preference:
+        return build_ai_config("default")
+
+    chosen_provider = preference.get("provider") or "default"
+    if chosen_provider == "default":
+        return build_ai_config("default")
+
+    model = preference.get("model")
+    user_api_key = None
+    api_keys = preference.get("api_keys") or {}
+    if isinstance(api_keys, dict) and chosen_provider in api_keys:
+        user_api_key = api_keys.get(chosen_provider)
+    elif preference.get("api_key") and preference.get("provider") == chosen_provider:
+        user_api_key = preference.get("api_key")
+
+    return build_ai_config(chosen_provider, model, user_api_key=user_api_key)
 
 
 def run_tool_loop(

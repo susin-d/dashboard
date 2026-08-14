@@ -4,7 +4,7 @@ Living project snapshot for AI agents. `AGENTS.md` holds the permanent rules;
 this file holds the **current state** of the codebase and must be kept up to
 date whenever the implementation changes.
 
-> **Last updated:** 2026-08-14 (Restored monochrome profile card layout with avatar, details grid, and verified badge)
+> **Last updated:** 2026-08-14 (AI Models settings updated to show Default for provider, model, and key for env defaults, and prompt for custom API keys when selecting specific providers)
 
 ---
 
