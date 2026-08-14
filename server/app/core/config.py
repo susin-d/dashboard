@@ -110,9 +110,10 @@ class Settings:
 
     @property
     def cors_origins(self) -> list[str]:
+        raw = os.getenv("CORS_ORIGINS") or self.cors_origins_raw or ""
         return [
             origin.strip()
-            for origin in self.cors_origins_raw.split(",")
+            for origin in raw.split(",")
             if origin.strip()
         ]
 
