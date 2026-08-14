@@ -106,6 +106,7 @@ class Settings:
     smtp_from_email: str = os.getenv("SMTP_FROM_EMAIL", "noreply@starwaves.susindran.in")
     smtp_use_tls: bool = os.getenv("SMTP_USE_TLS", "true").lower() == "true"
     smtp_use_ssl: bool = os.getenv("SMTP_USE_SSL", "false").lower() == "true"
+    cron_secret: str | None = os.getenv("CRON_SECRET", "starwaves-cron-secret")
 
     @property
     def cors_origins(self) -> list[str]:

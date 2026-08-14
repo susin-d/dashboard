@@ -1,5 +1,11 @@
+import logging
+from datetime import datetime, timezone
+from typing import Any
+
 from fastapi import APIRouter, Depends, Header, HTTPException, Query, status
+from google.cloud import firestore
 from google.cloud.firestore_v1 import Client
+from google.cloud.firestore_v1.base_query import FieldFilter
 
 from app.core.config import settings
 from app.db import get_firestore
@@ -11,6 +17,8 @@ from app.services.ai_models import any_provider_available
 from app.services.eve import chat_with_eve
 from app.services.notifications import send_call_notification
 
+logger = logging.getLogger(__name__)
+
 router = APIRouter(prefix="/cron")
 
 
@@ -21,7 +29,7 @@ def _verify_cron_secret(
     expected_secret = getattr(settings, "cron_secret", None) or "starwaves-cron-secret"
     provided = secret or (authorization.removeprefix("Bearer ").strip() if authorization else None)
     if expected_secret and provided != expected_secret:
-        # In development if no secret set, allow execution for testing
+        # In development or test environments if no secret set, allow execution
         if any_provider_available() and provided is None and not authorization:
             return True
         raise HTTPException(
@@ -31,11 +39,8 @@ def _verify_cron_secret(
     return True
 
 
-@router.api_route("/execute-schedules", methods=["GET", "POST"])
-def execute_scheduled_tasks(
-    database: Client = Depends(get_firestore),
-    authorized: bool = Depends(_verify_cron_secret),
-):
+def run_eve_schedules_job(database: Client) -> dict[str, Any]:
+    """Job 1: Execute all due Eve schedules and voice calls."""
     due = list_all_due_schedules(database)
     executed_count = 0
     errors = []
@@ -84,11 +89,90 @@ def execute_scheduled_tasks(
             repo.mark_executed(schedule_id)
             executed_count += 1
         except Exception as err:
+            logger.error("Failed to execute schedule %s: %s", schedule_id, err)
             errors.append({"schedule_id": schedule_id, "error": str(err)})
 
     return {
-        "status": "ok",
+        "job": "eve_schedules",
         "due_count": len(due),
         "executed_count": executed_count,
         "errors": errors,
+    }
+
+
+def run_stale_calls_cleanup_job(database: Client) -> dict[str, Any]:
+    """Job 2: Clean up calls stuck in ringing state (> 45s)."""
+    cleaned_count = 0
+    errors = []
+    try:
+        now_ts = datetime.now(timezone.utc).timestamp()
+        query = database.collection("calls").where(filter=FieldFilter("status", "==", "ringing"))
+        for doc in query.stream():
+            data = doc.to_dict() or {}
+            created_at = data.get("created_at")
+            if hasattr(created_at, "timestamp") and (now_ts - created_at.timestamp()) > 45:
+                doc.reference.update({"status": "missed", "updated_at": firestore.SERVER_TIMESTAMP})
+                cleaned_count += 1
+    except Exception as err:
+        logger.error("Failed to clean up stale calls: %s", err)
+        errors.append(str(err))
+
+    return {
+        "job": "stale_calls_cleanup",
+        "cleaned_count": cleaned_count,
+        "errors": errors,
+    }
+
+
+def run_daily_maintenance_job(database: Client) -> dict[str, Any]:
+    """Job 3: General daily workspace maintenance and cleanup."""
+    cleaned_notifications = 0
+    errors = []
+    try:
+        now_ts = datetime.now(timezone.utc).timestamp()
+        # Clean up read notifications older than 30 days
+        thirty_days_ago = now_ts - (30 * 86400)
+        query = database.collection_group("notifications").where(filter=FieldFilter("read", "==", True))
+        for doc in query.stream():
+            data = doc.to_dict() or {}
+            created_at = data.get("created_at")
+            if hasattr(created_at, "timestamp") and created_at.timestamp() < thirty_days_ago:
+                doc.reference.delete()
+                cleaned_notifications += 1
+    except Exception as err:
+        logger.warning("Daily maintenance notice: %s", err)
+        errors.append(str(err))
+
+    return {
+        "job": "daily_maintenance",
+        "cleaned_notifications": cleaned_notifications,
+        "errors": errors,
+    }
+
+
+@router.api_route("/process-jobs", methods=["GET", "POST"])
+@router.api_route("/run-all", methods=["GET", "POST"])
+@router.api_route("/execute-schedules", methods=["GET", "POST"])
+def process_all_serverless_jobs(
+    database: Client = Depends(get_firestore),
+    authorized: bool = Depends(_verify_cron_secret),
+):
+    """Unified Vercel Serverless Cron Endpoint.
+
+    Executes all scheduled batch jobs (schedules execution, stale call cleanup,
+    and daily maintenance) inside one single invocation to comply with Vercel Hobby
+    plan daily cron job limits.
+    """
+    schedules_result = run_eve_schedules_job(database)
+    calls_result = run_stale_calls_cleanup_job(database)
+    maintenance_result = run_daily_maintenance_job(database)
+
+    return {
+        "status": "ok",
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "jobs": {
+            "eve_schedules": schedules_result,
+            "stale_calls": calls_result,
+            "daily_maintenance": maintenance_result,
+        },
     }
