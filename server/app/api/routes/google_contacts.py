@@ -170,8 +170,7 @@ async def import_google_contacts(
         if enc_refresh:
             try:
                 refresh_token = decrypt_google_token(enc_refresh)
-                new_token_data = await refresh_google_token(refresh_token)
-                access_token = new_token_data["access_token"]
+                access_token = await refresh_google_token(refresh_token)
                 doc.reference.update({
                     "access_token": encrypt_google_token(access_token),
                     "updated_at": firestore.SERVER_TIMESTAMP,
