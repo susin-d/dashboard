@@ -56,14 +56,27 @@ def oauth_callback_html(frontend_url: str, feature: str, error_reason: str | Non
 <body>
 <script>
   try {{
+    var payload = {{
+      type: "STARWAVES_OAUTH_CALLBACK",
+      feature: "{feature}",
+      status: "{status}",
+      error: "{err_str}"
+    }};
     if (window.opener) {{
-      window.opener.postMessage({{
-        type: "STARWAVES_OAUTH_CALLBACK",
-        feature: "{feature}",
-        status: "{status}",
-        error: "{err_str}"
-      }}, "*");
+      try {{
+        window.opener.postMessage(payload, "*");
+      }} catch (err) {{}}
     }}
+    if (window.BroadcastChannel) {{
+      try {{
+        var bc = new BroadcastChannel("starwaves_oauth");
+        bc.postMessage(payload);
+        bc.close();
+      }} catch (err) {{}}
+    }}
+    try {{
+      localStorage.setItem("starwaves_oauth_event", JSON.stringify({{ payload: payload, t: Date.now() }}));
+    }} catch (err) {{}}
   }} catch (e) {{}}
   window.close();
   setTimeout(function() {{

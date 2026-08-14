@@ -4,7 +4,7 @@ Living project snapshot for AI agents. `AGENTS.md` holds the permanent rules;
 this file holds the **current state** of the codebase and must be kept up to
 date whenever the implementation changes.
 
-> **Last updated:** 2026-08-14 (Removed 'via SMTP' / 'via Mail' suffixes from combined account verification messages and pending items)
+> **Last updated:** 2026-08-14 (Fixed Cross-Origin-Opener-Policy popup.closed polling warning in popupOAuth.js and added BroadcastChannel / localStorage callback listeners)
 
 ---
 

@@ -25,12 +25,30 @@ export function openOAuthPopup(url, title = 'google-oauth-popup') {
     }
 
     let isDone = false
-    let pollTimer = null
+    let broadcastChannel = null
 
     const cleanup = () => {
       isDone = true
-      if (pollTimer) clearInterval(pollTimer)
       window.removeEventListener('message', handleMessage)
+      window.removeEventListener('storage', handleStorage)
+      window.removeEventListener('focus', handleFocus)
+      if (broadcastChannel) {
+        try {
+          broadcastChannel.close()
+        } catch {
+          // Ignore
+        }
+      }
+    }
+
+    const processOAuthData = (data) => {
+      if (isDone) return
+      cleanup()
+      if (data?.status === 'error') {
+        reject(new Error(data.error || 'OAuth authorization failed.'))
+      } else {
+        resolve(data)
+      }
     }
 
     const handleMessage = (event) => {
@@ -39,34 +57,54 @@ export function openOAuthPopup(url, title = 'google-oauth-popup') {
         typeof event.data === 'object' &&
         event.data.type === 'STARWAVES_OAUTH_CALLBACK'
       ) {
-        cleanup()
-        if (event.data.status === 'error') {
-          reject(new Error(event.data.error || 'OAuth authorization failed.'))
-        } else {
-          resolve(event.data)
+        processOAuthData(event.data)
+      }
+    }
+
+    const handleStorage = (event) => {
+      if (event.key === 'starwaves_oauth_event' && event.newValue) {
+        try {
+          const parsed = JSON.parse(event.newValue)
+          if (parsed?.payload?.type === 'STARWAVES_OAUTH_CALLBACK') {
+            processOAuthData(parsed.payload)
+          }
+        } catch {
+          // Ignore parse errors
         }
       }
     }
 
-    window.addEventListener('message', handleMessage)
-
-    pollTimer = setInterval(() => {
-      if (isDone) return
-      let closed = false
+    if (typeof BroadcastChannel !== 'undefined') {
       try {
-        closed = Boolean(popup && popup.closed)
+        broadcastChannel = new BroadcastChannel('starwaves_oauth')
+        broadcastChannel.onmessage = (event) => {
+          if (event.data?.type === 'STARWAVES_OAUTH_CALLBACK') {
+            processOAuthData(event.data)
+          }
+        }
       } catch {
-        // Cross-Origin-Opener-Policy (COOP) can throw a SecurityError / DOMException
-        // when checking popup.closed while popup is on an external domain (e.g. accounts.google.com).
-        // Catching the exception avoids console spam while polling continues.
-        closed = false
+        broadcastChannel = null
       }
+    }
 
-      if (closed) {
-        cleanup()
-        resolve()
-      }
-    }, 500)
+    const handleFocus = () => {
+      if (isDone) return
+      // When the main window regains focus, check after a short delay if popup was closed
+      setTimeout(() => {
+        if (isDone) return
+        try {
+          if (popup && popup.closed) {
+            cleanup()
+            resolve()
+          }
+        } catch {
+          // Cross-Origin-Opener-Policy (COOP) can restrict access to popup.closed; ignore silently
+        }
+      }, 500)
+    }
+
+    window.addEventListener('message', handleMessage)
+    window.addEventListener('storage', handleStorage)
+    window.addEventListener('focus', handleFocus)
   })
 }
-
