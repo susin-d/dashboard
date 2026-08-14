@@ -2,7 +2,6 @@ import { AccountSection } from './settings/AccountSection'
 import { AiModelsSection } from './settings/AiModelsSection'
 import { AppsSection } from './settings/AppsSection'
 import { CodingSection } from './settings/CodingSection'
-import { DataSourcesSection } from './settings/DataSourcesSection'
 import { EveVoiceSection } from './settings/EveVoiceSection'
 import { HackathonSourcesSection } from './settings/HackathonSourcesSection'
 import { ProfileSection } from './settings/ProfileSection'
@@ -34,7 +33,6 @@ export function SettingPage({
         <a href="#settings-themes">Themes &amp; Appearance</a>
         <a href="#settings-apps">Integrations</a>
         <a href="#settings-ai-models">AI Models</a>
-        <a href="#settings-sources">Data sources</a>
         <a href="#settings-coding">Coding profiles</a>
         <a href="#settings-eve-voice">Eve voice</a>
         <a href="#settings-account">Account &amp; security</a>
@@ -49,7 +47,6 @@ export function SettingPage({
         setImportedIcsCalendars={setImportedIcsCalendars}
         setImportedIcsEvents={setImportedIcsEvents}
       />
-      <DataSourcesSection />
       <AiModelsSection />
       <PushNotificationsSection user={user} />
       <CodingSection user={user} onContestSitesChange={onContestSitesChange} />

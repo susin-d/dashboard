@@ -4,7 +4,7 @@ Living project snapshot for AI agents. `AGENTS.md` holds the permanent rules;
 this file holds the **current state** of the codebase and must be kept up to
 date whenever the implementation changes.
 
-> **Last updated:** 2026-08-14 (Scoped button inset shadow in base.css and eliminated horizontal line artifact across notification items)
+> **Last updated:** 2026-08-14 (Removed Data sources & Reminders section and calendar reminder email test card from Settings)
 
 ---
 
