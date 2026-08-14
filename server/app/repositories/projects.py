@@ -56,10 +56,31 @@ class ProjectRepository:
 
     def patch(self, project_id: str, updates: dict[str, Any]) -> dict[str, Any] | None:
         reference = self.collection.document(project_id)
+        now = datetime.now(timezone.utc).isoformat()
+        serialized = serialize_dates(updates)
         try:
+            snapshot = reference.get()
+            if not snapshot.exists:
+                base_data = {
+                    "name": updates.get("name") or project_id,
+                    "description": updates.get("description") or "",
+                    "status": updates.get("status") or "Active",
+                    "progress": updates.get("progress") or 0,
+                    "members": updates.get("members") or 1,
+                    "technologies": updates.get("technologies") or [],
+                    "github_url": updates.get("github_url"),
+                    "live_url": updates.get("live_url"),
+                    "lifecycle_phase": updates.get("lifecycle_phase") or "idea",
+                    "created_at": firestore.SERVER_TIMESTAMP,
+                    "updated_at": firestore.SERVER_TIMESTAMP,
+                    **serialized,
+                }
+                reference.set(base_data)
+                return {"id": reference.id, **base_data, "created_at": now, "updated_at": now}
+
             reference.update(
                 {
-                    **serialize_dates(updates),
+                    **serialized,
                     "updated_at": firestore.SERVER_TIMESTAMP,
                 },
             )

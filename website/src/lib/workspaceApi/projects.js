@@ -1,8 +1,11 @@
 import { request } from './_shared'
 
 function mapProject(project) {
+  const rawId = String(project.id)
+  const isGithub = rawId.startsWith('github-')
+  const formattedId = isGithub || rawId.startsWith('project-') ? rawId : `project-${rawId}`
   return {
-    id: `project-${project.id}`,
+    id: formattedId,
     name: project.name,
     description: project.description,
     status: project.status,
@@ -13,7 +16,7 @@ function mapProject(project) {
     liveUrl: project.live_url,
     lifecyclePhase: project.lifecycle_phase,
     updatedAt: project.updated_at,
-    source: 'manual',
+    source: project.source ?? (isGithub ? 'github' : 'manual'),
   }
 }
 
