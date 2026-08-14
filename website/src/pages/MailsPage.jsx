@@ -8,7 +8,7 @@ import {
   sendGoogleMessage, updateGoogleMessage,
 } from '../lib/googleMail'
 import { getGmailAccounts, getGmailStatus } from '../lib/gmailApi'
-import { ConfirmDialog } from '../components/ui'
+import { ConfirmDialog, MailModal } from '../components/ui'
 import { usePersistentState } from '../hooks/usePersistentState'
 
 const FOLDERS = [
@@ -425,8 +425,7 @@ export function MailsPage({ onNavigate }) {
 
       {/* Message Reader Modal */}
       {selected && (
-        <div className="mail-modal" role="dialog" aria-modal="true" aria-labelledby="message-title" onMouseDown={() => setSelected(null)}>
-          <div className="mail-card" onMouseDown={(event) => event.stopPropagation()}>
+        <MailModal labelledBy="message-title" onClose={() => setSelected(null)}>
             <header className="mail-card-header">
               <div>
                 <span className="mail-avatar" aria-label="Mail" title="Mail">
@@ -472,14 +471,13 @@ export function MailsPage({ onNavigate }) {
                 <pre>{selected.body}</pre>
               )}
             </div>
-          </div>
-        </div>
+        </MailModal>
       )}
 
       {/* Compose Email Modal */}
       {compose && (
-        <div className="mail-modal" role="dialog" aria-modal="true" aria-labelledby="compose-title" onMouseDown={requestCloseCompose}>
-          <form className="mail-card compose-card" onMouseDown={(event) => event.stopPropagation()} onSubmit={sendMessage}>
+        <MailModal labelledBy="compose-title" onClose={requestCloseCompose} className="compose-card">
+          <form onSubmit={sendMessage}>
             <header className="mail-card-header">
               <h3 id="compose-title">{compose.threadId ? 'Reply Message' : 'New Message'}</h3>
               <button type="button" onClick={requestCloseCompose} aria-label="Close compose"><X size={16} /></button>
@@ -498,7 +496,7 @@ export function MailsPage({ onNavigate }) {
               </button>
             </footer>
           </form>
-        </div>
+        </MailModal>
       )}
       <ConfirmDialog
         isOpen={discardRequested}

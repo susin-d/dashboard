@@ -4,7 +4,7 @@ Living project snapshot for AI agents. `AGENTS.md` holds the permanent rules;
 this file holds the **current state** of the codebase and must be kept up to
 date whenever the implementation changes.
 
-> **Last updated:** 2026-08-12 (system OS notification enhancement)
+> **Last updated:** 2026-08-14 (shared Modal consolidation)
 
 ---
 
@@ -91,9 +91,12 @@ database id, CORS origins. Loads `.env.prod` before `.env`.
 - **Entry**: `website/src/main.jsx` → `App.jsx` (routing + workspace state).
 - **Layout**: `website/src/layouts/AppLayout.jsx` (Header, Sidebar, network status).
 - **UI primitives**: `website/src/components/ui/` (`Avatar`, `Badge`, `Modal`,
-  `ModalHeader`, `ModalActions`, `ConfirmDialog`, `FormField`, `PageHeader`,
-  `EmptyState`, `CustomDropdown`, `CalendarPicker`, `Markdown`) re-exported via
-  `index.js`.
+  `MailModal`, `ModalHeader`, `ModalActions`, `ConfirmDialog`, `FormField`,
+  `PageHeader`, `EmptyState`, `CustomDropdown`, `CalendarPicker`, `Markdown`)
+  re-exported via `index.js`. Dialogs across pages use the shared `Modal` /
+  `MailModal` primitives (Portal-based, Escape + backdrop dismissal, focus
+  management, `data-modal-initial-focus` support); destructive confirmations
+  reuse `ConfirmDialog`.
 - **Hooks** (`src/hooks/`): `useAuth`, `useRouter`, `useTheme`,
   `useThemeCustomizer`, `useWorkspaceData`, `useCallCenter`, plus
   `usePersistentState`, `useLocalNotifications`, `useDialogAccessibility`.

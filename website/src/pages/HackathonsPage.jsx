@@ -10,11 +10,10 @@ import {
   Search,
   Trash2,
   Users,
-  X,
 } from 'lucide-react'
 import { usePersistentState } from '../hooks/usePersistentState'
 import { createHackathon, deleteHackathon, updateHackathon } from '../lib/workspaceApi'
-import { ConfirmDialog } from '../components/ui'
+import { ConfirmDialog, Modal } from '../components/ui'
 
 const emptyHackathon = {
   title: '',
@@ -371,69 +370,65 @@ export function HackathonsPage({ hackathons, setHackathons, canLoadMore, loading
 
       {canLoadMore && <button className="secondary-button" type="button" onClick={onLoadMore} disabled={loadingMore}>{loadingMore ? 'Loading…' : 'Load more hackathons'}</button>}
 
-      {formOpen && (
-        <div className="todo-modal-backdrop" onMouseDown={() => setFormOpen(false)} role="presentation">
-          <div className="todo-modal document-modal" role="dialog" aria-modal="true" onMouseDown={(event) => event.stopPropagation()}>
-            <div className="todo-modal-heading">
-              <div><p>Hackathons</p><h2>Add hackathon</h2></div>
-              <button className="icon-button" onClick={() => setFormOpen(false)} aria-label="Close hackathon form"><X size={18} /></button>
-            </div>
-            <form className="project-edit-form" onSubmit={submitHackathon}>
-              {error && <div className="todo-api-error" role="alert">{error}</div>}
-              <div className="project-edit-form-row">
-                <label>Title<input value={form.title} onChange={(event) => updateField('title', event.target.value)} required /></label>
-                <label>Organizer<input value={form.organizer} onChange={(event) => updateField('organizer', event.target.value)} /></label>
-              </div>
-              <div className="project-edit-form-row">
-                <label>Starts<input type="datetime-local" value={form.startsAt} onChange={(event) => updateField('startsAt', event.target.value)} required /></label>
-                <label>Ends<input type="datetime-local" value={form.endsAt} onChange={(event) => updateField('endsAt', event.target.value)} required /></label>
-              </div>
-              <div className="project-edit-form-row">
-                <label>Mode<select value={form.mode} onChange={(event) => updateField('mode', event.target.value)}><option>Online</option><option>In person</option><option>Hybrid</option></select></label>
-                <label>Team size<input value={form.teamSize} onChange={(event) => updateField('teamSize', event.target.value)} placeholder="1–4 members" /></label>
-              </div>
-              <label>Tags<input value={form.tags} onChange={(event) => updateField('tags', event.target.value)} placeholder="AI, Web, Open Source" /></label>
-              <label>Event URL<input type="url" value={form.url} onChange={(event) => updateField('url', event.target.value)} /></label>
-              <div className="todo-modal-actions">
-                <button className="secondary-button" type="button" onClick={() => setFormOpen(false)} disabled={saving}>Cancel</button>
-                <button className="primary-button" type="submit" disabled={saving}><Plus size={16} />{saving ? 'Saving…' : 'Add hackathon'}</button>
-              </div>
-            </form>
+      <Modal
+        isOpen={formOpen}
+        onClose={() => setFormOpen(false)}
+        className="document-modal"
+        subtitle="Hackathons"
+        title="Add hackathon"
+      >
+        <form className="project-edit-form" onSubmit={submitHackathon}>
+          {error && <div className="todo-api-error" role="alert">{error}</div>}
+          <div className="project-edit-form-row">
+            <label>Title<input value={form.title} onChange={(event) => updateField('title', event.target.value)} required data-modal-initial-focus /></label>
+            <label>Organizer<input value={form.organizer} onChange={(event) => updateField('organizer', event.target.value)} /></label>
           </div>
-        </div>
-      )}
+          <div className="project-edit-form-row">
+            <label>Starts<input type="datetime-local" value={form.startsAt} onChange={(event) => updateField('startsAt', event.target.value)} required /></label>
+            <label>Ends<input type="datetime-local" value={form.endsAt} onChange={(event) => updateField('endsAt', event.target.value)} required /></label>
+          </div>
+          <div className="project-edit-form-row">
+            <label>Mode<select value={form.mode} onChange={(event) => updateField('mode', event.target.value)}><option>Online</option><option>In person</option><option>Hybrid</option></select></label>
+            <label>Team size<input value={form.teamSize} onChange={(event) => updateField('teamSize', event.target.value)} placeholder="1–4 members" /></label>
+          </div>
+          <label>Tags<input value={form.tags} onChange={(event) => updateField('tags', event.target.value)} placeholder="AI, Web, Open Source" /></label>
+          <label>Event URL<input type="url" value={form.url} onChange={(event) => updateField('url', event.target.value)} /></label>
+          <div className="todo-modal-actions">
+            <button className="secondary-button" type="button" onClick={() => setFormOpen(false)} disabled={saving}>Cancel</button>
+            <button className="primary-button" type="submit" disabled={saving}><Plus size={16} />{saving ? 'Saving…' : 'Add hackathon'}</button>
+          </div>
+        </form>
+      </Modal>
 
-      {editingHackathon && (
-        <div className="todo-modal-backdrop" onMouseDown={() => setEditingHackathon(null)} role="presentation">
-          <div className="todo-modal document-modal" role="dialog" aria-modal="true" onMouseDown={(event) => event.stopPropagation()}>
-            <div className="todo-modal-heading">
-              <div><p>Hackathons</p><h2>Edit hackathon</h2></div>
-              <button className="icon-button" onClick={() => setEditingHackathon(null)} aria-label="Close hackathon editor"><X size={18} /></button>
-            </div>
-            <form className="project-edit-form" onSubmit={saveHackathonEdit}>
-              {editError && <div className="todo-api-error" role="alert">{editError}</div>}
-              <div className="project-edit-form-row">
-                <label>Title<input value={editForm.title} onChange={(event) => updateEditField('title', event.target.value)} required /></label>
-                <label>Organizer<input value={editForm.organizer} onChange={(event) => updateEditField('organizer', event.target.value)} /></label>
-              </div>
-              <div className="project-edit-form-row">
-                <label>Starts<input type="datetime-local" value={editForm.startsAt} onChange={(event) => updateEditField('startsAt', event.target.value)} required /></label>
-                <label>Ends<input type="datetime-local" value={editForm.endsAt} onChange={(event) => updateEditField('endsAt', event.target.value)} required /></label>
-              </div>
-              <div className="project-edit-form-row">
-                <label>Mode<select value={editForm.mode} onChange={(event) => updateEditField('mode', event.target.value)}><option>Online</option><option>In person</option><option>Hybrid</option></select></label>
-                <label>Team size<input value={editForm.teamSize} onChange={(event) => updateEditField('teamSize', event.target.value)} placeholder="1–4 members" /></label>
-              </div>
-              <label>Tags<input value={editForm.tags} onChange={(event) => updateEditField('tags', event.target.value)} placeholder="AI, Web, Open Source" /></label>
-              <label>Event URL<input type="url" value={editForm.url} onChange={(event) => updateEditField('url', event.target.value)} /></label>
-              <div className="todo-modal-actions">
-                <button className="secondary-button" type="button" onClick={() => setEditingHackathon(null)} disabled={editSaving}>Cancel</button>
-                <button className="primary-button" type="submit" disabled={editSaving}>{editSaving ? 'Saving…' : 'Save changes'}</button>
-              </div>
-            </form>
+      <Modal
+        isOpen={Boolean(editingHackathon)}
+        onClose={() => setEditingHackathon(null)}
+        className="document-modal"
+        subtitle="Hackathons"
+        title="Edit hackathon"
+      >
+        <form className="project-edit-form" onSubmit={saveHackathonEdit}>
+          {editError && <div className="todo-api-error" role="alert">{editError}</div>}
+          <div className="project-edit-form-row">
+            <label>Title<input value={editForm.title} onChange={(event) => updateEditField('title', event.target.value)} required data-modal-initial-focus /></label>
+            <label>Organizer<input value={editForm.organizer} onChange={(event) => updateEditField('organizer', event.target.value)} /></label>
           </div>
-        </div>
-      )}
+          <div className="project-edit-form-row">
+            <label>Starts<input type="datetime-local" value={editForm.startsAt} onChange={(event) => updateEditField('startsAt', event.target.value)} required /></label>
+            <label>Ends<input type="datetime-local" value={editForm.endsAt} onChange={(event) => updateEditField('endsAt', event.target.value)} required /></label>
+          </div>
+          <div className="project-edit-form-row">
+            <label>Mode<select value={editForm.mode} onChange={(event) => updateEditField('mode', event.target.value)}><option>Online</option><option>In person</option><option>Hybrid</option></select></label>
+            <label>Team size<input value={editForm.teamSize} onChange={(event) => updateEditField('teamSize', event.target.value)} placeholder="1–4 members" /></label>
+          </div>
+          <label>Tags<input value={editForm.tags} onChange={(event) => updateEditField('tags', event.target.value)} placeholder="AI, Web, Open Source" /></label>
+          <label>Event URL<input type="url" value={editForm.url} onChange={(event) => updateEditField('url', event.target.value)} /></label>
+          <div className="todo-modal-actions">
+            <button className="secondary-button" type="button" onClick={() => setEditingHackathon(null)} disabled={editSaving}>Cancel</button>
+            <button className="primary-button" type="submit" disabled={editSaving}>{editSaving ? 'Saving…' : 'Save changes'}</button>
+          </div>
+        </form>
+      </Modal>
       <ConfirmDialog isOpen={Boolean(deleteId)} message="Are you sure you want to delete this manual hackathon entry?" onCancel={() => setDeleteId(null)} onConfirm={confirmDeleteHackathon} />
     </section>
   )

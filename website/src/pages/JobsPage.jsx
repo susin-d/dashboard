@@ -7,16 +7,15 @@ import {
   FileText,
   MapPin,
   Pencil,
-  Plus,
+Plus,
   Trash2,
-  X,
   Search,
   SlidersHorizontal,
   RotateCcw,
 } from 'lucide-react'
 import { usePersistentState } from '../hooks/usePersistentState'
 import { createJob, deleteJob, updateJob } from '../lib/workspaceApi'
-import { ConfirmDialog } from '../components/ui'
+import { ConfirmDialog, Modal } from '../components/ui'
 import { buildApplicationTimeline } from '../utils/jobTimeline'
 
 const emptyJob = {
@@ -344,65 +343,63 @@ export function JobsPage({ jobs, setJobs, documents, createIntent, canLoadMore, 
 
       {canLoadMore && <button className="secondary-button" type="button" onClick={onLoadMore} disabled={loadingMore}>{loadingMore ? 'Loading…' : 'Load more jobs'}</button>}
 
-      {formOpen && (
-        <div className="todo-modal-backdrop" onMouseDown={() => setFormOpen(false)} role="presentation">
-          <div className="todo-modal job-modal" role="dialog" aria-modal="true" onMouseDown={(event) => event.stopPropagation()}>
-            <div className="todo-modal-heading">
-              <div><p>Career</p><h2>Add job record</h2></div>
-              <button className="icon-button" onClick={() => setFormOpen(false)} aria-label="Close form"><X size={18} /></button>
-            </div>
-            <form className="project-edit-form" onSubmit={addJob}>
-              {jobError && <div className="todo-api-error" role="alert">{jobError}</div>}
-              <div className="project-edit-form-row">
-                <label>Company<input value={form.company} onChange={(event) => updateField('company', event.target.value)} required /></label>
-                <label>Role<input value={form.role} onChange={(event) => updateField('role', event.target.value)} required /></label>
-                <label>Status<select value={form.status} onChange={(event) => updateField('status', event.target.value)}><option>Saved</option><option>Applied</option><option>Interview</option><option>Offer</option><option>Rejected</option></select></label>
-              </div>
-              <div className="project-edit-form-row">
-                <label>Location<input value={form.location} onChange={(event) => updateField('location', event.target.value)} /></label>
-                <label>Work type<select value={form.workType} onChange={(event) => updateField('workType', event.target.value)}><option>Full-time</option><option>Part-time</option><option>Contract</option><option>Internship</option><option>Hybrid</option></select></label>
-                <label>Salary<input value={form.salary} onChange={(event) => updateField('salary', event.target.value)} /></label>
-              </div>
-              <div className="project-edit-form-row">
-                <label>Applied date<input type="date" value={form.appliedDate} onChange={(event) => updateField('appliedDate', event.target.value)} /></label>
-                <label>Interview date<input type="date" value={form.interviewDate} onChange={(event) => updateField('interviewDate', event.target.value)} /></label>
-                <label>Deadline<input type="date" value={form.deadline} onChange={(event) => updateField('deadline', event.target.value)} /></label>
-              </div>
-              <label>
-                Resume used
-                <select
-                  value={form.resumeId}
-                  onChange={(event) =>
-                    updateField('resumeId', event.target.value)
-                  }
-                >
-                  <option value="">No resume selected</option>
-                  {resumeDocuments.map((document) => (
-                    <option key={document.id} value={document.id}>
-                      {document.name}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label>Job URL<input type="url" value={form.jobUrl} onChange={(event) => updateField('jobUrl', event.target.value)} /></label>
-              <label>Notes<textarea rows="3" value={form.notes} onChange={(event) => updateField('notes', event.target.value)} /></label>
-              <div className="todo-modal-actions"><button className="secondary-button" type="button" onClick={() => setFormOpen(false)} disabled={jobSaving}>Cancel</button><button className="primary-button jobs-add-button" type="submit" disabled={jobSaving}><Plus size={16} />{jobSaving ? 'Saving…' : 'Add job'}</button></div>
-            </form>
+<Modal
+        isOpen={formOpen}
+        onClose={() => setFormOpen(false)}
+        className="job-modal"
+        subtitle="Career"
+        title="Add job record"
+      >
+        <form className="project-edit-form" onSubmit={addJob}>
+          {jobError && <div className="todo-api-error" role="alert">{jobError}</div>}
+          <div className="project-edit-form-row">
+            <label>Company<input value={form.company} onChange={(event) => updateField('company', event.target.value)} required data-modal-initial-focus /></label>
+            <label>Role<input value={form.role} onChange={(event) => updateField('role', event.target.value)} required /></label>
+            <label>Status<select value={form.status} onChange={(event) => updateField('status', event.target.value)}><option>Saved</option><option>Applied</option><option>Interview</option><option>Offer</option><option>Rejected</option></select></label>
           </div>
-        </div>
-      )}
+          <div className="project-edit-form-row">
+            <label>Location<input value={form.location} onChange={(event) => updateField('location', event.target.value)} /></label>
+            <label>Work type<select value={form.workType} onChange={(event) => updateField('workType', event.target.value)}><option>Full-time</option><option>Part-time</option><option>Contract</option><option>Internship</option><option>Hybrid</option></select></label>
+            <label>Salary<input value={form.salary} onChange={(event) => updateField('salary', event.target.value)} /></label>
+          </div>
+          <div className="project-edit-form-row">
+            <label>Applied date<input type="date" value={form.appliedDate} onChange={(event) => updateField('appliedDate', event.target.value)} /></label>
+            <label>Interview date<input type="date" value={form.interviewDate} onChange={(event) => updateField('interviewDate', event.target.value)} /></label>
+            <label>Deadline<input type="date" value={form.deadline} onChange={(event) => updateField('deadline', event.target.value)} /></label>
+          </div>
+          <label>
+            Resume used
+            <select
+              value={form.resumeId}
+              onChange={(event) =>
+                updateField('resumeId', event.target.value)
+              }
+            >
+              <option value="">No resume selected</option>
+              {resumeDocuments.map((document) => (
+                <option key={document.id} value={document.id}>
+                  {document.name}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>Job URL<input type="url" value={form.jobUrl} onChange={(event) => updateField('jobUrl', event.target.value)} /></label>
+          <label>Notes<textarea rows="3" value={form.notes} onChange={(event) => updateField('notes', event.target.value)} /></label>
+          <div className="todo-modal-actions"><button className="secondary-button" type="button" onClick={() => setFormOpen(false)} disabled={jobSaving}>Cancel</button><button className="primary-button jobs-add-button" type="submit" disabled={jobSaving}><Plus size={16} />{jobSaving ? 'Saving…' : 'Add job'}</button></div>
+        </form>
+      </Modal>
 
-      {editingJob && (
-        <div className="todo-modal-backdrop" onMouseDown={() => setEditingJob(null)} role="presentation">
-          <div className="todo-modal job-modal" role="dialog" aria-modal="true" onMouseDown={(event) => event.stopPropagation()}>
-            <div className="todo-modal-heading">
-              <div><p>Career</p><h2>Edit job record</h2></div>
-              <button className="icon-button" onClick={() => setEditingJob(null)} aria-label="Close form"><X size={18} /></button>
-            </div>
-            <form className="project-edit-form" onSubmit={saveJobEdit}>
-              {editError && <div className="todo-api-error" role="alert">{editError}</div>}
-              <div className="project-edit-form-row">
-                <label>Company<input value={editForm.company} onChange={(event) => updateEditField('company', event.target.value)} required /></label>
+      <Modal
+        isOpen={Boolean(editingJob)}
+        onClose={() => setEditingJob(null)}
+        className="job-modal"
+        subtitle="Career"
+        title="Edit job record"
+      >
+        <form className="project-edit-form" onSubmit={saveJobEdit}>
+          {editError && <div className="todo-api-error" role="alert">{editError}</div>}
+          <div className="project-edit-form-row">
+            <label>Company<input value={editForm.company} onChange={(event) => updateEditField('company', event.target.value)} required data-modal-initial-focus /></label>
                 <label>Role<input value={editForm.role} onChange={(event) => updateEditField('role', event.target.value)} required /></label>
                 <label>Status<select value={editForm.status} onChange={(event) => updateEditField('status', event.target.value)}><option>Saved</option><option>Applied</option><option>Interview</option><option>Offer</option><option>Rejected</option></select></label>
               </div>
@@ -439,9 +436,7 @@ export function JobsPage({ jobs, setJobs, documents, createIntent, canLoadMore, 
                 <button className="primary-button jobs-add-button" type="submit" disabled={editSaving}>{editSaving ? 'Saving…' : 'Save changes'}</button>
               </div>
             </form>
-          </div>
-        </div>
-      )}
+          </Modal>
       <ConfirmDialog isOpen={Boolean(deleteId)} message="Are you sure you want to delete this job entry?" onCancel={() => setDeleteId(null)} onConfirm={confirmDeleteJob} />
     </section>
   )

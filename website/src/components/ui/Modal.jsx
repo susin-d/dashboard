@@ -2,7 +2,7 @@ import { useEffect, useId, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { X } from 'lucide-react'
 
-export function Modal({ isOpen, onClose, title, subtitle, children, className = '' }) {
+export function Modal({ isOpen, onClose, title, subtitle, children, className = '', backdropClassName = '', hideHeading = false }) {
   const modalRef = useRef(null)
   const titleId = useId()
   const descriptionId = useId()
@@ -62,19 +62,19 @@ export function Modal({ isOpen, onClose, title, subtitle, children, className = 
   if (!isOpen) return null
 
   return createPortal(
-    <div className="modal-backdrop" onClick={onClose} role="presentation">
+    <div className={`modal-backdrop ${backdropClassName}`.trim()} onClick={onClose} role="presentation">
       <div
         ref={modalRef}
-        className={`modal ${className}`}
+        className={`modal ${className}`.trim()}
         role="dialog"
         aria-modal="true"
-        aria-labelledby={title ? titleId : undefined}
-        aria-describedby={subtitle ? descriptionId : undefined}
+        aria-labelledby={title && !hideHeading ? titleId : undefined}
+        aria-describedby={subtitle && !hideHeading ? descriptionId : undefined}
         data-dialog-managed="true"
         tabIndex={-1}
         onClick={(event) => event.stopPropagation()}
       >
-        {(title || onClose) && (
+        {!hideHeading && (title || onClose) && (
           <div className="modal-heading">
             <div>
               {subtitle && <p id={descriptionId}>{subtitle}</p>}
@@ -86,7 +86,6 @@ export function Modal({ isOpen, onClose, title, subtitle, children, className = 
                 className="icon-button"
                 onClick={onClose}
                 aria-label="Close dialog"
-                data-modal-initial-focus
               >
                 <X size={18} />
               </button>

@@ -1,26 +1,14 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { LogOut, Trash2 } from 'lucide-react'
 import { clearAuthSession, deleteAccount } from '../../lib/authApi'
 import { clearGmailAuthorization } from '../../lib/firebase'
+import { Modal } from '../../components/ui'
 
 export function AccountSection({ user, onSignOut }) {
   const [accountDeleting, setAccountDeleting] = useState(false)
   const [accountDeleteMessage, setAccountDeleteMessage] = useState('')
   const [deleteModalOpen, setDeleteModalOpen] = useState(false)
   const [deleteConfirmation, setDeleteConfirmation] = useState('')
-
-  useEffect(() => {
-    if (!deleteModalOpen) return undefined
-    const closeOnEscape = (event) => {
-      if (event.key === 'Escape' && !accountDeleting) {
-        setDeleteModalOpen(false)
-        setDeleteConfirmation('')
-        setAccountDeleteMessage('')
-      }
-    }
-    window.addEventListener('keydown', closeOnEscape)
-    return () => window.removeEventListener('keydown', closeOnEscape)
-  }, [deleteModalOpen, accountDeleting])
 
   const deleteAccountHandler = async (event) => {
     event.preventDefault()
@@ -101,73 +89,64 @@ export function AccountSection({ user, onSignOut }) {
         </button>
       </div>
 
-      {deleteModalOpen && (
-        <div
-          className="delete-account-backdrop"
-          role="presentation"
-          onMouseDown={(event) => {
-            if (event.target === event.currentTarget) closeDeleteModal()
-          }}
-        >
-          <section
-            className="delete-account-modal"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="delete-account-title"
-          >
-            <div className="delete-account-modal-icon">
-              <Trash2 size={21} />
-            </div>
-            <h2 id="delete-account-title">Delete account?</h2>
-            <p>
-              This permanently deletes your StarWaves account and cannot be
-              undone.
-            </p>
-
-            <form onSubmit={deleteAccountHandler}>
-              <label htmlFor="delete-account-confirmation">
-                Type <strong>{user.name}</strong> to confirm
-              </label>
-              <input
-                id="delete-account-confirmation"
-                value={deleteConfirmation}
-                onChange={(event) => {
-                  setDeleteConfirmation(event.target.value)
-                  setAccountDeleteMessage('')
-                }}
-                placeholder={user.name}
-                autoComplete="off"
-                autoFocus
-              />
-              {accountDeleteMessage && (
-                <p className="delete-account-modal-error" role="alert">
-                  {accountDeleteMessage}
-                </p>
-              )}
-              <div className="delete-account-modal-actions">
-                <button
-                  className="delete-account-cancel"
-                  type="button"
-                  onClick={closeDeleteModal}
-                  disabled={accountDeleting}
-                >
-                  Cancel
-                </button>
-                <button
-                  className="delete-account-confirm"
-                  type="submit"
-                  disabled={
-                    accountDeleting || deleteConfirmation !== user.name
-                  }
-                >
-                  <Trash2 size={15} />
-                  {accountDeleting ? 'Deleting…' : 'Delete account'}
-                </button>
-              </div>
-            </form>
-          </section>
+      <Modal
+        isOpen={deleteModalOpen}
+        onClose={closeDeleteModal}
+        className="delete-account-modal"
+        backdropClassName="delete-account-backdrop"
+        hideHeading
+      >
+        <div className="delete-account-modal-icon">
+          <Trash2 size={21} />
         </div>
-      )}
+        <h2 id="delete-account-title">Delete account?</h2>
+        <p>
+          This permanently deletes your StarWaves account and cannot be
+          undone.
+        </p>
+
+        <form onSubmit={deleteAccountHandler}>
+          <label htmlFor="delete-account-confirmation">
+            Type <strong>{user.name}</strong> to confirm
+          </label>
+          <input
+            id="delete-account-confirmation"
+            value={deleteConfirmation}
+            onChange={(event) => {
+              setDeleteConfirmation(event.target.value)
+              setAccountDeleteMessage('')
+            }}
+            placeholder={user.name}
+            autoComplete="off"
+            data-modal-initial-focus
+          />
+          {accountDeleteMessage && (
+            <p className="delete-account-modal-error" role="alert">
+              {accountDeleteMessage}
+            </p>
+          )}
+          <div className="delete-account-modal-actions">
+            <button
+              className="delete-account-cancel"
+              type="button"
+              onClick={closeDeleteModal}
+              disabled={accountDeleting}
+            >
+              Cancel
+            </button>
+            <button
+              className="delete-account-confirm"
+              type="submit"
+              disabled={
+                accountDeleting || deleteConfirmation !== user.name
+              }
+            >
+              <Trash2 size={15} />
+              {accountDeleting ? 'Deleting…' : 'Delete account'}
+            </button>
+          </div>
+        </form>
+      </Modal>
     </div>
   )
 }

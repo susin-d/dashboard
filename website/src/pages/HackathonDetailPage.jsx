@@ -8,10 +8,9 @@ import {
   Rocket,
   Trash2,
   Users,
-  X,
 } from 'lucide-react'
 import { deleteHackathon, updateHackathon } from '../lib/workspaceApi'
-import { ConfirmDialog } from '../components/ui'
+import { ConfirmDialog, Modal } from '../components/ui'
 
 const emptyHackathon = {
   title: '',
@@ -191,39 +190,25 @@ export function HackathonDetailPage({ hackathon, onBack, onSave, onDelete }) {
         </div>
       )}
 
-      {editing && (
-        <div className="todo-modal-backdrop" onMouseDown={() => setEditing(false)} role="presentation">
-          <div
-            className="todo-modal document-modal"
-            role="dialog"
-            aria-modal="true"
-            onMouseDown={(event) => event.stopPropagation()}
-          >
-            <div className="todo-modal-heading">
-              <div>
-                <p>Edit opportunity</p>
-                <h2>{hackathon.title}</h2>
-              </div>
-              <button
-                className="icon-button"
-                onClick={() => setEditing(false)}
-                aria-label="Close modal"
-                type="button"
-              >
-                <X size={18} />
-              </button>
-            </div>
-            <form onSubmit={handleSaveEdit} className="todo-form">
-              {error && <div className="auth-error-banner">{error}</div>}
-              <div className="form-group">
-                <label htmlFor="edit-title">Hackathon title</label>
-                <input
-                  id="edit-title"
-                  value={editForm.title}
-                  onChange={(e) => setEditForm((c) => ({ ...c, title: e.target.value }))}
-                  required
-                />
-              </div>
+      <Modal
+        isOpen={editing}
+        onClose={() => setEditing(false)}
+        className="document-modal"
+        subtitle="Edit opportunity"
+        title={hackathon.title || 'Edit hackathon'}
+      >
+        <form onSubmit={handleSaveEdit} className="todo-form">
+          {error && <div className="auth-error-banner">{error}</div>}
+          <div className="form-group">
+            <label htmlFor="edit-title">Hackathon title</label>
+            <input
+              id="edit-title"
+              value={editForm.title}
+              onChange={(e) => setEditForm((c) => ({ ...c, title: e.target.value }))}
+              required
+              data-modal-initial-focus
+            />
+          </div>
               <div className="form-row">
                 <div className="form-group">
                   <label htmlFor="edit-organizer">Organizer</label>
@@ -304,15 +289,13 @@ export function HackathonDetailPage({ hackathon, onBack, onSave, onDelete }) {
                 </button>
               </div>
             </form>
-          </div>
-        </div>
-      )}
+          </Modal>
 
       <ConfirmDialog
-        open={Boolean(deleteId)}
+        isOpen={Boolean(deleteId)}
         title="Delete hackathon"
         message="Are you sure you want to delete this hackathon? This action cannot be undone."
-        confirmText="Delete"
+        confirmLabel="Delete"
         onConfirm={confirmDelete}
         onCancel={() => setDeleteId(null)}
       />

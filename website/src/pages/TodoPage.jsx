@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
-import { CalendarDays, Check, Pencil, Plus, Trash2, X } from 'lucide-react'
+import { CalendarDays, Check, Pencil, Plus, Trash2 } from 'lucide-react'
 import { createTodo, deleteTodo, updateTodo } from '../lib/todosApi'
-import { ConfirmDialog } from '../components/ui'
+import { ConfirmDialog, Modal } from '../components/ui'
 import { usePersistentState } from '../hooks/usePersistentState'
 
 export function TodoPage({ tasks, setTasks, createIntent }) {
@@ -186,141 +186,91 @@ export function TodoPage({ tasks, setTasks, createIntent }) {
         </div>
       </div>
 
-      {taskFormOpen && (
-        <div
-          className="todo-modal-backdrop"
-          onMouseDown={() => setTaskFormOpen(false)}
-          onKeyDown={(event) => {
-            if (event.key === 'Escape') setTaskFormOpen(false)
-          }}
-          role="presentation"
-        >
-          <div
-            className="todo-modal"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="new-task-title"
-            onMouseDown={(event) => event.stopPropagation()}
-          >
-            <div className="todo-modal-heading">
-              <div>
-                <p>New task</p>
-                <h2 id="new-task-title">What needs to be done?</h2>
-              </div>
-              <button
-                className="icon-button"
-                onClick={() => setTaskFormOpen(false)}
-                aria-label="Close task form"
-              >
-                <X size={18} />
-              </button>
-            </div>
-
-            <form className="todo-modal-form" onSubmit={addTask}>
-              <label htmlFor="task-title">Task name</label>
-              <input
-                id="task-title"
-                value={newTask}
-                onChange={(event) => setNewTask(event.target.value)}
-                placeholder="Enter a task"
-                autoFocus
-                disabled={taskSaving}
-              />
-              <label htmlFor="task-date">Due date (optional)</label>
-              <input
-                id="task-date"
-                type="date"
-                value={dueDate}
-                onChange={(event) => setDueDate(event.target.value)}
-                disabled={taskSaving}
-              />
-              {taskError && <div className="todo-api-error" role="alert">{taskError}</div>}
-              <div className="todo-modal-actions">
-                <button
-                  className="secondary-button"
-                  type="button"
-                  onClick={() => setTaskFormOpen(false)}
-                  disabled={taskSaving}
-                >
-                  Cancel
-                </button>
-                <button className="primary-button" type="submit" disabled={taskSaving}>
-                  <Plus size={17} />
-                  {taskSaving ? 'Saving…' : 'Add task'}
-                </button>
-              </div>
-            </form>
+      <Modal
+        isOpen={taskFormOpen}
+        onClose={() => setTaskFormOpen(false)}
+        className="todo-modal"
+        subtitle="New task"
+        title="What needs to be done?"
+      >
+        <form className="todo-modal-form" onSubmit={addTask}>
+          <label htmlFor="task-title">Task name</label>
+          <input
+            id="task-title"
+            value={newTask}
+            onChange={(event) => setNewTask(event.target.value)}
+            placeholder="Enter a task"
+            data-modal-initial-focus
+            disabled={taskSaving}
+          />
+          <label htmlFor="task-date">Due date (optional)</label>
+          <input
+            id="task-date"
+            type="date"
+            value={dueDate}
+            onChange={(event) => setDueDate(event.target.value)}
+            disabled={taskSaving}
+          />
+          {taskError && <div className="todo-api-error" role="alert">{taskError}</div>}
+          <div className="todo-modal-actions">
+            <button
+              className="secondary-button"
+              type="button"
+              onClick={() => setTaskFormOpen(false)}
+              disabled={taskSaving}
+            >
+              Cancel
+            </button>
+            <button className="primary-button" type="submit" disabled={taskSaving}>
+              <Plus size={17} />
+              {taskSaving ? 'Saving…' : 'Add task'}
+            </button>
           </div>
-        </div>
-      )}
+        </form>
+      </Modal>
 
-      {editingTask && (
-        <div
-          className="todo-modal-backdrop"
-          onMouseDown={() => setEditingTask(null)}
-          onKeyDown={(event) => {
-            if (event.key === 'Escape') setEditingTask(null)
-          }}
-          role="presentation"
-        >
-          <div
-            className="todo-modal"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="edit-task-title"
-            onMouseDown={(event) => event.stopPropagation()}
-          >
-            <div className="todo-modal-heading">
-              <div>
-                <p>Edit task</p>
-                <h2 id="edit-task-title">Update details</h2>
-              </div>
-              <button
-                className="icon-button"
-                onClick={() => setEditingTask(null)}
-                aria-label="Close form"
-              >
-                <X size={18} />
-              </button>
-            </div>
-
-            <form className="todo-modal-form" onSubmit={saveTaskEdit}>
-              <label htmlFor="edit-task-title-input">Task name</label>
-              <input
-                id="edit-task-title-input"
-                value={editTitle}
-                onChange={(event) => setEditTitle(event.target.value)}
-                placeholder="Enter task name"
-                autoFocus
-                disabled={editSaving}
-                required
-              />
-              <label htmlFor="edit-task-date-input">Due date (optional)</label>
-              <input
-                id="edit-task-date-input"
-                type="date"
-                value={editDueDate}
-                onChange={(event) => setEditDueDate(event.target.value)}
-                disabled={editSaving}
-              />
-              {editError && <div className="todo-api-error" role="alert">{editError}</div>}
-              <div className="todo-modal-actions">
-                <button
-                  className="secondary-button"
-                  type="button"
-                  onClick={() => setEditingTask(null)}
-                  disabled={editSaving}
-                >
-                  Cancel
-                </button>
-                <button className="primary-button" type="submit" disabled={editSaving}>
-                  {editSaving ? 'Saving…' : 'Save changes'}
-                </button>
-              </div>
-            </form>
+      <Modal
+        isOpen={Boolean(editingTask)}
+        onClose={() => setEditingTask(null)}
+        className="todo-modal"
+        subtitle="Edit task"
+        title="Update details"
+      >
+        <form className="todo-modal-form" onSubmit={saveTaskEdit}>
+          <label htmlFor="edit-task-title-input">Task name</label>
+          <input
+            id="edit-task-title-input"
+            value={editTitle}
+            onChange={(event) => setEditTitle(event.target.value)}
+            placeholder="Enter task name"
+            data-modal-initial-focus
+            disabled={editSaving}
+            required
+          />
+          <label htmlFor="edit-task-date-input">Due date (optional)</label>
+          <input
+            id="edit-task-date-input"
+            type="date"
+            value={editDueDate}
+            onChange={(event) => setEditDueDate(event.target.value)}
+            disabled={editSaving}
+          />
+          {editError && <div className="todo-api-error" role="alert">{editError}</div>}
+          <div className="todo-modal-actions">
+            <button
+              className="secondary-button"
+              type="button"
+              onClick={() => setEditingTask(null)}
+              disabled={editSaving}
+            >
+              Cancel
+            </button>
+            <button className="primary-button" type="submit" disabled={editSaving}>
+              {editSaving ? 'Saving…' : 'Save changes'}
+            </button>
           </div>
-        </div>
-      )}
+        </form>
+      </Modal>
       <ConfirmDialog
         isOpen={Boolean(deleteRequested)}
         title="Delete task?"

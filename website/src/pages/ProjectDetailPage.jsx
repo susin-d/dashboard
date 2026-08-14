@@ -12,10 +12,9 @@ import {
   Save,
   Trash2,
   Users,
-  X,
 } from 'lucide-react'
 import { deleteProject, updateProject } from '../lib/workspaceApi'
-import { ConfirmDialog, CustomDropdown } from '../components/ui'
+import { ConfirmDialog, CustomDropdown, Modal } from '../components/ui'
 import { ProjectLifecycleCard } from '../components/ProjectLifecycleCard'
 import {
   getStatusForPhase,
@@ -315,42 +314,23 @@ export function ProjectDetailPage({ project, onBack, onSave }) {
         saving={phaseSaving}
       />
 
-      {editOpen && (
-        <div
-          className="todo-modal-backdrop"
-          onMouseDown={() => setEditOpen(false)}
-          role="presentation"
-        >
-          <div
-            className="todo-modal project-edit-modal"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="edit-project-title"
-            onMouseDown={(event) => event.stopPropagation()}
-          >
-            <div className="todo-modal-heading">
-              <div>
-                <p>Project</p>
-                <h2 id="edit-project-title">Edit project</h2>
-              </div>
-              <button
-                className="icon-button"
-                onClick={() => setEditOpen(false)}
-                aria-label="Close editor"
-              >
-                <X size={18} />
-              </button>
-            </div>
-
-            <form className="project-edit-form" onSubmit={saveProject}>
-              <label>
-                Project name
-                <input
-                  value={form.name}
-                  onChange={(event) => updateField('name', event.target.value)}
-                  required
-                />
-              </label>
+      <Modal
+        isOpen={editOpen}
+        onClose={() => setEditOpen(false)}
+        className="project-edit-modal"
+        subtitle="Project"
+        title="Edit project"
+      >
+        <form className="project-edit-form" onSubmit={saveProject}>
+          <label>
+            Project name
+            <input
+              value={form.name}
+              onChange={(event) => updateField('name', event.target.value)}
+              required
+              data-modal-initial-focus
+            />
+          </label>
               <label>
                 Description
                 <textarea
@@ -464,9 +444,7 @@ export function ProjectDetailPage({ project, onBack, onSave }) {
                 </button>
               </div>
             </form>
-          </div>
-        </div>
-      )}
+      </Modal>
       <ConfirmDialog
         isOpen={deleteRequested}
         message="Are you sure you want to delete this project?"
