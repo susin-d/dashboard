@@ -686,18 +686,105 @@
   background: var(--bg-hover);
 }
 
-.eve-model-tag {
+.eve-model-selector-container {
+  position: relative;
+}
+
+.eve-model-tag-btn {
   display: inline-flex;
   align-items: center;
-  gap: 0.35rem;
-  padding: 0.25rem 0.6rem;
+  gap: 0.4rem;
+  padding: 0.28rem 0.65rem;
   border-radius: 999px;
   background: var(--bg-secondary);
   border: 1px solid var(--border-color);
-  color: var(--text-secondary);
+  color: var(--text-primary);
   font-size: 0.76rem;
   font-weight: 600;
   letter-spacing: -0.01em;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.eve-model-tag-btn:hover {
+  background: var(--bg-hover);
+  border-color: var(--border-heavy);
+}
+
+.eve-model-chevron {
+  color: var(--text-muted);
+  transition: transform var(--transition-fast);
+}
+
+.eve-model-chevron.open {
+  transform: rotate(180deg);
+}
+
+.eve-model-menu-popup {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 0;
+  min-width: 220px;
+  max-height: 280px;
+  overflow-y: auto;
+  background: var(--bg-card, var(--bg-secondary));
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md, 8px);
+  box-shadow: var(--shadow-lg, 0 10px 25px rgba(0, 0, 0, 0.4));
+  z-index: 30;
+  padding: 0.4rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.eve-model-menu-title {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+  padding: 0.25rem 0.5rem 0.15rem;
+}
+
+.eve-model-menu-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.eve-model-menu-group-label {
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  padding: 0.2rem 0.5rem 0;
+}
+
+.eve-model-menu-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.4rem 0.6rem;
+  border-radius: var(--radius-xs, 4px);
+  background: transparent;
+  border: none;
+  color: var(--text-primary);
+  font-size: 0.78rem;
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.eve-model-menu-item:hover {
+  background: var(--bg-hover);
+}
+
+.eve-model-menu-item.active {
+  background: var(--color-primary);
+  color: var(--text-inverse);
+  font-weight: 600;
 }
 
 .eve-composer-bottom-right {

@@ -18,6 +18,7 @@ import {
   listEveSessions,
   sendEveMessage,
 } from '../lib/eveApi'
+import { loadAiModels, saveAiModelPreference } from '../lib/aiModelsApi'
 import { EveChatSection } from './eve/EveChatSection'
 import { EveSessionsSection } from './eve/EveSessionsSection'
 import { EveMemorySection } from './eve/EveMemorySection'
@@ -66,19 +67,46 @@ export function EvePage({ callCenter, onNavigate, onWorkspaceChanged, chatResetK
   const [memoryDraft, setMemoryDraft] = useState('')
   const [isAddingMemory, setIsAddingMemory] = useState(false)
   const [isLoadingSidebar, setIsLoadingSidebar] = useState(true)
+  const [aiProviders, setAiProviders] = useState([])
+  const [activeModel, setActiveModel] = useState({ provider: 'openai', model: 'gpt-5-mini', label: 'GPT-5 mini' })
 
   const refreshSidebar = async () => {
     try {
-      const [sessionData, memoryData] = await Promise.all([
+      const [sessionData, memoryData, modelsData] = await Promise.all([
         listEveSessions().catch(() => ({ sessions: [] })),
         listEveMemories().catch(() => ({ memories: [] })),
+        loadAiModels().catch(() => null),
       ])
       setSessions(sessionData.sessions ?? [])
       setMemories(memoryData.memories ?? [])
+
+      if (modelsData?.providers) {
+        const available = modelsData.providers.filter((p) => p.available)
+        setAiProviders(available)
+        const pref = modelsData.preference
+        const selectedProv = available.find((p) => p.id === (pref?.provider || '')) || available[0]
+        if (selectedProv) {
+          const modelObj = selectedProv.models?.find((m) => m.id === (pref?.model || '')) || selectedProv.models?.[0]
+          setActiveModel({
+            provider: selectedProv.id,
+            model: modelObj?.id || pref?.model || selectedProv.default_model || 'gpt-5-mini',
+            label: modelObj?.label || modelObj?.id || 'GPT-5 mini',
+          })
+        }
+      }
     } catch (sidebarError) {
       setError(sidebarError.message || 'Could not load Eve sessions and memory.')
     } finally {
       setIsLoadingSidebar(false)
+    }
+  }
+
+  const handleSelectAiModel = async (providerId, modelId, modelLabel) => {
+    setActiveModel({ provider: providerId, model: modelId, label: modelLabel })
+    try {
+      await saveAiModelPreference({ provider: providerId, model: modelId })
+    } catch (err) {
+      console.warn('Could not save model preference:', err)
     }
   }
 
@@ -388,6 +416,9 @@ export function EvePage({ callCenter, onNavigate, onWorkspaceChanged, chatResetK
               selectTool={selectTool}
               selectPrompt={selectPrompt}
               EVE_PRESET_PROMPTS={EVE_PRESET_PROMPTS}
+              aiProviders={aiProviders}
+              activeModel={activeModel}
+              onSelectAiModel={handleSelectAiModel}
             />
           )}
 
