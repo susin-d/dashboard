@@ -12,6 +12,7 @@ import { JobsPage } from './pages/JobsPage'
 import { MailsPage } from './pages/MailsPage'
 import { ChatsPage } from './pages/ChatsPage'
 import { CallsPage } from './pages/CallsPage'
+import { ContactsPage } from './pages/ContactsPage'
 import { IncomingCallOverlay } from './components/calls/IncomingCallOverlay'
 import { ProfilePage } from './pages/ProfilePage'
 import { ProjectDetailPage } from './pages/ProjectDetailPage'
@@ -442,6 +443,7 @@ function App() {
     mails: <MailsPage onNavigate={navigateWorkspace} />,
     chats: <ChatsPage onNavigate={navigateWorkspace} />,
     calls: <CallsPage callCenter={callCenter} user={userProfile} />,
+    contacts: <ContactsPage callCenter={callCenter} onNavigate={navigateWorkspace} />,
     profile: (
       <ProfilePage
         user={userProfile}

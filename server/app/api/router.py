@@ -6,6 +6,7 @@ from app.api.routes import (
     calls,
     coding_stats,
     competitive_coding_profile,
+    contacts,
     cron,
     documents,
     email,
@@ -28,6 +29,7 @@ api_router = APIRouter()
 api_router.include_router(ai_models.router, tags=["AI models settings"])
 api_router.include_router(auth.router, tags=["auth"])
 api_router.include_router(calls.router, tags=["calls"])
+api_router.include_router(contacts.router, tags=["contacts"])
 api_router.include_router(cron.router, tags=["cron serverless jobs"])
 api_router.include_router(email.router, tags=["email"])
 api_router.include_router(health.router, tags=["health"])

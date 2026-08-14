@@ -4,7 +4,7 @@ Living project snapshot for AI agents. `AGENTS.md` holds the permanent rules;
 this file holds the **current state** of the codebase and must be kept up to
 date whenever the implementation changes.
 
-> **Last updated:** 2026-08-14 (Removed Data sources & Reminders section and calendar reminder email test card from Settings)
+> **Last updated:** 2026-08-14 (Created Contacts page under Communication group with Firebase Firestore CRUD backend and frontend UI)
 
 ---
 
@@ -67,7 +67,7 @@ Starwaves/
 | Auth         | `app/api/routes/auth/`                                                                 | `oauth`, `credentials`, `password`, `account`, `combine`                                             |
 | Workspace    | `app/api/routes/workspace/`                                                            | `jobs`, `hackathons`, `projects`, `notifications`, `contests`, `calendar`                          |
 | Integrations | `google_calendar`, `google_drive`, `gmail`, `github`, `google_chat`            | OAuth callbacks under`/integrations/*/callback`                                                              |
-| Features     | `documents`, `todos`, `profiles`, `notifications`, `email`, `eve`, `calls` | EVE = AI assistant;`calls` = WebRTC signaling                                                                |
+| Features     | `documents`, `todos`, `contacts`, `profiles`, `notifications`, `email`, `eve`, `calls` | EVE = AI assistant;`calls` = WebRTC signaling; `contacts` = Address book / contacts directory                 |
 | Coding       | `coding_stats`, `competitive_coding_profile`                                         | Contests + profile stats                                                                                       |
 | Settings     | `ai_models`, `eve_speech`                                                            | `/settings/ai-models` AI provider/model + `/settings/eve-speech` STT/TTS provider/voice preference for EVE |
 | Misc         | `health`                                                                               | `/api/v1/health`                                                                                             |
@@ -75,7 +75,7 @@ Starwaves/
 ### Repositories (`server/app/repositories/`)
 
 `password`, `users`, `account_combine`, `account_deletion`, `jobs`, `projects`,
-`notifications`, `pagination`, `documents`, `profiles`, `todos`, `eve`,
+`notifications`, `pagination`, `documents`, `contacts`, `profiles`, `todos`, `eve`,
 `eve_sessions`, `calls`.
 
 ### Services (`server/app/services/`)
@@ -132,7 +132,7 @@ SMTP, Firestore database id, CORS origins. Loads `.env.prod` before `.env`.
   notifications, contests, calendar, email), `gmailApi`, `googleCalendar`,
   `googleDriveApi`, `eveApi`, `eveSchedulesApi`, `emailApi`, `githubApi`,
   `googleChatApi`, `codingStatsApi`, `competitiveCodingProfileApi`,
-  `documentsApi`, `callsApi`, `aiModelsApi`, `eveSpeechApi`), plus shared `request.js`
+  `documentsApi`, `contactsApi`, `callsApi`, `aiModelsApi`, `eveSpeechApi`), plus shared `request.js`
   (single `API_URL` + `apiRequest` wrapper), `firebase.js`, `authApi.js`,
   `index.js`.
 - **Themes** (`src/themes/`): `presets.js` holds `THEME_PRESETS` (parsed from
@@ -146,7 +146,7 @@ SMTP, Firestore database id, CORS origins. Loads `.env.prod` before `.env`.
   `callWebRTC`, `callDisplay`, `speech`.
 - **Pages** (`src/pages/`): Dashboard, Projects, ProjectDetail, Jobs,
   Hackathons, HackathonDetail, Todo, Documents, DocumentOpener, Mails,
-  Calendar, Chats, Calls, CompetitiveCoding, Stats, Eve, Settings, Themes,
+  Calendar, Chats, Calls, Contacts, CompetitiveCoding, Stats, Eve, Settings, Themes,
   Profile, Onboarding, Auth, ForgotPassword, Landing, TermsOfService, PrivacyPolicy.
 - **Call components** (`src/components/calls/`): `CallScreen`,
   `IncomingCallOverlay`.
