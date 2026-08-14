@@ -4,7 +4,7 @@ Living project snapshot for AI agents. `AGENTS.md` holds the permanent rules;
 this file holds the **current state** of the codebase and must be kept up to
 date whenever the implementation changes.
 
-> **Last updated:** 2026-08-14 (Added Google Contacts app shortcut to the Google Workspace integration card in Settings AppsSection)
+> **Last updated:** 2026-08-14 (Added 'contacts' to workspacePages in useRouter so /app/contacts routing and URL syncing works properly)
 
 ---
 

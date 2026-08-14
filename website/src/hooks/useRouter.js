@@ -9,6 +9,7 @@ const workspacePages = new Set([
   'mails',
   'chats',
   'calls',
+  'contacts',
   'competitive-coding',
   'hackathons',
   'projects',
