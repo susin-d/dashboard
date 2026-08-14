@@ -169,7 +169,14 @@ export async function beginGoogleOAuth() {
       popup.opener = window
     }
 
-    if (popup.closed) {
+    let isClosed = false
+    try {
+      isClosed = Boolean(popup.closed)
+    } catch {
+      // COOP restriction: ignore cross-origin access error
+    }
+
+    if (isClosed) {
       reject(new Error('Google sign-in was cancelled.'))
       return
     }
@@ -189,10 +196,14 @@ export async function beginGoogleOAuth() {
     window.addEventListener('message', messageHandler)
 
     const pollTimer = setInterval(() => {
-      if (popup.closed) {
-        clearInterval(pollTimer)
-        window.removeEventListener('message', messageHandler)
-        reject(new Error('Google sign-in was cancelled.'))
+      try {
+        if (popup.closed) {
+          clearInterval(pollTimer)
+          window.removeEventListener('message', messageHandler)
+          reject(new Error('Google sign-in was cancelled.'))
+        }
+      } catch {
+        // Cross-Origin-Opener-Policy prevents reading popup.closed while on Google Auth domain
       }
     }, 500)
   })
