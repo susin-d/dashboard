@@ -41,6 +41,10 @@ export function CallScreen({ callCenter, myUid }) {
     isEveThinking,
     ttsEnabled,
     sttStatus,
+    sttRecording,
+    sttProvider,
+    startSttRecording,
+    stopSttRecording,
     hangUp,
     dismiss,
     toggleMute,
@@ -96,7 +100,9 @@ export function CallScreen({ callCenter, myUid }) {
       else if (sttStatus === 'unsupported') statusText = 'Voice input not supported here'
       else if (sttStatus === 'permission') statusText = 'Microphone permission needed'
       else if (sttStatus === 'error') statusText = 'Voice input unavailable'
-      else statusText = `Listening… (${formatElapsed(elapsed)})`
+      else if (sttProvider === 'groq') {
+        statusText = sttRecording ? 'Listening…' : 'Hold to talk to Eve'
+      } else statusText = `Listening… (${formatElapsed(elapsed)})`
     } else {
       statusText = formatElapsed(elapsed)
     }
@@ -107,7 +113,11 @@ export function CallScreen({ callCenter, myUid }) {
 
   let sttHint = ''
   if (isEveCall && inProgress) {
-    if (sttStatus === 'unsupported') {
+    if (sttProvider === 'groq') {
+      sttHint = sttRecording
+        ? 'Release to send your message to Eve.'
+        : 'Hold the mic button to talk to Eve.'
+    } else if (sttStatus === 'unsupported') {
       sttHint = 'Speech recognition is not supported in this browser. Type your message below instead.'
     } else if (sttStatus === 'permission') {
       sttHint = 'Microphone permission was denied. Allow microphone access to use voice commands, or type below.'
@@ -207,6 +217,24 @@ export function CallScreen({ callCenter, myUid }) {
         </div>
 
         <div className="call-controls">
+          {sttProvider === 'groq' ? (
+            <button
+              type="button"
+              className={`call-control-button ${sttRecording ? 'active' : ''}`}
+              onPointerDown={(event) => {
+                event.preventDefault()
+                startSttRecording()
+              }}
+              onPointerUp={stopSttRecording}
+              onPointerLeave={stopSttRecording}
+              onPointerCancel={stopSttRecording}
+              aria-pressed={sttRecording}
+              title={sttRecording ? 'Release to send your message' : 'Hold to talk to Eve'}
+              disabled={muted}
+            >
+              <Mic size={22} />
+            </button>
+          ) : null}
           <button
             type="button"
             className={`call-control-button ${muted ? 'active' : ''}`}

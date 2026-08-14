@@ -23,6 +23,26 @@ export function saveEveSpeechPreference(preference) {
   return request({ method: 'PUT', body: JSON.stringify(preference) })
 }
 
+export function transcribeEveAudio(blob, language) {
+  const token = getStoredAuthToken()
+  if (!token) throw new Error(TOKEN_MESSAGE)
+  const formData = new FormData()
+  formData.append('file', blob, 'eve-audio.webm')
+  const shortLanguage = String(language || '').split('-')[0]
+  if (shortLanguage) formData.append('language', shortLanguage)
+  return fetchWithTimeout(`${API_URL}/eve/transcribe`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}` },
+    body: formData,
+  }).then(async (response) => {
+    if (!response.ok) {
+      const failure = await response.json().catch(() => null)
+      throw new Error(failure?.detail || 'Could not transcribe Eve audio.')
+    }
+    return response.json()
+  })
+}
+
 export function synthesizeEveSpeech({ text, language, voice, rate, pitch }) {
   const token = getStoredAuthToken()
   if (!token) throw new Error(TOKEN_MESSAGE)

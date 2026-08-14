@@ -8,6 +8,11 @@ import {
   updateCallStatus,
 } from '../lib/callsApi'
 import { sendEveMessage } from '../lib/eveApi'
+import {
+  loadEveSpeech,
+  synthesizeEveSpeech,
+  transcribeEveAudio,
+} from '../lib/eveSpeechApi'
 import { ICE_SERVERS, startRingtone, stopRingtone } from '../utils/callWebRTC'
 import { notify, requestNotificationPermission } from '../utils/browserNotifications'
 import {
@@ -22,6 +27,33 @@ const RING_TIMEOUT_MS = 35000
 const ECHO_COOLDOWN_MS = 700
 
 const BUSY_PHASES = ['dialing', 'connecting', 'active', 'incoming']
+
+function pickAudioMimeType() {
+  if (typeof window === 'undefined' || !window.MediaRecorder) return ''
+  const candidates = [
+    'audio/webm;codecs=opus',
+    'audio/webm',
+    'audio/ogg;codecs=opus',
+    'audio/mp4',
+  ]
+  return candidates.find((type) => window.MediaRecorder.isTypeSupported(type)) || ''
+}
+
+function resolveSpeechProviders(data) {
+  const preference = data?.preference || {}
+  const stt = (data?.stt_providers || []).find(
+    (provider) => provider.id === preference.stt_provider,
+  )
+  const tts = (data?.tts_providers || []).find(
+    (provider) => provider.id === preference.tts_provider,
+  )
+  return {
+    sttProvider: stt?.available ? preference.stt_provider : 'browser',
+    sttModel: stt?.available ? preference.stt_model || '' : '',
+    ttsProvider: tts?.available ? preference.tts_provider : 'browser',
+    ttsVoice: tts?.available ? preference.tts_voice || '' : '',
+  }
+}
 
 // Drives one WebRTC call session for the signed-in user, used app-wide by
 // App.jsx so calls keep running (and incoming calls keep ringing) anywhere.
@@ -42,10 +74,16 @@ export function useCallCenter({ user }) {
   const [isEveSpeaking, setIsEveSpeaking] = useState(false)
   const [isEveThinking, setIsEveThinking] = useState(false)
   const [ttsEnabled, setTtsEnabled] = useState(true)
+  const [sttRecording, setSttRecording] = useState(false)
   const [sttStatus, setSttStatus] = useState(() =>
     isSpeechRecognitionSupported() ? 'idle' : 'unsupported',
   )
   const [sttSupported] = useState(() => isSpeechRecognitionSupported())
+  const [speechPrefs, setSpeechPrefs] = useState(() =>
+    resolveSpeechProviders(null),
+  )
+  const speechPrefsRef = useRef(speechPrefs)
+  speechPrefsRef.current = speechPrefs
 
   const phaseRef = useRef('idle')
   const pcRef = useRef(null)
@@ -66,6 +104,10 @@ export function useCallCenter({ user }) {
   const isEveSpeakingRef = useRef(false)
   const lastSpeechEndRef = useRef(0)
   const ttsEnabledRef = useRef(ttsEnabled)
+  const eveAudioRef = useRef(null)
+  const mediaRecorderRef = useRef(null)
+  const mediaChunksRef = useRef([])
+  const audioStreamRef = useRef(null)
   ttsEnabledRef.current = ttsEnabled
   const isEveThinkingRef = useRef(isEveThinking)
   isEveThinkingRef.current = isEveThinking
@@ -132,6 +174,20 @@ export function useCallCenter({ user }) {
         } catch {}
         recognitionRef.current = null
       }
+      if (mediaRecorderRef.current) {
+        try {
+          mediaRecorderRef.current.stop()
+        } catch {}
+        mediaRecorderRef.current = null
+      }
+      audioStreamRef.current?.getTracks().forEach((track) => track.stop())
+      audioStreamRef.current = null
+      if (eveAudioRef.current) {
+        try {
+          eveAudioRef.current.pause()
+        } catch {}
+        eveAudioRef.current = null
+      }
       permissionBlockedRef.current = false
       isEveSpeakingRef.current = false
       lastSpeechEndRef.current = 0
@@ -146,7 +202,12 @@ export function useCallCenter({ user }) {
       setVideoOff(false)
       setIsEveSpeaking(false)
       setIsEveThinking(false)
-      setSttStatus(sttSupported ? 'idle' : 'unsupported')
+      setSttRecording(false)
+      setSttStatus(
+        speechPrefsRef.current.sttProvider === 'groq' || sttSupported
+          ? 'idle'
+          : 'unsupported',
+      )
       setUserTranscript('')
       setEveTranscript('Hello! I’m Eve. How can I help you today?')
       setPhase(nextPhase)
@@ -321,35 +382,79 @@ export function useCallCenter({ user }) {
     }, RING_TIMEOUT_MS)
   }, [teardown])
 
-  const speakEveResponse = useCallback((text) => {
-    if (!text) return
-    setEveTranscript(text)
-    if (typeof window === 'undefined' || !('speechSynthesis' in window)) return
-    if (!ttsEnabledRef.current) return
-
+  const speakServerResponse = useCallback((text) => {
     const prefs = loadEveVoicePrefs()
-    const voices = window.speechSynthesis.getVoices() || []
-    const voice = selectVoice(prefs, voices)
-
-    window.speechSynthesis.cancel()
-    const utterance = new SpeechSynthesisUtterance(text)
-    if (voice) utterance.voice = voice
-    utterance.lang = prefs.language
-    utterance.rate = prefs.rate
-    utterance.pitch = prefs.pitch
-    const stopSpeaking = () => {
-      isEveSpeakingRef.current = false
-      lastSpeechEndRef.current = Date.now()
-      setIsEveSpeaking(false)
-    }
-    utterance.onstart = () => {
-      isEveSpeakingRef.current = true
-      setIsEveSpeaking(true)
-    }
-    utterance.onend = stopSpeaking
-    utterance.onerror = stopSpeaking
-    window.speechSynthesis.speak(utterance)
+    const voice = speechPrefsRef.current.ttsVoice
+    synthesizeEveSpeech({
+      text,
+      language: prefs.language,
+      voice,
+      rate: prefs.rate,
+      // Browser pitch defaults to 1 (neutral); Google Cloud expects 0 (neutral).
+      pitch: prefs.pitch - 1,
+    })
+      .then((blob) => {
+        const url = URL.createObjectURL(blob)
+        const audio = new Audio(url)
+        eveAudioRef.current = audio
+        isEveSpeakingRef.current = true
+        setIsEveSpeaking(true)
+        const finish = () => {
+          URL.revokeObjectURL(url)
+          if (eveAudioRef.current === audio) eveAudioRef.current = null
+          isEveSpeakingRef.current = false
+          lastSpeechEndRef.current = Date.now()
+          setIsEveSpeaking(false)
+        }
+        audio.onended = finish
+        audio.onerror = finish
+        audio.play().catch(finish)
+      })
+      .catch(() => {
+        isEveSpeakingRef.current = false
+        lastSpeechEndRef.current = Date.now()
+        setIsEveSpeaking(false)
+      })
   }, [])
+
+  const speakEveResponse = useCallback(
+    (text) => {
+      if (!text) return
+      setEveTranscript(text)
+      if (!ttsEnabledRef.current) return
+
+      if (speechPrefsRef.current.ttsProvider === 'google') {
+        speakServerResponse(text)
+        return
+      }
+
+      if (typeof window === 'undefined' || !('speechSynthesis' in window)) return
+
+      const prefs = loadEveVoicePrefs()
+      const voices = window.speechSynthesis.getVoices() || []
+      const voice = selectVoice(prefs, voices)
+
+      window.speechSynthesis.cancel()
+      const utterance = new SpeechSynthesisUtterance(text)
+      if (voice) utterance.voice = voice
+      utterance.lang = prefs.language
+      utterance.rate = prefs.rate
+      utterance.pitch = prefs.pitch
+      const stopSpeaking = () => {
+        isEveSpeakingRef.current = false
+        lastSpeechEndRef.current = Date.now()
+        setIsEveSpeaking(false)
+      }
+      utterance.onstart = () => {
+        isEveSpeakingRef.current = true
+        setIsEveSpeaking(true)
+      }
+      utterance.onend = stopSpeaking
+      utterance.onerror = stopSpeaking
+      window.speechSynthesis.speak(utterance)
+    },
+    [speakServerResponse],
+  )
 
   const sendVoiceToEve = useCallback(
     async (text) => {
@@ -370,6 +475,96 @@ export function useCallCenter({ user }) {
     [speakEveResponse],
   )
 
+  const transcribeServerAudio = useCallback(
+    async (blob) => {
+      const prefs = loadEveVoicePrefs()
+      try {
+        const data = await transcribeEveAudio(blob, prefs.language)
+        const text = (data?.text || '').trim()
+        if (text) await sendVoiceToEve(text)
+      } catch {
+        setEveTranscript('Sorry, I had trouble understanding that audio.')
+      } finally {
+        setSttStatus('idle')
+      }
+    },
+    [sendVoiceToEve],
+  )
+
+  const startSttRecording = useCallback(() => {
+    if (speechPrefsRef.current.sttProvider !== 'groq') return
+    if (mediaRecorderRef.current) return
+    const stream = localStreamRef.current
+    if (!stream || typeof window === 'undefined' || !window.MediaRecorder) {
+      setSttStatus('error')
+      return
+    }
+    const mimeType = pickAudioMimeType()
+    if (!mimeType) {
+      setSttStatus('error')
+      return
+    }
+    try {
+      const audioTracks = stream.getAudioTracks()
+      if (audioTracks.length === 0) {
+        setSttStatus('error')
+        return
+      }
+      const audioStream = new MediaStream(audioTracks)
+      const recorder = new MediaRecorder(audioStream, { mimeType })
+      mediaChunksRef.current = []
+      recorder.ondataavailable = (event) => {
+        if (event.data && event.data.size > 0) mediaChunksRef.current.push(event.data)
+      }
+      recorder.onstop = () => {
+        setSttRecording(false)
+        audioStream.getTracks().forEach((track) => track.stop())
+        const blob = new Blob(mediaChunksRef.current, { type: mimeType })
+        mediaChunksRef.current = []
+        if (blob.size > 0) {
+          setSttStatus('listening')
+          transcribeServerAudio(blob)
+        } else {
+          setSttStatus('idle')
+        }
+      }
+      recorder.onerror = () => {
+        setSttRecording(false)
+        setSttStatus('error')
+      }
+      recorder.start()
+      mediaRecorderRef.current = recorder
+      audioStreamRef.current = audioStream
+      setSttRecording(true)
+      setSttStatus('listening')
+    } catch {
+      setSttStatus('error')
+    }
+  }, [transcribeServerAudio])
+
+  const stopSttRecording = useCallback(() => {
+    const recorder = mediaRecorderRef.current
+    if (recorder && recorder.state !== 'inactive') {
+      try {
+        recorder.stop()
+      } catch {}
+    }
+    mediaRecorderRef.current = null
+  }, [])
+
+  useEffect(() => {
+    if (!isEveCall || phase !== 'active') return undefined
+    let active = true
+    loadEveSpeech()
+      .then((data) => {
+        if (active) setSpeechPrefs(resolveSpeechProviders(data))
+      })
+      .catch(() => {})
+    return () => {
+      active = false
+    }
+  }, [isEveCall, phase])
+
   useEffect(() => {
     if (!isEveCall || phase !== 'active' || muted) {
       if (recognitionRef.current) {
@@ -378,7 +573,9 @@ export function useCallCenter({ user }) {
         } catch {}
         recognitionRef.current = null
       }
-      setSttStatus(sttSupported ? 'idle' : 'unsupported')
+      setSttStatus(
+        speechPrefs.sttProvider === 'groq' || sttSupported ? 'idle' : 'unsupported',
+      )
       return
     }
 
@@ -386,6 +583,11 @@ export function useCallCenter({ user }) {
       typeof window !== 'undefined'
         ? window.SpeechRecognition || window.webkitSpeechRecognition
         : null
+    if (speechPrefs.sttProvider === 'groq') {
+      // Server STT is push-to-talk; the browser recognition engine is unused.
+      setSttStatus('idle')
+      return
+    }
     if (!SpeechRecognition) {
       setSttStatus('unsupported')
       return
@@ -471,7 +673,7 @@ export function useCallCenter({ user }) {
         recognitionRef.current = null
       }
     }
-  }, [isEveCall, muted, phase, sendVoiceToEve, sttSupported])
+  }, [isEveCall, muted, phase, sendVoiceToEve, sttSupported, speechPrefs.sttProvider])
 
   const dial = useCallback(
     async (calleeIdentifier, requestedMode) => {
@@ -644,8 +846,16 @@ export function useCallCenter({ user }) {
   const toggleTts = useCallback(() => {
     setTtsEnabled((current) => {
       const next = !current
-      if (!next && typeof window !== 'undefined' && 'speechSynthesis' in window) {
-        window.speechSynthesis.cancel()
+      if (!next) {
+        if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+          window.speechSynthesis.cancel()
+        }
+        if (eveAudioRef.current) {
+          try {
+            eveAudioRef.current.pause()
+          } catch {}
+          eveAudioRef.current = null
+        }
         isEveSpeakingRef.current = false
         lastSpeechEndRef.current = Date.now()
         setIsEveSpeaking(false)
@@ -718,6 +928,9 @@ export function useCallCenter({ user }) {
     ttsEnabled,
     sttSupported,
     sttStatus,
+    sttRecording,
+    sttProvider: speechPrefs.sttProvider,
+    ttsProvider: speechPrefs.ttsProvider,
     dial,
     accept,
     decline,
@@ -728,5 +941,7 @@ export function useCallCenter({ user }) {
     toggleTts,
     requestEveCall,
     sendVoiceToEve,
+    startSttRecording,
+    stopSttRecording,
   }
 }
