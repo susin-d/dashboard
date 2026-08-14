@@ -34,24 +34,38 @@ export function SettingPage({
   const itemRefs = useRef(new Map())
   const [activeSection, setActiveSection] = useState('settings-profile')
   const [indicatorStyle, setIndicatorStyle] = useState(null)
+  const isClickScrollingRef = useRef(false)
+  const clickTimeoutRef = useRef(null)
 
   useEffect(() => {
-    const handleScroll = () => {
-      const scrollPos = window.scrollY + 180
-      let current = SETTINGS_SECTIONS[0].id
+    let rafId = null
 
-      for (const section of SETTINGS_SECTIONS) {
-        const el = document.getElementById(section.id)
-        if (el && el.offsetTop <= scrollPos) {
-          current = section.id
+    const handleScroll = () => {
+      if (isClickScrollingRef.current) return
+
+      if (rafId) cancelAnimationFrame(rafId)
+      rafId = requestAnimationFrame(() => {
+        const scrollPos = window.scrollY + 160
+        let current = SETTINGS_SECTIONS[0].id
+
+        for (const section of SETTINGS_SECTIONS) {
+          const el = document.getElementById(section.id)
+          if (el && el.offsetTop <= scrollPos) {
+            current = section.id
+          }
         }
-      }
-      setActiveSection(current)
+        setActiveSection((prev) => (prev !== current ? current : prev))
+      })
     }
 
     window.addEventListener('scroll', handleScroll, { passive: true })
     handleScroll()
-    return () => window.removeEventListener('scroll', handleScroll)
+
+    return () => {
+      if (rafId) cancelAnimationFrame(rafId)
+      window.removeEventListener('scroll', handleScroll)
+      if (clickTimeoutRef.current) clearTimeout(clickTimeoutRef.current)
+    }
   }, [])
 
   useLayoutEffect(() => {
@@ -61,13 +75,10 @@ export function SettingPage({
     if (!nav || !activeItem) return
 
     const updateIndicator = () => {
-      const navRect = nav.getBoundingClientRect()
-      const itemRect = activeItem.getBoundingClientRect()
-
       setIndicatorStyle({
-        width: itemRect.width,
-        height: itemRect.height,
-        transform: `translateX(${itemRect.left - navRect.left + nav.scrollLeft}px)`,
+        width: `${activeItem.offsetWidth}px`,
+        height: `${activeItem.offsetHeight}px`,
+        transform: `translate3d(${activeItem.offsetLeft}px, ${activeItem.offsetTop}px, 0)`,
       })
     }
 
@@ -75,19 +86,25 @@ export function SettingPage({
 
     const resizeObserver = new ResizeObserver(updateIndicator)
     resizeObserver.observe(nav)
-    nav.addEventListener('scroll', updateIndicator, { passive: true })
+    resizeObserver.observe(activeItem)
     window.addEventListener('resize', updateIndicator)
 
     return () => {
       resizeObserver.disconnect()
-      nav.removeEventListener('scroll', updateIndicator)
       window.removeEventListener('resize', updateIndicator)
     }
   }, [activeSection])
 
   const handleNavClick = (e, sectionId) => {
     e.preventDefault()
+    isClickScrollingRef.current = true
     setActiveSection(sectionId)
+
+    if (clickTimeoutRef.current) clearTimeout(clickTimeoutRef.current)
+    clickTimeoutRef.current = setTimeout(() => {
+      isClickScrollingRef.current = false
+    }, 700)
+
     const el = document.getElementById(sectionId)
     if (el) {
       el.scrollIntoView({ behavior: 'smooth', block: 'start' })
