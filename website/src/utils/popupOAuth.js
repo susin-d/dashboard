@@ -24,11 +24,49 @@ export function openOAuthPopup(url, title = 'google-oauth-popup') {
       return
     }
 
-    const pollTimer = setInterval(() => {
-      if (popup.closed) {
-        clearInterval(pollTimer)
+    let isDone = false
+    let pollTimer = null
+
+    const cleanup = () => {
+      isDone = true
+      if (pollTimer) clearInterval(pollTimer)
+      window.removeEventListener('message', handleMessage)
+    }
+
+    const handleMessage = (event) => {
+      if (
+        event.data &&
+        typeof event.data === 'object' &&
+        event.data.type === 'STARWAVES_OAUTH_CALLBACK'
+      ) {
+        cleanup()
+        if (event.data.status === 'error') {
+          reject(new Error(event.data.error || 'OAuth authorization failed.'))
+        } else {
+          resolve(event.data)
+        }
+      }
+    }
+
+    window.addEventListener('message', handleMessage)
+
+    pollTimer = setInterval(() => {
+      if (isDone) return
+      let closed = false
+      try {
+        closed = Boolean(popup && popup.closed)
+      } catch {
+        // Cross-Origin-Opener-Policy (COOP) can throw a SecurityError / DOMException
+        // when checking popup.closed while popup is on an external domain (e.g. accounts.google.com).
+        // Catching the exception avoids console spam while polling continues.
+        closed = false
+      }
+
+      if (closed) {
+        cleanup()
         resolve()
       }
     }, 500)
   })
 }
+

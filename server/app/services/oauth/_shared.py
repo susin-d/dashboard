@@ -43,16 +43,34 @@ def integration_accounts_reference(database: Client, user_id: str, integration_n
 
 def oauth_callback_html(frontend_url: str, feature: str, error_reason: str | None = None) -> HTMLResponse:
     """HTML close-and-redirect snippet used by OAuth callback routes."""
-    if error_reason:
-        return HTMLResponse(
-            f"""<!DOCTYPE html><html><body><script>
-            if (window.opener) {{ window.close(); }}
-            else {{ window.location.href = "{frontend_url}/app/setting?{feature}=error&reason={error_reason}"; }}
-            </script></body></html>"""
-        )
-    return HTMLResponse(
-        f"""<!DOCTYPE html><html><body><script>
-        if (window.opener) {{ window.close(); }}
-        else {{ window.location.href = "{frontend_url}/app/setting?{feature}=connected"; }}
-        </script></body></html>"""
+    status = "error" if error_reason else "success"
+    err_str = (error_reason or "").replace('"', '\\"')
+    redirect_target = (
+        f"{frontend_url}/app/setting?{feature}=error&reason={error_reason}"
+        if error_reason
+        else f"{frontend_url}/app/setting?{feature}=connected"
     )
+    html = f"""<!DOCTYPE html>
+<html>
+<head><title>StarWaves Authentication</title></head>
+<body>
+<script>
+  try {{
+    if (window.opener) {{
+      window.opener.postMessage({{
+        type: "STARWAVES_OAUTH_CALLBACK",
+        feature: "{feature}",
+        status: "{status}",
+        error: "{err_str}"
+      }}, "*");
+    }}
+  }} catch (e) {{}}
+  window.close();
+  setTimeout(function() {{
+    window.location.href = "{redirect_target}";
+  }}, 800);
+</script>
+</body>
+</html>"""
+    return HTMLResponse(html)
+
