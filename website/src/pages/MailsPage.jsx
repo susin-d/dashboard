@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
   Archive, BellRing, ChevronDown, ChevronLeft, ChevronRight, Inbox, LoaderCircle, Mail, MailOpen,
-  MailPlus, Megaphone, MessagesSquare, Plus, RefreshCw, Reply, Search, Send, Star, Trash2, X,
+  MailPlus, Megaphone, MessagesSquare, Plus, RefreshCw, Reply, Search, Send, Star, Trash2, User, X,
 } from 'lucide-react'
 import {
   hasGmailConnection, loadGoogleMail, loadGoogleMessage,
@@ -290,7 +290,9 @@ export function MailsPage({ onNavigate }) {
             className="mail-account-trigger"
             aria-expanded={accountMenuOpen}
             onClick={() => setAccountMenuOpen((open) => !open)}
+            title={selectedAccountEmail || account || 'Choose account'}
           >
+            <User size={18} />
             <span>{selectedAccountEmail || account || 'Choose account'}</span>
             <ChevronDown size={15} />
           </button>
