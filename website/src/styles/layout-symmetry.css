@@ -26,7 +26,8 @@
   .projects-page,
   .setting-page,
   .stats-page,
-  .todo-page
+  .todo-page,
+  .eve-page-container
 ) {
   width: min(100%, var(--layout-max-width));
   margin-inline: auto;

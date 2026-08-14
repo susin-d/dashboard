@@ -132,6 +132,50 @@ function renderBlocks(content) {
       continue
     }
 
+    if (
+      line.includes('|') &&
+      index + 1 < lines.length &&
+      /^\s*\|?\s*:?-+:?\s*(\|\s*:?-+:?\s*)+\|?\s*$/.test(lines[index + 1])
+    ) {
+      const splitCells = (rowText) =>
+        rowText
+          .replace(/^\s*\|/, '')
+          .replace(/\|\s*$/, '')
+          .split('|')
+          .map((c) => c.trim())
+
+      const headers = splitCells(line)
+      index += 2
+      const rows = []
+      while (index < lines.length && lines[index].includes('|') && lines[index].trim()) {
+        rows.push(splitCells(lines[index]))
+        index++
+      }
+      blocks.push(
+        <div key={blocks.length} className="md-table-wrapper">
+          <table className="md-table">
+            <thead>
+              <tr>
+                {headers.map((cell, cIdx) => (
+                  <th key={cIdx}>{renderInline(cell, `th-${blocks.length}-${cIdx}`)}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((row, rIdx) => (
+                <tr key={rIdx}>
+                  {row.map((cell, cIdx) => (
+                    <td key={cIdx}>{renderInline(cell, `td-${blocks.length}-${rIdx}-${cIdx}`)}</td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>,
+      )
+      continue
+    }
+
     const paragraphLines = [line]
     index++
     while (
@@ -141,7 +185,12 @@ function renderBlocks(content) {
       !/^(#{1,6})\s/.test(lines[index]) &&
       !/^>\s?/.test(lines[index]) &&
       !/^[-*+]\s+/.test(lines[index]) &&
-      !/^\d+\.\s+/.test(lines[index])
+      !/^\d+\.\s+/.test(lines[index]) &&
+      !(
+        lines[index].includes('|') &&
+        index + 1 < lines.length &&
+        /^\s*\|?\s*:?-+:?\s*(\|\s*:?-+:?\s*)+\|?\s*$/.test(lines[index + 1])
+      )
     ) {
       paragraphLines.push(lines[index])
       index++

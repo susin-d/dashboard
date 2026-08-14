@@ -40,8 +40,9 @@ export function EveSchedulesCard({ onScheduleTriggered }) {
     try {
       const data = await listEveSchedules()
       setSchedules(data.schedules || [])
-    } catch (err) {
-      setError(err.message || 'Could not load automated schedules.')
+    } catch {
+      // Gracefully fall back to empty array if backend schedules endpoint is unavailable or redeploying
+      setSchedules([])
     } finally {
       setLoading(false)
     }
