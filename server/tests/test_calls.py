@@ -240,6 +240,7 @@ class TestCallEndpoints(unittest.TestCase):
             ),
         ]
 
+        collection.document.return_value.update.reset_mock()
         response = self.client.get("/api/v1/calls/incoming")
         self.assertEqual(response.status_code, 200)
         # Guard calls update({status: "missed", ...}) on the stale document.

@@ -4,7 +4,7 @@ Living project snapshot for AI agents. `AGENTS.md` holds the permanent rules;
 this file holds the **current state** of the codebase and must be kept up to
 date whenever the implementation changes.
 
-> **Last updated:** 2026-08-14 (Removed unwanted top inset shadow line from StarWaves brand logo and buttons across navigation, auth, and header)
+> **Last updated:** 2026-08-14 (Guarded background worker lifespan to prevent thread startup in serverless environments such as Vercel)
 
 ---
 

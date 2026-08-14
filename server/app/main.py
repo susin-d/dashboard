@@ -11,6 +11,8 @@ from app.api.router import api_router
 from app.core.config import settings
 from app.core.worker import server_worker
 
+import os
+
 logger = logging.getLogger(__name__)
 
 ALLOWED_ORIGIN_REGEX = re.compile(
@@ -22,17 +24,20 @@ ALLOWED_ORIGIN_REGEX = re.compile(
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     logger.info("Initializing %s (env=%s)...", settings.app_name, settings.app_env)
-    # Start long-running server background worker daemon
-    try:
-        server_worker.start()
-    except Exception as err:
-        logger.warning("Could not start background worker daemon: %s", err)
+    # Only start background worker daemon in non-serverless environments
+    is_serverless = bool(os.getenv("VERCEL") or os.getenv("AWS_LAMBDA_FUNCTION_NAME"))
+    if not is_serverless:
+        try:
+            server_worker.start()
+        except Exception as err:
+            logger.warning("Could not start background worker daemon: %s", err)
     yield
     logger.info("Shutting down %s...", settings.app_name)
-    try:
-        server_worker.stop()
-    except Exception as err:
-        logger.warning("Error stopping background worker daemon: %s", err)
+    if not is_serverless:
+        try:
+            server_worker.stop()
+        except Exception as err:
+            logger.warning("Error stopping background worker daemon: %s", err)
 
 
 def create_app() -> FastAPI:
