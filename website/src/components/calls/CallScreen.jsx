@@ -159,7 +159,7 @@ export function CallScreen({ callCenter, myUid }) {
             </div>
             <div className="eve-visualizer-badge">
               <Sparkles size={14} />
-              <span>Eve AI Copilot Voice Session</span>
+              <span>Eve AI Voice Session</span>
             </div>
           </div>
 

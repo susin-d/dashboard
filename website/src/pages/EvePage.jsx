@@ -27,7 +27,7 @@ const STARTER_MESSAGES = [
   {
     role: 'assistant',
     content:
-      'Hello! I’m Eve, your StarWaves AI workspace copilot. I can read, create, update, soft-delete, and restore records across your workspace including tasks, projects, jobs, hackathons, and documents.',
+      'Hello! I’m Eve, your StarWaves AI workspace assistant. I can read, create, update, soft-delete, and restore records across your workspace including tasks, projects, jobs, hackathons, and documents.',
   },
 ]
 
@@ -313,7 +313,7 @@ export function EvePage({ callCenter, onNavigate, onWorkspaceChanged, chatResetK
             >
               <MessageSquare size={16} />
               <div className="eve-nav-text">
-                <span className="eve-nav-title">Chat &amp; Copilot</span>
+                <span className="eve-nav-title">Chat &amp; Assistant</span>
                 <span className="eve-nav-subtitle">Live workspace assistant</span>
               </div>
             </button>

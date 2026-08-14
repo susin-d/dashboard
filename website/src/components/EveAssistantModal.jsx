@@ -329,7 +329,7 @@ export function EveAssistantModal({ isOpen, onClose, onNavigate, onWorkspaceChan
                 <div className="eve-avatar" aria-hidden="true"><Bot size={22} /></div>
                 <div>
                   <h2 id={titleId}>Eve</h2>
-                  <p id={descriptionId}>AI workspace copilot</p>
+                  <p id={descriptionId}>AI workspace assistant</p>
                 </div>
               </div>
               <div className="eve-panel-controls">

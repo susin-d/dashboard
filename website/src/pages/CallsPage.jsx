@@ -117,7 +117,7 @@ export function CallsPage({ callCenter, user }) {
           <div className="eve-quick-call-box">
             <div className="eve-quick-call-title">
               <Bot size={16} />
-              <span>Eve AI Copilot</span>
+              <span>Eve AI Assistant</span>
             </div>
             <p className="eve-quick-call-desc">Have a real-time voice call with your StarWaves AI assistant.</p>
             <div className="eve-quick-call-buttons">

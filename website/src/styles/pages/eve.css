@@ -10,7 +10,7 @@
   box-sizing: border-box;
 }
 
-/* ── Voice Call & Copilot Header Banner ── */
+/* ── Voice Call & Assistant Header Banner ── */
 .eve-header-banner {
   display: flex;
   justify-content: space-between;
