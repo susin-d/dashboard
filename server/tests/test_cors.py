@@ -33,8 +33,15 @@ class TestCORSAndErrorMiddleware(unittest.TestCase):
 
     def test_cors_preflight_options(self):
         origin = "http://localhost:5173"
-        response = self.client.options("/api/v1/health", headers={"Origin": origin})
-        self.assertEqual(response.status_code, 204)
+        response = self.client.options(
+            "/api/v1/health",
+            headers={
+                "Origin": origin,
+                "Access-Control-Request-Method": "GET",
+                "Access-Control-Request-Headers": "Authorization, Content-Type",
+            },
+        )
+        self.assertEqual(response.status_code, 200)
         self.assertEqual(
             response.headers.get("access-control-allow-origin"),
             origin,
