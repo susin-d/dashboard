@@ -33,10 +33,11 @@ export function AiModelsSection() {
           null
         if (preselected) {
           setSelectedProvider(preselected.id)
+          const models = preselected.models || []
           setSelectedModel(
-            preselected.models.some((model) => model.id === preference?.model)
+            models.some((model) => model.id === preference?.model)
               ? preference.model
-              : preselected.models[0]?.id || '',
+              : models[0]?.id || '',
           )
         }
       })

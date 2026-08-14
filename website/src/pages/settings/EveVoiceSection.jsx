@@ -65,10 +65,11 @@ export function EveVoiceSection() {
           null
         if (sttChoice) {
           setSttProvider(sttChoice.id)
+          const sttModels = sttChoice.models || []
           setSttModel(
-            sttChoice.models.some((model) => model.id === preference?.stt_model)
+            sttModels.some((model) => model.id === preference?.stt_model)
               ? preference.stt_model
-              : sttChoice.models[0]?.id || '',
+              : sttModels[0]?.id || '',
           )
         }
 
@@ -81,10 +82,11 @@ export function EveVoiceSection() {
         if (ttsChoice) {
           setTtsProvider(ttsChoice.id)
           const savedVoice = preference?.tts_voice || ''
+          const ttsVoices = ttsChoice.voices || []
           setTtsVoice(
-            ttsChoice.voices.some((voice) => voice.id === savedVoice)
+            ttsVoices.some((voice) => voice.id === savedVoice)
               ? savedVoice
-              : ttsChoice.voices[0]?.id || '',
+              : ttsVoices[0]?.id || '',
           )
         }
       })

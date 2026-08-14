@@ -45,7 +45,7 @@ export function CompetitiveCodingPage({ contestSites }) {
       <div className="workspace-insight-grid" aria-label="Competitive coding overview">
         <div className="workspace-insight-card"><span>Platforms</span><strong>{contestSites.length}</strong><small>connected sources</small></div>
         <div className="workspace-insight-card"><span>Upcoming</span><strong>{allContests.length}</strong><small>contests to explore</small></div>
-        <div className="workspace-insight-card"><span>Next move</span><strong>{contestSites.some((site) => site.contests.length > 0) ? 'Pick one' : 'Connect'}</strong><small>{contestSites.some((site) => site.contests.length > 0) ? 'and reserve your slot' : 'a contest source in Settings'}</small></div>
+        <div className="workspace-insight-card"><span>Next move</span><strong>{contestSites.some((site) => (site.contests || []).length > 0) ? 'Pick one' : 'Connect'}</strong><small>{contestSites.some((site) => (site.contests || []).length > 0) ? 'and reserve your slot' : 'a contest source in Settings'}</small></div>
       </div>
 
       <div className="contest-controls" aria-label="Filter contests">

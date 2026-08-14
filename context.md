@@ -4,7 +4,7 @@ Living project snapshot for AI agents. `AGENTS.md` holds the permanent rules;
 this file holds the **current state** of the codebase and must be kept up to
 date whenever the implementation changes.
 
-> **Last updated:** 2026-08-14 (Polished Mails page UI: fixed left margins to clear folders sub-sidebar, removed default button inset shadows from star & row buttons, and fixed collapsed account trigger overflow)
+> **Last updated:** 2026-08-14 (Fixed `todosundefined` 404 URL resolution by defaulting path parameter in `apiRequest` and `todosApi.js`, and added defensive empty array fallbacks for `.some()` calls in AI models and voice settings)
 
 ---
 

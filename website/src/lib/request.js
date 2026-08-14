@@ -24,7 +24,7 @@ export async function fetchWithTimeout(url, options = {}, timeoutMs = DEFAULT_RE
 }
 
 export async function apiRequest(
-  path,
+  path = '',
   {
     basePath = '',
     authRequired = true,

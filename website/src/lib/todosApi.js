@@ -4,7 +4,7 @@ const BASE_PATH = '/todos'
 const ERROR_MESSAGE = 'The todo database is unavailable.'
 const TOKEN_MESSAGE = 'Sign in to access your todo list.'
 
-function request(path, options = {}) {
+function request(path = '', options = {}) {
   return apiRequest(path, {
     basePath: BASE_PATH,
     errorMessage: ERROR_MESSAGE,
