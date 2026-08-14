@@ -3,7 +3,6 @@ import re
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
-from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from app.api.router import api_router
@@ -73,24 +72,23 @@ def create_app() -> FastAPI:
                     },
                 )
 
-        if is_allowed and origin:
+        if origin and is_allowed:
             response.headers["Access-Control-Allow-Origin"] = origin
             response.headers["Access-Control-Allow-Credentials"] = "true"
             response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS, PATCH, HEAD"
+            req_headers = request.headers.get("access-control-request-headers")
             response.headers["Access-Control-Allow-Headers"] = (
-                "Authorization, Content-Type, Accept, Origin, X-Requested-With, CRON-Secret"
+                req_headers or "Authorization, Content-Type, Accept, Origin, X-Requested-With, CRON-Secret, *"
             )
             response.headers["Access-Control-Max-Age"] = "86400"
-        return response
+        elif origin:
+            response.headers["Access-Control-Allow-Origin"] = origin
+            response.headers["Access-Control-Allow-Credentials"] = "true"
+            response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS, PATCH, HEAD"
+            response.headers["Access-Control-Allow-Headers"] = "*"
+            response.headers["Access-Control-Max-Age"] = "86400"
 
-    application.add_middleware(
-        CORSMiddleware,
-        allow_origins=["*"],
-        allow_origin_regex=r"https?://.*|capacitor://.*",
-        allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
-    )
+        return response
 
     @application.exception_handler(Exception)
     async def global_exception_handler(request: Request, exc: Exception):
@@ -113,6 +111,3 @@ def create_app() -> FastAPI:
 
 
 app = create_app()
-
-
-

@@ -4,7 +4,7 @@ Living project snapshot for AI agents. `AGENTS.md` holds the permanent rules;
 this file holds the **current state** of the codebase and must be kept up to
 date whenever the implementation changes.
 
-> **Last updated:** 2026-08-14 (Configured dual-mode background worker architecture: single daily unified serverless cron job for Vercel Hobby plan compliance and dedicated per-job daemon runners for GCP persistent servers)
+> **Last updated:** 2026-08-14 (Fixed CORS preflight handling and header resolution across all origins and error responses, eliminating conflicting middleware layers)
 
 ---
 
