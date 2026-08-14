@@ -4,7 +4,7 @@ Living project snapshot for AI agents. `AGENTS.md` holds the permanent rules;
 this file holds the **current state** of the codebase and must be kept up to
 date whenever the implementation changes.
 
-> **Last updated:** 2026-08-14 (Eve speech backend: Groq Whisper STT + Google Cloud TTS server providers, `settings/eve-speech` prefs, `/eve/transcribe` + `/eve/synthesize` endpoints)
+> **Last updated:** 2026-08-14 (Eve speech backend providers + Settings UI: server-side Groq Whisper STT / Google Cloud TTS pickers in "Eve voice" section, `eveSpeechApi.js`)
 
 ---
 
@@ -132,7 +132,7 @@ SMTP, Firestore database id, CORS origins. Loads `.env.prod` before `.env`.
   notifications, contests, calendar, email), `gmailApi`, `googleCalendar`,
   `googleDriveApi`, `eveApi`, `eveSchedulesApi`, `emailApi`, `githubApi`,
   `googleChatApi`, `codingStatsApi`, `competitiveCodingProfileApi`,
-  `documentsApi`, `callsApi`, `aiModelsApi`), plus shared `request.js`
+  `documentsApi`, `callsApi`, `aiModelsApi`, `eveSpeechApi`), plus shared `request.js`
   (single `API_URL` + `apiRequest` wrapper), `firebase.js`, `authApi.js`,
   `index.js`.
 - **Themes** (`src/themes/`): `presets.js` holds `THEME_PRESETS` (parsed from
@@ -201,6 +201,18 @@ SMTP, Firestore database id, CORS origins. Loads `.env.prod` before `.env`.
   fallback when unset or when the chosen provider has no server-side key.
   Server-side env keys: `GROQ_API_KEY`/`GROQ_URL`/`GROQ_STT_MODEL`,
   `GOOGLE_CLOUD_TTS_API_KEY`/`GOOGLE_CLOUD_TTS_URL`/`GOOGLE_CLOUD_TTS_VOICE`.
+- Eve speech Settings UI (`EveVoiceSection.jsx` + `eveSpeechApi.js`): the
+  Settings "Eve voice" section now loads the server's speech provider catalog
+  via `GET /settings/eve-speech` and lets users pick the STT provider
+  (Browser / Groq Whisper + model) and TTS provider (Browser / Google Cloud +
+  voice) with `PUT /settings/eve-speech`, mirroring the AI Models picker. The
+  preview button uses the selected engine — browser `SpeechSynthesis` or the
+  server `/eve/synthesize` endpoint (playing the returned MP3, with browser
+  pitch mapped 1-based → Google 0-based). Unavailable providers (no server
+  key) are filtered out and a fallback warning is shown when a saved provider
+  is no longer available. Browser-only controls (language, local voice, rate,
+  pitch) remain localStorage-backed under `starwaves.eve_voice_prefs`; the
+  language picker also drives which Google Cloud voices are offered.
 - Automated Eve Reminders & Schedules: create one-time or recurring (cron-based) automated prompts or voice calls.
   - Supports two action types: AI Chat Prompt execution (runs prompt, saves session & notifies user) or Eve Voice Call (automatically initiates an incoming voice call from Eve to user at scheduled time).
   - Tools added to Eve assistant (`create_eve_schedule`, `list_eve_schedules`, `delete_eve_schedule`) so users can schedule reminders conversationally in chat or via the `EveSchedulesCard` sidebar component.
