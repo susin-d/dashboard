@@ -67,7 +67,14 @@ export function EveCallSection({ callCenter }) {
       setTranscriptLog((prev) => {
         const last = prev[prev.length - 1]
         if (last?.speaker === 'user' && last?.text === userTranscript) return prev
-        return [...prev, { speaker: 'user', text: userTranscript, time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }]
+        return [
+          ...prev,
+          {
+            speaker: 'user',
+            text: userTranscript,
+            time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          },
+        ]
       })
     }
   }, [userTranscript])
@@ -77,7 +84,14 @@ export function EveCallSection({ callCenter }) {
       setTranscriptLog((prev) => {
         const last = prev[prev.length - 1]
         if (last?.speaker === 'eve' && last?.text === eveTranscript) return prev
-        return [...prev, { speaker: 'eve', text: eveTranscript, time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }]
+        return [
+          ...prev,
+          {
+            speaker: 'eve',
+            text: eveTranscript,
+            time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          },
+        ]
       })
     }
   }, [eveTranscript])
@@ -103,11 +117,25 @@ export function EveCallSection({ callCenter }) {
     event?.preventDefault()
     const text = textDraft.trim()
     if (!text || isEveThinking) return
+
     setTranscriptLog((prev) => [
       ...prev,
-      { speaker: 'user', text, time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) },
+      {
+        speaker: 'user',
+        text,
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      },
     ])
-    sendVoiceToEve?.(text)
+
+    if (inProgress) {
+      sendVoiceToEve?.(text)
+    } else {
+      // If not currently in a call, start call and send prompt
+      requestEveCall?.('audio')
+      setTimeout(() => {
+        sendVoiceToEve?.(text)
+      }, 600)
+    }
     setTextDraft('')
   }
 
@@ -118,7 +146,7 @@ export function EveCallSection({ callCenter }) {
     if (isEveThinking) statusText = 'Eve is thinking…'
     else if (isEveSpeaking) statusText = 'Eve is speaking…'
     else if (muted) statusText = 'Microphone muted'
-    else if (sttStatus === 'unsupported') statusText = 'Voice input unsupported (use text input below)'
+    else if (sttStatus === 'unsupported') statusText = 'Voice input unsupported in browser (type below)'
     else if (sttStatus === 'permission') statusText = 'Microphone permission needed'
     else if (sttStatus === 'error') statusText = 'Voice input error (type below)'
     else if (sttProvider === 'groq') {
@@ -126,15 +154,15 @@ export function EveCallSection({ callCenter }) {
     } else {
       statusText = `Listening… (${formatElapsed(elapsed)})`
     }
-  } else if (phase === 'declined') statusText = 'Call was declined'
+  } else if (phase === 'declined') statusText = 'Call declined'
   else if (phase === 'missed') statusText = 'Call missed'
-  else if (phase === 'ended') statusText = 'Call ended'
-  else if (phase === 'error') statusText = 'Call failed'
+  else if (phase === 'ended') statusText = 'Call ended · Ready to reconnect'
+  else if (phase === 'error') statusText = 'Call failed · Click to retry'
 
   return (
-    <div className="eve-call-section-container">
-      {/* ── Subpage Header ── */}
-      <div className="eve-call-page-header">
+    <div className="eve-call-section">
+      {/* ── Header ── */}
+      <div className="eve-call-header">
         <div className="eve-call-header-info">
           <h2>Voice &amp; AI Call</h2>
           <p>Real-time natural bidirectional voice &amp; text conversation with Eve</p>
@@ -151,200 +179,206 @@ export function EveCallSection({ callCenter }) {
         </div>
       </div>
 
-      {/* ── Main Call Stage Card ── */}
-      <div className={`eve-call-main-stage ${inProgress ? 'in-call' : 'idle'}`}>
-        {/* ── Animated Circle Visualizer Area ── */}
-        <div className="eve-call-visualizer-area">
-          <div
-            className={`eve-call-circle-stage ${inProgress ? 'in-call' : 'idle'} ${
-              isEveSpeaking ? 'speaking' : ''
-            } ${isEveThinking ? 'thinking' : ''} ${
-              !isEveSpeaking && !isEveThinking && inProgress && !muted ? 'listening' : ''
-            }`}
-          >
-            {/* Concentric expanding circular wave rings */}
-            <div className="eve-call-wave-circle wave-1" />
-            <div className="eve-call-wave-circle wave-2" />
-            <div className="eve-call-wave-circle wave-3" />
-            <div className="eve-call-wave-circle wave-4" />
-            <div className="eve-call-wave-circle wave-5" />
+      {/* ── Visualizer & Orb Area ── */}
+      <div className={`eve-call-visualizer-area ${inProgress ? 'compact' : ''}`}>
+        <div
+          className={`eve-call-circle-stage ${inProgress ? 'in-call' : 'idle'} ${
+            isEveSpeaking ? 'speaking' : ''
+          } ${isEveThinking ? 'thinking' : ''} ${
+            !isEveSpeaking && !isEveThinking && inProgress && !muted ? 'listening' : ''
+          }`}
+        >
+          {/* Concentric expanding circular wave rings */}
+          <div className="eve-call-wave-circle wave-1" />
+          <div className="eve-call-wave-circle wave-2" />
+          <div className="eve-call-wave-circle wave-3" />
+          <div className="eve-call-wave-circle wave-4" />
+          <div className="eve-call-wave-circle wave-5" />
 
-            {/* Central Circle Orb Core */}
-            <div className="eve-call-orb-core">
-              {isEveThinking ? (
-                <Loader size={42} className="eve-call-spin-icon" />
-              ) : isEveSpeaking ? (
-                <Sparkles size={42} className="eve-call-speaking-icon" />
-              ) : inProgress ? (
-                <Bot size={42} className="eve-call-bot-icon" />
-              ) : (
-                <PhoneCall size={40} className="eve-call-idle-icon" />
-              )}
-            </div>
-          </div>
-
-          <div className="eve-call-title-group">
-            <h3 className="eve-call-title">
-              {inProgress ? 'Eve AI Assistant' : 'Call Eve Assistant'}
-            </h3>
-            <p className="eve-call-subtitle">{statusText}</p>
-            {error && <p className="eve-call-error-text" role="alert">{error}</p>}
+          {/* Central Circle Orb Core */}
+          <div className="eve-call-orb-core">
+            {isEveThinking ? (
+              <Loader size={36} className="eve-call-spin-icon" />
+            ) : isEveSpeaking ? (
+              <Sparkles size={36} className="eve-call-speaking-icon" />
+            ) : inProgress ? (
+              <Bot size={36} className="eve-call-bot-icon" />
+            ) : (
+              <PhoneCall size={34} className="eve-call-idle-icon" />
+            )}
           </div>
         </div>
 
-        {/* ── Live Transcripts / Captions Stream ── */}
-        <div className="eve-call-captions-drawer" role="log" aria-live="polite" aria-label="Call conversation stream">
-          {transcriptLog.length === 0 && !userTranscript && !eveTranscript ? (
-            <div className="eve-call-captions-empty">
-              <MessageSquare size={16} />
-              <span>
-                {inProgress
-                  ? 'Speak naturally into your microphone or type a message below…'
-                  : 'Start a voice call to begin real-time voice and text conversation.'}
-              </span>
-            </div>
-          ) : (
-            <div className="eve-call-captions-list">
-              {transcriptLog.map((entry, idx) => (
-                <div key={idx} className={`eve-call-caption-bubble ${entry.speaker}`}>
-                  <div className="caption-avatar">
-                    {entry.speaker === 'user' ? <User size={13} /> : <Bot size={13} />}
-                  </div>
-                  <div className="caption-content">
-                    <div className="caption-meta">
-                      <span className="caption-author">{entry.speaker === 'user' ? 'You' : 'Eve'}</span>
-                      {entry.time && <span className="caption-time">{entry.time}</span>}
-                    </div>
-                    <p className="caption-text">{entry.text}</p>
-                  </div>
-                </div>
-              ))}
-
-              {isEveThinking && (
-                <div className="eve-call-caption-bubble eve thinking">
-                  <div className="caption-avatar">
-                    <Bot size={13} />
-                  </div>
-                  <div className="caption-content">
-                    <span className="caption-author">Eve</span>
-                    <div className="eve-typing-indicator">
-                      <span /><span /><span />
-                    </div>
-                  </div>
-                </div>
-              )}
-              <div ref={captionsEndRef} />
-            </div>
-          )}
+        <div className="eve-call-title-group">
+          <h3 className="eve-call-title">
+            {inProgress ? 'Eve AI Assistant' : 'Call Eve Assistant'}
+          </h3>
+          <p className="eve-call-subtitle">{statusText}</p>
+          {error && <p className="eve-call-error-text" role="alert">{error}</p>}
         </div>
 
-        {/* ── Persistent Text Input & Call Action Bar ── */}
-        <div className="eve-call-bottom-toolbar">
-          {inProgress ? (
-            <div className="eve-call-active-footer">
-              {/* Integrated Call Text Input */}
-              <form className="eve-call-text-input-row" onSubmit={handleTextSend}>
-                <input
-                  type="text"
-                  value={textDraft}
-                  onChange={(e) => setTextDraft(e.target.value)}
-                  placeholder="Type a message to Eve (or speak into your mic)…"
-                  disabled={isEveThinking}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' && !e.shiftKey) {
-                      e.preventDefault()
-                      handleTextSend(e)
-                    }
-                  }}
-                />
-                <button
-                  type="submit"
-                  className="eve-call-text-send-btn"
-                  disabled={isEveThinking || !textDraft.trim()}
-                  title="Send message to Eve"
-                  aria-label="Send message"
-                >
-                  <Send size={15} />
-                </button>
-              </form>
+        {!inProgress && (
+          <div className="eve-call-idle-actions">
+            <button
+              type="button"
+              className="eve-call-start-btn"
+              onClick={() => handleStartCall('audio')}
+            >
+              <Phone size={16} />
+              <span>Start Voice Call</span>
+            </button>
 
-              {/* Action Buttons Row */}
-              <div className="eve-call-controls-row">
-                {sttProvider === 'groq' && (
-                  <button
-                    type="button"
-                    className={`eve-call-ctrl-btn ${sttRecording ? 'active-talk' : ''}`}
-                    onPointerDown={(e) => {
-                      e.preventDefault()
-                      startSttRecording?.()
-                    }}
-                    onPointerUp={stopSttRecording}
-                    onPointerLeave={stopSttRecording}
-                    onPointerCancel={stopSttRecording}
-                    disabled={muted}
-                    title={sttRecording ? 'Release to send speech' : 'Hold to talk'}
-                  >
-                    <Mic size={18} />
-                    <span>{sttRecording ? 'Recording…' : 'Hold to talk'}</span>
-                  </button>
-                )}
+            <button
+              type="button"
+              className="eve-call-start-btn secondary"
+              onClick={() => handleStartCall('video')}
+            >
+              <Video size={16} />
+              <span>Start Video Call</span>
+            </button>
+          </div>
+        )}
+      </div>
 
-                <button
-                  type="button"
-                  className={`eve-call-ctrl-btn ${muted ? 'active-mute' : ''}`}
-                  onClick={toggleMute}
-                  title={muted ? 'Unmute microphone' : 'Mute microphone'}
-                  aria-pressed={muted}
-                >
-                  {muted ? <MicOff size={18} /> : <Mic size={18} />}
-                  <span>{muted ? 'Muted' : 'Mic On'}</span>
-                </button>
-
-                <button
-                  type="button"
-                  className={`eve-call-ctrl-btn ${!ttsEnabled ? 'active-mute' : ''}`}
-                  onClick={toggleTts}
-                  title={ttsEnabled ? 'Mute Eve voice' : 'Unmute Eve voice'}
-                  aria-pressed={!ttsEnabled}
-                >
-                  {ttsEnabled ? <Volume2 size={18} /> : <VolumeX size={18} />}
-                  <span>{ttsEnabled ? 'Voice On' : 'Voice Off'}</span>
-                </button>
-
-                <button
-                  type="button"
-                  className="eve-call-hangup-btn"
-                  onClick={hangUp}
-                  title="End call session"
-                  aria-label="End call session"
-                >
-                  <PhoneOff size={18} />
-                  <span>End Call</span>
-                </button>
+      {/* ── Conversation & Captions Stream ── */}
+      <div
+        className={`eve-call-captions-drawer ${!inProgress ? 'idle-mode' : ''}`}
+        role="log"
+        aria-live="polite"
+        aria-label="Call conversation stream"
+      >
+        {transcriptLog.length === 0 && !userTranscript && !eveTranscript ? (
+          <div className="eve-call-captions-empty">
+            <MessageSquare size={16} />
+            <span>
+              {inProgress
+                ? 'Speak into your microphone or type a message below…'
+                : 'Click Start Voice Call or type a message below to converse with Eve.'}
+            </span>
+          </div>
+        ) : (
+          <div className="eve-call-captions-list">
+            {transcriptLog.map((entry, idx) => (
+              <div key={idx} className={`eve-call-caption-bubble ${entry.speaker}`}>
+                <div className="caption-avatar">
+                  {entry.speaker === 'user' ? <User size={13} /> : <Bot size={13} />}
+                </div>
+                <div className="caption-content">
+                  <div className="caption-meta">
+                    <span className="caption-author">{entry.speaker === 'user' ? 'You' : 'Eve'}</span>
+                    {entry.time && <span className="caption-time">{entry.time}</span>}
+                  </div>
+                  <p className="caption-text">{entry.text}</p>
+                </div>
               </div>
-            </div>
-          ) : (
-            <div className="eve-call-idle-footer">
-              <button
-                type="button"
-                className="eve-call-start-btn"
-                onClick={() => handleStartCall('audio')}
-              >
-                <Phone size={17} />
-                <span>Start Voice Call</span>
-              </button>
+            ))}
 
+            {isEveThinking && (
+              <div className="eve-call-caption-bubble eve thinking">
+                <div className="caption-avatar">
+                  <Bot size={13} />
+                </div>
+                <div className="caption-content">
+                  <span className="caption-author">Eve</span>
+                  <div className="eve-typing-indicator">
+                    <span /><span /><span />
+                  </div>
+                </div>
+              </div>
+            )}
+            <div ref={captionsEndRef} />
+          </div>
+        )}
+      </div>
+
+      {/* ── Bottom Controls & Input Footer ── */}
+      <div className="eve-call-bottom-toolbar">
+        {/* Integrated Text Input Row */}
+        <form className="eve-call-text-input-row" onSubmit={handleTextSend}>
+          <input
+            type="text"
+            value={textDraft}
+            onChange={(e) => setTextDraft(e.target.value)}
+            placeholder={
+              inProgress
+                ? 'Type a message to Eve (or speak into your mic)…'
+                : 'Type a message to start conversation with Eve…'
+            }
+            disabled={isEveThinking}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault()
+                handleTextSend(e)
+              }
+            }}
+          />
+          <button
+            type="submit"
+            className="eve-call-text-send-btn"
+            disabled={isEveThinking || !textDraft.trim()}
+            title="Send message to Eve"
+            aria-label="Send message"
+          >
+            <Send size={15} />
+          </button>
+        </form>
+
+        {/* Live Call Control Actions when in call */}
+        {inProgress && (
+          <div className="eve-call-controls-row">
+            {sttProvider === 'groq' && (
               <button
                 type="button"
-                className="eve-call-start-btn secondary"
-                onClick={() => handleStartCall('video')}
+                className={`eve-call-ctrl-btn ${sttRecording ? 'active-talk' : ''}`}
+                onPointerDown={(e) => {
+                  e.preventDefault()
+                  startSttRecording?.()
+                }}
+                onPointerUp={stopSttRecording}
+                onPointerLeave={stopSttRecording}
+                onPointerCancel={stopSttRecording}
+                disabled={muted}
+                title={sttRecording ? 'Release to send speech' : 'Hold to talk'}
               >
-                <Video size={17} />
-                <span>Start Video Call</span>
+                <Mic size={16} />
+                <span>{sttRecording ? 'Recording…' : 'Hold to talk'}</span>
               </button>
-            </div>
-          )}
-        </div>
+            )}
+
+            <button
+              type="button"
+              className={`eve-call-ctrl-btn ${muted ? 'active-mute' : ''}`}
+              onClick={toggleMute}
+              title={muted ? 'Unmute microphone' : 'Mute microphone'}
+              aria-pressed={muted}
+            >
+              {muted ? <MicOff size={16} /> : <Mic size={16} />}
+              <span>{muted ? 'Muted' : 'Mic On'}</span>
+            </button>
+
+            <button
+              type="button"
+              className={`eve-call-ctrl-btn ${!ttsEnabled ? 'active-mute' : ''}`}
+              onClick={toggleTts}
+              title={ttsEnabled ? 'Mute Eve voice' : 'Unmute Eve voice'}
+              aria-pressed={!ttsEnabled}
+            >
+              {ttsEnabled ? <Volume2 size={16} /> : <VolumeX size={16} />}
+              <span>{ttsEnabled ? 'Voice On' : 'Voice Off'}</span>
+            </button>
+
+            <button
+              type="button"
+              className="eve-call-hangup-btn"
+              onClick={hangUp}
+              title="End call session"
+              aria-label="End call session"
+            >
+              <PhoneOff size={16} />
+              <span>End Call</span>
+            </button>
+          </div>
+        )}
       </div>
     </div>
   )

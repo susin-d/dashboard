@@ -4,7 +4,7 @@ Living project snapshot for AI agents. `AGENTS.md` holds the permanent rules;
 this file holds the **current state** of the codebase and must be kept up to
 date whenever the implementation changes.
 
-> **Last updated:** 2026-08-14 (Refined Eve Voice & AI Call layout to fill active container with full-width stage, added persistent live chat text input alongside call controls, and expanded live transcript bubbles)
+> **Last updated:** 2026-08-14 (Streamlined Eve Voice & AI Call layout into a single unified panel matching chat section, eliminating nested card borders/dead space, and integrating live text input and visible call actions)
 
 ---
 
