@@ -1357,9 +1357,10 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.03em;
-  background: #27272a;
-  color: #ffffff;
-  border-radius: 4px;
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-xs, 4px);
 }
 
 .combined-description {
@@ -1381,9 +1382,14 @@
   align-items: center;
   gap: 10px;
   padding: 8px 12px;
-  background: var(--bg-secondary, #121212);
-  border: 1px solid var(--border-color, #27272a);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
   border-radius: var(--radius-md, 8px);
+  transition: border-color var(--transition-fast, 140ms ease);
+}
+
+.combine-input-group:focus-within {
+  border-color: var(--border-heavy, var(--text-primary));
 }
 
 .combine-input-group svg {
@@ -1395,8 +1401,12 @@
   width: 100%;
   border: none;
   background: transparent;
-  color: var(--text-primary, #ffffff);
+  color: var(--text-primary);
   font-size: 13px;
+}
+
+.combine-input-group input::placeholder {
+  color: var(--text-muted);
 }
 
 .combine-input-group input:focus {
@@ -1408,30 +1418,44 @@
   padding: 8px 16px;
   font-size: 12px;
   font-weight: 700;
-  background: #ffffff;
-  color: #000000;
-  border: 1px solid #ffffff;
+  background: var(--color-primary);
+  color: var(--text-inverse);
+  border: 1px solid var(--color-primary);
   border-radius: var(--radius-md, 8px);
   cursor: pointer;
   transition: all 0.18s ease;
 }
 
-.combine-submit-btn:hover {
-  background: #e4e4e7;
+.combine-submit-btn:hover:not(:disabled) {
+  background: var(--color-primary-hover);
+  border-color: var(--color-primary-hover);
+  transform: translateY(-1px);
+}
+
+.combine-submit-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .combine-feedback {
   margin: 8px 0;
   font-size: 12px;
   font-weight: 600;
+  padding: 8px 12px;
+  border-radius: var(--radius-sm, 6px);
+  line-height: 1.4;
 }
 
 .combine-feedback.success {
-  color: #fafafa;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
 }
 
 .combine-feedback.error {
-  color: #a1a1aa;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-heavy);
 }
 
 .combined-list {
@@ -1455,8 +1479,8 @@
   justify-content: space-between;
   gap: 12px;
   padding: 10px 14px;
-  background: var(--bg-secondary, #121212);
-  border: 1px solid var(--border-color, #27272a);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
   border-radius: var(--radius-md, 8px);
 }
 
@@ -1489,8 +1513,8 @@
   padding: 6px 12px;
   background: transparent;
   color: var(--text-secondary);
-  border: 1px solid var(--border-color, #27272a);
-  border-radius: 6px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm, 6px);
   font-size: 11px;
   font-weight: 600;
   cursor: pointer;
@@ -1498,17 +1522,17 @@
 }
 
 .unlink-account-btn:hover {
-  background: #27272a;
-  color: #ffffff;
+  background: var(--bg-hover);
+  color: var(--text-primary);
 }
 
 .pending-badge {
   font-size: 11px;
   padding: 3px 8px;
-  background: #18181b;
-  border: 1px solid #27272a;
-  color: #a1a1aa;
-  border-radius: 4px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  border-radius: var(--radius-xs, 4px);
   font-weight: 600;
 }
 
