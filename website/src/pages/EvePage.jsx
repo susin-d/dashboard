@@ -1,11 +1,8 @@
 import { useEffect, useState } from 'react'
 import {
-  Bot,
   Brain,
   CalendarClock,
   MessageSquare,
-  PhoneCall,
-  PhoneIncoming,
   History,
 } from 'lucide-react'
 import {
@@ -297,37 +294,6 @@ export function EvePage({ callCenter, onNavigate, onWorkspaceChanged, chatResetK
 
   return (
     <div className="eve-page-container">
-      {/* ── Voice & Quick Actions Banner ── */}
-      <div className="eve-header-banner">
-        <div className="eve-header-info">
-          <Bot size={18} />
-          <div>
-            <strong>Eve AI Workspace Assistant</strong>
-            <small>Interact via text chat, scheduled reminders, or real-time voice calls</small>
-          </div>
-        </div>
-        <div className="eve-header-actions">
-          <button
-            type="button"
-            className="secondary-button"
-            onClick={() => callCenter?.dial?.('eve@starwaves.app', 'audio')}
-            title="Start voice call with Eve AI Assistant"
-          >
-            <PhoneCall size={14} />
-            <span>Voice Call Eve</span>
-          </button>
-          <button
-            type="button"
-            className="secondary-button"
-            onClick={() => callCenter?.requestEveCall?.('audio')}
-            title="Have Eve initiate an incoming call to you"
-          >
-            <PhoneIncoming size={14} />
-            <span>Request Eve Call</span>
-          </button>
-        </div>
-      </div>
-
       {/* ── Eve App Layout with Mini-Sidebar ── */}
       <div className="eve-app-layout">
         <aside className="eve-mini-sidebar" aria-label="Eve Sub-navigation">
