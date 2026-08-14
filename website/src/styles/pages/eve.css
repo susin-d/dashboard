@@ -383,9 +383,9 @@
   gap: 0.2rem;
   padding: 0.75rem 0.9rem;
   border-radius: var(--radius-md, 8px);
-  background: var(--bg-tertiary, #18181b);
-  border: 1px solid var(--border-color, #27272a);
-  color: var(--text-primary, #ffffff);
+  background: var(--bg-card, var(--bg-secondary));
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
   text-align: left;
   cursor: pointer;
   transition: all 0.15s ease;
@@ -394,18 +394,26 @@
 
 .eve-starter-chip strong {
   font-size: 0.82rem;
-  color: var(--text-primary, #ffffff);
+  color: var(--text-primary);
 }
 
 .eve-starter-chip small {
   font-size: 0.72rem;
-  color: var(--text-secondary, #a1a1aa);
+  color: var(--text-secondary);
 }
 
 .eve-starter-chip:hover {
-  border-color: var(--border-color, #3f3f46);
-  background: #202023;
+  border-color: var(--border-heavy, var(--border-color));
+  background: var(--bg-hover);
   transform: translateY(-1px);
+}
+
+.eve-starter-chip:hover strong {
+  color: var(--text-primary);
+}
+
+.eve-starter-chip:hover small {
+  color: var(--text-secondary);
 }
 
 /* ── Chat Composer ── */
@@ -601,7 +609,8 @@
 }
 
 .eve-queue-run:hover:not(:disabled) {
-  background: #202023;
+  background: var(--bg-hover);
+  border-color: var(--border-heavy, var(--border-color));
 }
 
 /* Skills Popup Menu */
@@ -1114,8 +1123,8 @@
 }
 
 .eve-card-run-btn:hover:not(:disabled) {
-  border-color: var(--border-color, #3f3f46);
-  background: #202023;
+  border-color: var(--border-heavy, var(--border-color));
+  background: var(--bg-hover);
 }
 
 .eve-schedule-card-title {
