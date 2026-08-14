@@ -1,4 +1,5 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
+from fastapi.responses import Response
 from google.cloud.firestore_v1 import Client
 
 from app.core.auth import get_current_user
@@ -19,9 +20,77 @@ from app.schemas.eve import (
     EveSessionListResponse,
     EveSessionResponse,
 )
+from app.schemas.eve_speech import (
+    EveSynthesizeRequest,
+    EveTranscribeResponse,
+)
 from app.services.eve import chat_with_eve, delete_workspace_record, restore_workspace_record
+from app.services.speech import (
+    SpeechServiceError,
+    resolve_stt_engine,
+    resolve_tts_engine,
+    synthesize_speech,
+    transcribe_audio,
+)
 
 router = APIRouter(prefix="/eve")
+
+
+@router.post("/transcribe", response_model=EveTranscribeResponse)
+async def transcribe(
+    file: UploadFile = File(...),
+    language: str | None = Form(default=None),
+    database: Client = Depends(get_firestore),
+    user: dict = Depends(get_current_user),
+):
+    engine, model = resolve_stt_engine(database, user["uid"])
+    if engine != "groq":
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Groq speech-to-text is not configured.",
+        )
+    audio_bytes = await file.read()
+    try:
+        text = transcribe_audio(
+            audio_bytes,
+            file.content_type,
+            language,
+            model,
+        )
+    except SpeechServiceError as error:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail=str(error),
+        ) from error
+    return {"text": text}
+
+
+@router.post("/synthesize")
+def synthesize(
+    payload: EveSynthesizeRequest,
+    database: Client = Depends(get_firestore),
+    user: dict = Depends(get_current_user),
+):
+    engine, voice = resolve_tts_engine(database, user["uid"])
+    if engine != "google":
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Google Cloud text-to-speech is not configured.",
+        )
+    try:
+        audio_bytes, media_type = synthesize_speech(
+            payload.text,
+            payload.language,
+            payload.voice or voice,
+            payload.rate,
+            payload.pitch,
+        )
+    except SpeechServiceError as error:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail=str(error),
+        ) from error
+    return Response(content=audio_bytes, media_type=media_type)
 
 
 @router.post("/chat", response_model=EveChatResponse)

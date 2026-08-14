@@ -11,6 +11,7 @@ from app.api.routes import (
     email,
     eve,
     eve_schedules,
+    eve_speech,
     gmail,
     google_calendar,
     google_drive,
@@ -35,6 +36,7 @@ api_router.include_router(profiles.router, tags=["profiles"])
 api_router.include_router(documents.router, tags=["documents"])
 api_router.include_router(eve.router, tags=["Eve AI assistant"])
 api_router.include_router(eve_schedules.router, tags=["Eve automated schedules"])
+api_router.include_router(eve_speech.router, tags=["Eve speech settings"])
 api_router.include_router(gmail.router, tags=["Gmail integration"])
 api_router.include_router(
     competitive_coding_profile.router,

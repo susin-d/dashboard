@@ -86,6 +86,15 @@ class Settings:
     gemini_api_key: str | None = os.getenv("GEMINI_API_KEY")
     gemini_url: str | None = os.getenv("GEMINI_URL") or None
     gemini_model: str = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
+    groq_api_key: str | None = os.getenv("GROQ_API_KEY")
+    groq_url: str | None = os.getenv("GROQ_URL") or None
+    groq_stt_model: str = os.getenv("GROQ_STT_MODEL", "whisper-large-v3")
+    google_cloud_tts_api_key: str | None = os.getenv("GOOGLE_CLOUD_TTS_API_KEY")
+    google_cloud_tts_url: str | None = os.getenv(
+        "GOOGLE_CLOUD_TTS_URL",
+        "https://texttospeech.googleapis.com/v1",
+    )
+    google_cloud_tts_voice: str = os.getenv("GOOGLE_CLOUD_TTS_VOICE", "en-US-Standard-C")
     firestore_database_id: str = os.getenv(
         "FIRESTORE_DATABASE_ID",
         "(default)",

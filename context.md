@@ -4,7 +4,7 @@ Living project snapshot for AI agents. `AGENTS.md` holds the permanent rules;
 this file holds the **current state** of the codebase and must be kept up to
 date whenever the implementation changes.
 
-> **Last updated:** 2026-08-14 (AI Models settings section: per-user provider/model picker, multi-provider EVE backend; added SPEECH_PROVIDERS.md TTS/STT provider comparison)
+> **Last updated:** 2026-08-14 (Eve speech backend: Groq Whisper STT + Google Cloud TTS server providers, `settings/eve-speech` prefs, `/eve/transcribe` + `/eve/synthesize` endpoints)
 
 ---
 
@@ -69,7 +69,7 @@ Starwaves/
 | Integrations | `google_calendar`, `google_drive`, `gmail`, `github`, `google_chat` | OAuth callbacks under `/integrations/*/callback` |
 | Features | `documents`, `todos`, `profiles`, `notifications`, `email`, `eve`, `calls` | EVE = AI assistant; `calls` = WebRTC signaling |
 | Coding | `coding_stats`, `competitive_coding_profile` | Contests + profile stats |
-| Settings | `ai_models` | `/settings/ai-models` per-user AI provider/model preference for EVE |
+| Settings | `ai_models`, `eve_speech` | `/settings/ai-models` AI provider/model + `/settings/eve-speech` STT/TTS provider/voice preference for EVE |
 | Misc | `health` | `/api/v1/health` |
 
 ### Repositories (`server/app/repositories/`)
@@ -91,7 +91,15 @@ and the `ai_models/` package (`_shared.py`, `openai.py`, `anthropic.py`,
 (provider catalog + availability, `resolve_ai_config` reading the per-user
 preference with server-default fallback, and a shared `run_tool_loop`
 executed by per-provider `ProviderClient` adapters for OpenAI Responses API,
-Anthropic Messages API, and Google Gemini).
+Anthropic Messages API, and Google Gemini), plus the `speech/` package
+(`_shared.py`, `groq.py`, `google_tts.py`) that provides server-side STT/TTS
+for EVE voice calls: a provider catalog (browser + Groq Whisper for STT,
+browser + Google Cloud TTS for TTS) with `available` flags driven by
+server-side API keys, per-user preference persisted at
+`users/{uid}/settings/eve-speech` with browser fallback
+(`resolve_stt_engine`/`resolve_tts_engine`), `transcribe_audio` (Groq
+OpenAI-compatible endpoint) and `synthesize_speech` (Google Cloud
+Text-to-Speech REST, MP3).
 
 ### Config (`server/app/core/config.py`)
 
@@ -99,8 +107,10 @@ Environment-driven `Settings` dataclass: Firebase Admin creds, GitHub/Google
 OAuth secrets, Gmail/Drive/Chat callbacks, AI provider keys for EVE
 (`OPENAI_API_KEY`/`OPENAI_URL`/`OPENAI_MODEL`,
 `ANTHROPIC_API_KEY`/`ANTHROPIC_URL`/`ANTHROPIC_MODEL`,
-`GEMINI_API_KEY`/`GEMINI_URL`/`GEMINI_MODEL`), SMTP, Firestore
-database id, CORS origins. Loads `.env.prod` before `.env`.
+`GEMINI_API_KEY`/`GEMINI_URL`/`GEMINI_MODEL`), EVE speech keys
+(`GROQ_API_KEY`/`GROQ_URL`/`GROQ_STT_MODEL`,
+`GOOGLE_CLOUD_TTS_API_KEY`/`GOOGLE_CLOUD_TTS_URL`/`GOOGLE_CLOUD_TTS_VOICE`),
+SMTP, Firestore database id, CORS origins. Loads `.env.prod` before `.env`.
 
 ## 4. Frontend (React)
 
@@ -176,7 +186,21 @@ database id, CORS origins. Loads `.env.prod` before `.env`.
 - Hackathon discovery with configurable sources + manual entry.
 - Notifications: calendar-derived reminders, call notifications (incoming, missed, declined workspace records & desktop alerts), push notifications, read/delete. Proactive notification permission handling (`browserNotifications.js` + `useWorkspaceData.js`) auto-attaches permission prompt triggers to initial user interaction on workspace entry, provides an interactive prompt banner in `Header.jsx`'s notification panel, requests permission on Bell icon clicks & WebRTC call actions, and displays live permission state badges in Settings.
 - EVE AI assistant (multi-provider: OpenAI / Anthropic / Google Gemini) with sessions, persistent memories, bidirectional voice calling, and automated schedule/reminder execution.
-- AI Models settings: the Settings page exposes an "AI models" section (`AiModelsSection.jsx` + `aiModelsApi.js`) where users pick a provider and a model for EVE from a curated catalog (OpenAI `gpt-5-mini`/`gpt-5`/`gpt-4o`/`gpt-4o-mini`/`o3-mini`, Anthropic `claude-sonnet-4-5`/`claude-opus-4-1`/`claude-haiku-4-5`, Gemini `gemini-2.5-flash`/`gemini-2.5-pro`/`gemini-2.0-flash`). The choice is stored per-user at `users/{uid}/settings/ai-models` via `GET/PUT /settings/ai-models` (`app/api/routes/ai_models.py`); `resolve_ai_config` reads it for every EVE chat/schedule/cron call and falls back to the server default (`OPENAI_MODEL` + OpenAI) when unset, invalid, or when the chosen provider has no server-side key. Providers without a configured API key are surfaced as unavailable in the catalog (`providers[].available`), which the section shows and falls back around. Server-side per-provider env keys: `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `GEMINI_API_KEY` (with optional `*_URL` / `*_MODEL` overrides).
+- AI Models settings: the Settings page exposes an "AI models" section (`AiModelsSection.jsx` + `aiModelsApi.js`) where users pick a provider and a model for EVE from a curated catalog (OpenAI `gpt-5-mini`/`gpt-5`/`gpt-4o`/`gpt-4o-mini`/`o3-mini`, Anthropic `claude-sonnet-4-5`/`claude-opus-4-1`/`claude-haiku-4-5`, Gemini `gemini-2.5-flash`/`gemini-2.5-pro`/`gemini-2.0-flash`). The choice is stored per-user at `users/{uid}/settings/ai-models` via `GET/PUT /settings/ai-models` (`app/api/routes/ai_models.py`); `resolve_ai_config` reads it for every EVE chat/schedule/cron call and falls back to the server default (`OPENAI_MODEL` + OpenAI) when unset, invalid, or when the chosen provider has no server-side key. Providers without a configured API key are surfaced as unavailable in the catalog (`providers[].available`), which the section shows and falls around. Server-side per-provider env keys: `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `GEMINI_API_KEY` (with optional `*_URL` / `*_MODEL` overrides).
+- Eve speech backend: server-side STT/TTS providers for EVE voice calls in
+  addition to the browser Web Speech API path. `GET/PUT /settings/eve-speech`
+  (`app/api/routes/eve_speech.py`) returns a provider catalog (browser + Groq
+  Whisper STT, browser + Google Cloud TTS) with `available` flags and persists
+  the user's `stt_provider`/`stt_model`/`tts_provider`/`tts_voice` choice to
+  `users/{uid}/settings/eve-speech`. The catalog is curated in
+  `app/services/speech/_shared.py` (Groq Whisper models, Google Cloud
+  Standard voices per supported language). `POST /eve/transcribe` streams an
+  audio upload to Groq and returns the transcript text; `POST /eve/synthesize`
+  returns MP3 audio from Google Cloud TTS. `resolve_stt_engine` /
+  `resolve_tts_engine` pick the active provider per user with a browser
+  fallback when unset or when the chosen provider has no server-side key.
+  Server-side env keys: `GROQ_API_KEY`/`GROQ_URL`/`GROQ_STT_MODEL`,
+  `GOOGLE_CLOUD_TTS_API_KEY`/`GOOGLE_CLOUD_TTS_URL`/`GOOGLE_CLOUD_TTS_VOICE`.
 - Automated Eve Reminders & Schedules: create one-time or recurring (cron-based) automated prompts or voice calls.
   - Supports two action types: AI Chat Prompt execution (runs prompt, saves session & notifies user) or Eve Voice Call (automatically initiates an incoming voice call from Eve to user at scheduled time).
   - Tools added to Eve assistant (`create_eve_schedule`, `list_eve_schedules`, `delete_eve_schedule`) so users can schedule reminders conversationally in chat or via the `EveSchedulesCard` sidebar component.
