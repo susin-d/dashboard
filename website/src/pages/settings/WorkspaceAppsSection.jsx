@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Check, ExternalLink, FileText, HardDrive, Plus, Presentation, Sheet } from 'lucide-react'
+import { Check, Contact, ExternalLink, FileText, HardDrive, Plus, Presentation, Sheet } from 'lucide-react'
 import { ConfirmDialog } from '../../components/ui'
 import {
   beginGoogleDriveOAuth,
@@ -35,6 +35,13 @@ const workspaceApps = [
     description: 'Open your presentations.',
     url: 'https://slides.google.com',
     icon: Presentation,
+  },
+  {
+    id: 'contacts',
+    name: 'Google Contacts',
+    description: 'Sync and manage your address book.',
+    url: 'https://contacts.google.com',
+    icon: Contact,
   },
 ]
 

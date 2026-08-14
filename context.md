@@ -4,7 +4,7 @@ Living project snapshot for AI agents. `AGENTS.md` holds the permanent rules;
 this file holds the **current state** of the codebase and must be kept up to
 date whenever the implementation changes.
 
-> **Last updated:** 2026-08-14 (Added smooth sliding active pill indicator and scroll-spy animation to Settings page section navigation matching the sidebar animation)
+> **Last updated:** 2026-08-14 (Added Google Contacts app shortcut to the Google Workspace integration card in Settings AppsSection)
 
 ---
 
