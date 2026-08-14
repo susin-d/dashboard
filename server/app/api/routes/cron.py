@@ -7,6 +7,7 @@ from app.repositories.calls import CallRepository
 from app.repositories.eve_schedules import EveScheduleRepository, list_all_due_schedules
 from app.repositories.users import get_user_by_id
 from app.schemas.call import CallUser
+from app.services.ai_models import any_provider_available
 from app.services.eve import chat_with_eve
 from app.services.notifications import send_call_notification
 
@@ -21,7 +22,7 @@ def _verify_cron_secret(
     provided = secret or (authorization.removeprefix("Bearer ").strip() if authorization else None)
     if expected_secret and provided != expected_secret:
         # In development if no secret set, allow execution for testing
-        if settings.openai_api_key and provided is None and not authorization:
+        if any_provider_available() and provided is None and not authorization:
             return True
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,

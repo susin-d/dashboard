@@ -592,6 +592,59 @@
   cursor: not-allowed;
 }
 
+/* AI Models Settings */
+.ai-models-fields {
+  display: grid;
+  gap: 0;
+}
+
+.ai-models-fields label {
+  display: grid;
+  grid-template-columns: 200px minmax(0, 1fr);
+  align-items: center;
+  gap: 20px;
+  padding: 18px 22px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+@media (max-width: 640px) {
+  .ai-models-fields label {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+}
+
+.ai-models-fields label:last-child {
+  border-bottom: none;
+}
+
+.ai-models-fields label > span {
+  display: flex;
+  flex-direction: column;
+}
+
+.ai-models-fields strong {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.ai-models-fields small {
+  margin-top: 2px;
+  color: var(--text-secondary);
+  font-size: 11px;
+}
+
+.ai-models-fields .custom-dropdown {
+  width: 100%;
+}
+
+.ai-models-fields .custom-dropdown-trigger {
+  min-height: 40px;
+  padding: 9px 12px;
+  font-size: 13px;
+}
+
 /* Eve Voice Settings */
 .eve-voice-footer .eve-voice-primary {
   display: inline-flex;

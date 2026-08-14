@@ -1,4 +1,5 @@
 import { AccountSection } from './settings/AccountSection'
+import { AiModelsSection } from './settings/AiModelsSection'
 import { AppsSection } from './settings/AppsSection'
 import { CodingSection } from './settings/CodingSection'
 import { DataSourcesSection } from './settings/DataSourcesSection'
@@ -32,6 +33,7 @@ export function SettingPage({
         <a href="#settings-profile">Profile</a>
         <a href="#settings-themes">Themes &amp; Appearance</a>
         <a href="#settings-apps">Integrations</a>
+        <a href="#settings-ai-models">AI Models</a>
         <a href="#settings-sources">Data sources</a>
         <a href="#settings-coding">Coding profiles</a>
         <a href="#settings-eve-voice">Eve voice</a>
@@ -48,6 +50,7 @@ export function SettingPage({
         setImportedIcsEvents={setImportedIcsEvents}
       />
       <DataSourcesSection />
+      <AiModelsSection />
       <PushNotificationsSection user={user} />
       <CodingSection user={user} onContestSitesChange={onContestSitesChange} />
       <HackathonSourcesSection user={user} onHackathonsChange={onHackathonsChange} />

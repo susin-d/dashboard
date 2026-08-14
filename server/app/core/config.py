@@ -80,6 +80,12 @@ class Settings:
     openai_api_key: str | None = os.getenv("OPENAI_API_KEY")
     openai_url: str | None = os.getenv("OPENAI_URL") or None
     openai_model: str = os.getenv("OPENAI_MODEL", "gpt-5-mini")
+    anthropic_api_key: str | None = os.getenv("ANTHROPIC_API_KEY")
+    anthropic_url: str | None = os.getenv("ANTHROPIC_URL") or None
+    anthropic_model: str = os.getenv("ANTHROPIC_MODEL", "claude-sonnet-4-5")
+    gemini_api_key: str | None = os.getenv("GEMINI_API_KEY")
+    gemini_url: str | None = os.getenv("GEMINI_URL") or None
+    gemini_model: str = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
     firestore_database_id: str = os.getenv(
         "FIRESTORE_DATABASE_ID",
         "(default)",

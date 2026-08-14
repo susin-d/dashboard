@@ -1,3 +1,7 @@
+from app.schemas.ai_models import (
+    AiModelPreferenceUpdate,
+    AiModelsResponse,
+)
 from app.schemas.competitive_coding_profile import (
     CompetitiveCodingProfileUpdate,
 )
@@ -17,6 +21,8 @@ from app.schemas.workspace import (
 )
 
 __all__ = [
+    "AiModelPreferenceUpdate",
+    "AiModelsResponse",
     "CompetitiveCodingProfileUpdate",
     "DocumentUpsert",
     "DocumentResponse",

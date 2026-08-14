@@ -4,7 +4,7 @@ Living project snapshot for AI agents. `AGENTS.md` holds the permanent rules;
 this file holds the **current state** of the codebase and must be kept up to
 date whenever the implementation changes.
 
-> **Last updated:** 2026-08-14 (Eve voice UX: Web Speech STT/SpeechSynthesis prefs, STT status surfacing, echo-loop guard, on-call text fallback)
+> **Last updated:** 2026-08-14 (AI Models settings section: per-user provider/model picker, multi-provider EVE backend)
 
 ---
 
@@ -68,6 +68,7 @@ Starwaves/
 | Integrations | `google_calendar`, `google_drive`, `gmail`, `github`, `google_chat` | OAuth callbacks under `/integrations/*/callback` |
 | Features | `documents`, `todos`, `profiles`, `notifications`, `email`, `eve`, `calls` | EVE = AI assistant; `calls` = WebRTC signaling |
 | Coding | `coding_stats`, `competitive_coding_profile` | Contests + profile stats |
+| Settings | `ai_models` | `/settings/ai-models` per-user AI provider/model preference for EVE |
 | Misc | `health` | `/api/v1/health` |
 
 ### Repositories (`server/app/repositories/`)
@@ -83,12 +84,21 @@ Starwaves/
 `google.py`, `github.py`) that centralizes provider-agnostic OAuth helpers
 (`format_oauth_error`, state-serializer factory, `integration_account_id`,
 `integration_accounts_reference`, `oauth_callback_html`) and provider flows
-(authorize URL builders, token encryption/exchange/refresh, profile fetch).
+(authorize URL builders, token encryption/exchange/refresh, profile fetch),
+and the `ai_models/` package (`_shared.py`, `openai.py`, `anthropic.py`,
+`gemini.py`) that provides a multi-provider tool-calling engine for EVE
+(provider catalog + availability, `resolve_ai_config` reading the per-user
+preference with server-default fallback, and a shared `run_tool_loop`
+executed by per-provider `ProviderClient` adapters for OpenAI Responses API,
+Anthropic Messages API, and Google Gemini).
 
 ### Config (`server/app/core/config.py`)
 
 Environment-driven `Settings` dataclass: Firebase Admin creds, GitHub/Google
-OAuth secrets, Gmail/Drive/Chat callbacks, OpenAI (EVE), SMTP, Firestore
+OAuth secrets, Gmail/Drive/Chat callbacks, AI provider keys for EVE
+(`OPENAI_API_KEY`/`OPENAI_URL`/`OPENAI_MODEL`,
+`ANTHROPIC_API_KEY`/`ANTHROPIC_URL`/`ANTHROPIC_MODEL`,
+`GEMINI_API_KEY`/`GEMINI_URL`/`GEMINI_MODEL`), SMTP, Firestore
 database id, CORS origins. Loads `.env.prod` before `.env`.
 
 ## 4. Frontend (React)
@@ -111,8 +121,9 @@ database id, CORS origins. Loads `.env.prod` before `.env`.
   notifications, contests, calendar, email), `gmailApi`, `googleCalendar`,
   `googleDriveApi`, `eveApi`, `eveSchedulesApi`, `emailApi`, `githubApi`,
   `googleChatApi`, `codingStatsApi`, `competitiveCodingProfileApi`,
-  `documentsApi`, `callsApi`), plus shared `request.js` (single `API_URL` +
-  `apiRequest` wrapper), `firebase.js`, `authApi.js`, `index.js`.
+  `documentsApi`, `callsApi`, `aiModelsApi`), plus shared `request.js`
+  (single `API_URL` + `apiRequest` wrapper), `firebase.js`, `authApi.js`,
+  `index.js`.
 - **Themes** (`src/themes/`): `presets.js` holds `THEME_PRESETS` (parsed from
   CSS files in `src/styles/themes/`), option metadata (`PALETTE_GROUPS`,
   `FONT_OPTIONS`, `RADIUS_OPTIONS`, `DENSITY_OPTIONS`, `ELEVATION_OPTIONS`,
@@ -130,7 +141,8 @@ database id, CORS origins. Loads `.env.prod` before `.env`.
   `IncomingCallOverlay`.
 - **Settings sections** (`src/pages/settings/`): Profile, Account, Apps,
   WorkspaceApps, Theme, Calendar, IcsCalendar, Gmail, Github, GoogleChat,
-  Coding, HackathonSources, DataSources, PushNotifications, EveVoice.
+  Coding, HackathonSources, DataSources, PushNotifications, EveVoice,
+  AiModels.
 - **Dashboard config**: `src/dashboard/dashboardConfig.js` (React Grid Layout).
 - **Navigation config**: `src/config/navigation.js`.
 
@@ -162,7 +174,8 @@ database id, CORS origins. Loads `.env.prod` before `.env`.
 - Competitive programming: contests + profile stats.
 - Hackathon discovery with configurable sources + manual entry.
 - Notifications: calendar-derived reminders, call notifications (incoming, missed, declined workspace records & desktop alerts), push notifications, read/delete. Proactive notification permission handling (`browserNotifications.js` + `useWorkspaceData.js`) auto-attaches permission prompt triggers to initial user interaction on workspace entry, provides an interactive prompt banner in `Header.jsx`'s notification panel, requests permission on Bell icon clicks & WebRTC call actions, and displays live permission state badges in Settings.
-- EVE AI assistant (OpenAI) with sessions, persistent memories, bidirectional voice calling, and automated schedule/reminder execution.
+- EVE AI assistant (multi-provider: OpenAI / Anthropic / Google Gemini) with sessions, persistent memories, bidirectional voice calling, and automated schedule/reminder execution.
+- AI Models settings: the Settings page exposes an "AI models" section (`AiModelsSection.jsx` + `aiModelsApi.js`) where users pick a provider and a model for EVE from a curated catalog (OpenAI `gpt-5-mini`/`gpt-5`/`gpt-4o`/`gpt-4o-mini`/`o3-mini`, Anthropic `claude-sonnet-4-5`/`claude-opus-4-1`/`claude-haiku-4-5`, Gemini `gemini-2.5-flash`/`gemini-2.5-pro`/`gemini-2.0-flash`). The choice is stored per-user at `users/{uid}/settings/ai-models` via `GET/PUT /settings/ai-models` (`app/api/routes/ai_models.py`); `resolve_ai_config` reads it for every EVE chat/schedule/cron call and falls back to the server default (`OPENAI_MODEL` + OpenAI) when unset, invalid, or when the chosen provider has no server-side key. Providers without a configured API key are surfaced as unavailable in the catalog (`providers[].available`), which the section shows and falls back around. Server-side per-provider env keys: `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `GEMINI_API_KEY` (with optional `*_URL` / `*_MODEL` overrides).
 - Automated Eve Reminders & Schedules: create one-time or recurring (cron-based) automated prompts or voice calls.
   - Supports two action types: AI Chat Prompt execution (runs prompt, saves session & notifies user) or Eve Voice Call (automatically initiates an incoming voice call from Eve to user at scheduled time).
   - Tools added to Eve assistant (`create_eve_schedule`, `list_eve_schedules`, `delete_eve_schedule`) so users can schedule reminders conversationally in chat or via the `EveSchedulesCard` sidebar component.

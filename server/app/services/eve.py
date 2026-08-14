@@ -6,10 +6,8 @@ from uuid import uuid4
 from fastapi import HTTPException, status
 from google.cloud import firestore
 from google.cloud.firestore_v1 import Client
-from openai import OpenAI, OpenAIError
 from pydantic import ValidationError
 
-from app.core.config import settings
 from app.repositories import documents, eve_sessions, todos
 from app.repositories.eve import add_memory, delete_memory, list_memories
 from app.repositories.jobs import JobRepository
@@ -26,9 +24,15 @@ from app.schemas.workspace import (
     ProjectCreate,
     ProjectUpdate,
 )
+from app.services.ai_models import (
+    AIServiceError,
+    PROVIDER_CLIENTS,
+    any_provider_available,
+    resolve_ai_config,
+    run_tool_loop,
+)
 
 MAX_RECORDS_PER_READ = 50
-MAX_TOOL_ROUNDS = 6
 SUPPORTED_RESOURCES = ("todos", "projects", "jobs", "hackathons", "documents", "notifications")
 WRITABLE_RESOURCES = ("todos", "projects", "jobs", "hackathons", "documents")
 WORKSPACE_PAGES = (
@@ -781,8 +785,11 @@ def chat_with_eve(
     messages: list[dict[str, str]],
     session_id: str | None = None,
 ) -> tuple[str, list[str], list[dict[str, Any]]]:
-    if not settings.openai_api_key:
-        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Eve is not configured. Add OPENAI_API_KEY on the server.")
+    if not any_provider_available():
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Eve is not configured. Add an AI provider API key (OPENAI_API_KEY, ANTHROPIC_API_KEY, or GEMINI_API_KEY) on the server.",
+        )
 
     if session_id:
         try:
@@ -791,49 +798,38 @@ def chat_with_eve(
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(error)) from error
 
     instructions = _build_instructions(database, user["uid"])
-    client_options = {"api_key": settings.openai_api_key}
-    if settings.openai_url:
-        client_options["base_url"] = settings.openai_url
-    client = OpenAI(**client_options)
+    config = resolve_ai_config(database, user["uid"])
+    client_class = PROVIDER_CLIENTS[config.provider]
+    client = client_class(config.client_options)
     conversation: list[Any] = [{"role": message["role"], "content": message["content"]} for message in messages]
-    changed_resources: list[str] = []
-    actions: list[dict[str, Any]] = []
-    try:
-        for _ in range(MAX_TOOL_ROUNDS):
-            response = client.responses.create(
-                model=settings.openai_model,
-                instructions=instructions,
-                input=conversation,
-                tools=EVE_TOOLS,
-                store=False,
-            )
-            function_calls = [item for item in response.output if item.type == "function_call"]
-            if not function_calls:
-                message = response.output_text or "I could not generate a response. Please try again."
-                if session_id:
-                    eve_sessions.save_messages(
-                        database,
-                        user["uid"],
-                        session_id,
-                        [
-                            {"role": message["role"], "content": message["content"]}
-                            for message in messages
-                        ]
-                        + [{"role": "assistant", "content": message}],
-                    )
-                return message, changed_resources, actions
-            conversation.extend(response.output)
-            for call in function_calls:
-                try:
-                    result, changed_resource, action = _run_tool(database, user["uid"], call.name, json.loads(call.arguments))
-                    if changed_resource and changed_resource not in changed_resources:
-                        changed_resources.append(changed_resource)
-                    if action:
-                        actions.append(action)
-                except (KeyError, TypeError, ValueError, ValidationError) as error:
-                    result = {"error": str(error)}
-                conversation.append({"type": "function_call_output", "call_id": call.call_id, "output": json.dumps(result, default=str)})
-    except OpenAIError as error:
-        raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail="Eve could not reach the AI service. Please try again.") from error
 
-    raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail="Eve could not complete the request. Please try again with a simpler request.")
+    def run_tool(name: str, arguments: dict[str, Any]):
+        return _run_tool(database, user["uid"], name, arguments)
+
+    try:
+        message, changed_resources, actions = run_tool_loop(
+            client,
+            config,
+            instructions,
+            conversation,
+            EVE_TOOLS,
+            run_tool,
+        )
+    except AIServiceError as error:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="Eve could not reach the AI service. Please try again.",
+        ) from error
+
+    if session_id:
+        eve_sessions.save_messages(
+            database,
+            user["uid"],
+            session_id,
+            [
+                {"role": message["role"], "content": message["content"]}
+                for message in messages
+            ]
+            + [{"role": "assistant", "content": message}],
+        )
+    return message, changed_resources, actions
