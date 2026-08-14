@@ -4,7 +4,7 @@ Living project snapshot for AI agents. `AGENTS.md` holds the permanent rules;
 this file holds the **current state** of the codebase and must be kept up to
 date whenever the implementation changes.
 
-> **Last updated:** 2026-08-14 (Added Google Contacts direct OAuth sync via People API and Google CSV / vCard import to Contacts)
+> **Last updated:** 2026-08-14 (Restored monochrome profile card layout with avatar, details grid, and verified badge)
 
 ---
 
