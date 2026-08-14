@@ -4,7 +4,7 @@ Living project snapshot for AI agents. `AGENTS.md` holds the permanent rules;
 this file holds the **current state** of the codebase and must be kept up to
 date whenever the implementation changes.
 
-> **Last updated:** 2026-08-14 (Refined button styling with flex alignment, SVG spacing, and fixed 2-column grid layout nesting in settings AccountSection and calls dialer cards)
+> **Last updated:** 2026-08-14 (Polished Notifications panel UI: aligned unread indicator with title, added hover & spacing to dismiss buttons, prevented viewport overflow with dynamic height, and added scrollbar padding and footer container)
 
 ---
 

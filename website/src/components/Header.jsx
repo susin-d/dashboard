@@ -423,11 +423,13 @@ export function Header({
                       <button type="button" className="notification-main" onClick={() => openNotification(notification)}>
                         <span className="notification-icon"><NotificationIcon size={17} /></span>
                         <span className="notification-copy">
-                          <strong>{notification.title}</strong>
+                          <span className="notification-title-row">
+                            <strong>{notification.title}</strong>
+                            {notification.unread && <span className="notification-unread-dot" aria-label="Unread" />}
+                          </span>
                           <span>{notification.message}</span>
                           <small>{notification.time}</small>
                         </span>
-                        {notification.unread && <span className="notification-unread-dot" />}
                       </button>
                       <button
                         type="button"
@@ -444,9 +446,11 @@ export function Header({
               )}
             </div>
             {notificationsCanLoadMore && (
-              <button className="secondary-button" type="button" onClick={onLoadMoreNotifications} disabled={notificationsLoading}>
-                {notificationsLoading ? 'Loading…' : 'Load more notifications'}
-              </button>
+              <div className="notification-panel-footer">
+                <button className="secondary-button" type="button" onClick={onLoadMoreNotifications} disabled={notificationsLoading}>
+                  {notificationsLoading ? 'Loading…' : 'Load more notifications'}
+                </button>
+              </div>
             )}
           </aside>
         </div>,
