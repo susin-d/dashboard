@@ -902,8 +902,8 @@
   gap: 0.75rem;
   padding: 1.25rem;
   border-radius: var(--radius-md, 10px);
-  background: var(--bg-tertiary, #18181b);
-  border: 1px solid var(--border-color, #27272a);
+  background: var(--bg-card, var(--bg-secondary));
+  border: 1px solid var(--border-color);
 }
 
 .eve-memory-composer-card h3 {
@@ -912,13 +912,13 @@
   gap: 0.5rem;
   font-size: 0.95rem;
   font-weight: 700;
-  color: var(--text-primary, #ffffff);
+  color: var(--text-primary);
   margin: 0;
 }
 
 .eve-memory-composer-card p {
   font-size: 0.82rem;
-  color: var(--text-secondary, #a1a1aa);
+  color: var(--text-secondary);
   margin: 0;
   line-height: 1.4;
 }
@@ -933,10 +933,10 @@
 .eve-memory-create-form textarea {
   width: 100%;
   padding: 0.75rem 0.9rem;
-  border-radius: var(--radius-md, 8px);
-  background: var(--bg-secondary, #121212);
-  border: 1px solid var(--border-color, #27272a);
-  color: var(--text-primary, #ffffff);
+  border-radius: var(--radius-xs, 6px);
+  background: var(--bg-primary, var(--bg-card));
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
   font-family: inherit;
   font-size: 0.85rem;
   line-height: 1.5;
@@ -946,7 +946,7 @@
 }
 
 .eve-memory-create-form textarea:focus {
-  border-color: var(--border-color, #3f3f46);
+  border-color: var(--border-heavy, var(--text-primary));
 }
 
 .eve-memory-form-footer {
@@ -957,7 +957,7 @@
 
 .eve-char-counter {
   font-size: 0.75rem;
-  color: var(--text-muted, #71717a);
+  color: var(--text-muted);
 }
 
 .eve-memory-grid {
@@ -972,8 +972,8 @@
   gap: 0.75rem;
   padding: 1.1rem;
   border-radius: var(--radius-md, 10px);
-  background: var(--bg-tertiary, #18181b);
-  border: 1px solid var(--border-color, #27272a);
+  background: var(--bg-card, var(--bg-secondary));
+  border: 1px solid var(--border-color);
 }
 
 .eve-memory-card-header {
@@ -987,23 +987,23 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  color: var(--text-muted, #71717a);
-  background: var(--bg-secondary, #121212);
+  color: var(--text-muted);
+  background: var(--bg-secondary);
   padding: 0.2rem 0.5rem;
   border-radius: 4px;
-  border: 1px solid var(--border-color, #27272a);
+  border: 1px solid var(--border-color);
 }
 
 .eve-memory-card-text {
   font-size: 0.85rem;
   line-height: 1.5;
-  color: var(--text-primary, #ffffff);
+  color: var(--text-primary);
   margin: 0;
 }
 
 .eve-memory-card-time {
   font-size: 0.72rem;
-  color: var(--text-muted, #71717a);
+  color: var(--text-muted);
   margin-top: auto;
 }
 
@@ -1014,8 +1014,8 @@
   gap: 0.75rem;
   padding: 1.25rem;
   border-radius: var(--radius-md, 10px);
-  background: var(--bg-tertiary, #18181b);
-  border: 1px solid var(--border-color, #27272a);
+  background: var(--bg-card, var(--bg-secondary));
+  border: 1px solid var(--border-color);
 }
 
 .eve-schedule-composer-card h3 {
@@ -1024,13 +1024,13 @@
   gap: 0.5rem;
   font-size: 0.95rem;
   font-weight: 700;
-  color: var(--text-primary, #ffffff);
+  color: var(--text-primary);
   margin: 0;
 }
 
 .eve-schedule-composer-card p {
   font-size: 0.82rem;
-  color: var(--text-secondary, #a1a1aa);
+  color: var(--text-secondary);
   margin: 0;
 }
 
@@ -1072,13 +1072,13 @@
   gap: 0.75rem;
   padding: 1.2rem;
   border-radius: var(--radius-md, 10px);
-  background: var(--bg-tertiary, #18181b);
-  border: 1px solid var(--border-color, #27272a);
+  background: var(--bg-card, var(--bg-secondary));
+  border: 1px solid var(--border-color);
   transition: all 0.15s ease;
 }
 
 .eve-schedule-card:hover {
-  border-color: var(--border-color, #3f3f46);
+  border-color: var(--border-heavy, var(--border-color));
   transform: translateY(-1px);
 }
 
@@ -1094,11 +1094,11 @@
   gap: 0.35rem;
   font-size: 0.72rem;
   font-weight: 600;
-  color: var(--text-primary, #ffffff);
-  background: var(--bg-secondary, #121212);
+  color: var(--text-primary);
+  background: var(--bg-secondary);
   padding: 0.25rem 0.55rem;
   border-radius: 4px;
-  border: 1px solid var(--border-color, #27272a);
+  border: 1px solid var(--border-color);
 }
 
 .eve-card-actions-row {

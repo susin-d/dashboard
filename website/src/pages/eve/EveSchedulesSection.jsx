@@ -10,6 +10,7 @@ import {
   PhoneCall,
   MessageSquare,
 } from 'lucide-react'
+import { CustomDropdown } from '../../components/ui/CustomDropdown'
 import {
   listEveSchedules,
   createEveSchedule,
@@ -184,45 +185,48 @@ export function EveSchedulesSection({ onScheduleTriggered }) {
             <div className="form-row-2col">
               <div className="form-group">
                 <label className="input-label">Action Type</label>
-                <select
-                  className="form-input"
+                <CustomDropdown
                   value={actionType}
-                  onChange={(e) => setActionType(e.target.value)}
-                >
-                  <option value="chat_prompt">AI Chat Prompt &amp; Summary</option>
-                  <option value="voice_call">Automated Voice Call (Phone / Audio)</option>
-                </select>
+                  onChange={setActionType}
+                  ariaLabel="Action Type"
+                  options={[
+                    { value: 'chat_prompt', label: 'AI Chat Prompt & Summary' },
+                    { value: 'voice_call', label: 'Automated Voice Call (Phone / Audio)' },
+                  ]}
+                />
               </div>
 
               <div className="form-group">
                 <label className="input-label">Schedule Frequency</label>
-                <select
-                  className="form-input"
+                <CustomDropdown
                   value={scheduleType}
-                  onChange={(e) => setScheduleType(e.target.value)}
-                >
-                  <option value="one_time">One-time Reminder</option>
-                  <option value="recurring">Recurring Schedule (Cron)</option>
-                </select>
+                  onChange={setScheduleType}
+                  ariaLabel="Schedule Frequency"
+                  options={[
+                    { value: 'one_time', label: 'One-time Reminder' },
+                    { value: 'recurring', label: 'Recurring Schedule (Cron)' },
+                  ]}
+                />
               </div>
             </div>
 
             {scheduleType === 'one_time' ? (
               <div className="form-group">
                 <label className="input-label">Execute In</label>
-                <select
-                  className="form-input"
+                <CustomDropdown
                   value={timeOffsetHours}
-                  onChange={(e) => setTimeOffsetHours(e.target.value)}
-                >
-                  <option value="0.25">15 minutes</option>
-                  <option value="0.5">30 minutes</option>
-                  <option value="1">1 hour</option>
-                  <option value="2">2 hours</option>
-                  <option value="4">4 hours</option>
-                  <option value="8">8 hours</option>
-                  <option value="24">24 hours (Tomorrow)</option>
-                </select>
+                  onChange={setTimeOffsetHours}
+                  ariaLabel="Execute In"
+                  options={[
+                    { value: '0.25', label: '15 minutes' },
+                    { value: '0.5', label: '30 minutes' },
+                    { value: '1', label: '1 hour' },
+                    { value: '2', label: '2 hours' },
+                    { value: '4', label: '4 hours' },
+                    { value: '8', label: '8 hours' },
+                    { value: '24', label: '24 hours (Tomorrow)' },
+                  ]}
+                />
               </div>
             ) : (
               <div className="form-group">
