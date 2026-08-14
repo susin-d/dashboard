@@ -4,7 +4,7 @@ Living project snapshot for AI agents. `AGENTS.md` holds the permanent rules;
 this file holds the **current state** of the codebase and must be kept up to
 date whenever the implementation changes.
 
-> **Last updated:** 2026-08-14 (Extracted and adopted reusable UI components across all pages: `TabNav`, `PageHeader`, `SectionHeading`, `SettingsCard`, `MetricCard`; unified styling and cleaned up duplicate CSS)
+> **Last updated:** 2026-08-14 (Fixed Eve AI assistant mention/tools popup CSS layout overlap by adding flex-shrink: 0, text truncation, and proper scroll/height constraints)
 
 ---
 
