@@ -64,7 +64,10 @@ async def google_calendar_callback(
 ):
     try:
         user_id = google_state_serializer().loads(state, max_age=600)["uid"]
-        token_data = await exchange_google_code(code)
+        token_data = await exchange_google_code(
+            code,
+            redirect_uri=settings.google_oauth_callback_url,
+        )
         profile = await google_profile(token_data["access_token"])
         subject = profile["sub"]
         document = accounts_collection(database, user_id).document(

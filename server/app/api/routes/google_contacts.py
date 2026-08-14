@@ -81,7 +81,10 @@ async def google_contacts_callback(
         )
 
     try:
-        token_data = await exchange_google_code(code)
+        token_data = await exchange_google_code(
+            code,
+            redirect_uri=settings.google_contacts_oauth_callback_url,
+        )
         access_token = token_data["access_token"]
         refresh_token = token_data.get("refresh_token")
         profile = await google_profile(access_token)

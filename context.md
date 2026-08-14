@@ -4,7 +4,7 @@ Living project snapshot for AI agents. `AGENTS.md` holds the permanent rules;
 this file holds the **current state** of the codebase and must be kept up to
 date whenever the implementation changes.
 
-> **Last updated:** 2026-08-14 (Fixed duplicate 'profile' key React warning in Header.jsx search targets)
+> **Last updated:** 2026-08-14 (Fixed Google Contacts OAuth callback 400 Bad Request token exchange by explicitly passing google_contacts_oauth_callback_url)
 
 ---
 
