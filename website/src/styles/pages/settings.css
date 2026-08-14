@@ -18,9 +18,38 @@
   border: 1px solid var(--border-color);
   border-radius: var(--radius-lg);
   backdrop-filter: blur(12px);
+  scrollbar-width: none;
+}
+
+.settings-section-nav::-webkit-scrollbar {
+  display: none;
+}
+
+.settings-nav-active-indicator {
+  position: absolute;
+  top: 8px;
+  left: 0;
+  z-index: 0;
+  border-radius: var(--radius-md);
+  background: var(--bg-hover);
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-sm);
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    transform 320ms cubic-bezier(0.22, 1, 0.36, 1),
+    width 240ms cubic-bezier(0.22, 1, 0.36, 1),
+    height 200ms ease,
+    opacity 140ms ease;
+}
+
+.settings-nav-active-indicator.visible {
+  opacity: 1;
 }
 
 .settings-section-nav a {
+  position: relative;
+  z-index: 1;
   min-height: 36px;
   display: inline-flex;
   align-items: center;
@@ -30,13 +59,18 @@
   border-radius: var(--radius-md);
   text-decoration: none;
   font-size: 13px;
-  font-weight: 700;
+  font-weight: 600;
+  transition: color 0.18s ease;
 }
 
 .settings-section-nav a:hover,
 .settings-section-nav a:focus-visible {
   color: var(--text-primary);
-  background: var(--bg-hover);
+}
+
+.settings-section-nav a.active {
+  color: var(--text-primary);
+  font-weight: 700;
 }
 
 .settings-source-summary {
@@ -60,11 +94,6 @@
 
 .setting-section {
   scroll-margin-top: 136px;
-}
-
-.settings-section-nav a:first-child {
-  color: var(--text-primary);
-  background: var(--bg-hover);
 }
 
 .setting-section {
