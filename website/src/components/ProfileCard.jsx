@@ -297,7 +297,7 @@ export function ProfileCard({ user, onProfileUpdated, onSignOut }) {
                     <Clock size={15} />
                     <div>
                       <strong>{req.email}</strong>
-                      <small>Verification email sent via Mail</small>
+                      <small>Verification email sent</small>
                     </div>
                   </div>
                   <span className="pending-badge">Verification Sent</span>
