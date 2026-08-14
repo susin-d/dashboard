@@ -15,7 +15,7 @@ Plus,
 } from 'lucide-react'
 import { usePersistentState } from '../hooks/usePersistentState'
 import { createJob, deleteJob, updateJob } from '../lib/workspaceApi'
-import { ConfirmDialog, Modal } from '../components/ui'
+import { ConfirmDialog, Modal, PageHeader } from '../components/ui'
 import { buildApplicationTimeline } from '../utils/jobTimeline'
 
 const emptyJob = {
@@ -169,20 +169,20 @@ export function JobsPage({ jobs, setJobs, documents, createIntent, canLoadMore, 
 
   return (
     <section className="jobs-page">
-      <div className="page-heading">
-        <div className="jobs-heading-copy">
-          <p>Career tracker</p>
-          <h1>Jobs</h1>
-          <span>{jobs.length} opportunities in your pipeline</span>
-        </div>
-        <button
-          className="primary-button jobs-add-button"
-          onClick={() => setFormOpen(true)}
-        >
-          <Plus size={17} />
-          Add job
-        </button>
-      </div>
+      <PageHeader
+        eyebrow="Career tracker"
+        title="Jobs"
+        description={`${jobs.length} opportunities in your pipeline`}
+        actions={
+          <button
+            className="primary-button jobs-add-button"
+            onClick={() => setFormOpen(true)}
+          >
+            <Plus size={17} />
+            Add job
+          </button>
+        }
+      />
 
       <div className="jobs-summary" aria-label="Job pipeline summary">
         {jobStatuses.slice(0, 4).map((status) => (

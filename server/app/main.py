@@ -10,6 +10,7 @@ from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.api.router import api_router
+from app.api.routes.calls_ws import router as calls_ws_router
 from app.core.config import settings
 from app.core.worker import server_worker
 
@@ -107,6 +108,8 @@ def create_app() -> FastAPI:
         return response
 
     application.include_router(api_router, prefix=settings.api_v1_prefix)
+    # WebSocket endpoint mounts at /ws/calls (no /api/v1 prefix — WS uses its own path)
+    application.include_router(calls_ws_router)
 
     return application
 

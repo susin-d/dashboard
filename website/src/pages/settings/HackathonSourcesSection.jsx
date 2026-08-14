@@ -5,6 +5,7 @@ import {
   loadHackathonSources,
   setHackathonSourceEnabled,
 } from '../../lib/workspaceApi'
+import { SectionHeading } from '../../components/ui'
 
 export function HackathonSourcesSection({ user, onHackathonsChange }) {
   const [hackathonSources, setHackathonSources] = useState([])
@@ -50,10 +51,10 @@ export function HackathonSourcesSection({ user, onHackathonsChange }) {
 
   return (
     <div className="setting-section" id="settings-hackathons">
-      <div className="section-heading">
-        <h2>Hackathons</h2>
-        <p>Turn on event sources to combine their active hackathons.</p>
-      </div>
+      <SectionHeading
+        title="Hackathons"
+        description="Turn on event sources to combine their active hackathons."
+      />
 
       <div className="hackathon-source-settings">
         <div className="hackathon-source-heading">

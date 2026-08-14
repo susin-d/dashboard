@@ -1,12 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import {
   createCall,
-  getCall,
-  getIncomingCalls,
   sendCallSignal,
   triggerEveCall,
   updateCallStatus,
 } from '../lib/callsApi'
+import { callsSocket } from '../lib/callsSocket'
 import { sendEveMessage } from '../lib/eveApi'
 import {
   loadEveSpeech,
@@ -21,8 +20,6 @@ import {
   selectVoice,
 } from '../utils/speech'
 
-const INCOMING_POLL_MS = 3000
-const CALL_POLL_MS = 2000
 const RING_TIMEOUT_MS = 35000
 const ECHO_COOLDOWN_MS = 700
 
@@ -93,8 +90,6 @@ export function useCallCenter({ user }) {
   const localStreamRef = useRef(null)
   const remoteStreamRef = useRef(null)
   const callIdRef = useRef(null)
-  const pollTimerRef = useRef(null)
-  const incomingTimerRef = useRef(null)
   const ringTimerRef = useRef(null)
   const userRef = useRef(user)
   userRef.current = user
@@ -127,17 +122,6 @@ export function useCallCenter({ user }) {
     if (phase !== 'incoming' && phase !== 'dialing') stopRingtone()
   }, [phase])
 
-  const clearCallPoll = useCallback(() => {
-    if (pollTimerRef.current) {
-      window.clearInterval(pollTimerRef.current)
-      pollTimerRef.current = null
-    }
-    if (ringTimerRef.current) {
-      window.clearTimeout(ringTimerRef.current)
-      ringTimerRef.current = null
-    }
-  }, [])
-
   const cleanupPeer = useCallback(() => {
     const pc = pcRef.current
     if (pc) {
@@ -161,7 +145,10 @@ export function useCallCenter({ user }) {
 
   const teardown = useCallback(
     (nextPhase) => {
-      clearCallPoll()
+      if (ringTimerRef.current) {
+        window.clearTimeout(ringTimerRef.current)
+        ringTimerRef.current = null
+      }
       cleanupPeer()
       stopLocalMedia()
       stopRingtone()
@@ -212,18 +199,17 @@ export function useCallCenter({ user }) {
       setEveTranscript('Hello! I’m Eve. How can I help you today?')
       setPhase(nextPhase)
     },
-    [clearCallPoll, cleanupPeer, stopLocalMedia, sttSupported],
+    [cleanupPeer, stopLocalMedia, sttSupported],
   )
 
   useEffect(
     () => () => {
-      if (incomingTimerRef.current) window.clearInterval(incomingTimerRef.current)
-      clearCallPoll()
+      if (ringTimerRef.current) window.clearTimeout(ringTimerRef.current)
       cleanupPeer()
       stopRingtone()
       localStreamRef.current?.getTracks().forEach((track) => track.stop())
     },
-    [clearCallPoll, cleanupPeer],
+    [cleanupPeer],
   )
 
   const createPeer = useCallback(async () => {
@@ -326,46 +312,33 @@ export function useCallCenter({ user }) {
     }
   }, [flushPendingCandidates])
 
-  const pollCall = useCallback(
-    async (callId) => {
-      try {
-        const data = await getCall(callId)
-        if (data.status === 'declined') {
-          notify('Call Declined', `${data.callee?.name || 'User'} declined your call.`, `call-declined-${callId}`)
-          teardown('declined')
-          return
-        }
-        if (data.status === 'missed') {
-          notify('Missed Call', `Missed call from ${data.caller?.name || 'Someone'}.`, `call-missed-${callId}`)
-          teardown('missed')
-          return
-        }
-        if (data.status === 'ended') {
-          teardown('ended')
-          return
-        }
-        if (data.status === 'active') {
-          setPhase((current) =>
-            current === 'dialing' || current === 'connecting' ? 'active' : current,
-          )
-        }
-        if (data.status === 'ringing' && phaseRef.current === 'incoming') {
-          setCall(data)
-        }
-        await processMessages(data)
-      } catch {
-        // transient errors are ignored; the poll retries shortly
+  const handleCallEvent = useCallback(
+    async (callData) => {
+      if (callData.status === 'declined') {
+        notify('Call Declined', `${callData.callee?.name || 'User'} declined your call.`, `call-declined-${callData.id}`)
+        teardown('declined')
+        return
       }
+      if (callData.status === 'missed') {
+        notify('Missed Call', `Missed call from ${callData.caller?.name || 'Someone'}.`, `call-missed-${callData.id}`)
+        teardown('missed')
+        return
+      }
+      if (callData.status === 'ended') {
+        teardown('ended')
+        return
+      }
+      if (callData.status === 'active') {
+        setPhase((current) =>
+          current === 'dialing' || current === 'connecting' ? 'active' : current,
+        )
+      }
+      if (callData.status === 'ringing' && phaseRef.current === 'incoming') {
+        setCall(callData)
+      }
+      await processMessages(callData)
     },
     [processMessages, teardown],
-  )
-
-  const startPollLoop = useCallback(
-    (callId) => {
-      clearCallPoll()
-      pollTimerRef.current = window.setInterval(() => pollCall(callId), CALL_POLL_MS)
-    },
-    [clearCallPoll, pollCall],
   )
 
   const startRingTimeout = useCallback(() => {
@@ -708,14 +681,13 @@ export function useCallCenter({ user }) {
           await sendCallSignal(created.id, 'offer', offer.sdp)
           startRingTimeout()
         }
-        startPollLoop(created.id)
       } catch (err) {
         stopLocalMedia()
         setError(err.message || 'The call could not be started.')
         setPhase('error')
       }
     },
-    [createPeer, requestMedia, startPollLoop, startRingTimeout, stopLocalMedia],
+    [createPeer, requestMedia, startRingTimeout, stopLocalMedia],
   )
 
   const accept = useCallback(async () => {
@@ -753,7 +725,6 @@ export function useCallCenter({ user }) {
         }
         await updateCallStatus(callId, 'active')
       }
-      startPollLoop(callId)
     } catch (err) {
       stopLocalMedia()
       setError(err.message || 'The call could not be answered.')
@@ -764,7 +735,6 @@ export function useCallCenter({ user }) {
     flushPendingCandidates,
     mode,
     requestMedia,
-    startPollLoop,
     stopLocalMedia,
     call,
     incomingCall,
@@ -784,13 +754,12 @@ export function useCallCenter({ user }) {
           'Incoming voice call from Eve AI Assistant',
           `call-incoming-${created.id}`,
         )
-        startPollLoop(created.id)
       } catch (err) {
         setError(err.message || 'Could not request call from Eve.')
         setPhase('error')
       }
     },
-    [startPollLoop],
+    [],
   )
 
   const decline = useCallback(async () => {
@@ -870,16 +839,16 @@ export function useCallCenter({ user }) {
     }
   }, [teardown, user])
 
+  // WebSocket subscription: replaces both the incoming-call scanner and the
+  // in-call signal poll. The server pushes events whenever a write occurs.
   useEffect(() => {
     if (!user) return undefined
-    let cancelled = false
-    const scanIncoming = async () => {
-      if (cancelled) return
-      if (BUSY_PHASES.includes(phaseRef.current)) return
-      try {
-        const calls = await getIncomingCalls()
-        const ringing = calls[0] || null
-        if (ringing && ringing.id !== callIdRef.current) {
+
+    callsSocket.connect()
+    const unsubscribe = callsSocket.onMessage(async (event) => {
+      if (event.type === 'incoming_call') {
+        const ringing = event.call
+        if (!BUSY_PHASES.includes(phaseRef.current) && ringing.id !== callIdRef.current) {
           callIdRef.current = ringing.id
           processedIdsRef.current = new Set()
           remoteOfferRef.current = null
@@ -893,22 +862,20 @@ export function useCallCenter({ user }) {
             `Incoming ${ringing.mode || 'video'} call from ${ringing.caller?.name || 'Someone'}`,
             `call-incoming-${ringing.id}`,
           )
-          startPollLoop(ringing.id)
         }
-      } catch {
-        // network hiccups are ignored; the scanner retries
+      } else if (event.type === 'call_signal' || event.type === 'call_updated') {
+        const callData = event.call
+        if (callData.id === callIdRef.current) {
+          await handleCallEvent(callData)
+        }
       }
-    }
-    scanIncoming()
-    incomingTimerRef.current = window.setInterval(scanIncoming, INCOMING_POLL_MS)
+    })
+
     return () => {
-      cancelled = true
-      if (incomingTimerRef.current) {
-        window.clearInterval(incomingTimerRef.current)
-        incomingTimerRef.current = null
-      }
+      unsubscribe()
+      callsSocket.disconnect()
     }
-  }, [startPollLoop, user])
+  }, [handleCallEvent, user])
 
   return {
     phase,

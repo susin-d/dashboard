@@ -8,7 +8,7 @@ import {
   sendGoogleMessage, updateGoogleMessage,
 } from '../lib/googleMail'
 import { getGmailAccounts, getGmailStatus } from '../lib/gmailApi'
-import { ConfirmDialog, MailModal, TabNav } from '../components/ui'
+import { ConfirmDialog, MailModal, PageHeader, TabNav } from '../components/ui'
 import { usePersistentState } from '../hooks/usePersistentState'
 
 const FOLDERS = [
@@ -318,34 +318,37 @@ export function MailsPage({ onNavigate }) {
       </aside>
 
       {/* Page Heading & Search Toolbar */}
-      <div className="page-heading mail-page-heading">
-        <div>
-          <p>Communication</p>
-          <h1>Mails</h1>
-        </div>
-        <div className="mail-toolbar">
-          <form onSubmit={(event) => { event.preventDefault(); refresh(query, folder, '', false, selectedAccountEmail) }}>
-            <Search size={17} />
-            <input
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              placeholder="Search mail"
-              aria-label="Search mail"
-            />
-            {query && (
-              <button type="button" onClick={() => { setQuery(''); refresh('', folder, '', false, selectedAccountEmail) }} aria-label="Clear search">
-                <X size={15} />
+      <PageHeader
+        eyebrow="Communication"
+        title="Mails"
+        className="mail-page-heading"
+        actions={
+          <>
+            <div className="mail-toolbar">
+              <form onSubmit={(event) => { event.preventDefault(); refresh(query, folder, '', false, selectedAccountEmail) }}>
+                <Search size={17} />
+                <input
+                  value={query}
+                  onChange={(event) => setQuery(event.target.value)}
+                  placeholder="Search mail"
+                  aria-label="Search mail"
+                />
+                {query && (
+                  <button type="button" onClick={() => { setQuery(''); refresh('', folder, '', false, selectedAccountEmail) }} aria-label="Clear search">
+                    <X size={15} />
+                  </button>
+                )}
+              </form>
+              <button onClick={() => refresh(query, folder, pageToken, true, selectedAccountEmail)} disabled={loading} aria-label="Refresh inbox">
+                <RefreshCw size={17} className={loading ? 'mail-spin' : ''} />
               </button>
-            )}
-          </form>
-          <button onClick={() => refresh(query, folder, pageToken, true, selectedAccountEmail)} disabled={loading} aria-label="Refresh inbox">
-            <RefreshCw size={17} className={loading ? 'mail-spin' : ''} />
-          </button>
-        </div>
-        <button className="primary-button" onClick={() => setCompose({ ...EMPTY_COMPOSE })}>
-          <MailPlus size={16} /> Compose
-        </button>
-      </div>
+            </div>
+            <button className="primary-button" onClick={() => setCompose({ ...EMPTY_COMPOSE })}>
+              <MailPlus size={16} /> Compose
+            </button>
+          </>
+        }
+      />
 
       {/* Main Mail List Container */}
       {folder === 'INBOX' && (

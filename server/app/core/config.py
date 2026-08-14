@@ -72,7 +72,7 @@ class Settings:
         "GOOGLE_CONTACTS_OAUTH_CALLBACK_URL",
         "http://127.0.0.1:8000/api/v1/integrations/google-contacts/callback",
     )
-    frontend_url: str = os.getenv("FRONTEND_URL", "http://127.0.0.1:5173")
+    frontend_url: str = os.getenv("FRONTEND_URL", "http://localhost:5173")
     auth_google_callback_url: str = os.getenv(
         "AUTH_GOOGLE_CALLBACK_URL",
         "http://127.0.0.1:8000/api/v1/auth/google/callback",

@@ -1,3 +1,4 @@
+import { SectionHeading } from '../../components/ui'
 import { CalendarSection } from './CalendarSection'
 import { GithubSection } from './GithubSection'
 import { GmailSection } from './GmailSection'
@@ -14,10 +15,10 @@ export function AppsSection({
 }) {
   return (
     <div className="setting-section" id="settings-apps">
-      <div className="section-heading">
-        <h2>Apps</h2>
-        <p>Connect Google Workspace to use cloud files across StarWaves.</p>
-      </div>
+      <SectionHeading
+        title="Apps"
+        description="Connect Google Workspace to use cloud files across StarWaves."
+      />
 
       <div className="apps-settings-stack">
         <WorkspaceAppsSection />

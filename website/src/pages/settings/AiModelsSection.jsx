@@ -4,7 +4,7 @@ import {
   loadAiModels,
   saveAiModelPreference,
 } from '../../lib/aiModelsApi'
-import { CustomDropdown } from '../../components/ui/CustomDropdown'
+import { CustomDropdown, SectionHeading } from '../../components/ui'
 
 export function AiModelsSection() {
   const [providers, setProviders] = useState([])
@@ -127,10 +127,10 @@ export function AiModelsSection() {
 
   return (
     <div className="setting-section" id="settings-ai-models">
-      <div className="section-heading">
-        <h2>AI models</h2>
-        <p>Choose which AI provider and model power your EVE assistant.</p>
-      </div>
+      <SectionHeading
+        title="AI models"
+        description="Choose which AI provider and model power your EVE assistant."
+      />
 
       <div className="setting-content-stack">
         <form className="coding-settings-card" onSubmit={handleSave}>

@@ -1,14 +1,16 @@
 """Call routes: create WebRTC calls and exchange signaling between users.
 
-Signaling is polling-based so it works in the serverless Vercel deployment:
-both participants read the call document on an interval and write signaling
-messages to it through these endpoints.
+Signaling is WebSocket-push based. The server pushes events to connected
+clients via ``call_ws_manager`` whenever a write occurs, so no polling
+is required. The HTTP endpoints remain for REST semantics and for callers
+that are not yet connected to the WebSocket.
 """
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from google.cloud.firestore_v1 import Client
 
 from app.core.auth import get_current_user
+from app.core.ws_manager import call_ws_manager
 from app.db import get_firestore
 from app.repositories.calls import CallRepository
 from app.repositories.users import get_user_by_email, get_user_by_id
@@ -91,7 +93,7 @@ def list_recent_calls(
     response_model=CallResponse,
     status_code=status.HTTP_201_CREATED,
 )
-def trigger_eve_call(
+async def trigger_eve_call(
     mode: str = Query(default="audio"),
     database: Client = Depends(get_firestore),
     user: dict = Depends(get_current_user),
@@ -110,7 +112,9 @@ def trigger_eve_call(
         notification_type="call_incoming",
         call_id=call["id"],
     )
-    return _serialize(call)
+    serialized = _serialize(call)
+    await call_ws_manager.send(user["uid"], {"type": "incoming_call", "call": serialized})
+    return serialized
 
 
 @router.post(
@@ -118,7 +122,7 @@ def trigger_eve_call(
     response_model=CallResponse,
     status_code=status.HTTP_201_CREATED,
 )
-def create_call(
+async def create_call(
     payload: CallCreate,
     database: Client = Depends(get_firestore),
     user: dict = Depends(get_current_user),
@@ -141,6 +145,11 @@ def create_call(
             notification_type="call_incoming",
             call_id=call["id"],
         )
+        serialized = _serialize(call)
+        await call_ws_manager.send(
+            callee_record["uid"], {"type": "incoming_call", "call": serialized}
+        )
+        return serialized
     return _serialize(call)
 
 
@@ -156,7 +165,7 @@ def get_call(
 
 
 @router.patch("/{call_id}/status", response_model=CallResponse)
-def update_call_status(
+async def update_call_status(
     call_id: str,
     payload: CallStatusUpdate,
     database: Client = Depends(get_firestore),
@@ -189,11 +198,18 @@ def update_call_status(
                 notification_type="call_declined",
                 call_id=call_id,
             )
-    return _serialize(call)
+    serialized = _serialize(call)
+    # Push call_updated to both participants so each side reacts immediately.
+    caller_uid = call.get("caller", {}).get("uid")
+    callee_uid = call.get("callee", {}).get("uid")
+    event = {"type": "call_updated", "call": serialized}
+    for uid in {caller_uid, callee_uid} - {None}:
+        await call_ws_manager.send(uid, event)
+    return serialized
 
 
 @router.post("/{call_id}/signals", response_model=CallResponse)
-def send_call_signal(
+async def send_call_signal(
     call_id: str,
     payload: SignalCreate,
     database: Client = Depends(get_firestore),
@@ -202,4 +218,12 @@ def send_call_signal(
     repository = CallRepository(database)
     _require_participant(repository.get(call_id), user["uid"])
     repository.append_signal(call_id, user["uid"], payload.type, payload.payload)
-    return _serialize(repository.get(call_id))
+    call = _serialize(repository.get(call_id))
+    # Push the updated call document to the other participant so they receive
+    # the new signal (offer / answer / ice-candidate) without polling.
+    caller_uid = call.get("caller", {}).get("uid")
+    callee_uid = call.get("callee", {}).get("uid")
+    other_uid = callee_uid if user["uid"] == caller_uid else caller_uid
+    if other_uid:
+        await call_ws_manager.send(other_uid, {"type": "call_signal", "call": call})
+    return call

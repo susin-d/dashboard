@@ -1,12 +1,13 @@
 import { Palette } from 'lucide-react'
+import { SectionHeading } from '../../components/ui'
 
 export function ThemeSection({ onNavigate }) {
   return (
     <div className="setting-section" id="settings-themes">
-      <div className="section-heading">
-        <h2>Themes &amp; Appearance</h2>
-        <p>Customize presets and colors for all UI elements across every page in StarWaves.</p>
-      </div>
+      <SectionHeading
+        title="Themes & Appearance"
+        description="Customize presets and colors for all UI elements across every page in StarWaves."
+      />
 
       <div className="workspace-settings-card" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 24px', flexWrap: 'wrap', gap: '16px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>

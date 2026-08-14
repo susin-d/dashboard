@@ -26,6 +26,27 @@ def create_user_token(user_data: dict) -> str:
     return auth_serializer().dumps(payload)
 
 
+def get_current_user_from_token(token: str) -> dict:
+    """Validate a raw Starwaves token string and return the user payload.
+
+    Used by the WebSocket endpoint where the token arrives as a query
+    parameter rather than an Authorization header.
+
+    Raises ``HTTPException(401)`` on invalid or expired tokens.
+    """
+    try:
+        data = auth_serializer().loads(token, max_age=86400 * 30)
+        if isinstance(data, dict) and "uid" in data:
+            return data
+    except (BadSignature, SignatureExpired):
+        pass
+
+    raise HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="The authentication token is invalid or expired.",
+    )
+
+
 def get_current_user(
     authorization: str | None = Header(default=None),
 ) -> dict:

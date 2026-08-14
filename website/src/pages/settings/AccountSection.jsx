@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { LogOut, Trash2 } from 'lucide-react'
 import { clearAuthSession, deleteAccount } from '../../lib/authApi'
 import { clearGmailAuthorization } from '../../lib/firebase'
-import { Modal } from '../../components/ui'
+import { Modal, SectionHeading } from '../../components/ui'
 
 export function AccountSection({ user, onSignOut }) {
   const [accountDeleting, setAccountDeleting] = useState(false)
@@ -48,10 +48,10 @@ export function AccountSection({ user, onSignOut }) {
 
   return (
     <div className="setting-section delete-account-section" id="settings-account">
-      <div className="section-heading">
-        <h2>Account &amp; security</h2>
-        <p>Manage session access or permanently remove your account.</p>
-      </div>
+      <SectionHeading
+        title="Account & security"
+        description="Manage session access or permanently remove your account."
+      />
 
       <div className="account-actions-wrapper">
         <div className="account-action-card">

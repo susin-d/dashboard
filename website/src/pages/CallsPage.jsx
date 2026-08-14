@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { AlertCircle, Bot, Loader, Phone, PhoneCall, PhoneIncoming, RefreshCw, Video } from 'lucide-react'
 import { CallScreen } from '../components/calls/CallScreen'
+import { PageHeader } from '../components/ui'
 import { getRecentCalls } from '../lib/callsApi'
 import {
   callStatusLabel,
@@ -66,40 +67,40 @@ export function CallsPage({ callCenter, user }) {
 
   return (
     <section className="calls-page">
-      <div className="page-heading">
-        <div>
-          <p>Communication</p>
-          <h1>Calls</h1>
-        </div>
-        <div className="page-heading-actions">
-          <button
-            type="button"
-            className="secondary-button"
-            onClick={handleCallEve}
-            title="Start voice call with Eve AI Assistant"
-          >
-            <PhoneCall size={15} />
-            <span>Call Eve</span>
-          </button>
-          <button
-            type="button"
-            className="secondary-button"
-            onClick={handleRequestEveCall}
-            title="Have Eve initiate an incoming call to you"
-          >
-            <PhoneIncoming size={15} />
-            <span>Eve Call Me</span>
-          </button>
-          <button
-            className="icon-button"
-            onClick={loadRecent}
-            disabled={loadingRecent}
-            title="Refresh recent calls"
-          >
-            <RefreshCw size={16} className={loadingRecent ? 'calls-spin' : ''} />
-          </button>
-        </div>
-      </div>
+      <PageHeader
+        eyebrow="Communication"
+        title="Calls"
+        actions={
+          <>
+            <button
+              type="button"
+              className="secondary-button"
+              onClick={handleCallEve}
+              title="Start voice call with Eve AI Assistant"
+            >
+              <PhoneCall size={15} />
+              <span>Call Eve</span>
+            </button>
+            <button
+              type="button"
+              className="secondary-button"
+              onClick={handleRequestEveCall}
+              title="Have Eve initiate an incoming call to you"
+            >
+              <PhoneIncoming size={15} />
+              <span>Eve Call Me</span>
+            </button>
+            <button
+              className="icon-button"
+              onClick={loadRecent}
+              disabled={loadingRecent}
+              title="Refresh recent calls"
+            >
+              <RefreshCw size={16} className={loadingRecent ? 'calls-spin' : ''} />
+            </button>
+          </>
+        }
+      />
 
       {inCall && (
         <div className="calls-session-panel">

@@ -6,7 +6,7 @@ import {
   saveEveSpeechPreference,
   synthesizeEveSpeech,
 } from '../../lib/eveSpeechApi'
-import { CustomDropdown } from '../../components/ui/CustomDropdown'
+import { CustomDropdown, SectionHeading } from '../../components/ui'
 import {
   DEFAULT_EVE_VOICE_PREFS,
   EVE_VOICE_LANGUAGES,
@@ -286,14 +286,10 @@ export function EveVoiceSection() {
 
   return (
     <div className="setting-section" id="settings-eve-voice">
-      <div className="section-heading">
-        <h2>Eve voice</h2>
-        <p>
-          Choose how Eve listens and sounds during voice calls — which speech
-          providers she uses and the language she speaks. Provider choices are
-          saved to your account; voice details stay on this browser.
-        </p>
-      </div>
+      <SectionHeading
+        title="Eve voice"
+        description="Choose how Eve listens and sounds during voice calls — which speech providers she uses and the language she speaks. Provider choices are saved to your account; voice details stay on this browser."
+      />
 
       <div className="setting-content-stack">
         <form className="coding-settings-card" onSubmit={handleSave}>

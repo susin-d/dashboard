@@ -5,6 +5,7 @@ import {
   saveCompetitiveCodingProfile,
 } from '../../lib/competitiveCodingProfileApi'
 import { loadContests } from '../../lib/workspaceApi'
+import { SectionHeading } from '../../components/ui'
 
 const CONTEST_PLATFORMS = [
   {
@@ -134,10 +135,10 @@ export function CodingSection({ user, onContestSitesChange }) {
 
   return (
     <div className="setting-section" id="settings-coding">
-      <div className="section-heading">
-        <h2>Competitive coding</h2>
-        <p>Add a username or full profile URL for each coding platform.</p>
-      </div>
+      <SectionHeading
+        title="Competitive coding"
+        description="Add a username or full profile URL for each coding platform."
+      />
 
       <div className="setting-content-stack">
         <form

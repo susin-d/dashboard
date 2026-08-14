@@ -4,7 +4,7 @@ Living project snapshot for AI agents. `AGENTS.md` holds the permanent rules;
 this file holds the **current state** of the codebase and must be kept up to
 date whenever the implementation changes.
 
-> **Last updated:** 2026-08-14 (Extracted reusable `TabNav` component with sliding indicator animation from `SettingPage` into `components/ui/TabNav.jsx` + `styles/components/tab-nav.css`; refactored `SettingPage` and `MailsPage` inbox tabs to use it; removed duplicate CSS from `settings.css` and `mails.css`)
+> **Last updated:** 2026-08-14 (Replaced call signaling HTTP polling with persistent WebSocket connection `/ws/calls` and server-side `CallWSManager` push events; removed 3s incoming call poll and 2s active call poll in `useCallCenter.js`; added tab visibility-aware auto-reconnecting `callsSocket.js` client; configured Nginx `/ws/` proxy with 1-hour timeout)
 
 ---
 
@@ -54,8 +54,9 @@ Starwaves/
 
 ## 3. Backend (FastAPI)
 
-- **App factory**: `server/app/main.py` → `create_app()` with `@asynccontextmanager` `lifespan` manager (CORS + `/api/v1` router + `ServerBackgroundWorker` daemon thread).
+- **App factory**: `server/app/main.py` → `create_app()` with `@asynccontextmanager` `lifespan` manager (CORS + `/api/v1` router + `/ws/calls` WebSocket endpoint + `ServerBackgroundWorker` daemon thread).
 - **Background Worker Daemon**: `server/app/core/worker.py` -> `ServerBackgroundWorker` runs in long-running server environments (Docker / Uvicorn daemons / systemd) to auto-execute due Eve schedules, trigger voice calls, and expire stale calls every 30s.
+- **WebSocket Manager**: `server/app/core/ws_manager.py` -> `CallWSManager` handles active user WebSocket connections and dispatches real-time call events (`incoming_call`, `call_signal`, `call_updated`).
 - **Route registry**: `server/app/api/router.py` includes all top-level routers.
 - **Prefix**: `/api/v1` (see `server/app/core/config.py`).
 - **Auth**: Firebase ID tokens via `server/app/core/auth.py`.
@@ -133,7 +134,7 @@ SMTP, Firestore database id, CORS origins. Loads `.env.prod` before `.env`.
   notifications, contests, calendar, email), `gmailApi`, `googleCalendar`,
   `googleContacts`, `googleDriveApi`, `eveApi`, `eveSchedulesApi`, `emailApi`, `githubApi`,
   `googleChatApi`, `codingStatsApi`, `competitiveCodingProfileApi`,
-  `documentsApi`, `contactsApi`, `callsApi`, `aiModelsApi`, `eveSpeechApi`), plus shared `request.js`
+  `documentsApi`, `contactsApi`, `callsApi`, `callsSocket`, `aiModelsApi`, `eveSpeechApi`), plus shared `request.js`
   (single `API_URL` + `apiRequest` wrapper), `firebase.js`, `authApi.js`,
   `index.js`.
 - **Themes** (`src/themes/`): `presets.js` holds `THEME_PRESETS` (parsed from
@@ -219,9 +220,10 @@ SMTP, Firestore database id, CORS origins. Loads `.env.prod` before `.env`.
   - Tools added to Eve assistant (`create_eve_schedule`, `list_eve_schedules`, `delete_eve_schedule`) so users can schedule reminders conversationally in chat or via the `EveSchedulesCard` sidebar component.
   - Vercel Cron Integration: `vercel.json` registers background cron job (`/api/v1/cron/execute-schedules` every 15 minutes `*/15 * * * *`) targeting FastAPI backend route `app/api/routes/cron.py`.
 - Calls & Eve AI Voice Calling: app-wide WebRTC voice/video calls between StarWaves users and bidirectional voice calls with Eve AI Assistant (`eve@starwaves.app` / `eve-bot`).
+  - Real-time WebSocket signaling: uses persistent `/ws/calls` connection (`callsSocket.js` + `ws_manager.py`) with zero HTTP polling. Incoming calls, WebRTC offers/answers/ICE candidates, and call status transitions are pushed instantaneously to participants upon write operations.
   - Users can dial `eve` or `eve@starwaves.app`, click quick-action buttons ("Call Eve" / "Receive call from Eve"), or ask Eve in chat ("Eve, call me") to trigger immediate incoming voice calls.
   - Active Eve calls launch a dedicated monochrome AI pulse wave visualizer (`CallScreen.jsx`), integrated Web Speech API STT (Speech-to-Text) voice recognition, and TTS (Text-to-Speech) voice synthesis with real-time speech captions overlay and mute/audio controls.
-  - Backend: `server/app/api/routes/calls.py` handles `eve-bot` resolution and `/calls/trigger-eve` endpoint; `server/app/services/eve.py` includes the `trigger_eve_call` workspace tool.
+  - Backend: `server/app/api/routes/calls.py` handles `eve-bot` resolution and `/calls/trigger-eve` endpoint; `server/app/api/routes/calls_ws.py` handles `/ws/calls` WebSocket lifecycle; `server/app/services/eve.py` includes the `trigger_eve_call` workspace tool.
   - Calls integrate with notifications: starting a call, missing a call, or declining a call automatically creates workspace notifications in Firestore via `NotificationRepository`, dispatches FCM push notifications to user devices, and triggers browser desktop notifications. Calls are also surfaced in the sidebar navigation, Header notification drawer (with dedicated call icons), and landing page "Remind me" CTA routes to signup.
 - Eve voice call UX (Web Speech API, `for now` approach): Eve voice calls surface STT state via `sttSupported`/`sttStatus` (`listening`/`unsupported`/`permission`/`error`) in the `CallScreen.jsx` status line, and show an on-call text fallback input whenever voice input is not listening (unsupported browser, denied mic permission, or STT error). An echo-loop guard in `useCallCenter.js` ignores speech-recognition results while Eve's TTS is playing (plus a 700ms cooldown) so her own spoken words are never transcribed back into the conversation. Speech preferences (language, voice, rate, pitch) persist under `starwaves.eve_voice_prefs` via `src/utils/speech.js` (pure helpers + vitest suite), the `useSpeechVoices` hook, and the new Settings "Eve voice" section (`EveVoiceSection.jsx`). Note: Web Speech STT runs through the browser's speech service (Chrome uses Google servers, not on-device); TTS uses local OS voices.
 - Eve voice call server STT/TTS integration: `useCallCenter.js` loads the user's speech provider choice (`loadEveSpeech` → `GET /settings/eve-speech`) whenever an Eve call becomes active and stores it in `speechPrefs` (`sttProvider`/`sttModel`/`ttsProvider`/`ttsVoice`). When the TTS provider is `google`, Eve's replies are synthesized server-side via `synthesizeEveSpeech` (`POST /eve/synthesize`, Google Cloud TTS) and played through an `Audio` element with the same `isEveSpeaking`/echo-guard wiring as browser TTS. When the STT provider is `groq`, browser SpeechRecognition is skipped in favor of push-to-talk: `startSttRecording`/`stopSttRecording` capture mic audio (`MediaRecorder`, webm/opus) and `transcribeEveAudio` (`POST /eve/transcribe`, Groq Whisper) sends the transcript through the normal Eve reply path. `CallScreen.jsx` renders a hold-to-talk mic button when `sttProvider === 'groq'`, with release-to-send hints and the text fallback still available.
@@ -239,8 +241,7 @@ SMTP, Firestore database id, CORS origins. Loads `.env.prod` before `.env`.
 - Calendar event creation/editing not implemented.
 - Mail attachments, forwarding, rich-text composition, persistent drafts not
   implemented.
-- Calls: signaling is polling-based (2s call poll, 3s incoming poll), so there
-  is a short setup delay; calls use public STUN only, so peers behind strict
+- Calls: calls use public STUN only, so peers behind strict
   symmetric NAT/firewalls may fail to connect until a TURN relay is added.
   Signaling message backlogs are bounded (see §6).
 - Production frontend build emits a bundle-size advisory.

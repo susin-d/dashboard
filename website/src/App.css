@@ -17,6 +17,9 @@
 @import './styles/components/calendar-picker.css';
 @import './styles/components/markdown.css';
 @import './styles/components/tab-nav.css';
+@import './styles/components/section-heading.css';
+@import './styles/components/settings-card.css';
+@import './styles/components/metric-card.css';
 
 /* Page Styles */
 @import './styles/pages/dashboard.css';

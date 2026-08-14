@@ -13,7 +13,7 @@ import {
 } from 'lucide-react'
 import { usePersistentState } from '../hooks/usePersistentState'
 import { createHackathon, deleteHackathon, updateHackathon } from '../lib/workspaceApi'
-import { ConfirmDialog, Modal } from '../components/ui'
+import { ConfirmDialog, MetricCard, Modal, PageHeader } from '../components/ui'
 
 const emptyHackathon = {
   title: '',
@@ -174,27 +174,27 @@ export function HackathonsPage({ hackathons, setHackathons, canLoadMore, loading
 
   return (
     <section className="hackathons-page">
-      <div className="page-heading">
-        <div>
-          <p>Build & collaborate</p>
-          <h1>Hackathons</h1>
-          <span className="page-heading-description">Find a room, a team, and a deadline worth building toward.</span>
-        </div>
-        <div className="page-heading-actions">
-          <div className="hackathon-summary">
-            <Rocket size={16} />
-            <span>{hackathons.length} upcoming</span>
-          </div>
-          <button className="primary-button" onClick={() => setFormOpen(true)}>
-            <Plus size={16} /> Add hackathon
-          </button>
-        </div>
-      </div>
+      <PageHeader
+        eyebrow="Build & collaborate"
+        title="Hackathons"
+        description="Find a room, a team, and a deadline worth building toward."
+        actions={
+          <>
+            <div className="hackathon-summary">
+              <Rocket size={16} />
+              <span>{hackathons.length} upcoming</span>
+            </div>
+            <button className="primary-button" onClick={() => setFormOpen(true)}>
+              <Plus size={16} /> Add hackathon
+            </button>
+          </>
+        }
+      />
 
       <div className="workspace-insight-grid" aria-label="Hackathon overview">
-        <div className="workspace-insight-card"><span>Opportunities</span><strong>{hackathons.length}</strong><small>in your pipeline</small></div>
-        <div className="workspace-insight-card"><span>Online</span><strong>{hackathons.filter((item) => item.mode === 'Online').length}</strong><small>join from anywhere</small></div>
-        <div className="workspace-insight-card"><span>Next step</span><strong>{hackathons.length ? 'Choose' : 'Add one'}</strong><small>{hackathons.length ? 'a challenge to pursue' : 'your first challenge'}</small></div>
+        <MetricCard className="compact" label="Opportunities" value={hackathons.length} detail="in your pipeline" />
+        <MetricCard className="compact" label="Online" value={hackathons.filter((item) => item.mode === 'Online').length} detail="join from anywhere" />
+        <MetricCard className="compact" label="Next step" value={hackathons.length ? 'Choose' : 'Add one'} detail={hackathons.length ? 'a challenge to pursue' : 'your first challenge'} />
       </div>
 
       <div className="hackathon-toolbar" aria-label="Filter hackathons">

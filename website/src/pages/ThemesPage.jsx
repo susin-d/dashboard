@@ -16,6 +16,7 @@ import {
   Layers,
   Zap,
 } from 'lucide-react'
+import { PageHeader, SectionHeading } from '../components/ui'
 import {
   useThemeCustomizer,
   PALETTE_GROUPS,
@@ -72,70 +73,70 @@ export function ThemesPage() {
 
   return (
     <section className="themes-page">
-      <div className="page-heading">
-        <div>
-          <p>Account</p>
-          <h1>UI &amp; UX Customization Studio</h1>
-        </div>
-        <div className="themes-header-actions">
-          <button
-            type="button"
-            className="secondary-button"
-            onClick={resetToDefault}
-            title="Reset UI/UX settings to system defaults"
-          >
-            <RotateCcw size={15} />
-            Reset Defaults
-          </button>
-          <button
-            type="button"
-            className="secondary-button"
-            onClick={exportTheme}
-            title="Export full UI/UX configuration JSON"
-          >
-            <Download size={15} />
-            Export JSON
-          </button>
-          <button
-            type="button"
-            className="secondary-button"
-            onClick={triggerImport}
-            title="Import full UI/UX configuration JSON"
-          >
-            <Upload size={15} />
-            Import JSON
-          </button>
-          <input
-            type="file"
-            ref={fileInputRef}
-            onChange={handleFileUpload}
-            accept=".json"
-            style={{ display: 'none' }}
-          />
-          <button
-            type="button"
-            className="primary-button theme-save-btn"
-            onClick={saveCustomTheme}
-          >
-            {isSaved ? (
-              <>
-                <Check size={16} /> Saved!
-              </>
-            ) : (
-              <>
-                <Sparkles size={16} /> Save Studio Preset
-              </>
-            )}
-          </button>
-        </div>
-      </div>
+      <PageHeader
+        eyebrow="Account"
+        title="UI & UX Customization Studio"
+        actions={
+          <div className="themes-header-actions">
+            <button
+              type="button"
+              className="secondary-button"
+              onClick={resetToDefault}
+              title="Reset UI/UX settings to system defaults"
+            >
+              <RotateCcw size={15} />
+              Reset Defaults
+            </button>
+            <button
+              type="button"
+              className="secondary-button"
+              onClick={exportTheme}
+              title="Export full UI/UX configuration JSON"
+            >
+              <Download size={15} />
+              Export JSON
+            </button>
+            <button
+              type="button"
+              className="secondary-button"
+              onClick={triggerImport}
+              title="Import full UI/UX configuration JSON"
+            >
+              <Upload size={15} />
+              Import JSON
+            </button>
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handleFileUpload}
+              accept=".json"
+              style={{ display: 'none' }}
+            />
+            <button
+              type="button"
+              className="primary-button theme-save-btn"
+              onClick={saveCustomTheme}
+            >
+              {isSaved ? (
+                <>
+                  <Check size={16} /> Saved!
+                </>
+              ) : (
+                <>
+                  <Sparkles size={16} /> Save Studio Preset
+                </>
+              )}
+            </button>
+          </div>
+        }
+      />
 
       {/* 1. Presets */}
       <div className="themes-section">
-        <div className="section-heading">
-          <h2>1. Theme Presets</h2>
-          <p>Curated presets grouped by palette size, from monochrome to vibrant tetra color themes.</p>
-        </div>
+        <SectionHeading
+          title="1. Theme Presets"
+          description="Curated presets grouped by palette size, from monochrome to vibrant tetra color themes."
+        />
         {PALETTE_GROUPS.map((group) => {
           const presets = getPresetsByPalette(group.id)
 
@@ -196,10 +197,10 @@ export function ThemesPage() {
 
       {/* 2. Interface Geometry & UX Controls */}
       <div className="themes-section">
-        <div className="section-heading">
-          <h2>2. Interface Geometry, Motion &amp; UX</h2>
-          <p>Control font families, corner roundness, layout density, elevation depth, and motion speeds.</p>
-        </div>
+        <SectionHeading
+          title="2. Interface Geometry, Motion & UX"
+          description="Control font families, corner roundness, layout density, elevation depth, and motion speeds."
+        />
 
         <div className="ux-controls-grid">
           {/* Typography */}
@@ -320,10 +321,10 @@ export function ThemesPage() {
 
       {/* 3. Live Preview */}
       <div className="themes-section">
-        <div className="section-heading">
-          <h2>3. Live Interface Preview</h2>
-          <p>Real-time view of your typography, corner roundness, shadows, motion, and colors.</p>
-        </div>
+        <SectionHeading
+          title="3. Live Interface Preview"
+          description="Real-time view of your typography, corner roundness, shadows, motion, and colors."
+        />
 
         <div className="live-preview-container">
           <div className="preview-header-bar">
@@ -386,10 +387,10 @@ export function ThemesPage() {
 
       {/* 4. Color Controls */}
       <div className="themes-section">
-        <div className="section-heading">
-          <h2>4. Customize All Element Colors</h2>
-          <p>Fine-tune Hex/RGB colors for backgrounds, cards, typography, buttons, borders, and status tags.</p>
-        </div>
+        <SectionHeading
+          title="4. Customize All Element Colors"
+          description="Fine-tune Hex/RGB colors for backgrounds, cards, typography, buttons, borders, and status tags."
+        />
 
         <div className="color-category-tabs">
           <button

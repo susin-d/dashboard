@@ -17,6 +17,7 @@ import {
   getGoogleChatSpaces,
   sendGoogleChatMessage,
 } from '../lib/googleChatApi'
+import { PageHeader } from '../components/ui'
 
 export function ChatsPage({ onNavigate }) {
   const [accounts, setAccounts] = useState([])
@@ -123,36 +124,36 @@ export function ChatsPage({ onNavigate }) {
 
   return (
     <section className="chats-page">
-      <div className="page-heading">
-        <div>
-          <p>Communication</p>
-          <h1>Chats</h1>
-        </div>
-        <div className="page-heading-actions">
-          {accounts.length > 0 ? (
-            <div className="account-badge-pill">
-              <span className="dot active"></span>
-              {accounts.length} Google {accounts.length === 1 ? 'Account' : 'Accounts'} Connected
-            </div>
-          ) : !loading ? (
+      <PageHeader
+        eyebrow="Communication"
+        title="Chats"
+        actions={
+          <>
+            {accounts.length > 0 ? (
+              <div className="account-badge-pill">
+                <span className="dot active"></span>
+                {accounts.length} Google {accounts.length === 1 ? 'Account' : 'Accounts'} Connected
+              </div>
+            ) : !loading ? (
+              <button
+                className="secondary-button icon-button-text"
+                onClick={() => onNavigate && onNavigate('setting')}
+              >
+                <Settings size={16} />
+                <span>Connect Google Chat in Settings</span>
+              </button>
+            ) : null}
             <button
-              className="secondary-button icon-button-text"
-              onClick={() => onNavigate && onNavigate('setting')}
+              className="icon-button"
+              onClick={() => fetchSpaces(selectedAccountEmail)}
+              disabled={loading}
+              title="Refresh"
             >
-              <Settings size={16} />
-              <span>Connect Google Chat in Settings</span>
+              <RefreshCw size={16} className={loading ? 'spin' : ''} />
             </button>
-          ) : null}
-          <button
-            className="icon-button"
-            onClick={() => fetchSpaces(selectedAccountEmail)}
-            disabled={loading}
-            title="Refresh"
-          >
-            <RefreshCw size={16} className={loading ? 'spin' : ''} />
-          </button>
-        </div>
-      </div>
+          </>
+        }
+      />
 
       {/* No accounts connected empty state */}
       {!loading && accounts.length === 0 && (
