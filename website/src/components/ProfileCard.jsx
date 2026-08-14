@@ -368,7 +368,7 @@ export function ProfileCard({ user, onProfileUpdated, onSignOut }) {
                   Cancel
                 </button>
                 <button type="submit" disabled={saving} className="primary-button">
-                  {saving ? 'Saving…' : 'Save Changes'}
+                  {saving ? 'Saving...' : 'Save Changes'}
                 </button>
               </div>
             </form>

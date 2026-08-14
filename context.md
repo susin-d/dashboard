@@ -4,7 +4,7 @@ Living project snapshot for AI agents. `AGENTS.md` holds the permanent rules;
 this file holds the **current state** of the codebase and must be kept up to
 date whenever the implementation changes.
 
-> **Last updated:** 2026-08-14 (Removed test/welcome/reminder email buttons and dynamic Verified email status badge in Profile)
+> **Last updated:** 2026-08-14 (Added Google Contacts direct OAuth sync via People API and Google CSV / vCard import to Contacts)
 
 ---
 
@@ -66,7 +66,7 @@ Starwaves/
 | ------------ | ---------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
 | Auth         | `app/api/routes/auth/`                                                                 | `oauth`, `credentials`, `password`, `account`, `combine`                                             |
 | Workspace    | `app/api/routes/workspace/`                                                            | `jobs`, `hackathons`, `projects`, `notifications`, `contests`, `calendar`                          |
-| Integrations | `google_calendar`, `google_drive`, `gmail`, `github`, `google_chat`            | OAuth callbacks under`/integrations/*/callback`                                                              |
+| Integrations | `google_calendar`, `google_contacts`, `google_drive`, `gmail`, `github`, `google_chat` | OAuth callbacks under`/integrations/*/callback`                                                              |
 | Features     | `documents`, `todos`, `contacts`, `profiles`, `notifications`, `email`, `eve`, `calls` | EVE = AI assistant;`calls` = WebRTC signaling; `contacts` = Address book / contacts directory                 |
 | Coding       | `coding_stats`, `competitive_coding_profile`                                         | Contests + profile stats                                                                                       |
 | Settings     | `ai_models`, `eve_speech`                                                            | `/settings/ai-models` AI provider/model + `/settings/eve-speech` STT/TTS provider/voice preference for EVE |
@@ -80,7 +80,7 @@ Starwaves/
 
 ### Services (`server/app/services/`)
 
-`coding_stats`, `contests`, `email`, `eve`, `github`, `google_calendar`,
+`coding_stats`, `contests`, `email`, `eve`, `github`, `google_calendar`, `google_contacts`,
 `hackathon_sources`, `notifications`, plus `oauth/` package (`_shared.py`,
 `google.py`, `github.py`) that centralizes provider-agnostic OAuth helpers
 (`format_oauth_error`, state-serializer factory, `integration_account_id`,
@@ -130,7 +130,7 @@ SMTP, Firestore database id, CORS origins. Loads `.env.prod` before `.env`.
 - **API clients** (`src/lib/`): one per backend feature (`todosApi`,
   `workspaceApi/` (package split by feature: jobs, projects, hackathons,
   notifications, contests, calendar, email), `gmailApi`, `googleCalendar`,
-  `googleDriveApi`, `eveApi`, `eveSchedulesApi`, `emailApi`, `githubApi`,
+  `googleContacts`, `googleDriveApi`, `eveApi`, `eveSchedulesApi`, `emailApi`, `githubApi`,
   `googleChatApi`, `codingStatsApi`, `competitiveCodingProfileApi`,
   `documentsApi`, `contactsApi`, `callsApi`, `aiModelsApi`, `eveSpeechApi`), plus shared `request.js`
   (single `API_URL` + `apiRequest` wrapper), `firebase.js`, `authApi.js`,
