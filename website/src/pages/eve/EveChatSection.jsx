@@ -16,10 +16,21 @@ import {
   Sparkles,
   MessageSquare,
   Check,
+  Paperclip,
+  X,
+  FileText,
 } from 'lucide-react'
 import { Markdown } from '../../components/ui/Markdown'
 
 const MAX_CHARS = 4000
+
+function formatFileSize(bytes) {
+  if (!bytes || bytes === 0) return '0 B'
+  const k = 1024
+  const sizes = ['B', 'KB', 'MB', 'GB']
+  const i = Math.floor(Math.log(bytes) / Math.log(k))
+  return `${parseFloat((bytes / Math.pow(k, i)).toFixed(1))} ${sizes[i]}`
+}
 
 export function EveChatSection({
   messages,
@@ -44,9 +55,12 @@ export function EveChatSection({
 }) {
   const messagesEndRef = useRef(null)
   const composerRef = useRef(null)
+  const fileInputRef = useRef(null)
   const [queueCollapsed, setQueueCollapsed] = useState(false)
   const [isRecording, setIsRecording] = useState(false)
   const [modelPickerOpen, setModelPickerOpen] = useState(false)
+  const [attachments, setAttachments] = useState([])
+  const [isDragging, setIsDragging] = useState(false)
   const modelPickerRef = useRef(null)
   const recognitionRef = useRef(null)
 
@@ -72,6 +86,54 @@ export function EveChatSection({
       document.removeEventListener('keydown', handleKeyDown)
     }
   }, [])
+
+  const processFiles = async (fileList) => {
+    const files = Array.from(fileList || [])
+    if (!files.length) return
+
+    const readPromises = files.map((file) => {
+      return new Promise((resolve) => {
+        const isImage = file.type.startsWith('image/')
+        const isText =
+          file.type.startsWith('text/') ||
+          /\.(txt|md|json|js|jsx|ts|tsx|html|css|py|csv|xml|yaml|yml|sql|sh|env|log|rs|go|java|c|cpp|h)$/i.test(file.name)
+
+        const fileMeta = {
+          id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+          name: file.name,
+          size: file.size,
+          type: file.type || 'application/octet-stream',
+          isImage,
+        }
+
+        if (isImage) {
+          const reader = new FileReader()
+          reader.onload = (e) => resolve({ ...fileMeta, dataUrl: e.target.result })
+          reader.onerror = () => resolve(fileMeta)
+          reader.readAsDataURL(file)
+        } else if (isText || file.size < 500000) {
+          const reader = new FileReader()
+          reader.onload = (e) => {
+            const text = String(e.target.result || '')
+            const truncated = text.length > 40000 ? `${text.slice(0, 40000)}\n\n[...truncated]` : text
+            resolve({ ...fileMeta, textContent: truncated })
+          }
+          reader.onerror = () => resolve(fileMeta)
+          reader.readAsText(file)
+        } else {
+          resolve(fileMeta)
+        }
+      })
+    })
+
+    const loaded = await Promise.all(readPromises)
+    setAttachments((prev) => [...prev, ...loaded])
+    composerRef.current?.focus()
+  }
+
+  const removeAttachment = (id) => {
+    setAttachments((prev) => prev.filter((a) => a.id !== id))
+  }
 
   const handleEditQueueItem = (index) => {
     const item = promptQueue[index]
@@ -133,6 +195,13 @@ export function EveChatSection({
     }
   }
 
+  const onFormSubmit = (e) => {
+    e?.preventDefault()
+    if (!draft.trim() && attachments.length === 0) return
+    handleSubmit(e, attachments)
+    setAttachments([])
+  }
+
   const currentModelLabel = activeModel?.label || activeModel?.model || 'GPT-5 mini'
 
   return (
@@ -149,12 +218,31 @@ export function EveChatSection({
               <div className="eve-bubble-header">
                 <span className="eve-sender-name">{msg.role === 'assistant' ? 'Eve' : 'You'}</span>
               </div>
+              {msg.attachments && msg.attachments.length > 0 && (
+                <div className="eve-bubble-attachments">
+                  {msg.attachments.map((att) => (
+                    <div key={att.id} className="eve-bubble-attachment-card">
+                      {att.isImage && att.dataUrl ? (
+                        <img src={att.dataUrl} alt={att.name} className="eve-bubble-attachment-thumb" />
+                      ) : (
+                        <div className="eve-bubble-attachment-icon-box">
+                          <FileText size={14} />
+                        </div>
+                      )}
+                      <div className="eve-bubble-attachment-meta">
+                        <span className="eve-bubble-attachment-name" title={att.name}>{att.name}</span>
+                        <span className="eve-bubble-attachment-size">{formatFileSize(att.size)}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
               {msg.role === 'assistant' ? (
                 <div className="eve-bubble-text eve-bubble-markdown">
                   <Markdown content={msg.content} />
                 </div>
               ) : (
-                <p className="eve-bubble-text">{msg.content}</p>
+                msg.content && <p className="eve-bubble-text">{msg.content}</p>
               )}
             </div>
           </div>
@@ -292,8 +380,27 @@ export function EveChatSection({
         )}
 
         {/* ── Modern Composer Box ── */}
-        <form className="eve-page-composer" onSubmit={handleSubmit}>
-          <div className="eve-composer-card">
+        <form
+          className="eve-page-composer"
+          onSubmit={onFormSubmit}
+          onDragOver={(e) => {
+            e.preventDefault()
+            setIsDragging(true)
+          }}
+          onDragLeave={(e) => {
+            if (!e.currentTarget.contains(e.relatedTarget)) {
+              setIsDragging(false)
+            }
+          }}
+          onDrop={(e) => {
+            e.preventDefault()
+            setIsDragging(false)
+            if (e.dataTransfer.files?.length) {
+              processFiles(e.dataTransfer.files)
+            }
+          }}
+        >
+          <div className={`eve-composer-card ${isDragging ? 'dragging' : ''}`}>
             {draft.startsWith('@') && matchingTools.length > 0 && (
               <div className="eve-skills-popup" role="listbox" aria-label="Eve tools">
                 <div className="eve-skills-popup-title">
@@ -338,6 +445,35 @@ export function EveChatSection({
               </div>
             )}
 
+            {attachments.length > 0 && (
+              <div className="eve-composer-attachments-row" aria-label="Attached files">
+                {attachments.map((file) => (
+                  <div key={file.id} className="eve-composer-attachment-chip">
+                    {file.isImage && file.dataUrl ? (
+                      <img src={file.dataUrl} alt={file.name} className="eve-attachment-thumb" />
+                    ) : (
+                      <Paperclip size={13} className="eve-attachment-icon" />
+                    )}
+                    <div className="eve-attachment-meta">
+                      <span className="eve-attachment-name" title={file.name}>
+                        {file.name}
+                      </span>
+                      <span className="eve-attachment-size">{formatFileSize(file.size)}</span>
+                    </div>
+                    <button
+                      type="button"
+                      className="eve-attachment-remove-btn"
+                      onClick={() => removeAttachment(file.id)}
+                      title={`Remove ${file.name}`}
+                      aria-label={`Remove ${file.name}`}
+                    >
+                      <X size={12} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+
             <textarea
               ref={composerRef}
               className="eve-composer-textarea"
@@ -346,12 +482,29 @@ export function EveChatSection({
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && !e.shiftKey) {
                   e.preventDefault()
-                  handleSubmit(e)
+                  onFormSubmit(e)
                 }
               }}
-              placeholder="Ask Eve anything… Type @ to call a tool or / for a pre-saved prompt"
+              placeholder={
+                attachments.length > 0
+                  ? 'Add a prompt about the attached files (or press Enter to send)…'
+                  : 'Ask Eve anything… Type @ for tools, / for prompts, or + to add files'
+              }
               rows={2}
               maxLength={MAX_CHARS}
+            />
+
+            <input
+              ref={fileInputRef}
+              type="file"
+              multiple
+              style={{ display: 'none' }}
+              onChange={(e) => {
+                if (e.target.files) {
+                  processFiles(e.target.files)
+                  e.target.value = ''
+                }
+              }}
             />
 
             <div className="eve-composer-bottom-bar">
@@ -359,8 +512,9 @@ export function EveChatSection({
                 <button
                   type="button"
                   className="eve-bottom-pill-btn"
-                  onClick={() => setDraft((d) => (d ? `${d} @` : '@'))}
-                  title="Add workspace tool (@)"
+                  onClick={() => fileInputRef.current?.click()}
+                  title="Add files or documents"
+                  aria-label="Add files"
                 >
                   <Plus size={14} />
                 </button>
@@ -467,7 +621,7 @@ export function EveChatSection({
                 <button
                   type="submit"
                   className="eve-bottom-send-btn"
-                  disabled={!draft.trim()}
+                  disabled={!draft.trim() && attachments.length === 0}
                   aria-label={isSending ? 'Queue message' : 'Send message to Eve'}
                   title={isSending ? 'Queue message' : 'Send'}
                 >

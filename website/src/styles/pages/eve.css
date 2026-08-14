@@ -280,6 +280,87 @@
   color: var(--text-muted, #71717a);
 }
 
+/* Chat Bubble Attachments */
+.eve-bubble-attachments {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin-bottom: 0.45rem;
+}
+
+.eve-bubble-attachment-card {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.35rem 0.6rem 0.35rem 0.45rem;
+  border-radius: var(--radius-xs, 6px);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  max-width: 240px;
+}
+
+.eve-chat-bubble.user .eve-bubble-attachment-card {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.22);
+}
+
+.eve-bubble-attachment-thumb {
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  object-fit: cover;
+  flex-shrink: 0;
+  border: 1px solid var(--border-color);
+}
+
+.eve-bubble-attachment-icon-box {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  flex-shrink: 0;
+}
+
+.eve-chat-bubble.user .eve-bubble-attachment-icon-box {
+  background: rgba(255, 255, 255, 0.18);
+  color: var(--text-inverse);
+}
+
+.eve-bubble-attachment-meta {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+}
+
+.eve-bubble-attachment-name {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.25;
+}
+
+.eve-chat-bubble.user .eve-bubble-attachment-name {
+  color: var(--text-inverse);
+}
+
+.eve-bubble-attachment-size {
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  line-height: 1.2;
+}
+
+.eve-chat-bubble.user .eve-bubble-attachment-size {
+  color: rgba(255, 255, 255, 0.7);
+}
+
 .eve-bubble-text {
   font-size: 0.9rem;
   line-height: 1.55;
@@ -623,12 +704,98 @@
   border-radius: 14px;
   background: var(--bg-card, var(--bg-secondary));
   padding: 12px 14px 10px;
-  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast), background var(--transition-fast);
   box-shadow: var(--shadow-sm);
+}
+
+.eve-composer-card.dragging {
+  border-color: var(--text-primary);
+  border-style: dashed;
+  background: var(--bg-hover);
 }
 
 .eve-composer-card:focus-within {
   border-color: var(--border-heavy, var(--text-primary));
+}
+
+/* Composer Attachment Chips */
+.eve-composer-attachments-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  padding-bottom: 0.55rem;
+  margin-bottom: 0.35rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.eve-composer-attachment-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.25rem 0.55rem 0.25rem 0.4rem;
+  border-radius: var(--radius-xs, 6px);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  max-width: 220px;
+}
+
+.eve-attachment-thumb {
+  width: 22px;
+  height: 22px;
+  border-radius: 4px;
+  object-fit: cover;
+  flex-shrink: 0;
+  border: 1px solid var(--border-color);
+}
+
+.eve-attachment-icon {
+  color: var(--text-secondary);
+  flex-shrink: 0;
+}
+
+.eve-attachment-meta {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+}
+
+.eve-attachment-name {
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.2;
+}
+
+.eve-attachment-size {
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  line-height: 1.2;
+}
+
+.eve-attachment-remove-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 0;
+  margin-left: 2px;
+  flex-shrink: 0;
+  transition: all var(--transition-fast);
+}
+
+.eve-attachment-remove-btn:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
 }
 
 .eve-composer-textarea {

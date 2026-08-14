@@ -134,12 +134,12 @@ export function EvePage({ callCenter, onNavigate, onWorkspaceChanged, chatResetK
     })
   }
 
-  const sendMessage = async (customContent) => {
+  const sendMessage = async (customContent, attachments = []) => {
     const content = (customContent ?? draft).trim()
-    if (!content || isSending) return
+    if ((!content && (!attachments || attachments.length === 0)) || isSending) return
 
     try {
-      await sendPrompt(content, messages)
+      await sendPrompt(content, messages, attachments)
     } catch (requestError) {
       setError(requestError.message || 'Failed to send message to Eve.')
     } finally {
@@ -147,8 +147,20 @@ export function EvePage({ callCenter, onNavigate, onWorkspaceChanged, chatResetK
     }
   }
 
-  const sendPrompt = async (content, baseMessages) => {
-    const nextMessages = [...baseMessages, { role: 'user', content }]
+  const sendPrompt = async (content, baseMessages, attachments = []) => {
+    const userMessage = {
+      role: 'user',
+      content: content || 'Please review the attached file(s).',
+      attachments: attachments.map((a) => ({
+        id: a.id,
+        name: a.name,
+        size: a.size,
+        type: a.type,
+        isImage: a.isImage,
+        dataUrl: a.dataUrl,
+      })),
+    }
+    const nextMessages = [...baseMessages, userMessage]
     setMessages(nextMessages)
     setDraft('')
     setError('')
@@ -161,7 +173,25 @@ export function EvePage({ callCenter, onNavigate, onWorkspaceChanged, chatResetK
       setActiveSessionId(sessionId)
     }
 
-    const response = await sendEveMessage(nextMessages, sessionId)
+    const apiMessages = nextMessages.map((m) => {
+      if (m.role === 'user' && m.attachments?.length) {
+        const fileBlocks = (m.attachments === userMessage.attachments ? attachments : m.attachments)
+          .map((att) => {
+            if (att.textContent) {
+              return `[Attached file: ${att.name}]\n\`\`\`\n${att.textContent}\n\`\`\``
+            }
+            return `[Attached file: ${att.name} (${att.type || 'file'})]`
+          })
+          .join('\n\n')
+        return {
+          role: 'user',
+          content: `${fileBlocks}\n\n${m.content || 'Please review the attached file(s).'}`,
+        }
+      }
+      return { role: m.role, content: m.content }
+    })
+
+    const response = await sendEveMessage(apiMessages, sessionId)
     const finalMessages = [...nextMessages, { role: 'assistant', content: response.message }]
     setMessages(finalMessages)
     if (response.changed_resources?.length) {
@@ -229,16 +259,16 @@ export function EvePage({ callCenter, onNavigate, onWorkspaceChanged, chatResetK
     }
   }
 
-  const handleSubmit = (e) => {
+  const handleSubmit = (e, attachments = []) => {
     e?.preventDefault()
     const content = draft.trim()
-    if (!content) return
+    if (!content && (!attachments || attachments.length === 0)) return
     if (isSending) {
       setPromptQueue((current) => [...current, content])
       setDraft('')
       return
     }
-    sendMessage()
+    sendMessage(content, attachments)
   }
 
   const addToQueue = () => {
