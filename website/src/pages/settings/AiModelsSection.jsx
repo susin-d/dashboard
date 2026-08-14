@@ -107,7 +107,7 @@ export function AiModelsSection() {
 
   const hasUnavailableProvidersWarning =
     savedPreference &&
-    !providers.some((provider) => provider.id === savedPreference.provider)
+    !(providers || []).some((provider) => provider.id === savedPreference.provider)
 
   return (
     <div className="setting-section" id="settings-ai-models">

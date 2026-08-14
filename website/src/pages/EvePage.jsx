@@ -165,7 +165,7 @@ export function EvePage({ callCenter, onNavigate, onWorkspaceChanged, chatResetK
   const resumeSession = async (session) => {
     try {
       const sessionData = await getEveSession(session.id)
-      setMessages(sessionData.session.messages)
+      setMessages(sessionData?.session?.messages || STARTER_MESSAGES)
       setActiveSessionId(session.id)
       setError('')
     } catch (sessionError) {

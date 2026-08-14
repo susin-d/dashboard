@@ -277,10 +277,10 @@ export function EveVoiceSection() {
 
   const hasUnavailableProvidersWarning =
     savedPreference &&
-    (!sttProviders.some(
+    (!(sttProviders || []).some(
       (provider) => provider.id === savedPreference.stt_provider,
     ) ||
-      !ttsProviders.some(
+      !(ttsProviders || []).some(
         (provider) => provider.id === savedPreference.tts_provider,
       ))
 

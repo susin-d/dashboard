@@ -93,7 +93,7 @@ export function EveAssistantModal({ isOpen, onClose, onNavigate, onWorkspaceChan
       })
       .then((session) => {
         if (!cancelled) {
-          setMessages(session ? session.messages : STARTER_MESSAGES)
+          setMessages(session?.messages || STARTER_MESSAGES)
         }
       })
       .catch((loadError) => {
@@ -147,7 +147,7 @@ export function EveAssistantModal({ isOpen, onClose, onNavigate, onWorkspaceChan
     setActiveSessionId(sessionId)
     try {
       const session = await getEveSession(sessionId)
-      setMessages(session.messages)
+      setMessages(session?.messages || STARTER_MESSAGES)
       setDraft('')
       setPromptQueue([])
     } catch (requestError) {
@@ -173,7 +173,7 @@ export function EveAssistantModal({ isOpen, onClose, onNavigate, onWorkspaceChan
       setActiveSessionId(nextSession.id)
       try {
         const session = await getEveSession(nextSession.id)
-        setMessages(session.messages)
+        setMessages(session?.messages || STARTER_MESSAGES)
       } catch {
         setMessages(STARTER_MESSAGES)
       }
@@ -298,7 +298,7 @@ export function EveAssistantModal({ isOpen, onClose, onNavigate, onWorkspaceChan
     composerRef.current?.focus()
   }
 
-  const hasUserMessages = messages.some((msg) => msg.role === 'user')
+  const hasUserMessages = (messages || []).some((msg) => msg?.role === 'user')
   const charProgress = draft.length / MAX_CHARS
   const composerDisabled = isSending || isLoadingSessions
 

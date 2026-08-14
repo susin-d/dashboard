@@ -4,7 +4,7 @@ Living project snapshot for AI agents. `AGENTS.md` holds the permanent rules;
 this file holds the **current state** of the codebase and must be kept up to
 date whenever the implementation changes.
 
-> **Last updated:** 2026-08-14 (Fixed `todosundefined` 404 URL resolution by defaulting path parameter in `apiRequest` and `todosApi.js`, and added defensive empty array fallbacks for `.some()` calls in AI models and voice settings)
+> **Last updated:** 2026-08-14 (Guarded all `.some()` array access across Eve assistant sessions, calendar events, AI model selections, and voice provider preferences against undefined payloads)
 
 ---
 

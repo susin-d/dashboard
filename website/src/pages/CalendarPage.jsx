@@ -281,7 +281,7 @@ export function CalendarPage({ eventsByDate, onNavigate }) {
                 </button>
               )
             })}
-          {!days.some(({ date, isCurrentMonth }) =>
+          {!(days || []).some(({ date, isCurrentMonth }) =>
             isCurrentMonth && (eventsByDate.get(calendarDateKey(date))?.length ?? 0) > 0,
           ) && (
             <div className="calendar-agenda-empty">
