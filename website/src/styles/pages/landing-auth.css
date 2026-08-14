@@ -108,6 +108,7 @@ html.dark-theme .public-nav {
   gap: 10px;
   padding: 0;
   border: 0;
+  outline: none;
   background: transparent;
   color: var(--text-primary);
   font: inherit;
@@ -115,6 +116,7 @@ html.dark-theme .public-nav {
   font-weight: 800;
   letter-spacing: -0.02em;
   cursor: pointer;
+  box-shadow: none !important;
 }
 
 .public-nav-actions {
@@ -1521,6 +1523,10 @@ html.dark-theme .landing-cinematic .public-nav {
 .auth-brand {
   align-self: flex-start;
   color: #fff;
+  border: 0 !important;
+  outline: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
 }
 
 .auth-brand span {

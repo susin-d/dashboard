@@ -49,7 +49,8 @@ body::before {
   background: var(--bg-primary);
 }
 
-button, .card, .profile-card, .workspace-settings-card, .coding-settings-card,
+button:not(.public-brand):not(.auth-brand):not(.brand):not(.icon-button):not(.menu-button),
+.card, .profile-card, .workspace-settings-card, .coding-settings-card,
 .hackathon-source-settings, .project-overview-card, input, select, textarea {
   box-shadow: var(--shadow-inset);
 }
