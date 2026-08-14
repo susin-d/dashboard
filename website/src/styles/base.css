@@ -49,9 +49,9 @@ body::before {
   background: var(--bg-primary);
 }
 
-button:not(.public-brand):not(.auth-brand):not(.brand):not(.icon-button):not(.menu-button),
+.primary-button, .secondary-button, .auth-button, .danger-button,
 .card, .profile-card, .workspace-settings-card, .coding-settings-card,
-.hackathon-source-settings, .project-overview-card, input, select, textarea {
+.hackathon-source-settings, .project-overview-card, input:not([type="checkbox"]):not([type="radio"]), select, textarea {
   box-shadow: var(--shadow-inset);
 }
 
