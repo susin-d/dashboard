@@ -4,7 +4,7 @@ Living project snapshot for AI agents. `AGENTS.md` holds the permanent rules;
 this file holds the **current state** of the codebase and must be kept up to
 date whenever the implementation changes.
 
-> **Last updated:** 2026-08-14 (Fixed Eve AI assistant page layout geometry, added Markdown table parsing/styling support for AI responses, and removed intrusive initial load error banner on automated schedules)
+> **Last updated:** 2026-08-13 (Fixed Eve AI assistant page layout geometry, added Markdown table parsing/styling support for AI responses, and removed intrusive initial load error banner on automated schedules)
 
 ---
 
@@ -62,15 +62,15 @@ Starwaves/
 
 ### Route groups
 
-| Group | Router module | Notes |
-| --- | --- | --- |
-| Auth | `app/api/routes/auth/` | `oauth`, `credentials`, `password`, `account`, `combine` |
-| Workspace | `app/api/routes/workspace/` | `jobs`, `hackathons`, `projects`, `notifications`, `contests`, `calendar` |
-| Integrations | `google_calendar`, `google_drive`, `gmail`, `github`, `google_chat` | OAuth callbacks under `/integrations/*/callback` |
-| Features | `documents`, `todos`, `profiles`, `notifications`, `email`, `eve`, `calls` | EVE = AI assistant; `calls` = WebRTC signaling |
-| Coding | `coding_stats`, `competitive_coding_profile` | Contests + profile stats |
-| Settings | `ai_models`, `eve_speech` | `/settings/ai-models` AI provider/model + `/settings/eve-speech` STT/TTS provider/voice preference for EVE |
-| Misc | `health` | `/api/v1/health` |
+| Group        | Router module                                                                            | Notes                                                                                                          |
+| ------------ | ---------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| Auth         | `app/api/routes/auth/`                                                                 | `oauth`, `credentials`, `password`, `account`, `combine`                                             |
+| Workspace    | `app/api/routes/workspace/`                                                            | `jobs`, `hackathons`, `projects`, `notifications`, `contests`, `calendar`                          |
+| Integrations | `google_calendar`, `google_drive`, `gmail`, `github`, `google_chat`            | OAuth callbacks under`/integrations/*/callback`                                                              |
+| Features     | `documents`, `todos`, `profiles`, `notifications`, `email`, `eve`, `calls` | EVE = AI assistant;`calls` = WebRTC signaling                                                                |
+| Coding       | `coding_stats`, `competitive_coding_profile`                                         | Contests + profile stats                                                                                       |
+| Settings     | `ai_models`, `eve_speech`                                                            | `/settings/ai-models` AI provider/model + `/settings/eve-speech` STT/TTS provider/voice preference for EVE |
+| Misc         | `health`                                                                               | `/api/v1/health`                                                                                             |
 
 ### Repositories (`server/app/repositories/`)
 
