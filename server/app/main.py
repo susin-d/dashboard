@@ -3,7 +3,9 @@ import re
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
+from fastapi.exceptions import RequestValidationError, HTTPException as FastAPIHTTPException
 from fastapi.responses import JSONResponse
+from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.api.router import api_router
 from app.core.config import settings
@@ -61,6 +63,17 @@ def create_app() -> FastAPI:
         else:
             try:
                 response = await call_next(request)
+            except (FastAPIHTTPException, StarletteHTTPException) as exc:
+                response = JSONResponse(
+                    status_code=exc.status_code,
+                    content={"detail": exc.detail},
+                    headers=getattr(exc, "headers", None) or {},
+                )
+            except RequestValidationError as exc:
+                response = JSONResponse(
+                    status_code=422,
+                    content={"detail": exc.errors()},
+                )
             except Exception as exc:
                 logger.error("Unhandled exception on %s: %s", request.url.path, exc, exc_info=True)
                 response = JSONResponse(
@@ -72,7 +85,7 @@ def create_app() -> FastAPI:
                     },
                 )
 
-        if origin and is_allowed:
+        if origin:
             response.headers["Access-Control-Allow-Origin"] = origin
             response.headers["Access-Control-Allow-Credentials"] = "true"
             response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS, PATCH, HEAD"
@@ -80,12 +93,6 @@ def create_app() -> FastAPI:
             response.headers["Access-Control-Allow-Headers"] = (
                 req_headers or "Authorization, Content-Type, Accept, Origin, X-Requested-With, CRON-Secret, *"
             )
-            response.headers["Access-Control-Max-Age"] = "86400"
-        elif origin:
-            response.headers["Access-Control-Allow-Origin"] = origin
-            response.headers["Access-Control-Allow-Credentials"] = "true"
-            response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS, PATCH, HEAD"
-            response.headers["Access-Control-Allow-Headers"] = "*"
             response.headers["Access-Control-Max-Age"] = "86400"
 
         return response

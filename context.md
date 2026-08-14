@@ -4,7 +4,7 @@ Living project snapshot for AI agents. `AGENTS.md` holds the permanent rules;
 this file holds the **current state** of the codebase and must be kept up to
 date whenever the implementation changes.
 
-> **Last updated:** 2026-08-14 (Fixed CORS preflight handling and header resolution across all origins and error responses, eliminating conflicting middleware layers)
+> **Last updated:** 2026-08-14 (Ensured all HTTPException, validation, and error responses preserve status codes and reflect Access-Control-Allow-Origin headers across all client origins)
 
 ---
 
