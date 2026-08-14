@@ -352,16 +352,16 @@
 .eve-messages {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 12px;
   min-height: 0;
 }
 
 .eve-message {
-  max-width: 85%;
+  max-width: 88%;
   animation: eve-msg-in 250ms cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
-.eve-message p {
+.eve-message > p {
   margin: 0;
   padding: 12px 16px;
   border-radius: var(--radius-lg);
@@ -374,33 +374,54 @@
   align-self: flex-start;
 }
 
-.eve-message.assistant p {
-  color: var(--text-primary);
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-color);
-  border-left: 3px solid var(--color-primary);
-}
-
+.eve-message.assistant > p,
 .eve-message-md {
   color: var(--text-primary);
   background: var(--bg-secondary);
   border: 1px solid var(--border-color);
-  border-left: 3px solid var(--color-primary);
   border-radius: var(--radius-lg);
   padding: 12px 16px;
   font-size: 13.5px;
   line-height: 1.6;
-  white-space: normal;
+}
+
+.eve-message-md .markdown-renderer {
+  font-size: inherit;
+  line-height: inherit;
+  color: inherit;
+}
+
+.eve-message-md .markdown-renderer > :first-child {
+  margin-top: 0;
+}
+
+.eve-message-md .markdown-renderer > :last-child {
+  margin-bottom: 0;
+}
+
+.eve-message-md .markdown-renderer .md-paragraph {
+  margin: 0 0 0.5rem;
+  padding: 0;
+  border: none;
+  background: transparent;
+}
+
+.eve-message-md .markdown-renderer .md-paragraph:last-child {
+  margin-bottom: 0;
 }
 
 .eve-message.user {
   align-self: flex-end;
 }
 
-.eve-message.user p {
+.eve-message.user > p {
   color: var(--text-inverse);
   background: var(--color-primary);
   border: 1px solid var(--color-primary);
+  border-radius: var(--radius-lg);
+  margin: 0;
+  padding: 12px 16px;
+  white-space: pre-wrap;
 }
 
 /* ── Typing Indicator ── */
@@ -438,13 +459,14 @@
 }
 
 .eve-chip {
-  padding: 7px 14px;
+  padding: 6px 13px;
   border: 1px solid var(--border-color);
   border-radius: var(--radius-full);
   color: var(--text-secondary);
   background: var(--bg-card);
+  box-shadow: none !important;
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 550;
   cursor: pointer;
   transition: all var(--transition-fast);
 }
@@ -455,7 +477,7 @@
   background: var(--bg-hover);
   border-color: var(--border-heavy);
   transform: translateY(-1px);
-  box-shadow: var(--shadow-sm);
+  box-shadow: var(--shadow-sm) !important;
 }
 
 /* ── Error ── */
@@ -481,7 +503,7 @@
 
 .eve-composer-field {
   position: relative;
-  padding: 10px 14px 0;
+  padding: 10px 14px 4px;
   border: 1px solid var(--border-color);
   border-radius: var(--radius-lg);
   background: var(--bg-primary);
@@ -498,9 +520,10 @@
   display: block;
   margin-bottom: 4px;
   color: var(--text-muted);
-  font-size: 11px;
+  font-size: 10.5px;
   font-weight: 700;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 
 .eve-composer textarea {
@@ -511,9 +534,9 @@
   resize: none;
   border: 0;
   background: transparent;
+  box-shadow: none !important;
   outline: 0;
   overflow-y: auto;
-  field-sizing: content;
   font-size: 13.5px;
   line-height: 1.55;
   color: var(--text-primary);
