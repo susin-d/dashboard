@@ -1,0 +1,29 @@
+/* Neon District - Electric theme with cyan, magenta, and lime glow tones */
+html.neon-theme {
+  --bg-primary: #0c0d16;
+  --bg-secondary: #131426;
+  --bg-tertiary: #1c1d38;
+  --bg-card: #161730;
+  --bg-card-hover: #1f203e;
+  --bg-hover: #2a2c50;
+  --bg-overlay: #161730;
+  --text-primary: #eef0ff;
+  --text-secondary: #b9c2ff;
+  --text-muted: #8a97e8;
+  --text-inverse: #0c0d16;
+  --color-primary: #00e5ff;
+  --color-primary-hover: #00b8d6;
+  --color-primary-light: #0a4a5e;
+  --color-accent: #ff3df0;
+  --border-color: #272952;
+  --border-light: #1c1d3a;
+  --border-heavy: #3e4180;
+  --border-focus: #00e5ff;
+  --scrollbar-track: #131426;
+  --scrollbar-thumb: #3e4180;
+  --scrollbar-thumb-hover: #00e5ff;
+  --color-success: #7aff6b;
+  --color-warning: #ffe14d;
+  --color-danger: #ff4d6e;
+  --color-purple: #b26bff;
+}

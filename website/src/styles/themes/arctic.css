@@ -1,0 +1,29 @@
+/* Arctic Ice - Pale glacial ice theme with cool arctic blue highlights */
+html.arctic-theme {
+  --bg-primary: #f4f8fb;
+  --bg-secondary: #e9f0f6;
+  --bg-tertiary: #dbe7f0;
+  --bg-card: #fafcfe;
+  --bg-card-hover: #eef4f9;
+  --bg-hover: #dbe7f0;
+  --bg-overlay: #fafcfe;
+  --text-primary: #1f3a4d;
+  --text-secondary: #4f7086;
+  --text-muted: #7590a3;
+  --text-inverse: #fafcfe;
+  --color-primary: #0e7490;
+  --color-primary-hover: #155e75;
+  --color-primary-light: #cbeaf5;
+  --color-accent: #0891b2;
+  --border-color: #dbe7f0;
+  --border-light: #e6eef5;
+  --border-heavy: #b3c8d6;
+  --border-focus: #0e7490;
+  --scrollbar-track: #e9f0f6;
+  --scrollbar-thumb: #b3c8d6;
+  --scrollbar-thumb-hover: #0e7490;
+  --color-success: #1f7a5a;
+  --color-warning: #a16207;
+  --color-danger: #b91c1c;
+  --color-purple: #6d5bb8;
+}

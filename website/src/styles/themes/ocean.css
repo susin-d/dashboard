@@ -1,0 +1,29 @@
+/* Tidal Cyan - Deep ocean dark theme with electric cyan highlights */
+html.ocean-theme {
+  --bg-primary: #08131a;
+  --bg-secondary: #0d1d26;
+  --bg-tertiary: #142a36;
+  --bg-card: #0f202a;
+  --bg-card-hover: #162d3a;
+  --bg-hover: #1c3a4a;
+  --bg-overlay: #0f202a;
+  --text-primary: #ecfeff;
+  --text-secondary: #a5f3fc;
+  --text-muted: #67e8f9;
+  --text-inverse: #08131a;
+  --color-primary: #22d3ee;
+  --color-primary-hover: #06b6d4;
+  --color-primary-light: #164e63;
+  --color-accent: #67e8f9;
+  --border-color: #1c3a4a;
+  --border-light: #142a36;
+  --border-heavy: #2a5568;
+  --border-focus: #22d3ee;
+  --scrollbar-track: #0d1d26;
+  --scrollbar-thumb: #2a5568;
+  --scrollbar-thumb-hover: #22d3ee;
+  --color-success: #10b981;
+  --color-warning: #f59e0b;
+  --color-danger: #f43f5e;
+  --color-purple: #818cf8;
+}

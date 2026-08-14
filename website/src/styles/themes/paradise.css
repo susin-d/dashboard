@@ -1,0 +1,29 @@
+/* Tropical Paradise - Lush theme with teal, coral, and sunshine yellow tones */
+html.paradise-theme {
+  --bg-primary: #0c1715;
+  --bg-secondary: #12211e;
+  --bg-tertiary: #1a302b;
+  --bg-card: #142421;
+  --bg-card-hover: #1c302a;
+  --bg-hover: #253d36;
+  --bg-overlay: #142421;
+  --text-primary: #f0fbf8;
+  --text-secondary: #b0e8db;
+  --text-muted: #83c4b2;
+  --text-inverse: #0c1715;
+  --color-primary: #19c9a6;
+  --color-primary-hover: #12a98b;
+  --color-primary-light: #0e4d40;
+  --color-accent: #ff8a5c;
+  --border-color: #24423b;
+  --border-light: #19302a;
+  --border-heavy: #396558;
+  --border-focus: #19c9a6;
+  --scrollbar-track: #12211e;
+  --scrollbar-thumb: #396558;
+  --scrollbar-thumb-hover: #19c9a6;
+  --color-success: #4bd6a0;
+  --color-warning: #ffd257;
+  --color-danger: #ff6b7a;
+  --color-purple: #8f8bff;
+}

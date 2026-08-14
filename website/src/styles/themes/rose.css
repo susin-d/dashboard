@@ -1,0 +1,29 @@
+/* Rose Obsidian - Velvet dark theme with rose gold and crimson highlights */
+html.rose-theme {
+  --bg-primary: #140b10;
+  --bg-secondary: #1f1118;
+  --bg-tertiary: #2b1822;
+  --bg-card: #22121b;
+  --bg-card-hover: #2e1925;
+  --bg-hover: #3c2131;
+  --bg-overlay: #22121b;
+  --text-primary: #fff1f2;
+  --text-secondary: #fecdd3;
+  --text-muted: #fda4af;
+  --text-inverse: #140b10;
+  --color-primary: #f43f5e;
+  --color-primary-hover: #e11d48;
+  --color-primary-light: #881337;
+  --color-accent: #fb7185;
+  --border-color: #3a1d2d;
+  --border-light: #291420;
+  --border-heavy: #50263e;
+  --border-focus: #f43f5e;
+  --scrollbar-track: #1f1118;
+  --scrollbar-thumb: #50263e;
+  --scrollbar-thumb-hover: #f43f5e;
+  --color-success: #10b981;
+  --color-warning: #f59e0b;
+  --color-danger: #f43f5e;
+  --color-purple: #e879f9;
+}

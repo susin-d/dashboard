@@ -1,0 +1,29 @@
+/* Cyberpunk Amber - Warm obsidian background with amber gold glow */
+html.amber-theme {
+  --bg-primary: #14110c;
+  --bg-secondary: #1c1913;
+  --bg-tertiary: #26221a;
+  --bg-card: #1f1b14;
+  --bg-card-hover: #2a251c;
+  --bg-hover: #363024;
+  --bg-overlay: #1f1b14;
+  --text-primary: #fffbeb;
+  --text-secondary: #fde68a;
+  --text-muted: #fcd34d;
+  --text-inverse: #14110c;
+  --color-primary: #f59e0b;
+  --color-primary-hover: #d97706;
+  --color-primary-light: #78350f;
+  --color-accent: #fbbf24;
+  --border-color: #3a3123;
+  --border-light: #292218;
+  --border-heavy: #544733;
+  --border-focus: #f59e0b;
+  --scrollbar-track: #1c1913;
+  --scrollbar-thumb: #544733;
+  --scrollbar-thumb-hover: #f59e0b;
+  --color-success: #22c55e;
+  --color-warning: #f59e0b;
+  --color-danger: #ef4444;
+  --color-purple: #d946ef;
+}

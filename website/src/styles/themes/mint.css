@@ -1,0 +1,29 @@
+/* Mint Cream - Light pastel green theme with a fresh mint accent */
+html.mint-theme {
+  --bg-primary: #f2faf6;
+  --bg-secondary: #e6f5ee;
+  --bg-tertiary: #d4ecdf;
+  --bg-card: #f8fdfa;
+  --bg-card-hover: #ecf8f2;
+  --bg-hover: #d4ecdf;
+  --bg-overlay: #f8fdfa;
+  --text-primary: #1d3a2e;
+  --text-secondary: #4d7867;
+  --text-muted: #73988a;
+  --text-inverse: #f8fdfa;
+  --color-primary: #178a62;
+  --color-primary-hover: #0f6b4c;
+  --color-primary-light: #d1f0e3;
+  --color-accent: #2f9e64;
+  --border-color: #d4ecdf;
+  --border-light: #e0f2e9;
+  --border-heavy: #a8d4bd;
+  --border-focus: #178a62;
+  --scrollbar-track: #e6f5ee;
+  --scrollbar-thumb: #a8d4bd;
+  --scrollbar-thumb-hover: #178a62;
+  --color-success: #178a62;
+  --color-warning: #a16207;
+  --color-danger: #b91c1c;
+  --color-purple: #6d5bb8;
+}

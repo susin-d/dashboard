@@ -1,25 +1,17 @@
-import { getStoredAuthToken } from './authApi'
+import { apiRequest } from './request'
 import { openOAuthPopup } from '../utils/popupOAuth'
 
-const API_URL = import.meta.env.VITE_API_URL ?? 'http://127.0.0.1:8000/api/v1'
+const BASE_PATH = '/integrations/google-calendar'
+const ERROR_MESSAGE = 'Google Calendar could not be connected.'
+const TOKEN_MESSAGE = 'Sign in to connect Google Calendar.'
 
-async function request(path, options = {}) {
-  const token = getStoredAuthToken()
-  if (!token) throw new Error('Sign in to connect Google Calendar.')
-  const response = await fetch(
-    `${API_URL}/integrations/google-calendar${path}`,
-    {
-      ...options,
-      headers: { Authorization: `Bearer ${token}` },
-    },
-  )
-  if (!response.ok) {
-    const failure = await response.json().catch(() => null)
-    throw new Error(
-      failure?.detail || 'Google Calendar could not be connected.',
-    )
-  }
-  return response.status === 204 ? null : response.json()
+function request(path, options = {}) {
+  return apiRequest(path, {
+    basePath: BASE_PATH,
+    errorMessage: ERROR_MESSAGE,
+    missingTokenMessage: TOKEN_MESSAGE,
+    ...options,
+  })
 }
 
 export async function beginGoogleCalendarOAuth() {
@@ -32,7 +24,5 @@ export function loadGoogleCalendarData() {
 }
 
 export function removeGoogleCalendarAccount(accountId) {
-  return request(`/accounts/${encodeURIComponent(accountId)}`, {
-    method: 'DELETE',
-  })
+  return request(`/accounts/${encodeURIComponent(accountId)}`, { method: 'DELETE' })
 }

@@ -1,4 +1,5 @@
-@import './colors.css';
+@import './themes/index.css';
+@import './themes/dark.css';
 
 :root {
   /* Typography */

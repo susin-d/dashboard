@@ -1,6 +1,5 @@
-import { fetchWithTimeout } from './request'
+import { API_URL, apiRequest } from './request'
 
-const API_URL = import.meta.env.VITE_API_URL ?? 'http://127.0.0.1:8000/api/v1'
 const TOKEN_KEY = 'starwaves_auth_token'
 const USER_KEY = 'starwaves_auth_user'
 
@@ -49,107 +48,73 @@ export function consumeAuthTokenFromHash() {
   return true
 }
 
-async function request(path, options = {}, authenticated = false) {
-  const headers = {}
-  if (authenticated) {
-    const token = getStoredAuthToken()
-    if (!token) throw new Error('Sign in to continue.')
-    headers.Authorization = `Bearer ${token}`
-  }
-  if (options.body) {
-    headers['Content-Type'] = 'application/json'
-  }
-
-  let response
-  try {
-    response = await fetchWithTimeout(`${API_URL}${path}`, {
-      ...options,
-      headers: { ...headers, ...options.headers },
-    })
-  } catch (error) {
-    throw new Error(
-      error.message?.includes('Failed to fetch')
-        ? 'Could not reach the StarWaves API. Start the backend server or set VITE_API_URL to a reachable API URL.'
-        : error.message || 'Could not reach the StarWaves API.',
-    )
-  }
-
-  if (!response.ok) {
-    const failure = await response.json().catch(() => null)
-    throw new Error(failure?.detail || 'Authentication request failed.')
-  }
-
-  return response.status === 204 ? null : response.json()
+function request(path, options = {}) {
+  return apiRequest(path, {
+    errorMessage: 'Authentication request failed.',
+    missingTokenMessage: 'Sign in to continue.',
+    onFetchError: (error) =>
+      new Error(
+        error.message?.includes('Failed to fetch')
+          ? 'Could not reach the StarWaves API. Start the backend server or set VITE_API_URL to a reachable API URL.'
+          : error.message || 'Could not reach the StarWaves API.',
+      ),
+    ...options,
+  })
 }
 
 export async function signupWithEmail(email, password) {
-  const result = await request(
-    '/auth/signup',
-    {
-      method: 'POST',
-      body: JSON.stringify({ email, password }),
-    },
-    false,
-  )
+  const result = await request('/auth/signup', {
+    method: 'POST',
+    body: JSON.stringify({ email, password }),
+    authRequired: false,
+  })
   setStoredAuthToken(result.token, result.user)
   return result.user
 }
 
 export async function loginWithEmail(email, password) {
-  const result = await request(
-    '/auth/login',
-    {
-      method: 'POST',
-      body: JSON.stringify({ email, password }),
-    },
-    false,
-  )
+  const result = await request('/auth/login', {
+    method: 'POST',
+    body: JSON.stringify({ email, password }),
+    authRequired: false,
+  })
   setStoredAuthToken(result.token, result.user)
   return result.user
 }
 
-export async function requestPasswordReset(email) {
-  return request(
-    '/auth/forgot-password',
-    {
-      method: 'POST',
-      body: JSON.stringify({ email }),
-    },
-    false,
-  )
+export function requestPasswordReset(email) {
+  return request('/auth/forgot-password', {
+    method: 'POST',
+    body: JSON.stringify({ email }),
+    authRequired: false,
+  })
 }
 
-export async function verifyResetCode(email, code, token = '') {
-  return request(
-    '/auth/verify-reset-code',
-    {
-      method: 'POST',
-      body: JSON.stringify({ email, code, token }),
-    },
-    false,
-  )
+export function verifyResetCode(email, code, token = '') {
+  return request('/auth/verify-reset-code', {
+    method: 'POST',
+    body: JSON.stringify({ email, code, token }),
+    authRequired: false,
+  })
 }
 
-export async function resetPassword(token, password) {
-  return request(
-    '/auth/reset-password',
-    {
-      method: 'POST',
-      body: JSON.stringify({ token, password }),
-    },
-    false,
-  )
+export function resetPassword(token, password) {
+  return request('/auth/reset-password', {
+    method: 'POST',
+    body: JSON.stringify({ token, password }),
+    authRequired: false,
+  })
 }
 
-export async function deleteAccount() {
-  return request('/auth/account', { method: 'DELETE' }, true)
+export function deleteAccount() {
+  return request('/auth/account', { method: 'DELETE' })
 }
 
 export async function fetchCurrentUser() {
   const token = getStoredAuthToken()
   if (!token) return null
   try {
-    const user = await request('/auth/me', { method: 'GET' }, true)
+    const user = await request('/auth/me')
     setStoredAuthToken(token, user)
     return user
   } catch {
@@ -159,14 +124,10 @@ export async function fetchCurrentUser() {
 }
 
 export async function updateUserProfile(displayName) {
-  const updatedUser = await request(
-    '/auth/profile',
-    {
-      method: 'PATCH',
-      body: JSON.stringify({ displayName }),
-    },
-    true,
-  )
+  const updatedUser = await request('/auth/profile', {
+    method: 'PATCH',
+    body: JSON.stringify({ displayName }),
+  })
   const current = getStoredUser() || {}
   const newUser = { ...current, displayName: updatedUser.displayName }
   setStoredAuthToken(getStoredAuthToken(), newUser)
@@ -174,7 +135,7 @@ export async function updateUserProfile(displayName) {
 }
 
 export async function beginGoogleOAuth() {
-  const data = await request('/auth/google/login', { method: 'GET' }, false)
+  const data = await request('/auth/google/login', { authRequired: false })
   if (!data?.url) throw new Error('Could not initiate Google authentication.')
 
   const isNativeCapacitor = Boolean(window.Capacitor?.isNativePlatform?.())
@@ -237,38 +198,27 @@ export async function beginGoogleOAuth() {
   })
 }
 
-export async function requestAccountCombine(targetEmail) {
-  return request(
-    '/auth/combine-account/request',
-    {
-      method: 'POST',
-      body: JSON.stringify({ target_email: targetEmail }),
-    },
-    true,
-  )
+export function requestAccountCombine(targetEmail) {
+  return request('/auth/combine-account/request', {
+    method: 'POST',
+    body: JSON.stringify({ target_email: targetEmail }),
+  })
 }
 
-export async function verifyAccountCombine(token) {
-  return request(
-    '/auth/combine-account/verify',
-    {
-      method: 'POST',
-      body: JSON.stringify({ token }),
-    },
-    false,
-  )
+export function verifyAccountCombine(token) {
+  return request('/auth/combine-account/verify', {
+    method: 'POST',
+    body: JSON.stringify({ token }),
+    authRequired: false,
+  })
 }
 
-export async function fetchCombinedAccounts() {
-  return request('/auth/combine-account/list', { method: 'GET' }, true)
+export function fetchCombinedAccounts() {
+  return request('/auth/combine-account/list')
 }
 
-export async function unlinkCombinedAccount(targetIdentifier) {
-  return request(
-    `/auth/combine-account/unlink?target_identifier=${encodeURIComponent(targetIdentifier)}`,
-    {
-      method: 'DELETE',
-    },
-    true,
-  )
+export function unlinkCombinedAccount(targetIdentifier) {
+  return request(`/auth/combine-account/unlink?target_identifier=${encodeURIComponent(targetIdentifier)}`, {
+    method: 'DELETE',
+  })
 }

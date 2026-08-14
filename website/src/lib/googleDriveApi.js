@@ -1,23 +1,17 @@
-import { getStoredAuthToken } from './authApi'
+import { apiRequest } from './request'
 import { openOAuthPopup } from '../utils/popupOAuth'
 
-const API_URL = import.meta.env.VITE_API_URL ?? 'http://127.0.0.1:8000/api/v1'
+const BASE_PATH = '/integrations/google-drive'
+const ERROR_MESSAGE = 'Google Drive is unavailable.'
+const TOKEN_MESSAGE = 'Sign in to connect Google Drive.'
 
-async function request(path, options = {}) {
-  const token = getStoredAuthToken()
-  if (!token) throw new Error('Sign in to connect Google Drive.')
-  const response = await fetch(`${API_URL}/integrations/google-drive${path}`, {
+function request(path, options = {}) {
+  return apiRequest(path, {
+    basePath: BASE_PATH,
+    errorMessage: ERROR_MESSAGE,
+    missingTokenMessage: TOKEN_MESSAGE,
     ...options,
-    headers: {
-      Authorization: `Bearer ${token}`,
-      ...options.headers,
-    },
   })
-  if (!response.ok) {
-    const failure = await response.json().catch(() => null)
-    throw new Error(failure?.detail || 'Google Drive is unavailable.')
-  }
-  return response.status === 204 ? null : response.json()
 }
 
 export function getGoogleDriveStatus() {

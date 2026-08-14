@@ -1,22 +1,16 @@
-import { getStoredAuthToken } from './authApi'
+import { apiRequest } from './request'
 
-const API_URL = import.meta.env.VITE_API_URL ?? 'http://127.0.0.1:8000/api/v1'
+const BASE_PATH = '/calls'
+const ERROR_MESSAGE = 'Call request failed.'
+const TOKEN_MESSAGE = 'Sign in to make calls.'
 
-async function request(path, options = {}) {
-  const token = getStoredAuthToken()
-  if (!token) throw new Error('Sign in to make calls.')
-  const headers = { Authorization: `Bearer ${token}` }
-  if (options.body) headers['Content-Type'] = 'application/json'
-
-  const response = await fetch(`${API_URL}/calls${path}`, {
+function request(path, options = {}) {
+  return apiRequest(path, {
+    basePath: BASE_PATH,
+    errorMessage: ERROR_MESSAGE,
+    missingTokenMessage: TOKEN_MESSAGE,
     ...options,
-    headers,
   })
-  if (!response.ok) {
-    const failure = await response.json().catch(() => null)
-    throw new Error(failure?.detail || 'Call request failed.')
-  }
-  return response.status === 204 ? null : response.json()
 }
 
 export function createCall(calleeIdentifier, mode) {

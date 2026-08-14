@@ -1,22 +1,16 @@
-import { getStoredAuthToken } from './authApi'
+import { apiRequest } from './request'
 
-const API_URL = import.meta.env.VITE_API_URL ?? 'http://127.0.0.1:8000/api/v1'
+const BASE_PATH = '/settings/competitive-coding'
+const ERROR_MESSAGE = 'Could not save competitive coding IDs.'
+const TOKEN_MESSAGE = 'Sign in to update competitive coding IDs.'
 
-async function request(options = {}) {
-  const token = getStoredAuthToken()
-  if (!token) throw new Error('Sign in to update competitive coding IDs.')
-  const response = await fetch(`${API_URL}/settings/competitive-coding`, {
+function request(options = {}) {
+  return apiRequest('', {
+    basePath: BASE_PATH,
+    errorMessage: ERROR_MESSAGE,
+    missingTokenMessage: TOKEN_MESSAGE,
     ...options,
-    headers: {
-      Authorization: `Bearer ${token}`,
-      ...(options.body ? { 'Content-Type': 'application/json' } : {}),
-    },
   })
-  if (!response.ok) {
-    const failure = await response.json().catch(() => null)
-    throw new Error(failure?.detail || 'Could not save competitive coding IDs.')
-  }
-  return response.json()
 }
 
 export function loadCompetitiveCodingProfile() {

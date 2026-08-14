@@ -1,0 +1,29 @@
+/* Violet Glow - Deep violet dark theme with electric purple highlights */
+html.violet-theme {
+  --bg-primary: #110d1c;
+  --bg-secondary: #171226;
+  --bg-tertiary: #211a36;
+  --bg-card: #1a142b;
+  --bg-card-hover: #241c3c;
+  --bg-hover: #30264e;
+  --bg-overlay: #1a142b;
+  --text-primary: #f5f3ff;
+  --text-secondary: #ddd6fe;
+  --text-muted: #c4b5fd;
+  --text-inverse: #110d1c;
+  --color-primary: #8b5cf6;
+  --color-primary-hover: #7c3aed;
+  --color-primary-light: #4c1d95;
+  --color-accent: #a78bfa;
+  --border-color: #2e234a;
+  --border-light: #211936;
+  --border-heavy: #43346c;
+  --border-focus: #8b5cf6;
+  --scrollbar-track: #171226;
+  --scrollbar-thumb: #43346c;
+  --scrollbar-thumb-hover: #8b5cf6;
+  --color-success: #10b981;
+  --color-warning: #f59e0b;
+  --color-danger: #f43f5e;
+  --color-purple: #8b5cf6;
+}

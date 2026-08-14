@@ -1,0 +1,29 @@
+/* Emerald Cyber - Dark forest background with emerald mint accents */
+html.emerald-theme {
+  --bg-primary: #091410;
+  --bg-secondary: #0f1d18;
+  --bg-tertiary: #162922;
+  --bg-card: #12221c;
+  --bg-card-hover: #1a3028;
+  --bg-hover: #224035;
+  --bg-overlay: #12221c;
+  --text-primary: #ecfdf5;
+  --text-secondary: #a7f3d0;
+  --text-muted: #6ee7b7;
+  --text-inverse: #091410;
+  --color-primary: #10b981;
+  --color-primary-hover: #059669;
+  --color-primary-light: #064e3b;
+  --color-accent: #34d399;
+  --border-color: #14382c;
+  --border-light: #0f2920;
+  --border-heavy: #1f4d3d;
+  --border-focus: #10b981;
+  --scrollbar-track: #0f1d18;
+  --scrollbar-thumb: #1f4d3d;
+  --scrollbar-thumb-hover: #10b981;
+  --color-success: #10b981;
+  --color-warning: #f59e0b;
+  --color-danger: #f43f5e;
+  --color-purple: #a855f7;
+}

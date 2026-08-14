@@ -1,23 +1,14 @@
-import { getStoredAuthToken } from './authApi'
+import { apiRequest } from './request'
 
-const API_URL = import.meta.env.VITE_API_URL ?? 'http://127.0.0.1:8000/api/v1'
+const ERROR_MESSAGE = 'The documents database is unavailable.'
+const TOKEN_MESSAGE = 'Sign in to access your documents.'
 
-async function authenticatedRequest(path, options = {}) {
-  const token = getStoredAuthToken()
-  if (!token) throw new Error('Sign in to access your documents.')
-  const response = await fetch(`${API_URL}${path}`, {
+function authenticatedRequest(path, options = {}) {
+  return apiRequest(path, {
+    errorMessage: ERROR_MESSAGE,
+    missingTokenMessage: TOKEN_MESSAGE,
     ...options,
-    headers: {
-      Authorization: `Bearer ${token}`,
-      ...(options.body ? { 'Content-Type': 'application/json' } : {}),
-      ...options.headers,
-    },
   })
-  if (!response.ok) {
-    const failure = await response.json().catch(() => null)
-    throw new Error(failure?.detail || 'The documents database is unavailable.')
-  }
-  return response.status === 204 ? null : response.json()
 }
 
 function fromApi(document) {

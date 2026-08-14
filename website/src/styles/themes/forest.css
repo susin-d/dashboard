@@ -1,0 +1,29 @@
+/* Forest Canopy - Muted olive forest theme with mossy green highlights */
+html.forest-theme {
+  --bg-primary: #0c120e;
+  --bg-secondary: #121a14;
+  --bg-tertiary: #1a251c;
+  --bg-card: #151f18;
+  --bg-card-hover: #1c2a21;
+  --bg-hover: #243527;
+  --bg-overlay: #151f18;
+  --text-primary: #f0f7f0;
+  --text-secondary: #bfd3c2;
+  --text-muted: #97ad9b;
+  --text-inverse: #0c120e;
+  --color-primary: #4e7c58;
+  --color-primary-hover: #3d6446;
+  --color-primary-light: #203220;
+  --color-accent: #6da075;
+  --border-color: #223021;
+  --border-light: #1a241b;
+  --border-heavy: #3a5338;
+  --border-focus: #4e7c58;
+  --scrollbar-track: #121a14;
+  --scrollbar-thumb: #3a5338;
+  --scrollbar-thumb-hover: #4e7c58;
+  --color-success: #2f9e64;
+  --color-warning: #b9951d;
+  --color-danger: #c4451e;
+  --color-purple: #8a7cc0;
+}

@@ -26,7 +26,7 @@ import {
   DENSITY_OPTIONS,
   ELEVATION_OPTIONS,
   MOTION_OPTIONS,
-} from '../hooks/useThemeCustomizer'
+} from '../themes'
 
 export function ThemesPage() {
   const {

@@ -1,0 +1,29 @@
+/* Candy Frost - Soft pastel pink theme with rosy plum typography */
+html.candy-theme {
+  --bg-primary: #fdf6f7;
+  --bg-secondary: #f9ecee;
+  --bg-tertiary: #f3dde2;
+  --bg-card: #fffafb;
+  --bg-card-hover: #f9eef0;
+  --bg-hover: #f3dde2;
+  --bg-overlay: #fffafb;
+  --text-primary: #3a2328;
+  --text-secondary: #7d5b63;
+  --text-muted: #a1848c;
+  --text-inverse: #fffafb;
+  --color-primary: #d6336c;
+  --color-primary-hover: #b4255a;
+  --color-primary-light: #fbe0e8;
+  --color-accent: #ec4899;
+  --border-color: #f1d8de;
+  --border-light: #f7e6ea;
+  --border-heavy: #d9b0bc;
+  --border-focus: #d6336c;
+  --scrollbar-track: #f9ecee;
+  --scrollbar-thumb: #d9b0bc;
+  --scrollbar-thumb-hover: #d6336c;
+  --color-success: #2f9e64;
+  --color-warning: #c2410c;
+  --color-danger: #c41e2f;
+  --color-purple: #7c3aed;
+}

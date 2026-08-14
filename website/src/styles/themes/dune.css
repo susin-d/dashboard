@@ -1,0 +1,29 @@
+/* Dune Gold - Bright golden desert sand theme with rich honey accents */
+html.dune-theme {
+  --bg-primary: #faf6ee;
+  --bg-secondary: #f4ecdd;
+  --bg-tertiary: #eadfc8;
+  --bg-card: #fdf9f1;
+  --bg-card-hover: #f3ecdc;
+  --bg-hover: #e6d9bd;
+  --bg-overlay: #fdf9f1;
+  --text-primary: #43331f;
+  --text-secondary: #7c6847;
+  --text-muted: #a18a63;
+  --text-inverse: #fdf9f1;
+  --color-primary: #a16207;
+  --color-primary-hover: #854d0e;
+  --color-primary-light: #fef3c7;
+  --color-accent: #ca8a04;
+  --border-color: #e6d9bd;
+  --border-light: #efe6d2;
+  --border-heavy: #c9b489;
+  --border-focus: #a16207;
+  --scrollbar-track: #f4ecdd;
+  --scrollbar-thumb: #c9b489;
+  --scrollbar-thumb-hover: #a16207;
+  --color-success: #15803d;
+  --color-warning: #a16207;
+  --color-danger: #b91c1c;
+  --color-purple: #7e22ce;
+}
