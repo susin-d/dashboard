@@ -210,13 +210,20 @@ export function EvePage({ callCenter, onNavigate, onWorkspaceChanged, chatResetK
   }
 
   const handleSubmit = (e) => {
-    e.preventDefault()
+    e?.preventDefault()
+    const content = draft.trim()
+    if (!content) return
+    if (isSending) {
+      setPromptQueue((current) => [...current, content])
+      setDraft('')
+      return
+    }
     sendMessage()
   }
 
   const addToQueue = () => {
     const content = draft.trim()
-    if (!content || isSending) return
+    if (!content) return
     setPromptQueue((current) => [...current, content])
     setDraft('')
     composerRef.current?.focus()
@@ -414,7 +421,6 @@ export function EvePage({ callCenter, onNavigate, onWorkspaceChanged, chatResetK
                   placeholder="Ask Eve anything… Type @ to call a tool or / for a pre-saved prompt"
                   rows={3}
                   maxLength={MAX_CHARS}
-                  disabled={isSending}
                 />
 
                 <div className="eve-composer-bar">
@@ -434,7 +440,7 @@ export function EvePage({ callCenter, onNavigate, onWorkspaceChanged, chatResetK
                       type="button"
                       className="eve-queue-add"
                       onClick={addToQueue}
-                      disabled={!draft.trim() || isSending}
+                      disabled={!draft.trim()}
                       aria-label="Add message to queue"
                       title="Add to queue"
                     >
@@ -443,11 +449,11 @@ export function EvePage({ callCenter, onNavigate, onWorkspaceChanged, chatResetK
                     <button
                       type="submit"
                       className="eve-send-btn"
-                      disabled={!draft.trim() || isSending}
-                      aria-label="Send message to Eve"
+                      disabled={!draft.trim()}
+                      aria-label={isSending ? 'Queue message' : 'Send message to Eve'}
                     >
                       <Send size={15} />
-                      <span>Send</span>
+                      <span>{isSending ? 'Queue' : 'Send'}</span>
                     </button>
                   </div>
                 </div>
@@ -466,7 +472,6 @@ export function EvePage({ callCenter, onNavigate, onWorkspaceChanged, chatResetK
                           className="eve-queue-item-remove"
                           type="button"
                           onClick={() => removeFromQueue(index)}
-                          disabled={isSending}
                           aria-label="Remove queued message"
                         >
                           <X size={12} />
@@ -474,7 +479,7 @@ export function EvePage({ callCenter, onNavigate, onWorkspaceChanged, chatResetK
                       </span>
                     ))}
                   </div>
-                  <button className="eve-queue-clear" type="button" onClick={clearQueue} disabled={isSending}>
+                  <button className="eve-queue-clear" type="button" onClick={clearQueue}>
                     Clear queue
                   </button>
                 </div>

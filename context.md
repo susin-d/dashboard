@@ -4,7 +4,7 @@ Living project snapshot for AI agents. `AGENTS.md` holds the permanent rules;
 this file holds the **current state** of the codebase and must be kept up to
 date whenever the implementation changes.
 
-> **Last updated:** 2026-08-14 (Polished Eve AI Assistant modal styling: fixed nested double-borders and thick accent lines on markdown assistant message bubbles, and cleaned up prompt chips and composer field shadows)
+> **Last updated:** 2026-08-14 (Enabled continuous prompt typing and queuing during model thinking/sending across EveAssistantModal and EvePage)
 
 ---
 

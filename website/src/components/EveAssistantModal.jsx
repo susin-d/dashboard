@@ -186,7 +186,12 @@ export function EveAssistantModal({ isOpen, onClose, onNavigate, onWorkspaceChan
   const handleSubmit = async (event) => {
     event.preventDefault()
     const content = draft.trim()
-    if (!content || isSending) return
+    if (!content) return
+    if (isSending) {
+      setPromptQueue((current) => [...current, content])
+      setDraft('')
+      return
+    }
     setError('')
     setIsSending(true)
     try {
@@ -230,7 +235,7 @@ export function EveAssistantModal({ isOpen, onClose, onNavigate, onWorkspaceChan
 
   const addToQueue = () => {
     const content = draft.trim()
-    if (!content || isSending) return
+    if (!content) return
     setPromptQueue((current) => [...current, content])
     setDraft('')
     composerRef.current?.focus()
@@ -469,13 +474,12 @@ export function EveAssistantModal({ isOpen, onClose, onNavigate, onWorkspaceChan
                   placeholder="Ask anything… Type @ for tools or / for prompts"
                   rows="2"
                   maxLength={MAX_CHARS}
-                  disabled={composerDisabled}
                 />
                 <div className="eve-composer-footer">
-                  <span className="eve-composer-hint">⏎ to send</span>
+                  <span className="eve-composer-hint">{isSending ? '⏎ to queue' : '⏎ to send'}</span>
                   <div className="eve-composer-actions">
                     {promptQueue.length > 0 && (
-                      <button className="eve-queue-run" type="button" onClick={runQueue} disabled={composerDisabled}>
+                      <button className="eve-queue-run" type="button" onClick={runQueue} disabled={isSending}>
                         <Play size={13} />
                         Run queue ({promptQueue.length})
                       </button>
@@ -484,13 +488,13 @@ export function EveAssistantModal({ isOpen, onClose, onNavigate, onWorkspaceChan
                       className="eve-queue-add"
                       type="button"
                       onClick={addToQueue}
-                      disabled={!draft.trim() || composerDisabled}
+                      disabled={!draft.trim()}
                       aria-label="Add message to queue"
                       title="Add to queue"
                     >
                       <ListPlus size={16} />
                     </button>
-                    <button className="eve-send-button" type="submit" disabled={!draft.trim() || composerDisabled} aria-label="Send message">
+                    <button className="eve-send-button" type="submit" disabled={!draft.trim()} aria-label={isSending ? 'Queue message' : 'Send message'}>
                       <Send size={15} />
                     </button>
                   </div>
@@ -507,7 +511,6 @@ export function EveAssistantModal({ isOpen, onClose, onNavigate, onWorkspaceChan
                           className="eve-queue-item-remove"
                           type="button"
                           onClick={() => removeFromQueue(index)}
-                          disabled={composerDisabled}
                           aria-label="Remove queued message"
                         >
                           <X size={12} />
@@ -515,7 +518,7 @@ export function EveAssistantModal({ isOpen, onClose, onNavigate, onWorkspaceChan
                       </span>
                     ))}
                   </div>
-                  <button className="eve-queue-clear" type="button" onClick={clearQueue} disabled={composerDisabled}>
+                  <button className="eve-queue-clear" type="button" onClick={clearQueue}>
                     Clear queue
                   </button>
                 </div>
