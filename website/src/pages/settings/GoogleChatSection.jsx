@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Check, MessageSquare, Plus, Trash2 } from 'lucide-react'
-import { ConfirmDialog } from '../../components/ui'
+import { ConfirmDialog, SettingsCard } from '../../components/ui'
 import {
   beginGoogleChatOAuth,
   disconnectGoogleChatAccount,
@@ -86,15 +86,12 @@ export function GoogleChatSection({ user }) {
 
   return (
     <>
-      <section className="workspace-settings-card google-chat-settings-card">
-        <div className="workspace-settings-header">
-          <div>
-            <span className="workspace-google-mark"><MessageSquare size={19} /></span>
-            <div>
-              <h3>Google Chat</h3>
-              <p>Connect and manage multiple Google Chat accounts</p>
-            </div>
-          </div>
+      <SettingsCard
+        className="google-chat-settings-card"
+        icon={<MessageSquare size={19} />}
+        title="Google Chat"
+        description="Connect and manage multiple Google Chat accounts"
+        action={
           <button
             className={googleChatAccounts.length > 0 ? 'workspace-connected' : ''}
             onClick={googleChatAccounts.length > 0 ? () => setDisconnectAllRequested(true) : addGoogleChatAccount}
@@ -107,7 +104,8 @@ export function GoogleChatSection({ user }) {
                 ? 'Disconnect'
                 : 'Add Google Chat account'}
           </button>
-        </div>
+        }
+      >
         <div className="google-calendar-settings-body">
           {googleChatAccounts.length ? (
             <>
@@ -143,7 +141,7 @@ export function GoogleChatSection({ user }) {
           )}
           {googleChatMessage && <strong role="status">{googleChatMessage}</strong>}
         </div>
-      </section>
+      </SettingsCard>
 
       <ConfirmDialog
         isOpen={disconnectAllRequested}

@@ -5,7 +5,7 @@ import {
   loadHackathonSources,
   setHackathonSourceEnabled,
 } from '../../lib/workspaceApi'
-import { SectionHeading } from '../../components/ui'
+import { SectionHeading, SettingsCard } from '../../components/ui'
 
 export function HackathonSourcesSection({ user, onHackathonsChange }) {
   const [hackathonSources, setHackathonSources] = useState([])
@@ -56,14 +56,12 @@ export function HackathonSourcesSection({ user, onHackathonsChange }) {
         description="Turn on event sources to combine their active hackathons."
       />
 
-      <div className="hackathon-source-settings">
-        <div className="hackathon-source-heading">
-          <span><Globe2 size={18} /></span>
-          <div>
-            <h3>Hackathon sources</h3>
-            <p>Connected sources automatically update your Hackathons page.</p>
-          </div>
-        </div>
+      <SettingsCard
+        className="hackathon-source-settings"
+        icon={<Globe2 size={18} />}
+        title="Hackathon sources"
+        description="Connected sources automatically update your Hackathons page."
+      >
 
         <div className="hackathon-source-list">
           {hackathonSources.map((source) => (
@@ -99,7 +97,7 @@ export function HackathonSourcesSection({ user, onHackathonsChange }) {
             {hackathonSourceMessage}
           </p>
         )}
-      </div>
+      </SettingsCard>
     </div>
   )
 }

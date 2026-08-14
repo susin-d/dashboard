@@ -6,7 +6,7 @@ import {
   saveEveSpeechPreference,
   synthesizeEveSpeech,
 } from '../../lib/eveSpeechApi'
-import { CustomDropdown, SectionHeading } from '../../components/ui'
+import { CustomDropdown, SectionHeading, SettingsCard } from '../../components/ui'
 import {
   DEFAULT_EVE_VOICE_PREFS,
   EVE_VOICE_LANGUAGES,
@@ -292,16 +292,14 @@ export function EveVoiceSection() {
       />
 
       <div className="setting-content-stack">
-        <form className="coding-settings-card" onSubmit={handleSave}>
-          <div className="coding-settings-header">
-            <span>
-              <Bot size={18} />
-            </span>
-            <div>
-              <h3>Speech provider</h3>
-              <p>Which services run Eve's speech recognition and speech synthesis.</p>
-            </div>
-          </div>
+        <SettingsCard
+          as="form"
+          className="coding-settings-card"
+          onSubmit={handleSave}
+          icon={<Bot size={18} />}
+          title="Speech provider"
+          description="Which services run Eve's speech recognition and speech synthesis."
+        >
 
           {loadingProviders ? (
             <p className="hackathon-source-message" role="status" style={{ padding: '18px 22px' }}>
@@ -387,18 +385,14 @@ export function EveVoiceSection() {
               </div>
             </>
           )}
-        </form>
+        </SettingsCard>
 
-        <div className="coding-settings-card">
-          <div className="coding-settings-header">
-            <span>
-              <Volume2 size={18} />
-            </span>
-            <div>
-              <h3>Voice &amp; language</h3>
-              <p>Voice input (speech recognition) and Eve's spoken replies (speech synthesis).</p>
-            </div>
-          </div>
+        <SettingsCard
+          className="coding-settings-card"
+          icon={<Volume2 size={18} />}
+          title="Voice & language"
+          description="Voice input (speech recognition) and Eve's spoken replies (speech synthesis)."
+        >
 
           <div className="coding-profile-fields">
             <label>
@@ -491,18 +485,14 @@ export function EveVoiceSection() {
               Reset
             </button>
           </div>
-        </div>
+        </SettingsCard>
 
-        <div className="coding-settings-card">
-          <div className="coding-settings-header">
-            <span>
-              <Mic size={18} />
-            </span>
-            <div>
-              <h3>Browser capabilities</h3>
-              <p>What this browser supports for Eve voice calls.</p>
-            </div>
-          </div>
+        <SettingsCard
+          className="coding-settings-card"
+          icon={<Mic size={18} />}
+          title="Browser capabilities"
+          description="What this browser supports for Eve voice calls."
+        >
           <div className="eve-voice-capabilities">
             <span className={sttSupported ? 'supported' : 'unsupported'}>
               {sttSupported ? <Mic size={15} /> : <MicOff size={15} />}
@@ -517,7 +507,7 @@ export function EveVoiceSection() {
                 : 'Speech synthesis is not supported in this browser'}
             </span>
           </div>
-        </div>
+        </SettingsCard>
       </div>
     </div>
   )

@@ -23,6 +23,7 @@
   margin-bottom: 16px;
 }
 
+.metric-card,
 .stats-metric-card,
 .stats-detail-card {
   border: 1px solid var(--border-color);

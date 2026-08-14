@@ -5,7 +5,7 @@ import {
   saveCompetitiveCodingProfile,
 } from '../../lib/competitiveCodingProfileApi'
 import { loadContests } from '../../lib/workspaceApi'
-import { SectionHeading } from '../../components/ui'
+import { SectionHeading, SettingsCard } from '../../components/ui'
 
 const CONTEST_PLATFORMS = [
   {
@@ -141,17 +141,14 @@ export function CodingSection({ user, onContestSitesChange }) {
       />
 
       <div className="setting-content-stack">
-        <form
+        <SettingsCard
+          as="form"
           className="coding-settings-card"
           onSubmit={submitCodingProfile}
+          icon={<Code2 size={18} />}
+          title="Coding profiles"
+          description="These IDs will be used for your stats and contest activity."
         >
-          <div className="coding-settings-header">
-            <span><Code2 size={18} /></span>
-            <div>
-              <h3>Coding profiles</h3>
-              <p>These IDs will be used for your stats and contest activity.</p>
-            </div>
-          </div>
 
           <div className="coding-profile-fields">
             <label>
@@ -195,16 +192,14 @@ export function CodingSection({ user, onContestSitesChange }) {
               {codingSaving ? 'Saving…' : 'Save profiles'}
             </button>
           </div>
-        </form>
+        </SettingsCard>
 
-        <div className="hackathon-source-settings">
-          <div className="hackathon-source-heading">
-            <span><Code2 size={18} /></span>
-            <div>
-              <h3>Contest platforms & details</h3>
-              <p>Turn on or off upcoming contest details from specific platform sources.</p>
-            </div>
-          </div>
+        <SettingsCard
+          className="hackathon-source-settings"
+          icon={<Code2 size={18} />}
+          title="Contest platforms & details"
+          description="Turn on or off upcoming contest details from specific platform sources."
+        >
 
           <div className="hackathon-source-list">
             {CONTEST_PLATFORMS.map((platform) => {
@@ -238,7 +233,7 @@ export function CodingSection({ user, onContestSitesChange }) {
               {contestPlatformMessage}
             </p>
           )}
-        </div>
+        </SettingsCard>
       </div>
     </div>
   )

@@ -4,7 +4,7 @@ Living project snapshot for AI agents. `AGENTS.md` holds the permanent rules;
 this file holds the **current state** of the codebase and must be kept up to
 date whenever the implementation changes.
 
-> **Last updated:** 2026-08-14 (Replaced call signaling HTTP polling with persistent WebSocket connection `/ws/calls` and server-side `CallWSManager` push events; removed 3s incoming call poll and 2s active call poll in `useCallCenter.js`; added tab visibility-aware auto-reconnecting `callsSocket.js` client; configured Nginx `/ws/` proxy with 1-hour timeout)
+> **Last updated:** 2026-08-14 (Extracted and adopted reusable UI components across all pages: `TabNav`, `PageHeader`, `SectionHeading`, `SettingsCard`, `MetricCard`; unified styling and cleaned up duplicate CSS)
 
 ---
 
@@ -120,7 +120,7 @@ SMTP, Firestore database id, CORS origins. Loads `.env.prod` before `.env`.
 - **UI primitives**: `website/src/components/ui/` (`Avatar`, `Badge`, `Modal`,
   `MailModal`, `ModalHeader`, `ModalActions`, `ConfirmDialog`, `FormField`,
   `PageHeader`, `EmptyState`, `CustomDropdown`, `CalendarPicker`, `Markdown`,
-  `TabNav`)
+  `TabNav`, `SectionHeading`, `SettingsCard`, `MetricCard`)
   re-exported via `index.js`. Dialogs across pages use the shared `Modal` /
   `MailModal` primitives (Portal-based, Escape + backdrop dismissal, focus
   management, `data-modal-initial-focus` support); destructive confirmations

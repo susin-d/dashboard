@@ -1,5 +1,6 @@
 import { FileUp, Trash2, Upload } from 'lucide-react'
 import { parseIcsContent } from '../../utils/icsParser'
+import { SettingsCard } from '../../components/ui'
 
 export function IcsCalendarSection({
   importedIcsCalendars = [],
@@ -40,15 +41,12 @@ export function IcsCalendarSection({
   }
 
   return (
-    <section className="workspace-settings-card ics-calendar-settings-card">
-      <div className="workspace-settings-header">
-        <div>
-          <span className="workspace-google-mark"><FileUp size={19} /></span>
-          <div>
-            <h3>Imported Calendar Files (.ics)</h3>
-            <p>Import multiple iCal / .ics files to view external calendar events</p>
-          </div>
-        </div>
+    <SettingsCard
+      className="ics-calendar-settings-card"
+      icon={<FileUp size={19} />}
+      title="Imported Calendar Files (.ics)"
+      description="Import multiple iCal / .ics files to view external calendar events"
+      action={
         <label className="ics-upload-button">
           <Upload size={15} />
           <span>Import .ics file</span>
@@ -60,7 +58,8 @@ export function IcsCalendarSection({
             style={{ display: 'none' }}
           />
         </label>
-      </div>
+      }
+    >
       <div className="google-calendar-settings-body">
         {importedIcsCalendars.length ? (
           <div className="google-calendar-account-list">
@@ -89,6 +88,6 @@ export function IcsCalendarSection({
           </p>
         )}
       </div>
-    </section>
+    </SettingsCard>
   )
 }

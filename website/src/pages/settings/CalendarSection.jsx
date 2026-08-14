@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { CalendarDays, Check, Plus, RefreshCw, Trash2 } from 'lucide-react'
-import { ConfirmDialog } from '../../components/ui'
+import { ConfirmDialog, SettingsCard } from '../../components/ui'
 import {
   beginGoogleCalendarOAuth,
   loadGoogleCalendarData,
@@ -104,17 +104,12 @@ export function CalendarSection({ user, onGoogleCalendarsChange }) {
 
   return (
     <>
-      <section className="workspace-settings-card google-calendar-settings-card">
-        <div className="workspace-settings-header">
-          <div>
-            <span className="workspace-google-mark">
-              <CalendarDays size={19} />
-            </span>
-            <div>
-              <h3>Google Calendar</h3>
-              <p>Combine calendars from multiple Google accounts</p>
-            </div>
-          </div>
+      <SettingsCard
+        className="google-calendar-settings-card"
+        icon={<CalendarDays size={19} />}
+        title="Google Calendar"
+        description="Combine calendars from multiple Google accounts"
+        action={
           <button
             className={calendarConnections.length > 0 ? 'workspace-connected' : ''}
             onClick={calendarConnections.length > 0 ? () => setDisconnectAllRequested(true) : addGoogleCalendarAccount}
@@ -127,7 +122,8 @@ export function CalendarSection({ user, onGoogleCalendarsChange }) {
                 ? 'Disconnect'
                 : 'Add Google account'}
           </button>
-        </div>
+        }
+      >
 
         <div className="google-calendar-settings-body">
           {calendarConnections.length ? (
@@ -191,7 +187,7 @@ export function CalendarSection({ user, onGoogleCalendarsChange }) {
           )}
           {calendarMessage && <strong role="status">{calendarMessage}</strong>}
         </div>
-      </section>
+      </SettingsCard>
 
       <ConfirmDialog
         isOpen={disconnectAllRequested}

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Check, GitFork } from 'lucide-react'
-import { ConfirmDialog } from '../../components/ui'
+import { ConfirmDialog, SettingsCard } from '../../components/ui'
 import {
   beginGithubOAuth,
   disconnectGithub,
@@ -57,15 +57,12 @@ export function GithubSection({ user }) {
 
   return (
     <>
-      <section className="workspace-settings-card github-settings-card">
-        <div className="workspace-settings-header">
-          <div>
-            <span className="workspace-google-mark"><GitFork size={19} /></span>
-            <div>
-              <h3>GitHub</h3>
-              <p>Import repositories and live contribution stats</p>
-            </div>
-          </div>
+      <SettingsCard
+        className="github-settings-card"
+        icon={<GitFork size={19} />}
+        title="GitHub"
+        description="Import repositories and live contribution stats"
+        action={
           <button
             className={githubConnected ? 'workspace-connected' : ''}
             onClick={githubConnected ? () => setConfirmDisconnect(true) : toggleGithub}
@@ -78,7 +75,8 @@ export function GithubSection({ user }) {
                 ? 'Disconnect'
                 : 'Connect'}
           </button>
-        </div>
+        }
+      >
         <div className="github-settings-copy">
           <p>
             Connected repositories become StarWaves projects. GitHub activity
@@ -86,7 +84,7 @@ export function GithubSection({ user }) {
           </p>
           {githubMessage && <strong role="status">{githubMessage}</strong>}
         </div>
-      </section>
+      </SettingsCard>
 
       <ConfirmDialog
         isOpen={confirmDisconnect}

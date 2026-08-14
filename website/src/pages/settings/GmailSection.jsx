@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Check, Mail, Plus, Trash2 } from 'lucide-react'
-import { ConfirmDialog } from '../../components/ui'
+import { ConfirmDialog, SettingsCard } from '../../components/ui'
 import { clearGmailAuthorization } from '../../lib/firebase'
 import {
   disconnectGmail,
@@ -103,15 +103,12 @@ export function GmailSection({ user }) {
 
   return (
     <>
-      <section className="workspace-settings-card gmail-settings-card">
-        <div className="workspace-settings-header">
-          <div>
-            <span className="workspace-google-mark"><Mail size={19} /></span>
-            <div>
-              <h3>Google Mail</h3>
-              <p>Connect and switch between multiple Gmail accounts</p>
-            </div>
-          </div>
+      <SettingsCard
+        className="gmail-settings-card"
+        icon={<Mail size={19} />}
+        title="Google Mail"
+        description="Connect and switch between multiple Gmail accounts"
+        action={
           <button
             className={gmailAccounts.length > 0 ? 'workspace-connected' : ''}
             onClick={gmailAccounts.length > 0 ? () => setDisconnectAllRequested(true) : addGmailAccount}
@@ -124,7 +121,8 @@ export function GmailSection({ user }) {
                 ? 'Disconnect'
                 : 'Add Gmail account'}
           </button>
-        </div>
+        }
+      >
         <div className="google-calendar-settings-body">
           {gmailAccounts.length ? (
             <>
@@ -141,26 +139,29 @@ export function GmailSection({ user }) {
                     <button
                       className="google-calendar-remove"
                       onClick={() => setRemoveRequested(acc)}
-                      aria-label={`Disconnect ${acc.email}`}
+                      aria-label={`Remove ${acc.email}`}
                     >
                       <Trash2 size={15} />
                     </button>
                   </div>
                 ))}
               </div>
-              <button className="google-calendar-add-account" onClick={addGmailAccount} disabled={gmailBusy}>
-                <Plus size={14} />
-                Add another account
+              <button
+                className="google-calendar-add-btn"
+                onClick={addGmailAccount}
+                disabled={gmailBusy}
+              >
+                <Plus size={14} /> Add another Gmail account
               </button>
             </>
           ) : (
             <p className="google-calendar-empty">
-              Connect one or more Gmail accounts to read and send email directly within StarWaves.
+              No Gmail accounts connected yet. Link your Google account to read, compose, and search emails.
             </p>
           )}
           {gmailMessage && <strong role="status">{gmailMessage}</strong>}
         </div>
-      </section>
+      </SettingsCard>
 
       <ConfirmDialog
         isOpen={disconnectAllRequested}

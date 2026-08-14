@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Check, Contact, ExternalLink, FileText, HardDrive, Plus, Presentation, Sheet } from 'lucide-react'
-import { ConfirmDialog } from '../../components/ui'
+import { ConfirmDialog, SettingsCard } from '../../components/ui'
 import {
   beginGoogleDriveOAuth,
   disconnectGoogleDrive,
@@ -109,15 +109,11 @@ export function WorkspaceAppsSection() {
 
   return (
     <>
-      <section className="workspace-settings-card">
-        <div className="workspace-settings-header">
-          <div>
-            <span className="workspace-google-mark">G</span>
-            <div>
-              <h3>Google Workspace</h3>
-              <p>Drive, Docs, Sheets, and Slides</p>
-            </div>
-          </div>
+      <SettingsCard
+        icon="G"
+        title="Google Workspace"
+        description="Drive, Docs, Sheets, and Slides"
+        action={
           <button
             className={workspaceConnected ? 'workspace-connected' : ''}
             onClick={workspaceConnected ? () => setConfirmDisconnect(true) : connectWorkspace}
@@ -130,7 +126,8 @@ export function WorkspaceAppsSection() {
                 ? 'Disconnect'
                 : 'Connect'}
           </button>
-        </div>
+        }
+      >
 
         {connectionError && (
           <p className="workspace-connection-error" role="alert">
@@ -172,7 +169,7 @@ export function WorkspaceAppsSection() {
             )}
           </button>
         )}
-      </section>
+      </SettingsCard>
 
       <ConfirmDialog
         isOpen={confirmDisconnect}

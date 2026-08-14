@@ -4,7 +4,7 @@ import {
   loadAiModels,
   saveAiModelPreference,
 } from '../../lib/aiModelsApi'
-import { CustomDropdown, SectionHeading } from '../../components/ui'
+import { CustomDropdown, SectionHeading, SettingsCard } from '../../components/ui'
 
 export function AiModelsSection() {
   const [providers, setProviders] = useState([])
@@ -133,14 +133,14 @@ export function AiModelsSection() {
       />
 
       <div className="setting-content-stack">
-        <form className="coding-settings-card" onSubmit={handleSave}>
-          <div className="coding-settings-header">
-            <span><Bot size={18} /></span>
-            <div>
-              <h3>EVE model provider</h3>
-              <p>Eve uses this provider and model for chat, scheduled reminders, and voice calls.</p>
-            </div>
-          </div>
+        <SettingsCard
+          as="form"
+          className="coding-settings-card"
+          onSubmit={handleSave}
+          icon={<Bot size={18} />}
+          title="EVE model provider"
+          description="Eve uses this provider and model for chat, scheduled reminders, and voice calls."
+        >
 
           {loading ? (
             <p className="hackathon-source-message" role="status" style={{ padding: '18px 22px' }}>
@@ -247,7 +247,7 @@ export function AiModelsSection() {
               </div>
             </>
           )}
-        </form>
+        </SettingsCard>
       </div>
     </div>
   )

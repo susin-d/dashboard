@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { CalendarDays, ChevronDown, Clock3, Filter, Search, SlidersHorizontal, Trophy, X } from 'lucide-react'
-import { CustomDropdown, PageHeader } from '../components/ui'
+import { CustomDropdown, MetricCard, PageHeader } from '../components/ui'
 import { usePersistentState } from '../hooks/usePersistentState'
 
 export function CompetitiveCodingPage({ contestSites }) {
@@ -43,9 +43,14 @@ export function CompetitiveCodingPage({ contestSites }) {
       />
 
       <div className="workspace-insight-grid" aria-label="Competitive coding overview">
-        <div className="workspace-insight-card"><span>Platforms</span><strong>{contestSites.length}</strong><small>connected sources</small></div>
-        <div className="workspace-insight-card"><span>Upcoming</span><strong>{allContests.length}</strong><small>contests to explore</small></div>
-        <div className="workspace-insight-card"><span>Next move</span><strong>{contestSites.some((site) => (site.contests || []).length > 0) ? 'Pick one' : 'Connect'}</strong><small>{contestSites.some((site) => (site.contests || []).length > 0) ? 'and reserve your slot' : 'a contest source in Settings'}</small></div>
+        <MetricCard className="compact" label="Platforms" value={contestSites.length} detail="connected sources" />
+        <MetricCard className="compact" label="Upcoming" value={allContests.length} detail="contests to explore" />
+        <MetricCard
+          className="compact"
+          label="Next move"
+          value={contestSites.some((site) => (site.contests || []).length > 0) ? 'Pick one' : 'Connect'}
+          detail={contestSites.some((site) => (site.contests || []).length > 0) ? 'and reserve your slot' : 'a contest source in Settings'}
+        />
       </div>
 
       <div className="contest-controls" aria-label="Filter contests">
