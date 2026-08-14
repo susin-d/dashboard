@@ -1,42 +1,30 @@
 import asyncio
 import logging
-from urllib.parse import quote, urlencode
+from urllib.parse import quote
 
 import httpx
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import RedirectResponse
 from firebase_admin import firestore
 from google.cloud.firestore_v1 import Client
-from itsdangerous import BadSignature, SignatureExpired
 
 from app.core.auth import get_current_user
 from app.core.config import settings
 from app.db import get_firestore
-from app.services.github import (
+from app.services.github import fetch_github_data, state_serializer
+from app.services.oauth import (
+    build_github_authorize_url,
     decrypt_token,
     encrypt_token,
     exchange_code,
-    fetch_github_data,
-    require_oauth_config,
-    state_serializer,
+    format_oauth_error,
 )
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/integrations/github")
 
-
-def format_oauth_error(error: Exception) -> str:
-    if isinstance(error, httpx.HTTPStatusError):
-        try:
-            data = error.response.json()
-            desc = data.get("error_description") or data.get("error") or str(error)
-            return f"GitHub HTTP {error.response.status_code}: {desc}"
-        except Exception:
-            return f"GitHub HTTP {error.response.status_code}: {error.response.text[:100]}"
-    elif isinstance(error, httpx.HTTPError):
-        return f"Network error connecting to GitHub: {error}"
-    return str(error) or error.__class__.__name__
+GITHUB_SCOPES = "read:user repo"
 
 
 def reference(database: Client, user_id: str):
@@ -54,15 +42,12 @@ def authorize_github(user: dict = Depends(get_current_user)):
         state = state_serializer().dumps({"uid": user["uid"]})
     except RuntimeError as error:
         raise HTTPException(status_code=503, detail=str(error)) from None
-    query = urlencode(
-        {
-            "client_id": settings.github_oauth_client_id,
-            "redirect_uri": settings.github_oauth_callback_url,
-            "scope": "read:user repo",
-            "state": state,
-        },
+    url = build_github_authorize_url(
+        settings.github_oauth_callback_url,
+        GITHUB_SCOPES,
+        state,
     )
-    return {"url": f"https://github.com/login/oauth/authorize?{query}"}
+    return {"url": url}
 
 
 @router.get("/callback")
@@ -86,7 +71,7 @@ async def github_callback(
         )
     except Exception as error:
         logger.error("GitHub OAuth callback error: %s", error, exc_info=True)
-        reason = quote(format_oauth_error(error))
+        reason = quote(format_oauth_error(error, "GitHub"))
         return RedirectResponse(
             f"{settings.frontend_url}/app/setting?github=error&reason={reason}",
             status_code=302,

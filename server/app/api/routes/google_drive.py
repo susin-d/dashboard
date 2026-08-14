@@ -1,41 +1,37 @@
 import asyncio
 import logging
-from urllib.parse import quote, unquote, urlencode
+from urllib.parse import quote, unquote
 
 import httpx
 from fastapi import APIRouter, Depends, Header, HTTPException, Query, Request
-from fastapi.responses import HTMLResponse, RedirectResponse
 from firebase_admin import firestore
 from google.cloud.firestore_v1 import Client
-from itsdangerous import BadSignature, SignatureExpired, URLSafeTimedSerializer
+from itsdangerous import URLSafeTimedSerializer
 
 from app.core.auth import get_current_user
 from app.core.config import settings
 from app.db import get_firestore
-from app.services.google_calendar import (
+from app.services.oauth import (
     decrypt_google_token,
     encrypt_google_token,
+    exchange_google_code,
+    format_oauth_error,
+    google_oauth_state_serializer,
     google_profile,
+    oauth_callback_html,
     refresh_google_token,
-    require_google_oauth_config,
 )
+from app.services.oauth.google import build_google_authorize_url
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/integrations/google-drive")
 
-
-def format_oauth_error(error: Exception) -> str:
-    if isinstance(error, httpx.HTTPStatusError):
-        try:
-            data = error.response.json()
-            desc = data.get("error_description") or data.get("error") or str(error)
-            return f"Google HTTP {error.response.status_code}: {desc}"
-        except Exception:
-            return f"Google HTTP {error.response.status_code}: {error.response.text[:100]}"
-    elif isinstance(error, httpx.HTTPError):
-        return f"Network error connecting to Google: {error}"
-    return str(error) or error.__class__.__name__
+GOOGLE_DRIVE_SCOPES = (
+    "openid email profile "
+    "https://www.googleapis.com/auth/drive.metadata.readonly "
+    "https://www.googleapis.com/auth/drive.file"
+)
 
 
 def drive_reference(database: Client, user_id: str):
@@ -48,31 +44,7 @@ def drive_reference(database: Client, user_id: str):
 
 
 def drive_state_serializer() -> URLSafeTimedSerializer:
-    require_google_oauth_config()
-    return URLSafeTimedSerializer(
-        settings.google_oauth_state_secret,
-        salt="starwaves-google-drive-oauth",
-    )
-
-
-async def exchange_drive_code(code: str) -> dict:
-    require_google_oauth_config()
-    async with httpx.AsyncClient(timeout=20) as client:
-        response = await client.post(
-            "https://oauth2.googleapis.com/token",
-            data={
-                "client_id": settings.google_oauth_client_id,
-                "client_secret": settings.google_oauth_client_secret,
-                "code": code,
-                "grant_type": "authorization_code",
-                "redirect_uri": settings.google_drive_oauth_callback_url,
-            },
-        )
-        response.raise_for_status()
-        payload = response.json()
-        if not payload.get("access_token"):
-            raise ValueError("Google did not return Drive access.")
-        return payload
+    return google_oauth_state_serializer("starwaves-google-drive-oauth")
 
 
 async def access_token(database: Client, user_id: str) -> str:
@@ -92,23 +64,12 @@ def authorize_google_drive(user: dict = Depends(get_current_user)):
         state = drive_state_serializer().dumps({"uid": user["uid"]})
     except RuntimeError as error:
         raise HTTPException(status_code=503, detail=str(error)) from None
-    query = urlencode(
-        {
-            "client_id": settings.google_oauth_client_id,
-            "redirect_uri": settings.google_drive_oauth_callback_url,
-            "response_type": "code",
-            "scope": (
-                "openid email profile "
-                "https://www.googleapis.com/auth/drive.metadata.readonly "
-                "https://www.googleapis.com/auth/drive.file"
-            ),
-            "access_type": "offline",
-            "prompt": "consent select_account",
-            "include_granted_scopes": "true",
-            "state": state,
-        },
+    url = build_google_authorize_url(
+        settings.google_drive_oauth_callback_url,
+        GOOGLE_DRIVE_SCOPES,
+        state,
     )
-    return {"url": f"https://accounts.google.com/o/oauth2/v2/auth?{query}"}
+    return {"url": url}
 
 
 @router.get("/callback")
@@ -119,7 +80,10 @@ async def google_drive_callback(
 ):
     try:
         user_id = drive_state_serializer().loads(state, max_age=600)["uid"]
-        token_data = await exchange_drive_code(code)
+        token_data = await exchange_google_code(
+            code,
+            redirect_uri=settings.google_drive_oauth_callback_url,
+        )
         profile = await google_profile(token_data["access_token"])
         existing = (await asyncio.to_thread(drive_reference(database, user_id).get)).to_dict() or {}
         refresh_token = token_data.get("refresh_token")
@@ -146,18 +110,8 @@ async def google_drive_callback(
     except Exception as error:
         logger.error("Google Drive OAuth callback error: %s", error, exc_info=True)
         reason = quote(format_oauth_error(error))
-        return HTMLResponse(
-            f"""<!DOCTYPE html><html><body><script>
-            if (window.opener) {{ window.close(); }}
-            else {{ window.location.href = "{settings.frontend_url}/app/setting?drive=error&reason={reason}"; }}
-            </script></body></html>"""
-        )
-    return HTMLResponse(
-        f"""<!DOCTYPE html><html><body><script>
-        if (window.opener) {{ window.close(); }}
-        else {{ window.location.href = "{settings.frontend_url}/app/setting?drive=connected"; }}
-        </script></body></html>"""
-    )
+        return oauth_callback_html(settings.frontend_url, "drive", error_reason=reason)
+    return oauth_callback_html(settings.frontend_url, "drive")
 
 
 @router.get("/status")

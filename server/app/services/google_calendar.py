@@ -1,96 +1,31 @@
+"""Google Calendar data service: token helpers and calendar/event aggregation.
+
+OAuth config, token crypto/exchange, and profile helpers live in
+``app.services.oauth``; this module owns the Calendar-specific data fetching.
+"""
+
 import asyncio
-import base64
-import hashlib
 from datetime import datetime, timezone
 from urllib.parse import quote
 
 import httpx
-from cryptography.fernet import Fernet
 from itsdangerous import URLSafeTimedSerializer
 
-from app.core.config import settings
-
-
-def require_google_oauth_config() -> None:
-    if not all(
-        (
-            settings.google_oauth_client_id,
-            settings.google_oauth_client_secret,
-            settings.google_oauth_state_secret,
-        ),
-    ):
-        raise RuntimeError("Google Calendar OAuth is not configured on the server.")
+from app.services.oauth import (
+    decrypt_google_token,
+    encrypt_google_token,
+    exchange_google_code,
+    google_oauth_state_serializer,
+    google_profile,
+    google_token_cipher,
+    refresh_google_token,
+    require_google_oauth_config,
+)
 
 
 def google_state_serializer() -> URLSafeTimedSerializer:
-    require_google_oauth_config()
-    return URLSafeTimedSerializer(
-        settings.google_oauth_state_secret,
-        salt="starwaves-google-calendar-oauth",
-    )
-
-
-def google_token_cipher() -> Fernet:
-    require_google_oauth_config()
-    digest = hashlib.sha256(settings.google_oauth_state_secret.encode()).digest()
-    return Fernet(base64.urlsafe_b64encode(digest))
-
-
-def encrypt_google_token(token: str) -> str:
-    return google_token_cipher().encrypt(token.encode()).decode()
-
-
-def decrypt_google_token(token: str) -> str:
-    return google_token_cipher().decrypt(token.encode()).decode()
-
-
-async def exchange_google_code(code: str) -> dict:
-    require_google_oauth_config()
-    async with httpx.AsyncClient(timeout=20) as client:
-        response = await client.post(
-            "https://oauth2.googleapis.com/token",
-            data={
-                "client_id": settings.google_oauth_client_id,
-                "client_secret": settings.google_oauth_client_secret,
-                "code": code,
-                "grant_type": "authorization_code",
-                "redirect_uri": settings.google_oauth_callback_url,
-            },
-        )
-        response.raise_for_status()
-        payload = response.json()
-        if not payload.get("access_token"):
-            raise ValueError("Google did not return an access token.")
-        return payload
-
-
-async def refresh_google_token(refresh_token: str) -> str:
-    require_google_oauth_config()
-    async with httpx.AsyncClient(timeout=20) as client:
-        response = await client.post(
-            "https://oauth2.googleapis.com/token",
-            data={
-                "client_id": settings.google_oauth_client_id,
-                "client_secret": settings.google_oauth_client_secret,
-                "refresh_token": refresh_token,
-                "grant_type": "refresh_token",
-            },
-        )
-        response.raise_for_status()
-        payload = response.json()
-        if not payload.get("access_token"):
-            raise ValueError("Google could not refresh Calendar access.")
-        return payload["access_token"]
-
-
-async def google_profile(access_token: str) -> dict:
-    async with httpx.AsyncClient(timeout=20) as client:
-        response = await client.get(
-            "https://www.googleapis.com/oauth2/v3/userinfo",
-            headers={"Authorization": f"Bearer {access_token}"},
-        )
-        response.raise_for_status()
-        return response.json()
+    """Compatibility wrapper: Calendar OAuth state serializer with its default salt."""
+    return google_oauth_state_serializer("starwaves-google-calendar-oauth")
 
 
 async def google_calendar_data(access_token: str) -> dict:

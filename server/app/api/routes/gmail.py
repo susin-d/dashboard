@@ -1,40 +1,40 @@
 import asyncio
-import hashlib
 import logging
-from urllib.parse import quote, urlencode
+from urllib.parse import quote
 
 import httpx
 from fastapi import APIRouter, Depends, HTTPException, Query
-from fastapi.responses import HTMLResponse, RedirectResponse
 from firebase_admin import firestore
 from google.cloud.firestore_v1 import Client
-from itsdangerous import BadSignature, SignatureExpired, URLSafeTimedSerializer
+from itsdangerous import URLSafeTimedSerializer
 from pydantic import BaseModel, Field
 
 from app.core.auth import get_current_user
 from app.core.config import settings
 from app.db import get_firestore
-from app.services.google_calendar import (
+from app.services.oauth import (
+    decrypt_google_token,
     encrypt_google_token,
-    require_google_oauth_config,
+    exchange_google_code,
+    format_oauth_error,
+    google_oauth_state_serializer,
+    integration_account_id,
+    integration_accounts_reference,
+    oauth_callback_html,
+    refresh_google_token,
 )
+from app.services.oauth.google import build_google_authorize_url
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/integrations/gmail")
 
-
-def format_oauth_error(error: Exception) -> str:
-    if isinstance(error, httpx.HTTPStatusError):
-        try:
-            data = error.response.json()
-            desc = data.get("error_description") or data.get("error") or str(error)
-            return f"Google HTTP {error.response.status_code}: {desc}"
-        except Exception:
-            return f"Google HTTP {error.response.status_code}: {error.response.text[:100]}"
-    elif isinstance(error, httpx.HTTPError):
-        return f"Network error connecting to Google: {error}"
-    return str(error) or error.__class__.__name__
+GMAIL_SCOPES = (
+    "openid email profile "
+    "https://www.googleapis.com/auth/gmail.modify "
+    "https://www.googleapis.com/auth/gmail.readonly "
+    "https://www.googleapis.com/auth/gmail.send"
+)
 
 
 class GmailConnection(BaseModel):
@@ -42,25 +42,11 @@ class GmailConnection(BaseModel):
 
 
 def gmail_accounts_collection(database: Client, user_id: str):
-    return (
-        database.collection("users")
-        .document(user_id)
-        .collection("integrations")
-        .document("gmail")
-        .collection("accounts")
-    )
-
-
-def account_document_id(email: str) -> str:
-    return hashlib.sha256(email.lower().strip().encode()).hexdigest()
+    return integration_accounts_reference(database, user_id, "gmail")
 
 
 def gmail_state_serializer() -> URLSafeTimedSerializer:
-    require_google_oauth_config()
-    return URLSafeTimedSerializer(
-        settings.google_oauth_state_secret,
-        salt="starwaves-gmail-oauth",
-    )
+    return google_oauth_state_serializer("starwaves-gmail-oauth")
 
 
 @router.get("/authorize")
@@ -69,24 +55,12 @@ def authorize_gmail(user: dict = Depends(get_current_user)):
         state = gmail_state_serializer().dumps({"uid": user["uid"]})
     except RuntimeError as error:
         raise HTTPException(status_code=503, detail=str(error)) from None
-    query = urlencode(
-        {
-            "client_id": settings.google_oauth_client_id,
-            "redirect_uri": settings.gmail_oauth_callback_url,
-            "response_type": "code",
-            "scope": (
-                "openid email profile "
-                "https://www.googleapis.com/auth/gmail.modify "
-                "https://www.googleapis.com/auth/gmail.readonly "
-                "https://www.googleapis.com/auth/gmail.send"
-            ),
-            "access_type": "offline",
-            "prompt": "consent select_account",
-            "include_granted_scopes": "true",
-            "state": state,
-        },
+    url = build_google_authorize_url(
+        settings.gmail_oauth_callback_url,
+        GMAIL_SCOPES,
+        state,
     )
-    return {"url": f"https://accounts.google.com/o/oauth2/v2/auth?{query}"}
+    return {"url": url}
 
 
 @router.get("/callback")
@@ -97,20 +71,11 @@ async def gmail_callback(
 ):
     try:
         user_id = gmail_state_serializer().loads(state, max_age=600)["uid"]
+        token_data = await exchange_google_code(
+            code,
+            redirect_uri=settings.gmail_oauth_callback_url,
+        )
         async with httpx.AsyncClient(timeout=20) as client:
-            token_res = await client.post(
-                "https://oauth2.googleapis.com/token",
-                data={
-                    "client_id": settings.google_oauth_client_id,
-                    "client_secret": settings.google_oauth_client_secret,
-                    "code": code,
-                    "grant_type": "authorization_code",
-                    "redirect_uri": settings.gmail_oauth_callback_url,
-                },
-            )
-            token_res.raise_for_status()
-            token_data = token_res.json()
-
             profile_res = await client.get(
                 "https://gmail.googleapis.com/gmail/v1/users/me/profile",
                 headers={"Authorization": f"Bearer {token_data['access_token']}"},
@@ -118,7 +83,7 @@ async def gmail_callback(
             profile_res.raise_for_status()
             email = profile_res.json()["emailAddress"]
 
-        doc_id = account_document_id(email)
+        doc_id = integration_account_id(email)
         doc_ref = gmail_accounts_collection(database, user_id).document(doc_id)
         existing = (await asyncio.to_thread(doc_ref.get)).to_dict() or {}
         refresh_token = token_data.get("refresh_token")
@@ -145,18 +110,8 @@ async def gmail_callback(
     except Exception as error:
         logger.error("Gmail OAuth callback error: %s", error, exc_info=True)
         reason = quote(format_oauth_error(error))
-        return HTMLResponse(
-            f"""<!DOCTYPE html><html><body><script>
-            if (window.opener) {{ window.close(); }}
-            else {{ window.location.href = "{settings.frontend_url}/app/setting?gmail=error&reason={reason}"; }}
-            </script></body></html>"""
-        )
-    return HTMLResponse(
-        f"""<!DOCTYPE html><html><body><script>
-        if (window.opener) {{ window.close(); }}
-        else {{ window.location.href = "{settings.frontend_url}/app/setting?gmail=connected"; }}
-        </script></body></html>"""
-    )
+        return oauth_callback_html(settings.frontend_url, "gmail", error_reason=reason)
+    return oauth_callback_html(settings.frontend_url, "gmail")
 
 
 @router.post("")
@@ -186,7 +141,7 @@ async def connect_gmail(
             detail="Gmail account verification failed.",
         ) from error
 
-    doc_id = account_document_id(email)
+    doc_id = integration_account_id(email)
     doc_ref = gmail_accounts_collection(database, user["uid"]).document(doc_id)
     await asyncio.to_thread(
         lambda: doc_ref.set(
@@ -217,7 +172,7 @@ async def get_gmail_token(
     """Return a fresh Gmail access token for the given account (or first account)."""
     collection = gmail_accounts_collection(database, user["uid"])
     if email:
-        doc_id = account_document_id(email)
+        doc_id = integration_account_id(email)
         snapshot = await asyncio.to_thread(collection.document(doc_id).get)
         if not snapshot.exists:
             raise HTTPException(status_code=404, detail="Gmail account not found.")
@@ -244,7 +199,6 @@ async def get_gmail_token(
         )
 
     try:
-        from app.services.google_calendar import decrypt_google_token, refresh_google_token
         refresh_token = decrypt_google_token(encrypted_refresh_token)
         access_token = await refresh_google_token(refresh_token)
     except Exception as error:

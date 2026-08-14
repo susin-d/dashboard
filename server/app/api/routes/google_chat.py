@@ -1,30 +1,41 @@
 import asyncio
-import hashlib
 import logging
 import uuid
-from urllib.parse import quote, urlencode
+from urllib.parse import quote
 
 import httpx
 from fastapi import APIRouter, Depends, HTTPException, Query
-from fastapi.responses import HTMLResponse
 from firebase_admin import firestore
 from google.cloud.firestore_v1 import Client
-from itsdangerous import BadSignature, SignatureExpired, URLSafeTimedSerializer
+from itsdangerous import URLSafeTimedSerializer
 from pydantic import BaseModel, Field
 
 from app.core.auth import get_current_user
 from app.core.config import settings
 from app.db import get_firestore
-from app.services.google_calendar import (
+from app.services.oauth import (
     decrypt_google_token,
     encrypt_google_token,
+    exchange_google_code,
+    format_oauth_error,
+    google_oauth_state_serializer,
+    integration_account_id,
+    integration_accounts_reference,
+    oauth_callback_html,
     refresh_google_token,
-    require_google_oauth_config,
 )
+from app.services.oauth.google import build_google_authorize_url
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/integrations/google-chat")
+
+GOOGLE_CHAT_SCOPES = (
+    "openid email profile "
+    "https://www.googleapis.com/auth/chat.spaces.readonly "
+    "https://www.googleapis.com/auth/chat.messages "
+    "https://www.googleapis.com/auth/chat.memberships.readonly"
+)
 
 
 async def resolve_chat_access_token(account: dict) -> str | None:
@@ -47,19 +58,6 @@ async def resolve_chat_access_token(account: dict) -> str | None:
     return account.get("access_token")
 
 
-def format_oauth_error(error: Exception) -> str:
-    if isinstance(error, httpx.HTTPStatusError):
-        try:
-            data = error.response.json()
-            desc = data.get("error_description") or data.get("error") or str(error)
-            return f"Google HTTP {error.response.status_code}: {desc}"
-        except Exception:
-            return f"Google HTTP {error.response.status_code}: {error.response.text[:100]}"
-    elif isinstance(error, httpx.HTTPError):
-        return f"Network error connecting to Google: {error}"
-    return str(error) or error.__class__.__name__
-
-
 class GoogleChatConnection(BaseModel):
     access_token: str = Field(min_length=1)
 
@@ -71,25 +69,11 @@ class GoogleChatMessageSend(BaseModel):
 
 
 def chat_accounts_collection(database: Client, user_id: str):
-    return (
-        database.collection("users")
-        .document(user_id)
-        .collection("integrations")
-        .document("google_chat")
-        .collection("accounts")
-    )
-
-
-def account_document_id(email: str) -> str:
-    return hashlib.sha256(email.lower().strip().encode()).hexdigest()
+    return integration_accounts_reference(database, user_id, "google_chat")
 
 
 def chat_state_serializer() -> URLSafeTimedSerializer:
-    require_google_oauth_config()
-    return URLSafeTimedSerializer(
-        settings.google_oauth_state_secret,
-        salt="starwaves-google-chat-oauth",
-    )
+    return google_oauth_state_serializer("starwaves-google-chat-oauth")
 
 
 @router.get("/authorize")
@@ -98,24 +82,12 @@ def authorize_google_chat(user: dict = Depends(get_current_user)):
         state = chat_state_serializer().dumps({"uid": user["uid"]})
     except RuntimeError as error:
         raise HTTPException(status_code=503, detail=str(error)) from None
-    query = urlencode(
-        {
-            "client_id": settings.google_oauth_client_id,
-            "redirect_uri": settings.google_chat_oauth_callback_url,
-            "response_type": "code",
-            "scope": (
-                "openid email profile "
-                "https://www.googleapis.com/auth/chat.spaces.readonly "
-                "https://www.googleapis.com/auth/chat.messages "
-                "https://www.googleapis.com/auth/chat.memberships.readonly"
-            ),
-            "access_type": "offline",
-            "prompt": "consent select_account",
-            "include_granted_scopes": "true",
-            "state": state,
-        },
+    url = build_google_authorize_url(
+        settings.google_chat_oauth_callback_url,
+        GOOGLE_CHAT_SCOPES,
+        state,
     )
-    return {"url": f"https://accounts.google.com/o/oauth2/v2/auth?{query}"}
+    return {"url": url}
 
 
 @router.get("/callback")
@@ -126,20 +98,11 @@ async def google_chat_callback(
 ):
     try:
         user_id = chat_state_serializer().loads(state, max_age=600)["uid"]
+        token_data = await exchange_google_code(
+            code,
+            redirect_uri=settings.google_chat_oauth_callback_url,
+        )
         async with httpx.AsyncClient(timeout=20) as client:
-            token_res = await client.post(
-                "https://oauth2.googleapis.com/token",
-                data={
-                    "client_id": settings.google_oauth_client_id,
-                    "client_secret": settings.google_oauth_client_secret,
-                    "code": code,
-                    "grant_type": "authorization_code",
-                    "redirect_uri": settings.google_chat_oauth_callback_url,
-                },
-            )
-            token_res.raise_for_status()
-            token_data = token_res.json()
-
             userinfo_res = await client.get(
                 "https://www.googleapis.com/oauth2/v2/userinfo",
                 headers={"Authorization": f"Bearer {token_data['access_token']}"},
@@ -153,7 +116,7 @@ async def google_chat_callback(
         if not email:
             raise ValueError("Google account email could not be retrieved.")
 
-        doc_id = account_document_id(email)
+        doc_id = integration_account_id(email)
         doc_ref = chat_accounts_collection(database, user_id).document(doc_id)
         existing = (await asyncio.to_thread(doc_ref.get)).to_dict() or {}
         refresh_token = token_data.get("refresh_token")
@@ -181,18 +144,8 @@ async def google_chat_callback(
     except Exception as error:
         logger.error("Google Chat OAuth callback error: %s", error, exc_info=True)
         reason = quote(format_oauth_error(error))
-        return HTMLResponse(
-            f"""<!DOCTYPE html><html><body><script>
-            if (window.opener) {{ window.close(); }}
-            else {{ window.location.href = "{settings.frontend_url}/app/setting?chat=error&reason={reason}"; }}
-            </script></body></html>"""
-        )
-    return HTMLResponse(
-        f"""<!DOCTYPE html><html><body><script>
-        if (window.opener) {{ window.close(); }}
-        else {{ window.location.href = "{settings.frontend_url}/app/setting?chat=connected"; }}
-        </script></body></html>"""
-    )
+        return oauth_callback_html(settings.frontend_url, "chat", error_reason=reason)
+    return oauth_callback_html(settings.frontend_url, "chat")
 
 
 @router.get("/accounts")
@@ -245,7 +198,7 @@ async def connect_google_chat_account(
             detail="Google Chat account verification failed.",
         ) from error
 
-    doc_id = account_document_id(email)
+    doc_id = integration_account_id(email)
     doc_ref = chat_accounts_collection(database, user["uid"]).document(doc_id)
     await asyncio.to_thread(
         lambda: doc_ref.set(
