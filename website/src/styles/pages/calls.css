@@ -288,8 +288,12 @@ html.dark-theme .call-screen-stage {
 }
 
 .calls-dial-button {
-  margin-top: 10px;
+  display: inline-flex;
+  align-items: center;
   justify-content: center;
+  gap: 8px;
+  width: 100%;
+  margin-top: 10px;
 }
 
 /* Recent calls */
@@ -621,8 +625,17 @@ html.dark-theme .eve-quick-call-box {
 }
 
 .eve-quick-call-buttons button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
   font-size: 12px;
   padding: 6px 12px;
+  min-height: 36px;
+}
+
+.eve-quick-call-buttons button svg {
+  flex-shrink: 0;
 }
 
 /* Eve Call Screen Visualizer */

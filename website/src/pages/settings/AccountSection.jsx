@@ -53,40 +53,42 @@ export function AccountSection({ user, onSignOut }) {
         <p>Manage session access or permanently remove your account.</p>
       </div>
 
-      <div className="account-action-card">
-        <div>
-          <h3>Sign out of account</h3>
-          <p>
-            Sign out of your active StarWaves session on this device.
-          </p>
+      <div className="account-actions-wrapper">
+        <div className="account-action-card">
+          <div>
+            <h3>Sign out of account</h3>
+            <p>
+              Sign out of your active StarWaves session on this device.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={handleSignOut}
+          >
+            <LogOut size={15} />
+            <span>Sign out</span>
+          </button>
         </div>
-        <button
-          type="button"
-          onClick={handleSignOut}
-        >
-          <LogOut size={15} />
-          Sign out
-        </button>
-      </div>
 
-      <div className="delete-account-card">
-        <div>
-          <h3>Delete your account</h3>
-          <p>
-            This permanently deletes your account and cannot be undone.
-          </p>
-          {accountDeleteMessage && (
-            <strong role="alert">{accountDeleteMessage}</strong>
-          )}
+        <div className="delete-account-card">
+          <div>
+            <h3>Delete your account</h3>
+            <p>
+              This permanently deletes your account and cannot be undone.
+            </p>
+            {accountDeleteMessage && (
+              <strong role="alert">{accountDeleteMessage}</strong>
+            )}
+          </div>
+          <button
+            type="button"
+            onClick={openDeleteModal}
+            disabled={accountDeleting}
+          >
+            <Trash2 size={15} />
+            <span>{accountDeleting ? 'Deleting…' : 'Delete account'}</span>
+          </button>
         </div>
-        <button
-          type="button"
-          onClick={openDeleteModal}
-          disabled={accountDeleting}
-        >
-          <Trash2 size={15} />
-          {accountDeleting ? 'Deleting…' : 'Delete account'}
-        </button>
       </div>
 
       <Modal

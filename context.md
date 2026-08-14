@@ -4,7 +4,7 @@ Living project snapshot for AI agents. `AGENTS.md` holds the permanent rules;
 this file holds the **current state** of the codebase and must be kept up to
 date whenever the implementation changes.
 
-> **Last updated:** 2026-08-14 (Eve voice calls use server-side Groq STT / Google TTS when selected: `useCallCenter.js` loads the user's speech providers on call start, routes Eve TTS through `/eve/synthesize`, and offers push-to-talk recording via `/eve/transcribe`)
+> **Last updated:** 2026-08-14 (Refined button styling with flex alignment, SVG spacing, and fixed 2-column grid layout nesting in settings AccountSection and calls dialer cards)
 
 ---
 

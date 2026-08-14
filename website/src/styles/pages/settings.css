@@ -857,13 +857,19 @@
   padding-bottom: 32px;
 }
 
+.account-actions-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+}
+
 .account-action-card {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 24px;
   padding: 22px;
-  margin-bottom: 16px;
   background: var(--bg-card);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-xl, 14px);
@@ -886,7 +892,8 @@
 .account-action-card button {
   display: inline-flex;
   align-items: center;
-  gap: 7px;
+  gap: 8px;
+  flex-shrink: 0;
   padding: 10px 16px;
   color: var(--text-primary);
   background: var(--bg-tertiary);
@@ -897,6 +904,10 @@
   cursor: pointer;
   white-space: nowrap;
   transition: all 0.18s ease;
+}
+
+.account-action-card button svg {
+  flex-shrink: 0;
 }
 
 .account-action-card button:hover {
@@ -932,7 +943,8 @@
 .delete-account-card button {
   display: inline-flex;
   align-items: center;
-  gap: 7px;
+  gap: 8px;
+  flex-shrink: 0;
   padding: 10px 16px;
   color: var(--text-inverse);
   background: var(--color-primary);
@@ -943,6 +955,10 @@
   cursor: pointer;
   white-space: nowrap;
   transition: all 0.18s ease;
+}
+
+.delete-account-card button svg {
+  flex-shrink: 0;
 }
 
 .delete-account-card button:hover {
