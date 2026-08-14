@@ -4,7 +4,7 @@ Living project snapshot for AI agents. `AGENTS.md` holds the permanent rules;
 this file holds the **current state** of the codebase and must be kept up to
 date whenever the implementation changes.
 
-> **Last updated:** 2026-08-14 (Added file attachment support to Eve AI Assistant via the composer '+' button and drag-and-drop: supports documents, code, images with previews and extracted LLM prompt context)
+> **Last updated:** 2026-08-14 (Added dedicated 'Voice & AI Call' sub-navigation tab to Eve page with interactive animated circular sound wave visualizer responding in real-time when Eve speaks, live transcript drawer, and voice controls)
 
 ---
 

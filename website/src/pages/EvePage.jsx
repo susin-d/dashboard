@@ -4,6 +4,7 @@ import {
   CalendarClock,
   MessageSquare,
   History,
+  PhoneCall,
 } from 'lucide-react'
 import {
   createEveMemory,
@@ -20,6 +21,7 @@ import { EveChatSection } from './eve/EveChatSection'
 import { EveSessionsSection } from './eve/EveSessionsSection'
 import { EveMemorySection } from './eve/EveMemorySection'
 import { EveSchedulesSection } from './eve/EveSchedulesSection'
+import { EveCallSection } from './eve/EveCallSection'
 
 const STARTER_MESSAGES = [
   {
@@ -379,6 +381,23 @@ export function EvePage({ callCenter, onNavigate, onWorkspaceChanged, chatResetK
             <button
               type="button"
               role="tab"
+              aria-selected={activeTab === 'call'}
+              className={`eve-nav-btn ${activeTab === 'call' ? 'active' : ''}`}
+              onClick={() => setActiveTab('call')}
+            >
+              <PhoneCall size={16} />
+              <div className="eve-nav-text">
+                <span className="eve-nav-title">Voice &amp; AI Call</span>
+                <span className="eve-nav-subtitle">Live voice session</span>
+              </div>
+              {callCenter?.isEveCall && ['dialing', 'connecting', 'active'].includes(callCenter?.phase) && (
+                <span className="eve-nav-live-dot" title="Call in progress" />
+              )}
+            </button>
+
+            <button
+              type="button"
+              role="tab"
               aria-selected={activeTab === 'schedules'}
               className={`eve-nav-btn ${activeTab === 'schedules' ? 'active' : ''}`}
               onClick={() => setActiveTab('schedules')}
@@ -416,6 +435,10 @@ export function EvePage({ callCenter, onNavigate, onWorkspaceChanged, chatResetK
               activeModel={activeModel}
               onSelectAiModel={handleSelectAiModel}
             />
+          )}
+
+          {activeTab === 'call' && (
+            <EveCallSection callCenter={callCenter} />
           )}
 
           {activeTab === 'sessions' && (

@@ -170,6 +170,22 @@
   font-weight: 700;
 }
 
+.eve-nav-live-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--color-primary, #ffffff);
+  box-shadow: 0 0 0 2px var(--bg-card);
+  animation: eve-live-pulse 1.4s infinite ease-in-out;
+  flex-shrink: 0;
+}
+
+@keyframes eve-live-pulse {
+  0% { transform: scale(0.9); opacity: 0.5; }
+  50% { transform: scale(1.3); opacity: 1; }
+  100% { transform: scale(0.9); opacity: 0.5; }
+}
+
 .eve-nav-btn:hover {
   background: var(--bg-tertiary, #18181b);
   border-color: var(--border-color, #27272a);
@@ -1647,3 +1663,470 @@
   color: var(--text-primary, #ffffff);
   font-size: 0.82rem;
 }
+
+/* ═══════════════════════════════════════════════════════════════════
+   ── Eve AI Voice Call Section & Circular Sound Waves Animation ──
+   ═══════════════════════════════════════════════════════════════════ */
+.eve-call-section-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: calc(100vh - 200px);
+  padding: 1.5rem 1rem;
+}
+
+.eve-call-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: min(100%, 640px);
+  background: var(--bg-card, var(--bg-secondary));
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-xl, 16px);
+  padding: 2rem 1.75rem;
+  box-shadow: var(--shadow-md);
+  position: relative;
+  overflow: hidden;
+  text-align: center;
+}
+
+.eve-call-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  margin-bottom: 2rem;
+}
+
+.eve-call-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.3rem 0.75rem;
+  border-radius: 999px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.eve-call-status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--text-muted);
+}
+
+.eve-call-status-dot.active {
+  background: var(--color-primary);
+  box-shadow: 0 0 0 2px var(--bg-card), 0 0 8px var(--color-primary);
+  animation: eve-live-pulse 1.2s infinite ease-in-out;
+}
+
+.eve-call-engine-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+/* ── Central Animated Circle Stage ── */
+.eve-call-visualizer-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin: 1rem 0 2rem;
+  width: 100%;
+}
+
+.eve-call-circle-stage {
+  position: relative;
+  width: 220px;
+  height: 220px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1.5rem;
+}
+
+.eve-call-orb-core {
+  position: relative;
+  z-index: 6;
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  background: var(--color-primary, #18181b);
+  color: var(--text-inverse, #ffffff);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s ease;
+}
+
+.eve-call-circle-stage.idle .eve-call-orb-core {
+  animation: eve-orb-idle-breathe 3.5s ease-in-out infinite;
+}
+
+@keyframes eve-orb-idle-breathe {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+  }
+  50% {
+    transform: scale(1.05);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+  }
+}
+
+.eve-call-circle-stage.speaking .eve-call-orb-core {
+  animation: eve-orb-speaking-pulse 1s ease-in-out infinite alternate;
+  box-shadow: 0 0 40px rgba(255, 255, 255, 0.2), 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+
+@keyframes eve-orb-speaking-pulse {
+  0% {
+    transform: scale(1);
+  }
+  100% {
+    transform: scale(1.08);
+  }
+}
+
+.eve-call-circle-stage.thinking .eve-call-orb-core {
+  box-shadow: 0 0 25px rgba(255, 255, 255, 0.15);
+}
+
+.eve-call-spin-icon {
+  animation: eve-call-spin 1.4s linear infinite;
+}
+
+@keyframes eve-call-spin {
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+/* ── Concentric Circular Sound Wave Rings ── */
+.eve-call-wave-circle {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  border: 1.5px solid var(--border-heavy, #71717a);
+  opacity: 0;
+  pointer-events: none;
+  z-index: 2;
+  box-sizing: border-box;
+}
+
+/* ── Active Speaking Wave Ripples Animation ── */
+.eve-call-circle-stage.speaking .wave-1 {
+  animation: eve-circular-soundwave 2.2s cubic-bezier(0.12, 0.7, 0.25, 1) infinite 0s;
+}
+
+.eve-call-circle-stage.speaking .wave-2 {
+  animation: eve-circular-soundwave 2.2s cubic-bezier(0.12, 0.7, 0.25, 1) infinite 0.44s;
+}
+
+.eve-call-circle-stage.speaking .wave-3 {
+  animation: eve-circular-soundwave 2.2s cubic-bezier(0.12, 0.7, 0.25, 1) infinite 0.88s;
+}
+
+.eve-call-circle-stage.speaking .wave-4 {
+  animation: eve-circular-soundwave 2.2s cubic-bezier(0.12, 0.7, 0.25, 1) infinite 1.32s;
+}
+
+.eve-call-circle-stage.speaking .wave-5 {
+  animation: eve-circular-soundwave 2.2s cubic-bezier(0.12, 0.7, 0.25, 1) infinite 1.76s;
+}
+
+@keyframes eve-circular-soundwave {
+  0% {
+    transform: scale(0.95);
+    opacity: 0.9;
+    border-color: var(--text-primary, #ffffff);
+    border-width: 2px;
+  }
+  40% {
+    opacity: 0.6;
+    border-color: var(--border-heavy, #71717a);
+  }
+  100% {
+    transform: scale(2.4);
+    opacity: 0;
+    border-color: var(--border-color, #27272a);
+    border-width: 1px;
+  }
+}
+
+/* ── Listening Wave Ripples (Gentle) ── */
+.eve-call-circle-stage.listening .wave-1 {
+  animation: eve-listening-wave 2.8s ease-out infinite 0s;
+}
+
+.eve-call-circle-stage.listening .wave-2 {
+  animation: eve-listening-wave 2.8s ease-out infinite 0.9s;
+}
+
+.eve-call-circle-stage.listening .wave-3 {
+  animation: eve-listening-wave 2.8s ease-out infinite 1.8s;
+}
+
+@keyframes eve-listening-wave {
+  0% {
+    transform: scale(1);
+    opacity: 0.5;
+    border-color: var(--border-color);
+  }
+  100% {
+    transform: scale(1.6);
+    opacity: 0;
+    border-color: var(--border-color);
+  }
+}
+
+/* ── Title & Status ── */
+.eve-call-title-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.eve-call-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+
+.eve-call-subtitle {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.eve-call-error-text {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin: 0.25rem 0 0;
+}
+
+/* ── Live Transcripts Box ── */
+.eve-call-captions-drawer {
+  width: 100%;
+  max-width: 520px;
+  margin-bottom: 1.5rem;
+  padding: 0.9rem 1.1rem;
+  border-radius: var(--radius-md, 10px);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  max-height: 140px;
+  overflow-y: auto;
+  text-align: left;
+}
+
+.eve-call-caption-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
+.caption-tag {
+  flex-shrink: 0;
+  font-weight: 700;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 0.15rem 0.4rem;
+  border-radius: 4px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+}
+
+.caption-body {
+  margin: 0;
+  color: var(--text-secondary);
+  word-break: break-word;
+}
+
+.eve-call-caption-row.assistant .caption-body {
+  color: var(--text-primary);
+}
+
+/* ── Text Fallback Input ── */
+.eve-call-text-fallback {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  max-width: 480px;
+  margin-bottom: 1.5rem;
+}
+
+.eve-call-text-fallback input {
+  flex: 1;
+  padding: 0.6rem 0.85rem;
+  border-radius: var(--radius-xs, 6px);
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  font-size: 0.85rem;
+  outline: none;
+  transition: border-color var(--transition-fast);
+}
+
+.eve-call-text-fallback input:focus {
+  border-color: var(--border-heavy);
+}
+
+.eve-call-text-fallback button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-xs, 6px);
+  background: var(--color-primary);
+  color: var(--text-inverse);
+  border: none;
+  cursor: pointer;
+  transition: opacity var(--transition-fast);
+}
+
+.eve-call-text-fallback button:hover:not(:disabled) {
+  opacity: 0.9;
+}
+
+.eve-call-text-fallback button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* ── Controls Wrapper ── */
+.eve-call-controls-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding-top: 0.5rem;
+}
+
+.eve-call-idle-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+}
+
+.eve-call-start-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
+  padding: 0.7rem 1.4rem;
+  border-radius: var(--radius-md, 8px);
+  background: var(--color-primary);
+  color: var(--text-inverse);
+  border: 1px solid var(--color-primary);
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  box-shadow: var(--shadow-sm);
+}
+
+.eve-call-start-btn:hover {
+  opacity: 0.92;
+  transform: translateY(-1px);
+}
+
+.eve-call-start-btn.secondary {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+}
+
+.eve-call-start-btn.secondary:hover {
+  background: var(--bg-hover);
+  border-color: var(--border-heavy);
+}
+
+.eve-call-active-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+}
+
+.eve-call-ctrl-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  padding: 0.6rem 1rem;
+  border-radius: var(--radius-md, 8px);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.eve-call-ctrl-btn:hover:not(:disabled) {
+  background: var(--bg-hover);
+  border-color: var(--border-heavy);
+}
+
+.eve-call-ctrl-btn.active-mute {
+  background: var(--bg-tertiary);
+  border-color: var(--border-heavy);
+  color: var(--text-muted);
+}
+
+.eve-call-ctrl-btn.active-talk {
+  background: var(--color-primary);
+  color: var(--text-inverse);
+  border-color: var(--color-primary);
+}
+
+.eve-call-hangup-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1.2rem;
+  border-radius: var(--radius-md, 8px);
+  background: var(--color-primary);
+  color: var(--text-inverse);
+  border: 1px solid var(--color-primary);
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.eve-call-hangup-btn:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
