@@ -163,11 +163,41 @@ async def import_google_contacts(
             detail="Google account is missing access credentials.",
         )
 
+    import httpx
+
     access_token = decrypt_google_token(enc_access)
     try:
         raw_contacts = await fetch_google_people_connections(access_token)
     except Exception as initial_err:
-        if enc_refresh:
+        # If token was expired (401), attempt refresh
+        is_401 = isinstance(initial_err, httpx.HTTPStatusError) and initial_err.response.status_code == 401
+        is_403 = isinstance(initial_err, httpx.HTTPStatusError) and initial_err.response.status_code == 403
+
+        if is_403:
+            google_msg = ""
+            try:
+                err_data = initial_err.response.json()
+                google_msg = err_data.get("error", {}).get("message", "")
+            except Exception:
+                google_msg = str(initial_err)
+
+            logger.warning("Google People API 403 Forbidden: %s", google_msg)
+            if "People API has not been used" in google_msg or "disabled" in google_msg.lower():
+                detail = (
+                    "Google People API is not enabled in your Google Cloud Console. "
+                    "Please enable 'People API' at https://console.cloud.google.com/apis/library/people.googleapis.com and retry."
+                )
+            elif "scope" in google_msg.lower() or "permission" in google_msg.lower():
+                detail = (
+                    "Google Contacts permission was not granted. "
+                    "Please reconnect your Google account and grant Contacts access."
+                )
+            else:
+                detail = f"Google People API access denied (403): {google_msg or initial_err}"
+
+            raise HTTPException(status_code=403, detail=detail) from None
+
+        if enc_refresh and (is_401 or not isinstance(initial_err, httpx.HTTPStatusError)):
             try:
                 refresh_token = decrypt_google_token(enc_refresh)
                 access_token = await refresh_google_token(refresh_token)
@@ -177,7 +207,17 @@ async def import_google_contacts(
                 })
                 raw_contacts = await fetch_google_people_connections(access_token)
             except Exception as refresh_err:
-                logger.warning("Token refresh failed during Google Contacts import: %s", refresh_err)
+                logger.warning("Token refresh or retry failed during Google Contacts import: %s", refresh_err)
+                if isinstance(refresh_err, httpx.HTTPStatusError) and refresh_err.response.status_code == 403:
+                    try:
+                        err_data = refresh_err.response.json()
+                        google_msg = err_data.get("error", {}).get("message", "")
+                    except Exception:
+                        google_msg = str(refresh_err)
+                    raise HTTPException(
+                        status_code=403,
+                        detail=f"Google People API access denied (403): {google_msg or 'Enable Google People API in Google Cloud Console.'}",
+                    ) from None
                 raise HTTPException(
                     status_code=401,
                     detail="Google Contacts session expired. Please reconnect your Google account.",

@@ -84,7 +84,14 @@ async def fetch_google_people_connections(access_token: str) -> list[dict[str, A
         while True:
             req_url = f"{url}&pageToken={page_token}" if page_token else url
             response = await client.get(req_url, headers=headers)
-            response.raise_for_status()
+            if response.status_code != 200:
+                error_msg = response.text
+                try:
+                    err_json = response.json()
+                    error_msg = err_json.get("error", {}).get("message") or response.text
+                except Exception:
+                    pass
+                response.raise_for_status()
             data = response.json()
 
             connections = data.get("connections") or []

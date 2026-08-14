@@ -4,7 +4,7 @@ Living project snapshot for AI agents. `AGENTS.md` holds the permanent rules;
 this file holds the **current state** of the codebase and must be kept up to
 date whenever the implementation changes.
 
-> **Last updated:** 2026-08-14 (Fixed Google Contacts import token refresh bug where access_token string return value was incorrectly indexed as dictionary)
+> **Last updated:** 2026-08-14 (Improved Google People API error handling and logging to accurately report 403 Forbidden / API not enabled states)
 
 ---
 
