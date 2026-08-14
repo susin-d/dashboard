@@ -4,7 +4,7 @@ Living project snapshot for AI agents. `AGENTS.md` holds the permanent rules;
 this file holds the **current state** of the codebase and must be kept up to
 date whenever the implementation changes.
 
-> **Last updated:** 2026-08-13 (Fixed Eve AI assistant page layout geometry, added Markdown table parsing/styling support for AI responses, and removed intrusive initial load error banner on automated schedules)
+> **Last updated:** 2026-08-14 (Redesigned `/app/eve` with a dedicated mini-sidebar and standalone subpage sections for Chat & Copilot, Chat Sessions, Eve Memory, and Automated Schedules)
 
 ---
 

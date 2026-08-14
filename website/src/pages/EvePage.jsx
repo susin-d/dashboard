@@ -1,16 +1,12 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import {
   Bot,
-  ListPlus,
+  Brain,
+  CalendarClock,
   MessageSquare,
   PhoneCall,
   PhoneIncoming,
-  Plus,
-  Play,
-  Send,
-  Info,
-  Trash2,
-  X,
+  History,
 } from 'lucide-react'
 import {
   createEveMemory,
@@ -22,8 +18,10 @@ import {
   listEveSessions,
   sendEveMessage,
 } from '../lib/eveApi'
-import { Markdown } from '../components/ui/Markdown'
-import { EveSchedulesCard } from '../components/eve/EveSchedulesCard'
+import { EveChatSection } from './eve/EveChatSection'
+import { EveSessionsSection } from './eve/EveSessionsSection'
+import { EveMemorySection } from './eve/EveMemorySection'
+import { EveSchedulesSection } from './eve/EveSchedulesSection'
 
 const STARTER_MESSAGES = [
   {
@@ -55,9 +53,8 @@ const EVE_TOOLS_LIST = [
   { command: 'insight', name: 'insight', label: 'Workspace Insights Tool', description: 'Compute deadlines, overdue tasks, or dashboard summary' },
 ]
 
-const MAX_CHARS = 4000
-
 export function EvePage({ callCenter, onNavigate, onWorkspaceChanged, chatResetKey }) {
+  const [activeTab, setActiveTab] = useState('chat')
   const [messages, setMessages] = useState(STARTER_MESSAGES)
   const [draft, setDraft] = useState('')
   const [isSending, setIsSending] = useState(false)
@@ -70,16 +67,12 @@ export function EvePage({ callCenter, onNavigate, onWorkspaceChanged, chatResetK
   const [isAddingMemory, setIsAddingMemory] = useState(false)
   const [isLoadingSidebar, setIsLoadingSidebar] = useState(true)
 
-  const messagesEndRef = useRef(null)
-  const composerRef = useRef(null)
-
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [messages, isSending])
-
   const refreshSidebar = async () => {
     try {
-      const [sessionData, memoryData] = await Promise.all([listEveSessions(), listEveMemories()])
+      const [sessionData, memoryData] = await Promise.all([
+        listEveSessions().catch(() => ({ sessions: [] })),
+        listEveMemories().catch(() => ({ memories: [] })),
+      ])
       setSessions(sessionData.sessions ?? [])
       setMemories(memoryData.memories ?? [])
     } catch (sidebarError) {
@@ -160,6 +153,7 @@ export function EvePage({ callCenter, onNavigate, onWorkspaceChanged, chatResetK
     setError('')
     setPromptQueue([])
     setActiveSessionId(null)
+    setActiveTab('chat')
   }
 
   const resumeSession = async (session) => {
@@ -168,6 +162,7 @@ export function EvePage({ callCenter, onNavigate, onWorkspaceChanged, chatResetK
       setMessages(sessionData?.session?.messages || STARTER_MESSAGES)
       setActiveSessionId(session.id)
       setError('')
+      setActiveTab('chat')
     } catch (sessionError) {
       setError(sessionError.message || 'Could not load that Eve session.')
     }
@@ -226,7 +221,6 @@ export function EvePage({ callCenter, onNavigate, onWorkspaceChanged, chatResetK
     if (!content) return
     setPromptQueue((current) => [...current, content])
     setDraft('')
-    composerRef.current?.focus()
   }
 
   const removeFromQueue = (index) => {
@@ -267,24 +261,21 @@ export function EvePage({ callCenter, onNavigate, onWorkspaceChanged, chatResetK
 
   const selectTool = (tool) => {
     setDraft(`@${tool.command} `)
-    composerRef.current?.focus()
   }
 
   const selectPrompt = (item) => {
     setDraft(item.prompt)
-    composerRef.current?.focus()
   }
-
-  const charProgress = draft.length / MAX_CHARS
 
   return (
     <div className="eve-page-container">
+      {/* ── Voice & Quick Actions Banner ── */}
       <div className="eve-header-banner">
         <div className="eve-header-info">
           <Bot size={18} />
           <div>
-            <strong>Eve AI Voice Assistant</strong>
-            <small>Have an interactive real-time voice call with Eve</small>
+            <strong>Eve AI Workspace Assistant</strong>
+            <small>Interact via text chat, scheduled reminders, or real-time voice calls</small>
           </div>
         </div>
         <div className="eve-header-actions">
@@ -309,281 +300,126 @@ export function EvePage({ callCenter, onNavigate, onWorkspaceChanged, chatResetK
         </div>
       </div>
 
-      {/* ── Main Content Grid ── */}
-      <div className="eve-content-grid">
-        <main className="eve-chat-section">
-            <div className="eve-messages-feed" role="log" aria-live="polite" aria-label="Eve AI conversation feed">
-              {messages.map((msg, index) => (
-                <div key={index} className={`eve-chat-bubble ${msg.role}`}>
-                  {msg.role === 'assistant' && (
-                    <div className="eve-bubble-avatar">
-                      <Bot size={16} />
-                    </div>
-                  )}
-                    <div className="eve-bubble-content">
-                      <div className="eve-bubble-header">
-                        <span className="eve-sender-name">{msg.role === 'assistant' ? 'Eve' : 'You'}</span>
-                      </div>
-                      {msg.role === 'assistant' ? (
-                        <div className="eve-bubble-text eve-bubble-markdown">
-                          <Markdown content={msg.content} />
-                        </div>
-                      ) : (
-                        <p className="eve-bubble-text">{msg.content}</p>
-                      )}
-                    </div>
-                </div>
-              ))}
-
-              {isSending && (
-                <div className="eve-chat-bubble assistant sending">
-                  <div className="eve-bubble-avatar">
-                    <Bot size={16} />
-                  </div>
-                  <div className="eve-bubble-content">
-                    <span className="eve-sender-name">Eve</span>
-                    <div className="eve-typing-indicator" aria-label="Eve is processing">
-                      <span />
-                      <span />
-                      <span />
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {error && (
-                <div className="eve-error-banner" role="alert">
-                  <Info size={16} />
-                  <span>{error}</span>
-                </div>
-              )}
-
-              <div ref={messagesEndRef} />
-            </div>
-
-            {/* Composer Form */}
-            <form className="eve-page-composer" onSubmit={handleSubmit}>
-              <div className="eve-composer-inner">
-                {draft.startsWith('@') && matchingTools.length > 0 && (
-                  <div className="eve-skills-popup" role="listbox" aria-label="Eve tools">
-                    <div className="eve-skills-popup-title">
-                      Workspace Tools & Resources <span>Type @ to reference</span>
-                    </div>
-                    {matchingTools.map((tool) => (
-                      <button
-                        type="button"
-                        key={tool.command}
-                        className="eve-skill-item"
-                        onClick={() => selectTool(tool)}
-                      >
-                        <span className="eve-skill-cmd">@{tool.command}</span>
-                        <div className="eve-skill-desc">
-                          <strong>{tool.label}</strong>
-                          <small>{tool.description}</small>
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-                )}
-
-                {draft.startsWith('/') && matchingPrompts.length > 0 && (
-                  <div className="eve-skills-popup" role="listbox" aria-label="Eve pre-saved prompts">
-                    <div className="eve-skills-popup-title">
-                      Pre-saved Prompts <span>Type / to filter</span>
-                    </div>
-                    {matchingPrompts.map((item) => (
-                      <button
-                        type="button"
-                        key={item.command}
-                        className="eve-skill-item"
-                        onClick={() => selectPrompt(item)}
-                      >
-                        <span className="eve-skill-cmd">/{item.command}</span>
-                        <div className="eve-skill-desc">
-                          <strong>{item.label}</strong>
-                          <small>{item.description}</small>
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-                )}
-
-                <textarea
-                  ref={composerRef}
-                  value={draft}
-                  onChange={(e) => setDraft(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' && !e.shiftKey) {
-                      e.preventDefault()
-                      handleSubmit(e)
-                    }
-                  }}
-                  placeholder="Ask Eve anything… Type @ to call a tool or / for a pre-saved prompt"
-                  rows={3}
-                  maxLength={MAX_CHARS}
-                />
-
-                <div className="eve-composer-bar">
-                  <div className="eve-composer-actions">
-                    {promptQueue.length > 0 && (
-                      <button
-                        type="button"
-                        className="eve-queue-run"
-                        onClick={runQueue}
-                        disabled={isSending}
-                      >
-                        <Play size={13} />
-                        Run queue ({promptQueue.length})
-                      </button>
-                    )}
-                    <button
-                      type="button"
-                      className="eve-queue-add"
-                      onClick={addToQueue}
-                      disabled={!draft.trim()}
-                      aria-label="Add message to queue"
-                      title="Add to queue"
-                    >
-                      <ListPlus size={16} />
-                    </button>
-                    <button
-                      type="submit"
-                      className="eve-send-btn"
-                      disabled={!draft.trim()}
-                      aria-label={isSending ? 'Queue message' : 'Send message to Eve'}
-                    >
-                      <Send size={15} />
-                      <span>{isSending ? 'Queue' : 'Send'}</span>
-                    </button>
-                  </div>
-                </div>
-                <div
-                  className="eve-progress-indicator"
-                  style={{ width: `${charProgress * 100}%` }}
-                />
+      {/* ── Eve App Layout with Mini-Sidebar ── */}
+      <div className="eve-app-layout">
+        <aside className="eve-mini-sidebar" aria-label="Eve Sub-navigation">
+          <nav className="eve-nav-list" role="tablist">
+            <button
+              type="button"
+              role="tab"
+              aria-selected={activeTab === 'chat'}
+              className={`eve-nav-btn ${activeTab === 'chat' ? 'active' : ''}`}
+              onClick={() => setActiveTab('chat')}
+            >
+              <MessageSquare size={16} />
+              <div className="eve-nav-text">
+                <span className="eve-nav-title">Chat &amp; Copilot</span>
+                <span className="eve-nav-subtitle">Live workspace assistant</span>
               </div>
-              {promptQueue.length > 0 && (
-                <div className="eve-queue-strip" aria-label="Queued messages">
-                  <div className="eve-queue-list">
-                    {promptQueue.map((queuedPrompt, index) => (
-                      <span className="eve-queue-item" key={`${queuedPrompt}-${index}`}>
-                        <span className="eve-queue-item-text">{queuedPrompt}</span>
-                        <button
-                          className="eve-queue-item-remove"
-                          type="button"
-                          onClick={() => removeFromQueue(index)}
-                          aria-label="Remove queued message"
-                        >
-                          <X size={12} />
-                        </button>
-                      </span>
-                    ))}
-                  </div>
-                  <button className="eve-queue-clear" type="button" onClick={clearQueue}>
-                    Clear queue
-                  </button>
-                </div>
-              )}
-            </form>
-          </main>
-
-        {/* ── Sidebar Column ── */}
-        <aside className="eve-sidebar-section" aria-label="Eve sessions and memory">
-          <div className="eve-sidebar-card">
-            <h3>
-              <MessageSquare size={15} />
-              Sessions
-            </h3>
-            <p className="eve-sidebar-desc">
-              Continue a past conversation or start a new one. Each conversation is saved automatically.
-            </p>
-            <button type="button" className="eve-new-session-btn" onClick={startNewChat} disabled={isSending}>
-              <Plus size={14} />
-              New chat
             </button>
-            {isLoadingSidebar ? (
-              <p className="eve-sidebar-desc">Loading sessions…</p>
-            ) : sessions.length === 0 ? (
-              <p className="eve-sidebar-desc">No sessions yet.</p>
-            ) : (
-              <div className="eve-session-list" role="list">
-                {sessions.map((session) => (
-                  <div
-                    key={session.id}
-                    className={`eve-session-item${session.id === activeSessionId ? ' active' : ''}`}
-                  >
-                    <button
-                      type="button"
-                      className="eve-session-open"
-                      onClick={() => resumeSession(session)}
-                      disabled={isSending}
-                      title={session.preview ?? session.title}
-                    >
-                      <span className="eve-session-title">{session.title}</span>
-                      {session.preview && <span className="eve-session-preview">{session.preview}</span>}
-                    </button>
-                    <button
-                      type="button"
-                      className="eve-session-delete"
-                      onClick={() => removeSession(session.id)}
-                      disabled={isSending}
-                      aria-label={`Delete session ${session.title}`}
-                    >
-                      <Trash2 size={13} />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
 
-          <div className="eve-sidebar-card">
-            <h3>
-              <Bot size={15} />
-              Eve Memory
-            </h3>
-            <p className="eve-sidebar-desc">
-              Facts Eve remembers about you and your workspace. You can also tell Eve to “remember” something.
-            </p>
-            <form className="eve-memory-form" onSubmit={addMemory}>
-              <input
-                type="text"
-                value={memoryDraft}
-                onChange={(e) => setMemoryDraft(e.target.value)}
-                placeholder="Add a fact for Eve to remember…"
-                maxLength={500}
-                aria-label="New memory"
-              />
-              <button type="submit" className="eve-memory-add" disabled={!memoryDraft.trim() || isAddingMemory}>
-                <Plus size={14} />
-              </button>
-            </form>
-            {isLoadingSidebar ? (
-              <p className="eve-sidebar-desc">Loading memory…</p>
-            ) : memories.length === 0 ? (
-              <p className="eve-sidebar-desc">Nothing remembered yet.</p>
-            ) : (
-              <div className="eve-memory-list" role="list">
-                {memories.map((memory) => (
-                  <div key={memory.id} className="eve-memory-item">
-                    <span className="eve-memory-content">{memory.content}</span>
-                    <button
-                      type="button"
-                      className="eve-memory-delete"
-                      onClick={() => removeMemory(memory.id)}
-                      disabled={isSending}
-                      aria-label="Delete memory"
-                    >
-                      <Trash2 size={13} />
-                    </button>
-                  </div>
-                ))}
+            <button
+              type="button"
+              role="tab"
+              aria-selected={activeTab === 'sessions'}
+              className={`eve-nav-btn ${activeTab === 'sessions' ? 'active' : ''}`}
+              onClick={() => setActiveTab('sessions')}
+            >
+              <History size={16} />
+              <div className="eve-nav-text">
+                <span className="eve-nav-title">Chat Sessions</span>
+                <span className="eve-nav-subtitle">Past conversation history</span>
               </div>
-            )}
-          </div>
+              {sessions.length > 0 && (
+                <span className="eve-nav-badge">{sessions.length}</span>
+              )}
+            </button>
 
-          <EveSchedulesCard onScheduleTriggered={refreshSidebar} />
+            <button
+              type="button"
+              role="tab"
+              aria-selected={activeTab === 'memory'}
+              className={`eve-nav-btn ${activeTab === 'memory' ? 'active' : ''}`}
+              onClick={() => setActiveTab('memory')}
+            >
+              <Brain size={16} />
+              <div className="eve-nav-text">
+                <span className="eve-nav-title">Eve Memory</span>
+                <span className="eve-nav-subtitle">Remembered facts &amp; rules</span>
+              </div>
+              {memories.length > 0 && (
+                <span className="eve-nav-badge">{memories.length}</span>
+              )}
+            </button>
+
+            <button
+              type="button"
+              role="tab"
+              aria-selected={activeTab === 'schedules'}
+              className={`eve-nav-btn ${activeTab === 'schedules' ? 'active' : ''}`}
+              onClick={() => setActiveTab('schedules')}
+            >
+              <CalendarClock size={16} />
+              <div className="eve-nav-text">
+                <span className="eve-nav-title">Schedules &amp; Reminders</span>
+                <span className="eve-nav-subtitle">Automated prompts &amp; calls</span>
+              </div>
+            </button>
+          </nav>
         </aside>
+
+        {/* ── Active Section View ── */}
+        <div className="eve-active-view-container">
+          {activeTab === 'chat' && (
+            <EveChatSection
+              messages={messages}
+              draft={draft}
+              setDraft={setDraft}
+              isSending={isSending}
+              error={error}
+              promptQueue={promptQueue}
+              addToQueue={addToQueue}
+              removeFromQueue={removeFromQueue}
+              clearQueue={clearQueue}
+              runQueue={runQueue}
+              handleSubmit={handleSubmit}
+              matchingTools={matchingTools}
+              matchingPrompts={matchingPrompts}
+              selectTool={selectTool}
+              selectPrompt={selectPrompt}
+              EVE_PRESET_PROMPTS={EVE_PRESET_PROMPTS}
+            />
+          )}
+
+          {activeTab === 'sessions' && (
+            <EveSessionsSection
+              sessions={sessions}
+              activeSessionId={activeSessionId}
+              isLoading={isLoadingSidebar}
+              onResumeSession={resumeSession}
+              onRemoveSession={removeSession}
+              onStartNewChat={startNewChat}
+              isSending={isSending}
+            />
+          )}
+
+          {activeTab === 'memory' && (
+            <EveMemorySection
+              memories={memories}
+              isLoading={isLoadingSidebar}
+              onAddMemory={addMemory}
+              onRemoveMemory={removeMemory}
+              memoryDraft={memoryDraft}
+              setMemoryDraft={setMemoryDraft}
+              isAddingMemory={isAddingMemory}
+              isSending={isSending}
+            />
+          )}
+
+          {activeTab === 'schedules' && (
+            <EveSchedulesSection onScheduleTriggered={refreshSidebar} />
+          )}
+        </div>
       </div>
     </div>
   )

@@ -305,7 +305,6 @@ export function EveAssistantModal({ isOpen, onClose, onNavigate, onWorkspaceChan
 
   const hasUserMessages = (messages || []).some((msg) => msg?.role === 'user')
   const charProgress = draft.length / MAX_CHARS
-  const composerDisabled = isSending || isLoadingSessions
 
   if (!isOpen) return null
 
