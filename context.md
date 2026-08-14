@@ -4,7 +4,7 @@ Living project snapshot for AI agents. `AGENTS.md` holds the permanent rules;
 this file holds the **current state** of the codebase and must be kept up to
 date whenever the implementation changes.
 
-> **Last updated:** 2026-08-14 (AI Models settings section: per-user provider/model picker, multi-provider EVE backend)
+> **Last updated:** 2026-08-14 (AI Models settings section: per-user provider/model picker, multi-provider EVE backend; added SPEECH_PROVIDERS.md TTS/STT provider comparison)
 
 ---
 
@@ -48,6 +48,7 @@ Starwaves/
 ├── docker-compose.yml       Multi-container orchestration for server & Nginx
 ├── .env.docker.example      Docker deployment environment template
 ├── DOCKER.md                Container setup & operational documentation
+├── SPEECH_PROVIDERS.md      TTS/STT provider comparison for Eve voice
 └── vercel.json              Serverless rewrites
 ```
 
