@@ -568,6 +568,100 @@
   background: var(--bg-card);
 }
 
+.coding-profile-fields select {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md, 8px);
+  background: var(--bg-card, #ffffff);
+  color: var(--text-primary);
+  font: inherit;
+  font-size: 13px;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.coding-profile-fields select:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: var(--shadow-focus);
+  background: var(--bg-card);
+}
+
+.coding-profile-fields select:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* Eve Voice Settings */
+.eve-voice-footer .eve-voice-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 9px 16px;
+  color: var(--text-inverse);
+  background: var(--color-primary);
+  border: 1px solid var(--color-primary);
+  border-radius: var(--radius-md, 8px);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.18s ease;
+}
+
+.eve-voice-footer .eve-voice-primary:hover:not(:disabled) {
+  opacity: 0.92;
+  transform: translateY(-1px);
+}
+
+.eve-voice-footer .eve-voice-primary:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.eve-voice-footer .eve-voice-reset {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 9px 16px;
+  color: var(--text-primary);
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md, 8px);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.18s ease;
+}
+
+.eve-voice-footer .eve-voice-reset:hover {
+  background: var(--bg-hover);
+  border-color: var(--border-hover, var(--text-muted));
+}
+
+.eve-voice-capabilities {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 20px 22px;
+}
+
+.eve-voice-capabilities > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-muted, #71717a);
+}
+
+.eve-voice-capabilities > span.supported {
+  color: var(--text-primary, #09090b);
+}
+
 .coding-settings-footer {
   display: flex;
   align-items: center;

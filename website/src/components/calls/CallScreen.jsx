@@ -5,6 +5,7 @@ import {
   Mic,
   MicOff,
   PhoneOff,
+  Send,
   Sparkles,
   Video,
   VideoOff,
@@ -39,17 +40,20 @@ export function CallScreen({ callCenter, myUid }) {
     isEveSpeaking,
     isEveThinking,
     ttsEnabled,
+    sttStatus,
     hangUp,
     dismiss,
     toggleMute,
     toggleCamera,
     toggleTts,
+    sendVoiceToEve,
   } = callCenter
 
   const remote = otherParticipant(call || incomingCall, myUid)
   const localVideoRef = useRef(null)
   const remoteVideoRef = useRef(null)
   const [elapsed, setElapsed] = useState(0)
+  const [textDraft, setTextDraft] = useState('')
 
   useEffect(() => {
     if (localVideoRef.current) localVideoRef.current.srcObject = localStream
@@ -89,6 +93,9 @@ export function CallScreen({ callCenter, myUid }) {
       if (isEveThinking) statusText = 'Thinking…'
       else if (isEveSpeaking) statusText = 'Speaking…'
       else if (muted) statusText = 'Microphone muted'
+      else if (sttStatus === 'unsupported') statusText = 'Voice input not supported here'
+      else if (sttStatus === 'permission') statusText = 'Microphone permission needed'
+      else if (sttStatus === 'error') statusText = 'Voice input unavailable'
       else statusText = `Listening… (${formatElapsed(elapsed)})`
     } else {
       statusText = formatElapsed(elapsed)
@@ -97,6 +104,27 @@ export function CallScreen({ callCenter, myUid }) {
   else if (phase === 'missed') statusText = 'Call missed'
   else if (phase === 'ended') statusText = 'Call ended'
   else if (phase === 'error') statusText = 'Call failed'
+
+  let sttHint = ''
+  if (isEveCall && inProgress) {
+    if (sttStatus === 'unsupported') {
+      sttHint = 'Speech recognition is not supported in this browser. Type your message below instead.'
+    } else if (sttStatus === 'permission') {
+      sttHint = 'Microphone permission was denied. Allow microphone access to use voice commands, or type below.'
+    } else if (sttStatus === 'error') {
+      sttHint = 'Voice input ran into an error. Type your message below instead.'
+    }
+  }
+
+  const showTextFallback = isEveCall && inProgress && sttStatus !== 'listening'
+
+  const handleTextSend = (event) => {
+    event.preventDefault()
+    const text = textDraft.trim()
+    if (!text || isEveThinking) return
+    sendVoiceToEve(text)
+    setTextDraft('')
+  }
 
   if (isEveCall && inProgress) {
     return (
@@ -148,6 +176,34 @@ export function CallScreen({ callCenter, myUid }) {
               <span className="caption-text">{eveTranscript}</span>
             </div>
           </div>
+
+          {showTextFallback && (
+            <form className="eve-text-fallback" onSubmit={handleTextSend}>
+              {sttHint && (
+                <p className="eve-stt-hint" role="status">
+                  {sttHint}
+                </p>
+              )}
+              <label htmlFor="eve-text-input">Type a message to Eve</label>
+              <div className="eve-text-fallback-row">
+                <input
+                  id="eve-text-input"
+                  type="text"
+                  value={textDraft}
+                  onChange={(event) => setTextDraft(event.target.value)}
+                  placeholder="Type a message to Eve…"
+                  disabled={isEveThinking}
+                />
+                <button
+                  type="submit"
+                  disabled={isEveThinking || !textDraft.trim()}
+                  title="Send message"
+                >
+                  <Send size={16} />
+                </button>
+              </div>
+            </form>
+          )}
         </div>
 
         <div className="call-controls">

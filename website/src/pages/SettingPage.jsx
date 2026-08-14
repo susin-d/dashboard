@@ -2,6 +2,7 @@ import { AccountSection } from './settings/AccountSection'
 import { AppsSection } from './settings/AppsSection'
 import { CodingSection } from './settings/CodingSection'
 import { DataSourcesSection } from './settings/DataSourcesSection'
+import { EveVoiceSection } from './settings/EveVoiceSection'
 import { HackathonSourcesSection } from './settings/HackathonSourcesSection'
 import { ProfileSection } from './settings/ProfileSection'
 import { PushNotificationsSection } from './settings/PushNotificationsSection'
@@ -33,6 +34,7 @@ export function SettingPage({
         <a href="#settings-apps">Integrations</a>
         <a href="#settings-sources">Data sources</a>
         <a href="#settings-coding">Coding profiles</a>
+        <a href="#settings-eve-voice">Eve voice</a>
         <a href="#settings-account">Account &amp; security</a>
       </nav>
 
@@ -49,6 +51,7 @@ export function SettingPage({
       <PushNotificationsSection user={user} />
       <CodingSection user={user} onContestSitesChange={onContestSitesChange} />
       <HackathonSourcesSection user={user} onHackathonsChange={onHackathonsChange} />
+      <EveVoiceSection />
       <AccountSection user={user} onSignOut={onSignOut} />
     </section>
   )

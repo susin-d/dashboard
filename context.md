@@ -4,7 +4,7 @@ Living project snapshot for AI agents. `AGENTS.md` holds the permanent rules;
 this file holds the **current state** of the codebase and must be kept up to
 date whenever the implementation changes.
 
-> **Last updated:** 2026-08-14 (DRY refactor: shared OAuth helpers, unified API client, split workspaceApi & theme presets)
+> **Last updated:** 2026-08-14 (Eve voice UX: Web Speech STT/SpeechSynthesis prefs, STT status surfacing, echo-loop guard, on-call text fallback)
 
 ---
 
@@ -104,7 +104,8 @@ database id, CORS origins. Loads `.env.prod` before `.env`.
   reuse `ConfirmDialog`.
 - **Hooks** (`src/hooks/`): `useAuth`, `useRouter`,
   `useThemeCustomizer`, `useWorkspaceData`, `useCallCenter`, plus
-  `usePersistentState`, `useLocalNotifications`, `useDialogAccessibility`.
+  `usePersistentState`, `useLocalNotifications`, `useDialogAccessibility`,
+  `useSpeechVoices`.
 - **API clients** (`src/lib/`): one per backend feature (`todosApi`,
   `workspaceApi/` (package split by feature: jobs, projects, hackathons,
   notifications, contests, calendar, email), `gmailApi`, `googleCalendar`,
@@ -120,7 +121,7 @@ database id, CORS origins. Loads `.env.prod` before `.env`.
   plus `useThemeCustomizer`.
 - **Utils** (`src/utils/`): `browserNotifications`, `calendarEvents`,
   `calendarReminders`, `icsParser`, `popupOAuth`, `projectLifecycle`,
-  `callWebRTC`, `callDisplay`.
+  `callWebRTC`, `callDisplay`, `speech`.
 - **Pages** (`src/pages/`): Dashboard, Projects, ProjectDetail, Jobs,
   Hackathons, HackathonDetail, Todo, Documents, DocumentOpener, Mails,
   Calendar, Chats, Calls, CompetitiveCoding, Stats, Eve, Settings, Themes,
@@ -129,7 +130,7 @@ database id, CORS origins. Loads `.env.prod` before `.env`.
   `IncomingCallOverlay`.
 - **Settings sections** (`src/pages/settings/`): Profile, Account, Apps,
   WorkspaceApps, Theme, Calendar, IcsCalendar, Gmail, Github, GoogleChat,
-  Coding, HackathonSources, DataSources, PushNotifications.
+  Coding, HackathonSources, DataSources, PushNotifications, EveVoice.
 - **Dashboard config**: `src/dashboard/dashboardConfig.js` (React Grid Layout).
 - **Navigation config**: `src/config/navigation.js`.
 
@@ -171,6 +172,7 @@ database id, CORS origins. Loads `.env.prod` before `.env`.
   - Active Eve calls launch a dedicated monochrome AI pulse wave visualizer (`CallScreen.jsx`), integrated Web Speech API STT (Speech-to-Text) voice recognition, and TTS (Text-to-Speech) voice synthesis with real-time speech captions overlay and mute/audio controls.
   - Backend: `server/app/api/routes/calls.py` handles `eve-bot` resolution and `/calls/trigger-eve` endpoint; `server/app/services/eve.py` includes the `trigger_eve_call` workspace tool.
   - Calls integrate with notifications: starting a call, missing a call, or declining a call automatically creates workspace notifications in Firestore via `NotificationRepository`, dispatches FCM push notifications to user devices, and triggers browser desktop notifications. Calls are also surfaced in the sidebar navigation, Header notification drawer (with dedicated call icons), and landing page "Remind me" CTA routes to signup.
+- Eve voice call UX (Web Speech API, `for now` approach): Eve voice calls surface STT state via `sttSupported`/`sttStatus` (`listening`/`unsupported`/`permission`/`error`) in the `CallScreen.jsx` status line, and show an on-call text fallback input whenever voice input is not listening (unsupported browser, denied mic permission, or STT error). An echo-loop guard in `useCallCenter.js` ignores speech-recognition results while Eve's TTS is playing (plus a 700ms cooldown) so her own spoken words are never transcribed back into the conversation. Speech preferences (language, voice, rate, pitch) persist under `starwaves.eve_voice_prefs` via `src/utils/speech.js` (pure helpers + vitest suite), the `useSpeechVoices` hook, and the new Settings "Eve voice" section (`EveVoiceSection.jsx`). Note: Web Speech STT runs through the browser's speech service (Chrome uses Google servers, not on-device); TTS uses local OS voices.
 - Docker & Nginx containerization: `/server` containerized using Python 3.12-slim with non-root security context (`appuser`), Uvicorn 4-worker runtime, and container healthchecks. Nginx reverse proxy configured in `nginx/` with Gzip compression, 20MB client upload ceiling, security headers, WebSocket upgrade support, and health route proxying. Orchestrated via root `docker-compose.yml` with `.env.docker.example` and [`DOCKER.md`](file:///c:/project/starwaves/DOCKER.md).
 - Global CORS & Exception Middleware: `server/app/main.py` features outer CORS middleware and exception wrapping ensuring proper `Access-Control-Allow-Origin`, `Access-Control-Allow-Credentials`, and allowed header response headers across all HTTP endpoints, preflight `OPTIONS` requests, 4xx/500 status responses, and unhandled server exceptions for local development (`localhost`, `127.0.0.1`, Capacitor `capacitor://localhost`, custom ports) and production (`https://starwaves.susindran.in`, `https://*.susindran.in`, `https://*.vercel.app`).
 - Email & Google OAuth single-account unification: automatic merging of duplicate account records in Firestore (`merge_duplicate_user_accounts`), seamless password attachment to Google OAuth accounts upon signup (`create_user_with_password`), and on-demand `/api/v1/auth/merge-accounts` endpoint.

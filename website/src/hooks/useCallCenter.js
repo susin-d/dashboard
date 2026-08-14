@@ -10,10 +10,16 @@ import {
 import { sendEveMessage } from '../lib/eveApi'
 import { ICE_SERVERS, startRingtone, stopRingtone } from '../utils/callWebRTC'
 import { notify, requestNotificationPermission } from '../utils/browserNotifications'
+import {
+  isSpeechRecognitionSupported,
+  loadEveVoicePrefs,
+  selectVoice,
+} from '../utils/speech'
 
 const INCOMING_POLL_MS = 3000
 const CALL_POLL_MS = 2000
 const RING_TIMEOUT_MS = 35000
+const ECHO_COOLDOWN_MS = 700
 
 const BUSY_PHASES = ['dialing', 'connecting', 'active', 'incoming']
 
@@ -36,6 +42,10 @@ export function useCallCenter({ user }) {
   const [isEveSpeaking, setIsEveSpeaking] = useState(false)
   const [isEveThinking, setIsEveThinking] = useState(false)
   const [ttsEnabled, setTtsEnabled] = useState(true)
+  const [sttStatus, setSttStatus] = useState(() =>
+    isSpeechRecognitionSupported() ? 'idle' : 'unsupported',
+  )
+  const [sttSupported] = useState(() => isSpeechRecognitionSupported())
 
   const phaseRef = useRef('idle')
   const pcRef = useRef(null)
@@ -52,6 +62,9 @@ export function useCallCenter({ user }) {
   userRef.current = user
 
   const recognitionRef = useRef(null)
+  const permissionBlockedRef = useRef(false)
+  const isEveSpeakingRef = useRef(false)
+  const lastSpeechEndRef = useRef(0)
   const ttsEnabledRef = useRef(ttsEnabled)
   ttsEnabledRef.current = ttsEnabled
   const isEveThinkingRef = useRef(isEveThinking)
@@ -119,6 +132,9 @@ export function useCallCenter({ user }) {
         } catch {}
         recognitionRef.current = null
       }
+      permissionBlockedRef.current = false
+      isEveSpeakingRef.current = false
+      lastSpeechEndRef.current = 0
       callIdRef.current = null
       processedIdsRef.current = new Set()
       remoteOfferRef.current = null
@@ -130,11 +146,12 @@ export function useCallCenter({ user }) {
       setVideoOff(false)
       setIsEveSpeaking(false)
       setIsEveThinking(false)
+      setSttStatus(sttSupported ? 'idle' : 'unsupported')
       setUserTranscript('')
       setEveTranscript('Hello! I’m Eve. How can I help you today?')
       setPhase(nextPhase)
     },
-    [clearCallPoll, cleanupPeer, stopLocalMedia],
+    [clearCallPoll, cleanupPeer, stopLocalMedia, sttSupported],
   )
 
   useEffect(
@@ -310,13 +327,27 @@ export function useCallCenter({ user }) {
     if (typeof window === 'undefined' || !('speechSynthesis' in window)) return
     if (!ttsEnabledRef.current) return
 
+    const prefs = loadEveVoicePrefs()
+    const voices = window.speechSynthesis.getVoices() || []
+    const voice = selectVoice(prefs, voices)
+
     window.speechSynthesis.cancel()
     const utterance = new SpeechSynthesisUtterance(text)
-    utterance.rate = 1.0
-    utterance.pitch = 1.0
-    utterance.onstart = () => setIsEveSpeaking(true)
-    utterance.onend = () => setIsEveSpeaking(false)
-    utterance.onerror = () => setIsEveSpeaking(false)
+    if (voice) utterance.voice = voice
+    utterance.lang = prefs.language
+    utterance.rate = prefs.rate
+    utterance.pitch = prefs.pitch
+    const stopSpeaking = () => {
+      isEveSpeakingRef.current = false
+      lastSpeechEndRef.current = Date.now()
+      setIsEveSpeaking(false)
+    }
+    utterance.onstart = () => {
+      isEveSpeakingRef.current = true
+      setIsEveSpeaking(true)
+    }
+    utterance.onend = stopSpeaking
+    utterance.onerror = stopSpeaking
     window.speechSynthesis.speak(utterance)
   }, [])
 
@@ -347,6 +378,7 @@ export function useCallCenter({ user }) {
         } catch {}
         recognitionRef.current = null
       }
+      setSttStatus(sttSupported ? 'idle' : 'unsupported')
       return
     }
 
@@ -354,16 +386,30 @@ export function useCallCenter({ user }) {
       typeof window !== 'undefined'
         ? window.SpeechRecognition || window.webkitSpeechRecognition
         : null
-    if (!SpeechRecognition) return
+    if (!SpeechRecognition) {
+      setSttStatus('unsupported')
+      return
+    }
 
     let rec = recognitionRef.current
     if (!rec) {
+      const prefs = loadEveVoicePrefs()
       rec = new SpeechRecognition()
       rec.continuous = true
       rec.interimResults = true
-      rec.lang = 'en-US'
+      rec.lang = prefs.language
 
       rec.onresult = (event) => {
+        // Echo guard: while Eve's TTS plays through the speakers (or within a
+        // short cooldown after it stops) the mic picks up her voice. Ignore it
+        // so Eve's own speech is never transcribed back into the conversation.
+        if (
+          isEveSpeakingRef.current ||
+          isEveThinkingRef.current ||
+          Date.now() - lastSpeechEndRef.current < ECHO_COOLDOWN_MS
+        ) {
+          return
+        }
         let finalResult = ''
         let interimResult = ''
         for (let i = event.resultIndex; i < event.results.length; ++i) {
@@ -382,12 +428,29 @@ export function useCallCenter({ user }) {
         }
       }
 
-      rec.onerror = () => {
-        // ignore speech errors silently
+      rec.onstart = () => {
+        permissionBlockedRef.current = false
+        setSttStatus('listening')
+      }
+
+      rec.onerror = (event) => {
+        const reason = event?.error
+        if (reason === 'not-allowed' || reason === 'service-not-allowed') {
+          permissionBlockedRef.current = true
+          setSttStatus('permission')
+        } else if (reason === 'aborted' || reason === 'no-speech') {
+          // transient; recognition restarts via onend
+        } else {
+          setSttStatus('error')
+        }
       }
 
       rec.onend = () => {
-        if (phaseRef.current === 'active' && recognitionRef.current) {
+        if (
+          phaseRef.current === 'active' &&
+          recognitionRef.current &&
+          !permissionBlockedRef.current
+        ) {
           try {
             rec.start()
           } catch {}
@@ -408,7 +471,7 @@ export function useCallCenter({ user }) {
         recognitionRef.current = null
       }
     }
-  }, [isEveCall, muted, phase, sendVoiceToEve])
+  }, [isEveCall, muted, phase, sendVoiceToEve, sttSupported])
 
   const dial = useCallback(
     async (calleeIdentifier, requestedMode) => {
@@ -583,6 +646,8 @@ export function useCallCenter({ user }) {
       const next = !current
       if (!next && typeof window !== 'undefined' && 'speechSynthesis' in window) {
         window.speechSynthesis.cancel()
+        isEveSpeakingRef.current = false
+        lastSpeechEndRef.current = Date.now()
         setIsEveSpeaking(false)
       }
       return next
@@ -651,6 +716,8 @@ export function useCallCenter({ user }) {
     isEveSpeaking,
     isEveThinking,
     ttsEnabled,
+    sttSupported,
+    sttStatus,
     dial,
     accept,
     decline,
