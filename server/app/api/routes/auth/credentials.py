@@ -68,6 +68,7 @@ def signup(
             "uid": user_record["uid"],
             "email": user_record["email"],
             "displayName": user_record["display_name"],
+            "emailVerified": bool(user_record.get("email_verified", False)),
         },
     }
 
@@ -126,5 +127,6 @@ def login(payload: LoginRequest, database: Client = Depends(get_firestore)):
             "uid": user_record["uid"],
             "email": user_record["email"],
             "displayName": user_record.get("display_name") or user_record["email"].split("@")[0],
+            "emailVerified": bool(user_record.get("email_verified", False)),
         },
     }

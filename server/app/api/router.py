@@ -15,6 +15,7 @@ from app.api.routes import (
     eve_speech,
     gmail,
     google_calendar,
+    google_contacts,
     google_drive,
     github,
     google_chat,
@@ -50,6 +51,10 @@ api_router.include_router(github.router, tags=["GitHub integration"])
 api_router.include_router(
     google_calendar.router,
     tags=["Google Calendar integration"],
+)
+api_router.include_router(
+    google_contacts.router,
+    tags=["Google Contacts integration"],
 )
 api_router.include_router(
     google_chat.router,

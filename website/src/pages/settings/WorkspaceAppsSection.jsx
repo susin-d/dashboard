@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Check, ExternalLink, FileText, HardDrive, Presentation, Sheet } from 'lucide-react'
+import { Check, ExternalLink, FileText, HardDrive, Plus, Presentation, Sheet } from 'lucide-react'
 import { ConfirmDialog } from '../../components/ui'
 import {
   beginGoogleDriveOAuth,
@@ -157,7 +157,12 @@ export function WorkspaceAppsSection() {
             onClick={addWorkspaceAccount}
             disabled={connecting}
           >
-            {connecting ? 'Connecting…' : 'Add another account'}
+            {connecting ? 'Connecting…' : (
+              <>
+                <Plus size={14} />
+                Add another account
+              </>
+            )}
           </button>
         )}
       </section>

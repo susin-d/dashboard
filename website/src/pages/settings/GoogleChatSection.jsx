@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Check, MessageSquare, Trash2 } from 'lucide-react'
+import { Check, MessageSquare, Plus, Trash2 } from 'lucide-react'
 import { ConfirmDialog } from '../../components/ui'
 import {
   beginGoogleChatOAuth,
@@ -132,6 +132,7 @@ export function GoogleChatSection({ user }) {
                 ))}
               </div>
               <button className="google-calendar-add-account" onClick={addGoogleChatAccount} disabled={googleChatBusy}>
+                <Plus size={14} />
                 Add another account
               </button>
             </>

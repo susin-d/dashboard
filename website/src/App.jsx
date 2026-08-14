@@ -175,6 +175,10 @@ function App() {
           .then((res) => {
             alert(res.message || 'Email address verified successfully!')
             window.history.replaceState({}, '', window.location.pathname + window.location.search)
+            setSessionUser((current) => (current ? { ...current, emailVerified: true } : null))
+            fetchCurrentUser().then((u) => {
+              if (u) setSessionUser(u)
+            })
             setWorkspaceRefreshKey((prev) => prev + 1)
           })
           .catch((err) => {
@@ -260,18 +264,20 @@ function App() {
       activeUser.email?.split('@')[0] ||
       'StarWaves user'
     const nameParts = fullName.split(/\s+/).filter(Boolean)
+    const isGoogle = Boolean(
+      activeUser.providerData?.some(
+        ({ providerId }) => providerId === 'google.com',
+      ) || activeUser.google_auth
+    )
     return {
       uid: activeUser.uid,
       fullName,
       firstName: nameParts[0],
       initials: nameParts.slice(0, 2).map((part) => part[0]).join('').toUpperCase(),
       email: activeUser.email ?? 'No email available',
+      emailVerified: Boolean(activeUser.emailVerified || activeUser.email_verified || isGoogle),
       role: 'Member',
-      roleLabel: activeUser.providerData?.some(
-        ({ providerId }) => providerId === 'google.com',
-      )
-        ? 'Google account'
-        : 'Email account',
+      roleLabel: isGoogle ? 'Google account' : 'Email account',
     }
   }, [activeUser])
 

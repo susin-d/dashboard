@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Check, Mail, Trash2 } from 'lucide-react'
+import { Check, Mail, Plus, Trash2 } from 'lucide-react'
 import { ConfirmDialog } from '../../components/ui'
 import { clearGmailAuthorization } from '../../lib/firebase'
 import {
@@ -149,6 +149,7 @@ export function GmailSection({ user }) {
                 ))}
               </div>
               <button className="google-calendar-add-account" onClick={addGmailAccount} disabled={gmailBusy}>
+                <Plus size={14} />
                 Add another account
               </button>
             </>

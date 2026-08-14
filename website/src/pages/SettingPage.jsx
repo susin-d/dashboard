@@ -5,7 +5,6 @@ import { CodingSection } from './settings/CodingSection'
 import { EveVoiceSection } from './settings/EveVoiceSection'
 import { HackathonSourcesSection } from './settings/HackathonSourcesSection'
 import { ProfileSection } from './settings/ProfileSection'
-import { PushNotificationsSection } from './settings/PushNotificationsSection'
 import { ThemeSection } from './settings/ThemeSection'
 
 export function SettingPage({
@@ -48,7 +47,6 @@ export function SettingPage({
         setImportedIcsEvents={setImportedIcsEvents}
       />
       <AiModelsSection />
-      <PushNotificationsSection user={user} />
       <CodingSection user={user} onContestSitesChange={onContestSitesChange} />
       <HackathonSourcesSection user={user} onHackathonsChange={onHackathonsChange} />
       <EveVoiceSection />

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { CalendarDays, Check, RefreshCw, Trash2 } from 'lucide-react'
+import { CalendarDays, Check, Plus, RefreshCw, Trash2 } from 'lucide-react'
 import { ConfirmDialog } from '../../components/ui'
 import {
   beginGoogleCalendarOAuth,
@@ -178,6 +178,7 @@ export function CalendarSection({ user, onGoogleCalendarsChange }) {
                   Refresh all calendars
                 </button>
                 <button className="google-calendar-add-account" onClick={addGoogleCalendarAccount} disabled={calendarBusy}>
+                  <Plus size={14} />
                   Add another account
                 </button>
               </div>

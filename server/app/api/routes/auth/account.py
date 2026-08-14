@@ -39,14 +39,17 @@ def get_me(
     if user_record:
         display_name = user_record.get("display_name")
         email = user_record.get("email")
+        email_verified = bool(user_record.get("email_verified") or user_record.get("google_auth"))
     else:
         display_name = user.get("name")
         email = user.get("email")
+        email_verified = bool(user.get("email_verified") or user.get("google_auth"))
 
     return {
         "uid": user["uid"],
         "email": email,
         "displayName": display_name or (email.split("@")[0] if email else "User"),
+        "emailVerified": email_verified,
     }
 
 

@@ -132,7 +132,8 @@ async def google_callback(
             user: {{
               uid: "{user_record['uid']}",
               email: "{user_record['email']}",
-              displayName: "{user_record.get('display_name') or name}"
+              displayName: "{user_record.get('display_name') or name}",
+              emailVerified: true
             }}
           }};
           if (window.opener) {{

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { CheckCircle2, Clock, Link2, LogOut, Mail, ShieldCheck, Trash2, User, X } from 'lucide-react'
+import { CheckCircle2, Clock, Link2, LogOut, Mail, Trash2, User, X } from 'lucide-react'
 import {
   clearAuthSession,
   fetchCombinedAccounts,
@@ -7,12 +7,7 @@ import {
   unlinkCombinedAccount,
   updateUserProfile,
 } from '../lib/authApi'
-import {
-  resendWelcomeEmail,
-  sendReminderEmail,
-  sendTestEmail,
-  sendVerificationEmail,
-} from '../lib/emailApi'
+import { sendVerificationEmail } from '../lib/emailApi'
 
 export function ProfileCard({ user, onProfileUpdated, onSignOut }) {
   const [editing, setEditing] = useState(false)
@@ -40,6 +35,13 @@ export function ProfileCard({ user, onProfileUpdated, onSignOut }) {
   const [mailError, setMailError] = useState('')
   const [loadingMail, setLoadingMail] = useState(false)
 
+  const isVerified = Boolean(
+    user?.emailVerified ||
+    user?.email_verified ||
+    user?.roleLabel === 'Google account' ||
+    user?.providerData?.some((p) => p.providerId === 'google.com'),
+  )
+
   const handleSendVerification = async () => {
     setLoadingMail(true)
     setMailMsg('')
@@ -49,53 +51,6 @@ export function ProfileCard({ user, onProfileUpdated, onSignOut }) {
       setMailMsg(res.message || 'Verification link sent to your email.')
     } catch (err) {
       setMailError(err.message || 'Failed to send verification email.')
-    } finally {
-      setLoadingMail(false)
-    }
-  }
-
-  const handleResendWelcome = async () => {
-    setLoadingMail(true)
-    setMailMsg('')
-    setMailError('')
-    try {
-      const res = await resendWelcomeEmail()
-      setMailMsg(res.message || 'Welcome email dispatched.')
-    } catch (err) {
-      setMailError(err.message || 'Failed to resend welcome email.')
-    } finally {
-      setLoadingMail(false)
-    }
-  }
-
-  const handleSendTest = async () => {
-    setLoadingMail(true)
-    setMailMsg('')
-    setMailError('')
-    try {
-      const res = await sendTestEmail()
-      setMailMsg(res.message || 'Test email dispatched.')
-    } catch (err) {
-      setMailError(err.message || 'Failed to send test email.')
-    } finally {
-      setLoadingMail(false)
-    }
-  }
-
-  const handleSendReminder = async () => {
-    setLoadingMail(true)
-    setMailMsg('')
-    setMailError('')
-    try {
-      const res = await sendReminderEmail({
-        title: 'Project Milestone Review',
-        type: 'Task Reminder',
-        dueTime: 'Today at 5:00 PM UTC',
-        description: 'Review latest StarWaves platform updates and deploy serverless functions.',
-      })
-      setMailMsg(res.message || 'Reminder email dispatched.')
-    } catch (err) {
-      setMailError(err.message || 'Failed to send reminder email.')
     } finally {
       setLoadingMail(false)
     }
@@ -156,46 +111,92 @@ export function ProfileCard({ user, onProfileUpdated, onSignOut }) {
     setCombineError('')
     try {
       const res = await requestAccountCombine(combineEmail.trim())
-      setCombineMsg(res.message || `Verification email sent to ${combineEmail}.`)
+      setCombineMsg(res.message || 'Combine request sent successfully.')
       setCombineEmail('')
-      await loadCombinedAccounts()
+      loadCombinedAccounts()
     } catch (err) {
-      setCombineError(err.message || 'Failed to send combine request.')
+      setCombineError(err.message || 'Failed to send account combine request.')
     } finally {
       setLoadingCombine(false)
     }
   }
 
-  const handleUnlink = async (targetIdentifier) => {
-    if (!confirm('Are you sure you want to unlink this account?')) return
+  const handleUnlink = async (targetEmail) => {
     try {
-      await unlinkCombinedAccount(targetIdentifier)
-      await loadCombinedAccounts()
+      await unlinkCombinedAccount(targetEmail)
+      loadCombinedAccounts()
     } catch (err) {
-      alert(err.message || 'Failed to unlink account.')
+      setCombineError(err.message || 'Failed to unlink account.')
     }
   }
 
   return (
     <>
       <article className="profile-card">
-        <div className="profile-card-header">
-          <div className="profile-card-avatar">{user.initials}</div>
-          <div>
-            <h3>{user.fullName}</h3>
-            <p>{user.role}</p>
-          </div>
-          <div className="profile-card-actions">
-            <button
-              type="button"
-              className="profile-edit-button"
-              onClick={() => {
-                setDisplayName(user.fullName)
-                setEditing(true)
-              }}
-            >
-              Edit profile
-            </button>
+        <div className="profile-hero">
+        <div className="profile-avatar-large">
+          <User size={36} />
+        </div>
+        <div className="profile-hero-info">
+          <h2>{user.fullName}</h2>
+          <p>{user.email}</p>
+        </div>
+      </div>
+
+      <div className="profile-body">
+        <div className="profile-actions-bar">
+          {editing ? (
+            <form onSubmit={handleSave} className="profile-edit-form">
+              <input
+                type="text"
+                value={displayName}
+                onChange={(e) => setDisplayName(e.target.value)}
+                placeholder="Display Name"
+                disabled={saving}
+                autoFocus
+              />
+              <div className="profile-edit-buttons">
+                <button
+                  type="submit"
+                  className="primary-button"
+                  disabled={saving}
+                >
+                  {saving ? 'Saving...' : 'Save'}
+                </button>
+                <button
+                  type="button"
+                  className="secondary-button"
+                  onClick={() => {
+                    setDisplayName(user.fullName || '')
+                    setEditing(false)
+                  }}
+                >
+                  <X size={14} />
+                  Cancel
+                </button>
+              </div>
+            </form>
+          ) : (
+            <div className="profile-display-info">
+              <div>
+                <span className="profile-name-label">Display Name</span>
+                <span className="profile-display-name">
+                  {user.fullName}
+                </span>
+              </div>
+              <button
+                type="button"
+                className="secondary-button"
+                onClick={() => setEditing(true)}
+              >
+                Edit name
+              </button>
+            </div>
+          )}
+
+          {error && <p className="profile-error" role="alert">{error}</p>}
+
+          <div className="profile-signout-row">
             <button
               type="button"
               className="profile-signout-button"
@@ -208,73 +209,51 @@ export function ProfileCard({ user, onProfileUpdated, onSignOut }) {
           </div>
         </div>
 
-        <div className="profile-details">
-          <div className="profile-detail">
-            <Mail size={17} />
-            <div>
-              <span>Email</span>
-              <strong>{user.email}</strong>
-            </div>
-          </div>
-          <div className="profile-detail">
-            <ShieldCheck size={17} />
-            <div>
-              <span>Role</span>
-              <strong>{user.roleLabel}</strong>
-            </div>
-          </div>
-        </div>
-
         {/* Email & Notification Services */}
         <div className="combined-accounts-section">
           <div className="combined-accounts-header">
             <div className="combined-title">
               <Mail size={16} />
-              <span>Email & Notification Services</span>
+              <span>Email &amp; Notification Services</span>
             </div>
-            <span className="combined-smtp-tag">Mail Ready</span>
+            <span className="combined-smtp-tag">{isVerified ? 'Verified' : 'Mail Ready'}</span>
           </div>
           <p className="combined-description">
-            Manage email verification, resend welcome notifications, or send a test email.
+            {isVerified
+              ? 'Your email address is verified and active for workspace notifications.'
+              : 'Verify your email address to secure your account and enable workspace notifications.'}
           </p>
 
           <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '12px' }}>
-            <button
-              type="button"
-              onClick={handleSendVerification}
-              disabled={loadingMail}
-              className="secondary-button"
-              style={{ fontSize: '12px', padding: '6px 12px' }}
-            >
-              Verify Email
-            </button>
-            <button
-              type="button"
-              onClick={handleResendWelcome}
-              disabled={loadingMail}
-              className="secondary-button"
-              style={{ fontSize: '12px', padding: '6px 12px' }}
-            >
-              Resend Welcome Email
-            </button>
-            <button
-              type="button"
-              onClick={handleSendTest}
-              disabled={loadingMail}
-              className="secondary-button"
-              style={{ fontSize: '12px', padding: '6px 12px' }}
-            >
-              Send Test Email
-            </button>
-            <button
-              type="button"
-              onClick={handleSendReminder}
-              disabled={loadingMail}
-              className="secondary-button"
-              style={{ fontSize: '12px', padding: '6px 12px' }}
-            >
-              Send Reminder Email
-            </button>
+            {isVerified ? (
+              <button
+                type="button"
+                disabled
+                className="secondary-button"
+                style={{
+                  fontSize: '12px',
+                  padding: '6px 12px',
+                  cursor: 'default',
+                  opacity: 0.85,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                }}
+              >
+                <CheckCircle2 size={13} />
+                Verified
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={handleSendVerification}
+                disabled={loadingMail}
+                className="secondary-button"
+                style={{ fontSize: '12px', padding: '6px 12px' }}
+              >
+                Verify Email
+              </button>
+            )}
           </div>
 
           {mailMsg && <p className="combine-feedback success" style={{ marginTop: '10px' }} role="status">{mailMsg}</p>}
@@ -357,7 +336,8 @@ export function ProfileCard({ user, onProfileUpdated, onSignOut }) {
             </div>
           )}
         </div>
-      </article>
+      </div>
+    </article>
 
       {editing && (
         <div className="modal-backdrop" onClick={() => setEditing(false)}>

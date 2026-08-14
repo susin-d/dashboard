@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from 'react'
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import {
   Contact,
   Plus,
@@ -10,6 +10,10 @@ import {
   Pencil,
   Trash2,
   X,
+  Upload,
+  RefreshCw,
+  CheckCircle2,
+  FileText,
 } from 'lucide-react'
 import {
   listContacts,
@@ -18,6 +22,12 @@ import {
   deleteContact,
   toggleContactStarred,
 } from '../lib/contactsApi'
+import {
+  beginGoogleContactsOAuth,
+  importGoogleContacts,
+  parseGoogleContactsCsv,
+  parseVCard,
+} from '../lib/googleContacts'
 import { CustomDropdown } from '../components/ui/CustomDropdown'
 
 const CATEGORIES = [
@@ -36,7 +46,7 @@ const CATEGORY_OPTIONS = [
   { value: 'work', label: 'Work' },
   { value: 'personal', label: 'Personal' },
   { value: 'recruiter', label: 'Recruiter' },
-  { id: 'team', value: 'team', label: 'Team' },
+  { value: 'team', label: 'Team' },
   { value: 'client', label: 'Client' },
 ]
 
@@ -51,10 +61,11 @@ export function ContactsPage({ callCenter, onNavigate }) {
   const [contacts, setContacts] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [successMessage, setSuccessMessage] = useState('')
   const [searchQuery, setSearchQuery] = useState('')
   const [activeCategory, setActiveCategory] = useState('all')
 
-  // Modal State
+  // Add / Edit Modal State
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingContact, setEditingContact] = useState(null)
   const [isSaving, setIsSaving] = useState(false)
@@ -68,6 +79,12 @@ export function ContactsPage({ callCenter, onNavigate }) {
     notes: '',
     starred: false,
   })
+
+  // Import Modal State
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false)
+  const [isImporting, setIsImporting] = useState(false)
+  const [importProgressText, setImportProgressText] = useState('')
+  const fileInputRef = useRef(null)
 
   const loadAllContacts = useCallback(async () => {
     setLoading(true)
@@ -85,6 +102,13 @@ export function ContactsPage({ callCenter, onNavigate }) {
   useEffect(() => {
     loadAllContacts()
   }, [loadAllContacts])
+
+  // Clear toast after 5s
+  useEffect(() => {
+    if (!successMessage) return
+    const timer = setTimeout(() => setSuccessMessage(''), 5000)
+    return () => clearTimeout(timer)
+  }, [successMessage])
 
   const filteredContacts = useMemo(() => {
     return contacts.filter((c) => {
@@ -158,6 +182,7 @@ export function ContactsPage({ callCenter, onNavigate }) {
       }
       setIsModalOpen(false)
       setEditingContact(null)
+      setSuccessMessage(editingContact ? 'Contact updated.' : 'Contact created.')
     } catch (err) {
       setError(err.message || 'Failed to save contact.')
     } finally {
@@ -170,6 +195,7 @@ export function ContactsPage({ callCenter, onNavigate }) {
     try {
       await deleteContact(contactId)
       setContacts((prev) => prev.filter((c) => c.id !== contactId))
+      setSuccessMessage('Contact deleted.')
     } catch (err) {
       setError(err.message || 'Failed to delete contact.')
     }
@@ -205,6 +231,84 @@ export function ContactsPage({ callCenter, onNavigate }) {
     window.location.href = `mailto:${encodeURIComponent(contact.email)}`
   }
 
+  // ── Google Contacts Direct OAuth Import ──
+  const handleGoogleOAuthSync = async () => {
+    setIsImporting(true)
+    setError('')
+    setImportProgressText('Connecting with Google…')
+    try {
+      await beginGoogleContactsOAuth()
+      setImportProgressText('Fetching contacts from Google People API…')
+      const result = await importGoogleContacts()
+      await loadAllContacts()
+      setIsImportModalOpen(false)
+      setSuccessMessage(`Successfully imported ${result.imported_count} new contact${result.imported_count === 1 ? '' : 's'} from Google!`)
+    } catch (err) {
+      setError(err.message || 'Google Contacts import failed.')
+    } finally {
+      setIsImporting(false)
+      setImportProgressText('')
+    }
+  }
+
+  // ── Google Contacts CSV / vCard File Import ──
+  const handleFileUpload = async (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    setIsImporting(true)
+    setError('')
+    setImportProgressText(`Reading ${file.name}…`)
+
+    try {
+      const text = await file.text()
+      let parsedContacts = []
+
+      if (file.name.endsWith('.vcf') || file.name.endsWith('.vcard')) {
+        parsedContacts = parseVCard(text)
+      } else {
+        parsedContacts = parseGoogleContactsCsv(text)
+      }
+
+      if (!parsedContacts.length) {
+        throw new Error('No valid contacts found in the selected file.')
+      }
+
+      setImportProgressText(`Importing ${parsedContacts.length} contacts…`)
+
+      const existingEmails = new Set(contacts.filter((c) => c.email).map((c) => c.email.toLowerCase().trim()))
+      const existingPhones = new Set(contacts.filter((c) => c.phone).map((c) => c.phone.replace(/[\s-]/g, '').trim()))
+      const existingNames = new Set(contacts.map((c) => c.name.toLowerCase().trim()))
+
+      let count = 0
+      for (const item of parsedContacts) {
+        const em = (item.email || '').toLowerCase().trim()
+        const ph = (item.phone || '').replace(/[\s-]/g, '').trim()
+        const nm = (item.name || '').toLowerCase().trim()
+
+        if (em && existingEmails.has(em)) continue
+        if (ph && existingPhones.has(ph)) continue
+        if (!em && !ph && existingNames.has(nm)) continue
+
+        await createContact(item)
+        if (em) existingEmails.add(em)
+        if (ph) existingPhones.add(ph)
+        if (nm) existingNames.add(nm)
+        count++
+      }
+
+      await loadAllContacts()
+      setIsImportModalOpen(false)
+      setSuccessMessage(`Successfully imported ${count} contact${count === 1 ? '' : 's'} from ${file.name}!`)
+    } catch (err) {
+      setError(err.message || 'File import failed.')
+    } finally {
+      setIsImporting(false)
+      setImportProgressText('')
+      if (fileInputRef.current) fileInputRef.current.value = ''
+    }
+  }
+
   return (
     <main className="contacts-page">
       <header className="contacts-header">
@@ -215,19 +319,37 @@ export function ContactsPage({ callCenter, onNavigate }) {
             Manage your personal and professional network, phone directory, and communication links.
           </p>
         </div>
-        <button
-          type="button"
-          className="primary-button"
-          onClick={handleOpenAddModal}
-        >
-          <Plus size={14} />
-          <span>New Contact</span>
-        </button>
+        <div className="contacts-header-actions">
+          <button
+            type="button"
+            className="secondary-button"
+            onClick={() => setIsImportModalOpen(true)}
+            title="Import contacts from Google"
+          >
+            <Upload size={14} />
+            <span>Import Contacts</span>
+          </button>
+          <button
+            type="button"
+            className="primary-button"
+            onClick={handleOpenAddModal}
+          >
+            <Plus size={14} />
+            <span>New Contact</span>
+          </button>
+        </div>
       </header>
 
       {error && (
         <div className="error-banner" role="alert">
           <span>{error}</span>
+        </div>
+      )}
+
+      {successMessage && (
+        <div className="success-banner" role="status">
+          <CheckCircle2 size={16} />
+          <span>{successMessage}</span>
         </div>
       )}
 
@@ -273,17 +395,27 @@ export function ContactsPage({ callCenter, onNavigate }) {
           <p>
             {searchQuery
               ? 'Try searching with different terms or category filters.'
-              : 'Add your teammates, recruiters, clients, or friends to quickly call and email them.'}
+              : 'Add contacts manually or import your entire address book directly from Google Contacts.'}
           </p>
           {!searchQuery && (
-            <button
-              type="button"
-              className="primary-button"
-              onClick={handleOpenAddModal}
-            >
-              <Plus size={14} />
-              <span>Create your first contact</span>
-            </button>
+            <div className="contacts-empty-actions">
+              <button
+                type="button"
+                className="secondary-button"
+                onClick={() => setIsImportModalOpen(true)}
+              >
+                <Upload size={14} />
+                <span>Import from Google</span>
+              </button>
+              <button
+                type="button"
+                className="primary-button"
+                onClick={handleOpenAddModal}
+              >
+                <Plus size={14} />
+                <span>Create contact</span>
+              </button>
+            </div>
           )}
         </div>
       ) : (
@@ -412,7 +544,120 @@ export function ContactsPage({ callCenter, onNavigate }) {
         </div>
       )}
 
-      {/* Modal / Dialog for Add & Edit Contact */}
+      {/* ── Modal: Import from Google Contacts ── */}
+      {isImportModalOpen && (
+        <div
+          className="contact-modal-overlay"
+          onClick={() => !isImporting && setIsImportModalOpen(false)}
+        >
+          <div
+            className="contact-modal-card"
+            onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="import-modal-title"
+          >
+            <div className="contact-modal-header">
+              <h2 id="import-modal-title">Import Contacts</h2>
+              <button
+                type="button"
+                className="contact-modal-close-btn"
+                onClick={() => setIsImportModalOpen(false)}
+                disabled={isImporting}
+                aria-label="Close import dialog"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            <div className="contact-import-content">
+              {isImporting ? (
+                <div className="contact-import-loading">
+                  <RefreshCw size={24} className="spin" />
+                  <p>{importProgressText || 'Processing contacts…'}</p>
+                </div>
+              ) : (
+                <>
+                  {/* Option 1: Direct 1-Click Google OAuth Sync */}
+                  <div className="contact-import-option-card">
+                    <div className="contact-import-option-header">
+                      <div className="contact-import-badge-icon">
+                        <Contact size={20} />
+                      </div>
+                      <div>
+                        <h3>Direct Google Contacts Sync</h3>
+                        <p>
+                          Connect your Google Account to import all names, phone numbers, emails, companies, and avatars directly via Google People API.
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      className="primary-button"
+                      onClick={handleGoogleOAuthSync}
+                      style={{ width: '100%', justifyContent: 'center' }}
+                    >
+                      <Contact size={14} />
+                      <span>Sync with Google Account</span>
+                    </button>
+                  </div>
+
+                  <div className="contact-import-divider">
+                    <span>or upload file</span>
+                  </div>
+
+                  {/* Option 2: Upload Google Contacts CSV / vCard */}
+                  <div className="contact-import-option-card file-zone">
+                    <div className="contact-import-option-header">
+                      <div className="contact-import-badge-icon">
+                        <FileText size={20} />
+                      </div>
+                      <div>
+                        <h3>Upload Google Contacts File</h3>
+                        <p>
+                          Export your contacts from Google Contacts (contacts.google.com) as a <strong>Google CSV</strong> or <strong>vCard (.vcf)</strong> and upload it here.
+                        </p>
+                      </div>
+                    </div>
+
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      id="contacts-file-input"
+                      accept=".csv, .vcf, .vcard, text/csv, text/vcard"
+                      style={{ display: 'none' }}
+                      onChange={handleFileUpload}
+                    />
+
+                    <button
+                      type="button"
+                      className="secondary-button"
+                      onClick={() => fileInputRef.current?.click()}
+                      style={{ width: '100%', justifyContent: 'center' }}
+                    >
+                      <Upload size={14} />
+                      <span>Select Google CSV / vCard File</span>
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+
+            <div className="contact-modal-footer">
+              <button
+                type="button"
+                className="secondary-button"
+                onClick={() => setIsImportModalOpen(false)}
+                disabled={isImporting}
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Modal: Add / Edit Contact ── */}
       {isModalOpen && (
         <div className="contact-modal-overlay" onClick={handleCloseModal}>
           <div

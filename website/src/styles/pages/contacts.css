@@ -46,6 +46,13 @@
   margin: 0;
 }
 
+.contacts-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
 .contacts-controls {
   display: flex;
   justify-content: space-between;
@@ -405,7 +412,15 @@
   margin: 0;
 }
 
-/* ── Contact Modal Form ── */
+.contacts-empty-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  margin-top: 0.25rem;
+}
+
+/* ── Contact Modal & Import Modal ── */
 .contact-modal-overlay {
   position: fixed;
   inset: 0;
@@ -553,4 +568,100 @@
   gap: 0.65rem;
   padding: 1.1rem 1.4rem;
   border-top: 1px solid var(--border-color);
+}
+
+/* ── Import Modal Specific Styles ── */
+.contact-import-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+  padding: 1.4rem;
+}
+
+.contact-import-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2.5rem 1rem;
+  gap: 0.75rem;
+  text-align: center;
+  color: var(--text-primary);
+}
+
+.contact-import-loading p {
+  font-size: 0.88rem;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.contact-import-option-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  padding: 1.15rem;
+  border-radius: var(--radius-md, 10px);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  transition: border-color var(--transition-fast);
+}
+
+.contact-import-option-card:hover {
+  border-color: var(--border-heavy);
+}
+
+.contact-import-option-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.85rem;
+}
+
+.contact-import-badge-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-sm, 8px);
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  flex-shrink: 0;
+}
+
+.contact-import-option-header h3 {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0 0 0.25rem 0;
+}
+
+.contact-import-option-header p {
+  font-size: 0.8rem;
+  line-height: 1.4;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.contact-import-divider {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin: 0.2rem 0;
+}
+
+.contact-import-divider::before,
+.contact-import-divider::after {
+  content: '';
+  flex: 1;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.contact-import-divider span {
+  padding: 0 0.75rem;
 }
