@@ -4,7 +4,7 @@ Living project snapshot for AI agents. `AGENTS.md` holds the permanent rules;
 this file holds the **current state** of the codebase and must be kept up to
 date whenever the implementation changes.
 
-> **Last updated:** 2026-08-14 (shared Modal consolidation)
+> **Last updated:** 2026-08-14 (DRY refactor: shared OAuth helpers, unified API client, split workspaceApi & theme presets)
 
 ---
 
@@ -25,9 +25,10 @@ Starwaves/
 ├── website/                 React frontend
 │   ├── src/components/      Shared UI components (+ ui/ primitives)
 │   ├── src/hooks/           Auth, routing, theme, workspace data hooks
-│   ├── src/lib/             Frontend API clients
+│   ├── src/lib/             Frontend API clients (workspaceApi/ split by feature)
 │   ├── src/pages/           Workspace pages (+ settings/ feature sections)
 │   ├── src/styles/          Tokens, components, and page styles
+│   ├── src/themes/          Theme presets + customizer options/engine
 │   └── src/utils/           Pure parsers/transformers
 ├── server/                  FastAPI backend
 │   ├── app/
@@ -78,7 +79,11 @@ Starwaves/
 ### Services (`server/app/services/`)
 
 `coding_stats`, `contests`, `email`, `eve`, `github`, `google_calendar`,
-`hackathon_sources`, `notifications`.
+`hackathon_sources`, `notifications`, plus `oauth/` package (`_shared.py`,
+`google.py`, `github.py`) that centralizes provider-agnostic OAuth helpers
+(`format_oauth_error`, state-serializer factory, `integration_account_id`,
+`integration_accounts_reference`, `oauth_callback_html`) and provider flows
+(authorize URL builders, token encryption/exchange/refresh, profile fetch).
 
 ### Config (`server/app/core/config.py`)
 
@@ -97,14 +102,22 @@ database id, CORS origins. Loads `.env.prod` before `.env`.
   `MailModal` primitives (Portal-based, Escape + backdrop dismissal, focus
   management, `data-modal-initial-focus` support); destructive confirmations
   reuse `ConfirmDialog`.
-- **Hooks** (`src/hooks/`): `useAuth`, `useRouter`, `useTheme`,
+- **Hooks** (`src/hooks/`): `useAuth`, `useRouter`,
   `useThemeCustomizer`, `useWorkspaceData`, `useCallCenter`, plus
   `usePersistentState`, `useLocalNotifications`, `useDialogAccessibility`.
 - **API clients** (`src/lib/`): one per backend feature (`todosApi`,
-  `workspaceApi`, `gmailApi`, `googleCalendar`, `googleDriveApi`, `eveApi`,
-  `emailApi`, `githubApi`, `googleChatApi`, `codingStatsApi`,
-  `competitiveCodingProfileApi`, `documentsApi`, `notificationsApi`,
-  `callsApi`), plus shared `request.js`, `firebase.js`, `authApi.js` `index.js`.
+  `workspaceApi/` (package split by feature: jobs, projects, hackathons,
+  notifications, contests, calendar, email), `gmailApi`, `googleCalendar`,
+  `googleDriveApi`, `eveApi`, `eveSchedulesApi`, `emailApi`, `githubApi`,
+  `googleChatApi`, `codingStatsApi`, `competitiveCodingProfileApi`,
+  `documentsApi`, `callsApi`), plus shared `request.js` (single `API_URL` +
+  `apiRequest` wrapper), `firebase.js`, `authApi.js`, `index.js`.
+- **Themes** (`src/themes/`): `presets.js` holds `THEME_PRESETS` (parsed from
+  CSS files in `src/styles/themes/`), option metadata (`PALETTE_GROUPS`,
+  `FONT_OPTIONS`, `RADIUS_OPTIONS`, `DENSITY_OPTIONS`, `ELEVATION_OPTIONS`,
+  `MOTION_OPTIONS`, `COLOR_VARIABLE_GROUPS`), and the DOM engine
+  (`applyThemeVariables` / `resetThemeVariables`); `index.js` re-exports them
+  plus `useThemeCustomizer`.
 - **Utils** (`src/utils/`): `browserNotifications`, `calendarEvents`,
   `calendarReminders`, `icsParser`, `popupOAuth`, `projectLifecycle`,
   `callWebRTC`, `callDisplay`.
@@ -122,9 +135,10 @@ database id, CORS origins. Loads `.env.prod` before `.env`.
 
 ## 5. Design system
 
-- Monochrome only. Tokens in `src/styles/tokens.css`, colors in
-  `src/styles/colors.css`, import order via `src/App.css` (tokens → base →
-  utilities → responsive → components → pages).
+- Monochrome only. Tokens in `src/styles/tokens.css`, per-theme CSS overrides in
+  `src/styles/themes/` (light `index.css` + dark `dark.css` + preset files),
+  import order via `src/App.css` (tokens → base → utilities → responsive →
+  components → pages).
 - Light theme default, `html.dark-theme` for dark mode.
 - Icons: `lucide-react` only.
 
