@@ -229,6 +229,28 @@ export function MailsPage({ onNavigate }) {
     setCompose(null)
   }
 
+  const [connectingGmail, setConnectingGmail] = useState(false)
+
+  const handleConnectGmail = async () => {
+    setConnectingGmail(true)
+    try {
+      await beginGmailOAuth()
+      const { accounts: fetchedAccounts } = await getGmailAccounts()
+      if (fetchedAccounts && fetchedAccounts.length) {
+        setAccounts(fetchedAccounts)
+        setSelectedAccountEmail(fetchedAccounts[0].email)
+        setConnected(true)
+      } else {
+        setConnected(true)
+      }
+      refresh('', 'INBOX', '', false, null)
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setConnectingGmail(false)
+    }
+  }
+
   if (connected === null) {
     return (
       <div className="mail-page empty-connect">
@@ -242,8 +264,25 @@ export function MailsPage({ onNavigate }) {
       <div className="mail-page empty-connect">
         <Mail size={42} />
         <h2>Connect Google Mail</h2>
-        <p>Authorize Gmail in settings to view, reply to, and organize your emails inside StarWaves.</p>
-        <button className="primary-button" onClick={() => onNavigate('setting')}>Open Settings</button>
+        <p>Authorize Gmail to view, reply to, and organize your emails inside StarWaves.</p>
+        <div style={{ display: 'flex', gap: '10px', marginTop: '8px' }}>
+          <button
+            className="primary-button"
+            onClick={handleConnectGmail}
+            disabled={connectingGmail}
+          >
+            {connectingGmail ? (
+              <>
+                <LoaderCircle size={15} className="mail-spin" /> Connecting…
+              </>
+            ) : (
+              'Connect Gmail'
+            )}
+          </button>
+          <button className="secondary-button" onClick={() => onNavigate('setting')}>
+            Open Settings
+          </button>
+        </div>
       </div>
     )
   }
