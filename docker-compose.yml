@@ -67,6 +67,22 @@ services:
     networks:
       - starwaves-network
 
+  whatsapp-worker:
+    build:
+      context: ./services/whatsapp-worker
+      dockerfile: Dockerfile
+    container_name: starwaves-whatsapp-worker
+    restart: unless-stopped
+    environment:
+      - PORT=3001
+      - DATA_DIR=/app/data
+    ports:
+      - "3001:3001"
+    volumes:
+      - whatsapp-data:/app/data
+    networks:
+      - starwaves-network
+
 networks:
   starwaves-network:
     driver: bridge
@@ -75,4 +91,6 @@ volumes:
   postgres-data:
     driver: local
   nginx-logs:
+    driver: local
+  whatsapp-data:
     driver: local
