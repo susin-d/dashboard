@@ -10,8 +10,8 @@
 }
 
 .filter-bar-search {
-  flex: 1 1 240px;
-  max-width: 420px;
+  flex: 1 1 280px;
+  max-width: 480px;
 }
 
 .filter-bar-group {
@@ -28,18 +28,28 @@
   margin-left: auto;
 }
 
+.filter-bar .search-bar {
+  min-height: 34px;
+}
+
+.filter-bar .custom-dropdown-trigger {
+  min-height: 34px;
+  padding: 5px 11px;
+  font-size: 11.5px;
+}
+
 .filter-bar-reset {
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  min-height: 32px;
-  padding: 0 10px;
+  min-height: 34px;
+  padding: 0 11px;
   background: transparent;
   color: var(--text-muted);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-md, 8px);
   font: inherit;
-  font-size: 11px;
+  font-size: 11.5px;
   font-weight: 600;
   cursor: pointer;
   transition: all var(--transition-fast, 0.18s ease);
