@@ -103,6 +103,10 @@ class Settings:
         "FIRESTORE_DATABASE_ID",
         "(default)",
     )
+    database_url: str = os.getenv(
+        "DATABASE_URL",
+        "sqlite+aiosqlite:///starwaves.db",
+    )
     smtp_host: str = os.getenv("SMTP_HOST", "")
     smtp_port: int = int(os.getenv("SMTP_PORT", "587"))
     smtp_user: str | None = os.getenv("SMTP_USER")

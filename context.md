@@ -16,8 +16,8 @@ programming, and an AI assistant into one dashboard.
 
 - **Frontend** (`/website`): React 19 + Vite + Vanilla CSS (monochrome design system) + Monaco Editor.
 - **Desktop Shell** (`/website/src-tauri`): Tauri v2 scaffold with native FS, dialog, shell, and file watching plugins.
-- **Backend** (`/server`): FastAPI (Python) + Firebase Firestore. Containerized with Docker & Nginx.
-- **Auth**: Firebase Authentication; serverless deployment targets Vercel, dockerized server for standalone VM/cloud deployment.
+- **Backend** (`/server`): FastAPI (Python) + Supabase (PostgreSQL) / Async SQLAlchemy 2.0 / Firebase Firestore fallback. Containerized with Docker & Nginx.
+- **Auth**: Firebase Authentication / Bearer token validation; serverless deployment targets Vercel, dockerized server for standalone VM/cloud deployment.
 
 ## 2. Repository structure
 

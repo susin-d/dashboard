@@ -15,6 +15,8 @@ from app.api.routes.whatsapp_ws import router as whatsapp_ws_router
 from app.core.config import settings
 from app.core.worker import server_worker
 
+from app.db.session import init_db
+
 logger = logging.getLogger(__name__)
 
 ALLOWED_ORIGIN_REGEX = (
@@ -28,6 +30,10 @@ ALLOWED_ORIGIN_REGEX = (
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     logger.info("Initializing %s (env=%s)...", settings.app_name, settings.app_env)
+    try:
+        await init_db()
+    except Exception as err:
+        logger.warning("Could not auto-init database tables: %s", err)
     # Only start background worker daemon in non-serverless environments
     is_serverless = bool(os.getenv("VERCEL") or os.getenv("AWS_LAMBDA_FUNCTION_NAME"))
     if not is_serverless:

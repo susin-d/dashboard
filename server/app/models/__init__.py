@@ -1,0 +1,279 @@
+"""SQLAlchemy Declarative Models for Starwaves."""
+
+import uuid
+from datetime import datetime, timezone
+from sqlalchemy import (
+    Boolean,
+    Column,
+    DateTime,
+    Float,
+    ForeignKey,
+    Index,
+    Integer,
+    JSON,
+    String,
+    Text,
+)
+from sqlalchemy.orm import relationship
+
+from app.db.session import Base
+
+
+def utc_now() -> datetime:
+    return datetime.now(timezone.utc)
+
+
+def generate_uuid() -> str:
+    return str(uuid.uuid4())
+
+
+class User(Base):
+    __tablename__ = "users"
+
+    id = Column(String(64), primary_key=True, default=generate_uuid)
+    email = Column(String(255), unique=True, index=True, nullable=False)
+    name = Column(String(255), nullable=True)
+    display_name = Column(String(255), nullable=True)
+    avatar_url = Column(Text, nullable=True)
+    password_hash = Column(String(255), nullable=True)
+    password_salt = Column(String(255), nullable=True)
+    google_auth = Column(JSON, nullable=True)
+    combined_accounts = Column(JSON, default=list, nullable=False)
+    created_at = Column(DateTime(timezone=True), default=utc_now, nullable=False)
+    updated_at = Column(DateTime(timezone=True), default=utc_now, onupdate=utc_now, nullable=False)
+
+    # Relationships
+    jobs = relationship("Job", back_populates="user", cascade="all, delete-orphan")
+    projects = relationship("Project", back_populates="user", cascade="all, delete-orphan")
+    hackathons = relationship("Hackathon", back_populates="user", cascade="all, delete-orphan")
+    todos = relationship("Todo", back_populates="user", cascade="all, delete-orphan")
+    documents = relationship("Document", back_populates="user", cascade="all, delete-orphan")
+    contacts = relationship("Contact", back_populates="user", cascade="all, delete-orphan")
+    notifications = relationship("Notification", back_populates="user", cascade="all, delete-orphan")
+    eve_sessions = relationship("EveSession", back_populates="user", cascade="all, delete-orphan")
+    eve_memories = relationship("EveMemory", back_populates="user", cascade="all, delete-orphan")
+    eve_schedules = relationship("EveSchedule", back_populates="user", cascade="all, delete-orphan")
+    settings = relationship("UserSetting", back_populates="user", cascade="all, delete-orphan")
+
+
+class Job(Base):
+    __tablename__ = "jobs"
+
+    id = Column(String(64), primary_key=True, default=generate_uuid)
+    user_id = Column(String(64), ForeignKey("users.id", ondelete="CASCADE"), index=True, nullable=False)
+    company = Column(String(255), nullable=False)
+    role = Column(String(255), nullable=False)
+    status = Column(String(64), default="Applied", nullable=False)
+    location = Column(String(255), nullable=True)
+    work_type = Column(String(64), nullable=True)
+    salary = Column(String(128), nullable=True)
+    applied_date = Column(String(64), nullable=True)
+    resume_id = Column(String(64), nullable=True)
+    job_url = Column(Text, nullable=True)
+    notes = Column(Text, nullable=True)
+    deleted = Column(Boolean, default=False, nullable=False)
+    deleted_at = Column(DateTime(timezone=True), nullable=True)
+    created_at = Column(DateTime(timezone=True), default=utc_now, nullable=False)
+    updated_at = Column(DateTime(timezone=True), default=utc_now, onupdate=utc_now, nullable=False)
+
+    user = relationship("User", back_populates="jobs")
+
+
+class Project(Base):
+    __tablename__ = "projects"
+
+    id = Column(String(64), primary_key=True, default=generate_uuid)
+    user_id = Column(String(64), ForeignKey("users.id", ondelete="CASCADE"), index=True, nullable=False)
+    name = Column(String(255), nullable=False)
+    description = Column(Text, nullable=True)
+    status = Column(String(64), default="Planning", nullable=False)
+    progress = Column(Integer, default=0, nullable=False)
+    members = Column(Integer, default=1, nullable=False)
+    technologies = Column(JSON, default=list, nullable=False)
+    lifecycle_phase = Column(String(64), default="idea", nullable=False)
+    deleted = Column(Boolean, default=False, nullable=False)
+    deleted_at = Column(DateTime(timezone=True), nullable=True)
+    created_at = Column(DateTime(timezone=True), default=utc_now, nullable=False)
+    updated_at = Column(DateTime(timezone=True), default=utc_now, onupdate=utc_now, nullable=False)
+
+    user = relationship("User", back_populates="projects")
+
+
+class Hackathon(Base):
+    __tablename__ = "hackathons"
+
+    id = Column(String(64), primary_key=True, default=generate_uuid)
+    user_id = Column(String(64), ForeignKey("users.id", ondelete="CASCADE"), index=True, nullable=False)
+    title = Column(String(255), nullable=False)
+    organizer = Column(String(255), nullable=True)
+    location = Column(String(255), nullable=True)
+    dates = Column(String(255), nullable=True)
+    prize = Column(String(128), nullable=True)
+    status = Column(String(64), default="Registered", nullable=False)
+    hackathon_url = Column(Text, nullable=True)
+    source = Column(String(128), nullable=True)
+    notes = Column(Text, nullable=True)
+    deleted = Column(Boolean, default=False, nullable=False)
+    deleted_at = Column(DateTime(timezone=True), nullable=True)
+    created_at = Column(DateTime(timezone=True), default=utc_now, nullable=False)
+    updated_at = Column(DateTime(timezone=True), default=utc_now, onupdate=utc_now, nullable=False)
+
+    user = relationship("User", back_populates="hackathons")
+
+
+class Todo(Base):
+    __tablename__ = "todos"
+
+    id = Column(String(64), primary_key=True, default=generate_uuid)
+    user_id = Column(String(64), ForeignKey("users.id", ondelete="CASCADE"), index=True, nullable=False)
+    title = Column(String(255), nullable=False)
+    completed = Column(Boolean, default=False, nullable=False)
+    due_date = Column(String(64), nullable=True)
+    priority = Column(String(32), default="medium", nullable=False)
+    deleted = Column(Boolean, default=False, nullable=False)
+    deleted_at = Column(DateTime(timezone=True), nullable=True)
+    created_at = Column(DateTime(timezone=True), default=utc_now, nullable=False)
+    updated_at = Column(DateTime(timezone=True), default=utc_now, onupdate=utc_now, nullable=False)
+
+    user = relationship("User", back_populates="todos")
+
+
+class Document(Base):
+    __tablename__ = "documents"
+
+    id = Column(String(64), primary_key=True, default=generate_uuid)
+    user_id = Column(String(64), ForeignKey("users.id", ondelete="CASCADE"), index=True, nullable=False)
+    title = Column(String(255), nullable=False)
+    content = Column(Text, default="", nullable=False)
+    folder = Column(String(255), default="General", nullable=False)
+    tags = Column(JSON, default=list, nullable=False)
+    deleted = Column(Boolean, default=False, nullable=False)
+    deleted_at = Column(DateTime(timezone=True), nullable=True)
+    created_at = Column(DateTime(timezone=True), default=utc_now, nullable=False)
+    updated_at = Column(DateTime(timezone=True), default=utc_now, onupdate=utc_now, nullable=False)
+
+    user = relationship("User", back_populates="documents")
+
+
+class Contact(Base):
+    __tablename__ = "contacts"
+
+    id = Column(String(64), primary_key=True, default=generate_uuid)
+    user_id = Column(String(64), ForeignKey("users.id", ondelete="CASCADE"), index=True, nullable=False)
+    name = Column(String(255), nullable=False)
+    email = Column(String(255), nullable=True)
+    phone = Column(String(64), nullable=True)
+    role = Column(String(128), nullable=True)
+    company = Column(String(128), nullable=True)
+    notes = Column(Text, nullable=True)
+    deleted = Column(Boolean, default=False, nullable=False)
+    deleted_at = Column(DateTime(timezone=True), nullable=True)
+    created_at = Column(DateTime(timezone=True), default=utc_now, nullable=False)
+    updated_at = Column(DateTime(timezone=True), default=utc_now, onupdate=utc_now, nullable=False)
+
+    user = relationship("User", back_populates="contacts")
+
+
+class Notification(Base):
+    __tablename__ = "notifications"
+
+    id = Column(String(64), primary_key=True, default=generate_uuid)
+    user_id = Column(String(64), ForeignKey("users.id", ondelete="CASCADE"), index=True, nullable=False)
+    title = Column(String(255), nullable=False)
+    body = Column(Text, nullable=False)
+    type = Column(String(64), default="system", nullable=False)
+    read = Column(Boolean, default=False, nullable=False)
+    data = Column(JSON, default=dict, nullable=False)
+    deleted = Column(Boolean, default=False, nullable=False)
+    created_at = Column(DateTime(timezone=True), default=utc_now, nullable=False)
+    updated_at = Column(DateTime(timezone=True), default=utc_now, onupdate=utc_now, nullable=False)
+
+    user = relationship("User", back_populates="notifications")
+
+
+class Call(Base):
+    __tablename__ = "calls"
+
+    id = Column(String(64), primary_key=True, default=generate_uuid)
+    caller_id = Column(String(64), index=True, nullable=False)
+    receiver_id = Column(String(64), index=True, nullable=False)
+    status = Column(String(64), default="initiated", nullable=False)  # initiated, ringing, accepted, declined, ended
+    call_type = Column(String(32), default="voice", nullable=False)    # voice, video
+    duration = Column(Integer, default=0, nullable=False)
+    created_at = Column(DateTime(timezone=True), default=utc_now, nullable=False)
+    updated_at = Column(DateTime(timezone=True), default=utc_now, onupdate=utc_now, nullable=False)
+
+
+class EveSession(Base):
+    __tablename__ = "eve_sessions"
+
+    id = Column(String(64), primary_key=True, default=generate_uuid)
+    user_id = Column(String(64), ForeignKey("users.id", ondelete="CASCADE"), index=True, nullable=False)
+    title = Column(String(255), default="New chat", nullable=False)
+    messages = Column(JSON, default=list, nullable=False)
+    created_at = Column(DateTime(timezone=True), default=utc_now, nullable=False)
+    updated_at = Column(DateTime(timezone=True), default=utc_now, onupdate=utc_now, nullable=False)
+
+    user = relationship("User", back_populates="eve_sessions")
+
+
+class EveMemory(Base):
+    __tablename__ = "eve_memories"
+
+    id = Column(String(64), primary_key=True, default=generate_uuid)
+    user_id = Column(String(64), ForeignKey("users.id", ondelete="CASCADE"), index=True, nullable=False)
+    content = Column(Text, nullable=False)
+    created_at = Column(DateTime(timezone=True), default=utc_now, nullable=False)
+    updated_at = Column(DateTime(timezone=True), default=utc_now, onupdate=utc_now, nullable=False)
+
+    user = relationship("User", back_populates="eve_memories")
+
+
+class EveSchedule(Base):
+    __tablename__ = "eve_schedules"
+
+    id = Column(String(64), primary_key=True, default=generate_uuid)
+    user_id = Column(String(64), ForeignKey("users.id", ondelete="CASCADE"), index=True, nullable=False)
+    action_type = Column(String(64), default="prompt", nullable=False)  # prompt, voice_call
+    cron_expression = Column(String(128), nullable=True)
+    scheduled_time = Column(DateTime(timezone=True), nullable=True)
+    prompt = Column(Text, nullable=True)
+    enabled = Column(Boolean, default=True, nullable=False)
+    last_run_at = Column(DateTime(timezone=True), nullable=True)
+    created_at = Column(DateTime(timezone=True), default=utc_now, nullable=False)
+    updated_at = Column(DateTime(timezone=True), default=utc_now, onupdate=utc_now, nullable=False)
+
+    user = relationship("User", back_populates="eve_schedules")
+
+
+class UserSetting(Base):
+    __tablename__ = "user_settings"
+
+    id = Column(String(64), primary_key=True, default=generate_uuid)
+    user_id = Column(String(64), ForeignKey("users.id", ondelete="CASCADE"), index=True, nullable=False)
+    category = Column(String(128), nullable=False)  # e.g., "ai-models", "eve-speech", "github", "google"
+    settings = Column(JSON, default=dict, nullable=False)
+    created_at = Column(DateTime(timezone=True), default=utc_now, nullable=False)
+    updated_at = Column(DateTime(timezone=True), default=utc_now, onupdate=utc_now, nullable=False)
+
+    __table_args__ = (
+        Index("ix_user_settings_user_cat", "user_id", "category", unique=True),
+    )
+
+    user = relationship("User", back_populates="settings")
+
+
+class WorkspaceFile(Base):
+    __tablename__ = "workspace_files"
+
+    id = Column(String(64), primary_key=True, default=generate_uuid)
+    user_id = Column(String(64), ForeignKey("users.id", ondelete="CASCADE"), index=True, nullable=False)
+    path = Column(String(1024), nullable=False)
+    content = Column(Text, default="", nullable=False)
+    is_directory = Column(Boolean, default=False, nullable=False)
+    created_at = Column(DateTime(timezone=True), default=utc_now, nullable=False)
+    updated_at = Column(DateTime(timezone=True), default=utc_now, onupdate=utc_now, nullable=False)
+
+    __table_args__ = (
+        Index("ix_workspace_files_user_path", "user_id", "path", unique=True),
+    )
