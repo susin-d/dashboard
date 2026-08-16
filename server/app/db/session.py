@@ -11,11 +11,13 @@ from sqlalchemy.orm import DeclarativeBase
 from app.core.config import settings
 
 
+from sqlalchemy import create_engine
+
 class Base(DeclarativeBase):
     pass
 
 
-def get_db_url() -> str:
+def get_async_db_url() -> str:
     url = settings.database_url
     if url.startswith("postgres://"):
         url = url.replace("postgres://", "postgresql+asyncpg://", 1)
@@ -24,11 +26,33 @@ def get_db_url() -> str:
     return url
 
 
-db_url = get_db_url()
-is_sqlite = db_url.startswith("sqlite")
+def get_sync_db_url() -> str:
+    url = settings.database_url
+    if url.startswith("postgresql+asyncpg://"):
+        url = url.replace("postgresql+asyncpg://", "postgresql+psycopg2://", 1)
+    elif url.startswith("postgres://"):
+        url = url.replace("postgres://", "postgresql+psycopg2://", 1)
+    elif url.startswith("postgresql://"):
+        url = url.replace("postgresql://", "postgresql+psycopg2://", 1)
+    elif url.startswith("sqlite+aiosqlite://"):
+        url = url.replace("sqlite+aiosqlite://", "sqlite://", 1)
+    return url
+
+
+async_db_url = get_async_db_url()
+sync_db_url = get_sync_db_url()
+is_sqlite = sync_db_url.startswith("sqlite")
 
 engine = create_async_engine(
-    db_url,
+    async_db_url,
+    echo=False,
+    future=True,
+    pool_pre_ping=True,
+    **({} if is_sqlite else {"pool_size": 10, "max_overflow": 20}),
+)
+
+sync_engine = create_engine(
+    sync_db_url,
     echo=False,
     future=True,
     pool_pre_ping=True,

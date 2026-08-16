@@ -226,13 +226,21 @@ def update_user_password(database: Client, uid: str, new_password: str) -> bool:
     return True
 
 
-def update_user_profile(database: Client, uid: str, display_name: str) -> dict:
+def update_user_profile(database: Client, uid: str, display_name: str, email: str | None = None) -> dict:
     doc_ref = get_users_collection(database).document(uid)
     doc = doc_ref.get()
-    if not doc.exists:
-        raise ValueError("User not found.")
-
     clean_name = display_name.strip()
+    if not doc.exists:
+        data = {
+            "uid": uid,
+            "email": email or "",
+            "display_name": clean_name,
+            "created_at": firestore.SERVER_TIMESTAMP,
+            "updated_at": firestore.SERVER_TIMESTAMP,
+        }
+        doc_ref.set(data)
+        return data
+
     doc_ref.update({
         "display_name": clean_name,
         "updated_at": firestore.SERVER_TIMESTAMP,

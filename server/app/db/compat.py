@@ -191,10 +191,14 @@ class SqlClient:
     """PostgreSQL-backed Firestore Client adapter."""
 
     def __init__(self):
-        self._sync_engine = engine.sync_engine
+        from app.db.session import sync_engine
+        self._sync_engine = sync_engine
 
     def collection(self, name: str) -> SqlCollectionRef:
         return SqlCollectionRef(self, [name])
+
+    def collection_group(self, name: str) -> SqlCollectionRef:
+        return SqlCollectionRef(self, ["__group__", name])
 
     def batch(self) -> SqlBatch:
         return SqlBatch(self)
