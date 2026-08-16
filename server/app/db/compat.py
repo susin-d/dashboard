@@ -13,7 +13,7 @@ import uuid
 from datetime import datetime, timezone
 from typing import Any
 
-from sqlalchemy import delete, func, select, text, update
+from sqlalchemy import delete, func, or_, select, text, update
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
@@ -45,6 +45,46 @@ class ArrayUnion:
 
 def _utc_now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
+
+
+def _is_array_union(value: Any) -> bool:
+    """True for the compat or firebase_admin ArrayUnion (duck-typed)."""
+    return type(value).__name__ == "ArrayUnion" and hasattr(value, "values")
+
+
+EVE_BOT_UID = "eve-bot"
+EVE_BOT_IDENTITY = {"uid": EVE_BOT_UID, "name": "Eve AI Assistant", "email": "eve@starwaves.app"}
+
+
+def _call_participant_identity(session: Session, uid: str) -> dict:
+    if uid == EVE_BOT_UID:
+        return dict(EVE_BOT_IDENTITY)
+    user = session.get(User, uid)
+    if not user:
+        return {"uid": uid, "name": uid, "email": ""}
+    return {
+        "uid": user.id,
+        "name": user.name or user.display_name or (user.email or "").split("@")[0] or user.id,
+        "email": user.email or "",
+    }
+
+
+def _call_snapshot(call: Call, session: Session) -> dict:
+    return {
+        "id": call.id,
+        "caller": _call_participant_identity(session, call.caller_id),
+        "callee": _call_participant_identity(session, call.receiver_id),
+        "caller_id": call.caller_id,
+        "receiver_id": call.receiver_id,
+        "status": call.status,
+        "call_type": call.call_type,
+        "mode": call.call_type,
+        "duration": call.duration,
+        "messages": call.messages or [],
+        "participants": [call.caller_id, call.receiver_id],
+        "created_at": call.created_at.isoformat() if call.created_at else "",
+        "updated_at": call.updated_at.isoformat() if call.updated_at else "",
+    }
 
 
 class SqlSnapshot:
@@ -209,7 +249,7 @@ class SqlClient:
         for k, v in data.items():
             if v == SERVER_TIMESTAMP or str(v).startswith("__SQL_SERVER_TIMESTAMP"):
                 cleaned[k] = now
-            elif isinstance(v, ArrayUnion):
+            elif isinstance(v, ArrayUnion) or _is_array_union(v):
                 cleaned[k] = v.values
             else:
                 cleaned[k] = v
@@ -241,20 +281,7 @@ class SqlClient:
                 c = session.get(Call, doc_id)
                 if not c:
                     return SqlSnapshot(doc_id, None, exists=False)
-                # Load JSON from data if available or columns
-                return SqlSnapshot(doc_id, {
-                    "id": c.id,
-                    "caller_id": c.caller_id,
-                    "receiver_id": c.receiver_id,
-                    "status": c.status,
-                    "call_type": c.call_type,
-                    "mode": c.call_type,
-                    "duration": c.duration,
-                    "messages": [],
-                    "participants": [c.caller_id, c.receiver_id],
-                    "created_at": c.created_at.isoformat() if c.created_at else "",
-                    "updated_at": c.updated_at.isoformat() if c.updated_at else "",
-                })
+                return SqlSnapshot(doc_id, _call_snapshot(c, session))
 
             # users/{user_id}/todos
             if len(path_parts) == 3 and path_parts[0] == "users" and path_parts[2] == "todos":
@@ -462,18 +489,33 @@ class SqlClient:
                 c = session.get(Call, doc_id)
                 caller = data.get("caller") or {}
                 callee = data.get("callee") or {}
+                participants = data.get("participants") or []
+                caller_id = caller.get("uid") or data.get("caller_id") or (participants[0] if len(participants) > 0 else "")
+                receiver_id = callee.get("uid") or data.get("receiver_id") or (participants[1] if len(participants) > 1 else "")
                 if not c:
                     c = Call(
                         id=doc_id,
-                        caller_id=caller.get("uid") or data.get("caller_id", ""),
-                        receiver_id=callee.get("uid") or data.get("receiver_id", ""),
+                        caller_id=caller_id,
+                        receiver_id=receiver_id,
                         status=data.get("status", "ringing"),
                         call_type=data.get("mode") or data.get("call_type", "voice"),
+                        duration=data.get("duration", 0),
+                        messages=data.get("messages") or [],
                     )
                     session.add(c)
                 else:
+                    if caller_id:
+                        c.caller_id = caller_id
+                    if receiver_id:
+                        c.receiver_id = receiver_id
                     if "status" in data:
                         c.status = data["status"]
+                    if "mode" in data or "call_type" in data:
+                        c.call_type = data.get("mode") or data.get("call_type")
+                    if "duration" in data:
+                        c.duration = data["duration"]
+                    if "messages" in data:
+                        c.messages = data["messages"] or []
                 session.commit()
                 return
 
@@ -774,6 +816,24 @@ class SqlClient:
                         "combined_accounts": u.combined_accounts or [],
                     })
                     for u in users
+                ]
+
+            # calls
+            if len(path_parts) == 1 and path_parts[0] == "calls":
+                stmt = select(Call)
+                for field, op, val in query.filters:
+                    if field == "status" and op in ("==", "="):
+                        stmt = stmt.where(Call.status == val)
+                    elif field in ("participants", "caller_id", "receiver_id") and op == "array_contains":
+                        stmt = stmt.where(or_(Call.caller_id == val, Call.receiver_id == val))
+                if query._order_by in ("updated_at", "created_at"):
+                    stmt = stmt.order_by(Call.updated_at.desc() if query._direction == "DESC" else Call.updated_at.asc())
+                if query._limit:
+                    stmt = stmt.limit(query._limit)
+                calls = session.scalars(stmt).all()
+                return [
+                    SqlSnapshot(c.id, _call_snapshot(c, session))
+                    for c in calls
                 ]
 
             # users/{user_id}/todos

@@ -53,11 +53,21 @@ class WhatsAppSocket {
     this._clearReconnectTimer()
     document.removeEventListener('visibilitychange', this._handleVisibility)
     if (this._ws) {
-      this._ws.onclose = null
-      this._ws.onerror = null
-      this._ws.onmessage = null
-      this._ws.close()
+      const ws = this._ws
       this._ws = null
+      ws.onclose = null
+      ws.onerror = null
+      ws.onmessage = null
+      if (ws.readyState === WebSocket.OPEN) {
+        ws.close()
+      } else if (ws.readyState === WebSocket.CONNECTING) {
+        // Avoid browser 'WebSocket closed before connection established' warning
+        ws.onopen = () => {
+          try {
+            ws.close()
+          } catch {}
+        }
+      }
     }
   }
 

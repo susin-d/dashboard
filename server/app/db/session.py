@@ -11,7 +11,7 @@ from sqlalchemy.orm import DeclarativeBase
 from app.core.config import settings
 
 
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 
 class Base(DeclarativeBase):
     pass
@@ -82,3 +82,20 @@ async def init_db() -> None:
     """Initialize database tables."""
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+    _ensure_call_messages_column()
+
+
+def _ensure_call_messages_column() -> None:
+    """Idempotently backfill the calls.messages column on existing tables.
+
+    create_all() only creates missing tables, and this project has no alembic
+    migrations, so pre-existing deployments need an explicit ALTER TABLE.
+    """
+    with sync_engine.connect() as conn:
+        if is_sqlite:
+            columns = {row[1] for row in conn.execute(text("PRAGMA table_info(calls)"))}
+            if "messages" not in columns:
+                conn.execute(text("ALTER TABLE calls ADD COLUMN messages JSON NOT NULL DEFAULT '[]'"))
+        else:
+            conn.execute(text("ALTER TABLE calls ADD COLUMN IF NOT EXISTS messages JSON NOT NULL DEFAULT '[]'"))
+        conn.commit()

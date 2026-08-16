@@ -4,7 +4,7 @@ Living project snapshot for AI agents. `AGENTS.md` holds the permanent rules;
 this file holds the **current state** of the codebase and must be kept up to
 date whenever the implementation changes.
 
-> **Last updated:** 2026-08-16 (Enhanced sidebar expanding/collapsing transitions and item hover animations with smooth cubic-bezier easing)
+> **Last updated:** 2026-08-16 (Fixed SQL-backed call records: nested caller/callee round-trip, participant queries, signal persistence, and `calls.messages` column migration)
 
 ---
 
@@ -229,6 +229,7 @@ SMTP, Firestore database id, CORS origins. Loads `.env.prod` before `.env`.
   - Tools added to Eve assistant (`create_eve_schedule`, `list_eve_schedules`, `delete_eve_schedule`) so users can schedule reminders conversationally in chat or via the `EveSchedulesCard` sidebar component.
   - Vercel Cron Integration: `vercel.json` registers background cron job (`/api/v1/cron/execute-schedules` every 15 minutes `*/15 * * * *`) targeting FastAPI backend route `app/api/routes/cron.py`.
 - Calls & Eve AI Voice Calling: app-wide WebRTC voice/video calls between StarWaves users and bidirectional voice calls with Eve AI Assistant (`eve@starwaves.app` / `eve-bot`).
+  - SQL-backed call records (`server/app/db/compat.py`): the `calls` collection now round-trips Firestore-shaped documents — nested `caller`/`callee` identities are reconstructed from the `users` table (with a built-in `eve-bot` identity), `messages` are persisted as a JSON column, participant queries (`array_contains` on `participants`) map to `caller_id`/`receiver_id` OR-checks, and both compat and `firebase_admin` `ArrayUnion` values are normalized on writes. `init_db` (`server/app/db/session.py`) idempotently backfills the `calls.messages` column on existing deployments (Postgres `ADD COLUMN IF NOT EXISTS` / SQLite PRAGMA check) since the project has no alembic migrations.
   - Real-time WebSocket signaling: uses persistent `/ws/calls` connection (`callsSocket.js` + `ws_manager.py`) with zero HTTP polling. Incoming calls, WebRTC offers/answers/ICE candidates, and call status transitions are pushed instantaneously to participants upon write operations.
   - Users can dial `eve` or `eve@starwaves.app`, click quick-action buttons ("Call Eve" / "Receive call from Eve"), or ask Eve in chat ("Eve, call me") to trigger immediate incoming voice calls.
   - Active Eve calls launch a dedicated monochrome AI pulse wave visualizer (`CallScreen.jsx`), integrated Web Speech API STT (Speech-to-Text) voice recognition, and TTS (Text-to-Speech) voice synthesis with real-time speech captions overlay and mute/audio controls.

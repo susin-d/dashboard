@@ -200,6 +200,7 @@ class Call(Base):
     status = Column(String(64), default="initiated", nullable=False)  # initiated, ringing, accepted, declined, ended
     call_type = Column(String(32), default="voice", nullable=False)    # voice, video
     duration = Column(Integer, default=0, nullable=False)
+    messages = Column(JSON, default=list, nullable=False)
     created_at = Column(DateTime(timezone=True), default=utc_now, nullable=False)
     updated_at = Column(DateTime(timezone=True), default=utc_now, onupdate=utc_now, nullable=False)
 

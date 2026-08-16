@@ -37,7 +37,6 @@ export function WhatsAppPage() {
     let mounted = true
     async function loadInitial() {
       try {
-        setLoading(true)
         const stat = await fetchWhatsAppStatus().catch(() => ({ connected: false }))
         if (mounted) setStatus(stat)
 
@@ -46,8 +45,8 @@ export function WhatsAppPage() {
           setChats(chatList)
           setSelectedChatId((current) => current || (chatList.length > 0 ? chatList[0].id : null))
         }
-      } finally {
-        if (mounted) setLoading(false)
+      } catch (err) {
+        console.error('Failed to load WhatsApp data:', err)
       }
     }
 
