@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
-  Archive, BellRing, ChevronDown, ChevronLeft, ChevronRight, Inbox, LoaderCircle, Mail, MailOpen,
-  MailPlus, Megaphone, MessagesSquare, Plus, RefreshCw, Reply, Search, Send, Star, Trash2, User, X,
+  Archive, BellRing, ChevronDown, Inbox, LoaderCircle, Mail, MailOpen,
+  MailPlus, Megaphone, MessagesSquare, Plus, RefreshCw, Reply, Send, Star, Trash2, User, X,
 } from 'lucide-react'
 import {
   hasGmailConnection, loadGoogleMail, loadGoogleMessage,

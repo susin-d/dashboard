@@ -2,18 +2,17 @@ import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import {
   Contact,
   Plus,
-  Search,
   Star,
   Phone,
   Mail,
   Building,
   Pencil,
   Trash2,
-  X,
   Upload,
   RefreshCw,
   CheckCircle2,
   FileText,
+  X,
 } from 'lucide-react'
 import {
   listContacts,

@@ -4,8 +4,6 @@ import {
   CalendarDays,
   CheckCircle2,
   ChevronDown,
-  ChevronLeft,
-  ChevronRight,
   Circle,
   Clock3,
   FolderKanban,
@@ -17,7 +15,6 @@ import {
 import { calendarDateKey } from '../utils/calendarEvents'
 import { CalendarPicker, Pagination } from '../components/ui'
 import { usePersistentState } from '../hooks/usePersistentState'
-
 const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 
 function buildCalendarDays(date) {

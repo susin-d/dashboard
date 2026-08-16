@@ -7,7 +7,6 @@ import {
   Pencil,
   Plus,
   Rocket,
-  Search,
   Trash2,
   Users,
 } from 'lucide-react'

@@ -4,7 +4,7 @@ Living project snapshot for AI agents. `AGENTS.md` holds the permanent rules;
 this file holds the **current state** of the codebase and must be kept up to
 date whenever the implementation changes.
 
-> **Last updated:** 2026-08-16 (Migrated backend database engine to Supabase PostgreSQL with Async SQLAlchemy 2.0, relational schema models, and compat adapter)
+> **Last updated:** 2026-08-16 (Created and normalized shared UI primitives: SearchBar, Pagination, FilterBar, CustomDropdown, and EmptyState across all dashboard pages)
 
 ---
 
@@ -126,11 +126,13 @@ SMTP, Firestore database id, CORS origins. Loads `.env.prod` before `.env`.
 - **UI primitives**: `website/src/components/ui/` (`Avatar`, `Badge`, `Modal`,
   `MailModal`, `ModalHeader`, `ModalActions`, `ConfirmDialog`, `FormField`,
   `PageHeader`, `EmptyState`, `CustomDropdown`, `CalendarPicker`, `Markdown`,
-  `TabNav`, `SectionHeading`, `SettingsCard`, `MetricCard`)
+  `TabNav`, `SectionHeading`, `SettingsCard`, `MetricCard`, `SearchBar`,
+  `Pagination`, `FilterBar`)
   re-exported via `index.js`. Dialogs across pages use the shared `Modal` /
   `MailModal` primitives (Portal-based, Escape + backdrop dismissal, focus
   management, `data-modal-initial-focus` support); destructive confirmations
-  reuse `ConfirmDialog`.
+  reuse `ConfirmDialog`. Filter and search controls across pages use the
+  standardized `SearchBar`, `CustomDropdown`, `FilterBar`, and `Pagination` primitives.
 - **Hooks** (`src/hooks/`): `useAuth`, `useRouter`,
   `useThemeCustomizer`, `useWorkspaceData`, `useCallCenter`, plus
   `usePersistentState`, `useLocalNotifications`, `useDialogAccessibility`,

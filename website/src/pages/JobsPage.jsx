@@ -11,7 +11,6 @@ import {
   Trash2,
   Search,
   SlidersHorizontal,
-  RotateCcw,
 } from 'lucide-react'
 import { usePersistentState } from '../hooks/usePersistentState'
 import { createJob, deleteJob, updateJob } from '../lib/workspaceApi'

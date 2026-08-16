@@ -1,7 +1,6 @@
 import { useEffect, useState, useMemo, useCallback } from 'react'
 import {
   MessageSquare,
-  Search,
   Send,
   Users,
   User,

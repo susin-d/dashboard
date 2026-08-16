@@ -10,10 +10,8 @@ import {
   HardDrive,
   Pencil,
   Save,
-  Search,
   Trash2,
   Upload,
-  X,
 } from 'lucide-react'
 import {
   beginGoogleDriveOAuth,
