@@ -9,15 +9,13 @@ import {
   List,
   Minus,
   Plus,
-  RotateCcw,
   Search,
   SlidersHorizontal,
   Trash2,
   Users,
-  X,
 } from 'lucide-react'
 import { createProject, deleteProject, updateProject } from '../lib/workspaceApi'
-import { ConfirmDialog, CustomDropdown, Modal, PageHeader } from '../components/ui'
+import { ConfirmDialog, CustomDropdown, EmptyState, FilterBar, Modal, PageHeader, SearchBar } from '../components/ui'
 import { ProjectPhaseDots } from '../components/ProjectLifecycleCard'
 import {
   getProjectPhase,
@@ -305,59 +303,43 @@ export function ProjectsPage({
             <span className="chip-count">{statusCounts[status] || 0}</span>
           </button>
         ))}
-      </div>
-
-      <div className="project-toolbar" aria-label="Filter projects">
-        <label className="project-search">
-          <Search size={16} />
-          <span className="sr-only">Search projects</span>
-          <input
+      </div>      <FilterBar
+        className="project-toolbar"
+        search={
+          <SearchBar
             value={query}
-            onChange={(event) => setQuery(event.target.value)}
+            onChange={setQuery}
             placeholder="Search projects, tools, or descriptions"
+            ariaLabel="Search projects"
           />
-          {query && (
-            <button
-              type="button"
-              onClick={() => setQuery('')}
-              aria-label="Clear search"
-            >
-              <X size={15} />
-            </button>
-          )}
-        </label>
-        <div className="project-filter-controls">
-          <SlidersHorizontal size={15} aria-hidden="true" />
-          <CustomDropdown
-            value={statusFilter}
-            onChange={setStatusFilter}
-            ariaLabel="Filter by status"
-            options={['All', 'Active', 'Planning', 'On hold', 'Completed'].map(
-              (value) => ({
-                value,
-                label: value === 'All' ? 'All statuses' : value,
-              }),
-            )}
-          />
-          <CustomDropdown
-            value={sortOrder}
-            onChange={setSortOrder}
-            ariaLabel="Sort projects"
-            options={[
-              { value: 'updated', label: 'Recently updated' },
-              { value: 'progress', label: 'Progress' },
-              { value: 'name', label: 'Name' },
-            ]}
-          />
-          {hasFilters && (
-            <button
-              className="project-reset"
-              type="button"
-              onClick={resetFilters}
-            >
-              <RotateCcw size={13} /> Reset
-            </button>
-          )}
+        }
+        filters={
+          <>
+            <SlidersHorizontal size={15} className="text-muted" aria-hidden="true" />
+            <CustomDropdown
+              value={statusFilter}
+              onChange={setStatusFilter}
+              ariaLabel="Filter by status"
+              options={['All', 'Active', 'Planning', 'On hold', 'Completed'].map(
+                (value) => ({
+                  value,
+                  label: value === 'All' ? 'All statuses' : value,
+                }),
+              )}
+            />
+            <CustomDropdown
+              value={sortOrder}
+              onChange={setSortOrder}
+              ariaLabel="Sort projects"
+              options={[
+                { value: 'updated', label: 'Recently updated' },
+                { value: 'progress', label: 'Progress' },
+                { value: 'name', label: 'Name' },
+              ]}
+            />
+          </>
+        }
+        actions={
           <div className="project-view-toggle" aria-label="View layout switcher">
             <button
               type="button"
@@ -382,8 +364,10 @@ export function ProjectsPage({
               <List size={15} />
             </button>
           </div>
-        </div>
-      </div>
+        }
+        isFiltered={Boolean(hasFilters)}
+        onReset={resetFilters}
+      />
 
       {viewMode === 'grid' ? (
         <div className="projects-grid-layout" aria-label="Projects grid">
@@ -665,20 +649,22 @@ export function ProjectsPage({
       )}
 
       {!filteredProjects.length && (
-        <div className="project-empty-state">
-          <Search size={22} />
-          <strong>No projects match these filters</strong>
-          <span>Try a different search or status.</span>
-          {hasFilters && (
-            <button
-              className="secondary-button"
-              type="button"
-              onClick={resetFilters}
-            >
-              Clear filters
-            </button>
-          )}
-        </div>
+        <EmptyState
+          icon={Search}
+          title="No projects match these filters"
+          description="Try a different search or status."
+          action={
+            hasFilters ? (
+              <button
+                className="secondary-button"
+                type="button"
+                onClick={resetFilters}
+              >
+                Clear filters
+              </button>
+            ) : null
+          }
+        />
       )}
 
       {canLoadMore && (

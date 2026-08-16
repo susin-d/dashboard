@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { MessageSquare, Plus, Search, Trash2, ArrowRight } from 'lucide-react'
+import { MessageSquare, Plus, Trash2, ArrowRight } from 'lucide-react'
+import { EmptyState, SearchBar } from '../../components/ui'
 
 export function EveSessionsSection({
   sessions,
@@ -40,45 +41,43 @@ export function EveSessionsSection({
       </div>
 
       <div className="eve-sessions-toolbar">
-        <div className="eve-search-field">
-          <Search size={15} />
-          <input
-            type="text"
-            placeholder="Search conversations by topic or message…"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-        </div>
+        <SearchBar
+          className="eve-search-field"
+          placeholder="Search conversations by topic or message…"
+          ariaLabel="Search conversations"
+          value={searchQuery}
+          onChange={setSearchQuery}
+        />
         <span className="eve-sessions-count">
           {filteredSessions.length} {filteredSessions.length === 1 ? 'session' : 'sessions'}
         </span>
       </div>
 
       {isLoading ? (
-        <div className="eve-subpage-empty">
-          <p>Loading past conversations…</p>
-        </div>
+        <EmptyState description="Loading past conversations…" />
       ) : filteredSessions.length === 0 ? (
-        <div className="eve-subpage-empty">
-          <MessageSquare size={32} />
-          <h3>{searchQuery ? 'No matching conversations' : 'No saved conversations'}</h3>
-          <p>
-            {searchQuery
+        <EmptyState
+          icon={MessageSquare}
+          title={searchQuery ? 'No matching conversations' : 'No saved conversations'}
+          description={
+            searchQuery
               ? 'Try searching with different keywords.'
-              : 'Every conversation you have with Eve is saved automatically here.'}
-          </p>
-          {!searchQuery && (
-            <button
-              type="button"
-              className="primary-button"
-              onClick={onStartNewChat}
-              disabled={isSending}
-            >
-              <Plus size={14} />
-              <span>Start your first chat</span>
-            </button>
-          )}
-        </div>
+              : 'Every conversation you have with Eve is saved automatically here.'
+          }
+          action={
+            !searchQuery ? (
+              <button
+                type="button"
+                className="primary-button"
+                onClick={onStartNewChat}
+                disabled={isSending}
+              >
+                <Plus size={14} />
+                <span>Start New Chat</span>
+              </button>
+            ) : null
+          }
+        />
       ) : (
         <div className="eve-sessions-grid" role="list">
           {filteredSessions.map((session) => {

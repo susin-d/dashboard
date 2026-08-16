@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
-import { CalendarDays, ChevronDown, Clock3, Filter, Search, SlidersHorizontal, Trophy, X } from 'lucide-react'
-import { CustomDropdown, MetricCard, PageHeader } from '../components/ui'
+import { CalendarDays, ChevronDown, Clock3, Filter, Search, SlidersHorizontal, Trophy } from 'lucide-react'
+import { CustomDropdown, EmptyState, FilterBar, MetricCard, PageHeader, SearchBar } from '../components/ui'
 import { usePersistentState } from '../hooks/usePersistentState'
 
 export function CompetitiveCodingPage({ contestSites }) {
@@ -53,25 +53,70 @@ export function CompetitiveCodingPage({ contestSites }) {
         />
       </div>
 
-      <div className="contest-controls" aria-label="Filter contests">
-        <div className="contest-search"><Search size={16} /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search contests or platforms" aria-label="Search contests or platforms" />{query && <button type="button" onClick={() => setQuery('')} aria-label="Clear search"><X size={15} /></button>}</div>
-        <label><Filter size={14} /><span className="sr-only">Platform</span><CustomDropdown value={platform} onChange={setPlatform} ariaLabel="Platform" options={[{ value: 'all', label: 'All platforms' }, ...contestSites.map((site) => ({ value: site.id, label: site.name }))]} /></label>
-        <label><span className="sr-only">Timeframe</span><CustomDropdown value={timeframe} onChange={setTimeframe} ariaLabel="Timeframe" options={[{ value: 'all', label: 'Any time' }, { value: 'today', label: 'Next 24 hours' }, { value: 'week', label: 'Next 7 days' }, { value: 'month', label: 'Next 30 days' }]} /></label>
-        <label><SlidersHorizontal size={14} /><span className="sr-only">Sort contests</span><CustomDropdown value={sortOrder} onChange={setSortOrder} ariaLabel="Sort contests" options={[{ value: 'soonest', label: 'Soonest first' }, { value: 'latest', label: 'Latest first' }]} /></label>
-        {hasFilters && <button className="contest-reset" type="button" onClick={resetFilters}>Reset</button>}
-      </div>
+      <FilterBar
+        className="contest-controls"
+        search={
+          <SearchBar
+            value={query}
+            onChange={setQuery}
+            placeholder="Search contests or platforms"
+            ariaLabel="Search contests or platforms"
+          />
+        }
+        filters={
+          <>
+            <Filter size={14} className="text-muted" aria-hidden="true" />
+            <CustomDropdown
+              value={platform}
+              onChange={setPlatform}
+              ariaLabel="Platform"
+              options={[{ value: 'all', label: 'All platforms' }, ...contestSites.map((site) => ({ value: site.id, label: site.name }))]}
+            />
+            <CustomDropdown
+              value={timeframe}
+              onChange={setTimeframe}
+              ariaLabel="Timeframe"
+              options={[
+                { value: 'all', label: 'Any time' },
+                { value: 'today', label: 'Next 24 hours' },
+                { value: 'week', label: 'Next 7 days' },
+                { value: 'month', label: 'Next 30 days' },
+              ]}
+            />
+            <SlidersHorizontal size={14} className="text-muted" aria-hidden="true" />
+            <CustomDropdown
+              value={sortOrder}
+              onChange={setSortOrder}
+              ariaLabel="Sort contests"
+              options={[
+                { value: 'soonest', label: 'Soonest first' },
+                { value: 'latest', label: 'Latest first' },
+              ]}
+            />
+          </>
+        }
+        isFiltered={Boolean(hasFilters)}
+        onReset={resetFilters}
+      />
       <div className="contest-results-meta"><span><strong>{filteredContests.length}</strong> {filteredContests.length === 1 ? 'contest' : 'contests'} shown</span>{hasFilters && <span>Filters are active</span>}</div>
       <div className="contest-site-list">
         {contestSites.length === 0 ? (
-          <div className="empty-contest-platforms" style={{ padding: '40px 20px', textAlign: 'center', background: 'var(--bg-secondary, #09090b)', border: '1px solid var(--border-color, #27272a)', borderRadius: '12px' }}>
-            <Trophy size={36} style={{ color: 'var(--text-tertiary, #71717a)', marginBottom: '12px' }} />
-            <h3 style={{ margin: '0 0 8px 0', color: 'var(--text-primary, #ffffff)' }}>No Contest Sources Enabled</h3>
-            <p style={{ margin: 0, color: 'var(--text-secondary, #a1a1aa)', fontSize: '14px' }}>
-              All contest platforms are turned off. You can turn on contest details for Codeforces, CodeChef, and LeetCode in Settings.
-            </p>
-          </div>
+          <EmptyState
+            icon={Trophy}
+            title="No Contest Sources Enabled"
+            description="All contest platforms are turned off. You can turn on contest details for Codeforces, CodeChef, and LeetCode in Settings."
+          />
         ) : filteredContests.length === 0 ? (
-          <div className="empty-contest-platforms contest-filter-empty"><Search size={28} /><h3>No contests match</h3><p>Try a different search, platform, or time window.</p><button className="secondary-button" type="button" onClick={resetFilters}>Clear filters</button></div>
+          <EmptyState
+            icon={Search}
+            title="No contests match"
+            description="Try a different search, platform, or time window."
+            action={
+              <button className="secondary-button" type="button" onClick={resetFilters}>
+                Clear filters
+              </button>
+            }
+          />
         ) : (
           contestSites.filter((site) => visibleSiteIds.has(site.id)).map((site) => {
           const isOpen = openSites.has(site.id)

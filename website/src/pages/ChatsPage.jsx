@@ -17,7 +17,7 @@ import {
   getGoogleChatSpaces,
   sendGoogleChatMessage,
 } from '../lib/googleChatApi'
-import { PageHeader } from '../components/ui'
+import { PageHeader, SearchBar } from '../components/ui'
 
 export function ChatsPage({ onNavigate }) {
   const [accounts, setAccounts] = useState([])
@@ -222,16 +222,13 @@ export function ChatsPage({ onNavigate }) {
             </div>
 
             {/* Search */}
-            <div className="chats-search-bar">
-              <Search size={16} className="search-icon" />
-              <input
-                type="text"
-                placeholder="Search spaces or messages…"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="search-input"
-              />
-            </div>
+            <SearchBar
+              className="chats-search-bar"
+              placeholder="Search spaces or messages…"
+              ariaLabel="Search spaces or messages"
+              value={searchQuery}
+              onChange={setSearchQuery}
+            />
 
             {/* Filter chips */}
             <div className="chats-filter-chips">

@@ -28,7 +28,7 @@ import {
   parseGoogleContactsCsv,
   parseVCard,
 } from '../lib/googleContacts'
-import { CustomDropdown } from '../components/ui/CustomDropdown'
+import { CustomDropdown, EmptyState, SearchBar } from '../components/ui'
 
 const CATEGORIES = [
   { id: 'all', label: 'All' },
@@ -355,16 +355,13 @@ export function ContactsPage({ callCenter, onNavigate }) {
 
       {/* Controls: Search + Categories */}
       <div className="contacts-controls">
-        <div className="contacts-search-box">
-          <Search size={15} />
-          <input
-            type="text"
-            className="contacts-search-input"
-            placeholder="Search contacts by name, email, phone, or company…"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-        </div>
+        <SearchBar
+          className="contacts-search-box"
+          placeholder="Search contacts by name, email, phone, or company…"
+          ariaLabel="Search contacts"
+          value={searchQuery}
+          onChange={setSearchQuery}
+        />
 
         <div className="contacts-filter-tabs" role="tablist" aria-label="Contact categories">
           {CATEGORIES.map((cat) => (
@@ -385,39 +382,39 @@ export function ContactsPage({ callCenter, onNavigate }) {
 
       {/* Directory Grid */}
       {loading ? (
-        <div className="contacts-empty-state">
-          <p>Loading contacts directory…</p>
-        </div>
+        <EmptyState description="Loading contacts directory…" />
       ) : filteredContacts.length === 0 ? (
-        <div className="contacts-empty-state">
-          <Contact size={32} />
-          <h3>{searchQuery ? 'No matching contacts found' : 'No contacts saved yet'}</h3>
-          <p>
-            {searchQuery
+        <EmptyState
+          icon={Contact}
+          title={searchQuery ? 'No matching contacts found' : 'No contacts saved yet'}
+          description={
+            searchQuery
               ? 'Try searching with different terms or category filters.'
-              : 'Add contacts manually or import your entire address book directly from Google Contacts.'}
-          </p>
-          {!searchQuery && (
-            <div className="contacts-empty-actions">
-              <button
-                type="button"
-                className="secondary-button"
-                onClick={() => setIsImportModalOpen(true)}
-              >
-                <Upload size={14} />
-                <span>Import from Google</span>
-              </button>
-              <button
-                type="button"
-                className="primary-button"
-                onClick={handleOpenAddModal}
-              >
-                <Plus size={14} />
-                <span>Create contact</span>
-              </button>
-            </div>
-          )}
-        </div>
+              : 'Add contacts manually or import your entire address book directly from Google Contacts.'
+          }
+          action={
+            !searchQuery ? (
+              <div className="contacts-empty-actions">
+                <button
+                  type="button"
+                  className="secondary-button"
+                  onClick={() => setIsImportModalOpen(true)}
+                >
+                  <Upload size={14} />
+                  <span>Import from Google</span>
+                </button>
+                <button
+                  type="button"
+                  className="primary-button"
+                  onClick={handleOpenAddModal}
+                >
+                  <Plus size={14} />
+                  <span>Create contact</span>
+                </button>
+              </div>
+            ) : null
+          }
+        />
       ) : (
         <div className="contacts-grid" role="list">
           {filteredContacts.map((contact) => (

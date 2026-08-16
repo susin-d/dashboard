@@ -419,10 +419,11 @@ class SqlClient:
                     "updated_at": m.updated_at.isoformat() if m.updated_at else "",
                 })
 
-            # users/{user_id}/settings/{category}
-            if len(path_parts) == 3 and path_parts[0] == "users" and path_parts[2] == "settings":
+            # users/{user_id}/settings/{category} or users/{user_id}/integrations/{integration}
+            if len(path_parts) == 3 and path_parts[0] == "users" and path_parts[2] in ("settings", "integrations"):
                 user_id = path_parts[1]
-                stmt = select(UserSetting).where(UserSetting.user_id == user_id, UserSetting.category == doc_id)
+                category_key = doc_id if path_parts[2] == "settings" else f"integration:{doc_id}"
+                stmt = select(UserSetting).where(UserSetting.user_id == user_id, UserSetting.category == category_key)
                 setting = session.scalar(stmt)
                 if not setting:
                     return SqlSnapshot(doc_id, None, exists=False)
@@ -677,13 +678,14 @@ class SqlClient:
                 session.commit()
                 return
 
-            # users/{user_id}/settings/{category}
-            if len(path_parts) == 3 and path_parts[0] == "users" and path_parts[2] == "settings":
+            # users/{user_id}/settings/{category} or users/{user_id}/integrations/{integration}
+            if len(path_parts) == 3 and path_parts[0] == "users" and path_parts[2] in ("settings", "integrations"):
                 user_id = path_parts[1]
-                stmt = select(UserSetting).where(UserSetting.user_id == user_id, UserSetting.category == doc_id)
+                category_key = doc_id if path_parts[2] == "settings" else f"integration:{doc_id}"
+                stmt = select(UserSetting).where(UserSetting.user_id == user_id, UserSetting.category == category_key)
                 setting = session.scalar(stmt)
                 if not setting:
-                    setting = UserSetting(user_id=user_id, category=doc_id, settings=data)
+                    setting = UserSetting(user_id=user_id, category=category_key, settings=data)
                     session.add(setting)
                 else:
                     setting.settings = data
@@ -739,6 +741,13 @@ class SqlClient:
                 m = session.get(EveMemory, doc_id)
                 if m:
                     session.delete(m)
+            elif len(path_parts) == 3 and path_parts[0] == "users" and path_parts[2] in ("settings", "integrations"):
+                user_id = path_parts[1]
+                category_key = doc_id if path_parts[2] == "settings" else f"integration:{doc_id}"
+                stmt = select(UserSetting).where(UserSetting.user_id == user_id, UserSetting.category == category_key)
+                setting = session.scalar(stmt)
+                if setting:
+                    session.delete(setting)
             session.commit()
 
     def _query_coll(self, path_parts: list[str], query: SqlQuery) -> list[SqlSnapshot]:

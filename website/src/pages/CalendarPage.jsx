@@ -15,7 +15,7 @@ import {
   X,
 } from 'lucide-react'
 import { calendarDateKey } from '../utils/calendarEvents'
-import { CalendarPicker } from '../components/ui/CalendarPicker'
+import { CalendarPicker, Pagination } from '../components/ui'
 import { usePersistentState } from '../hooks/usePersistentState'
 
 const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
@@ -197,14 +197,12 @@ export function CalendarPage({ eventsByDate, onNavigate }) {
               </div>
             )}
           </div>
-          <div className="calendar-pagination">
-            <button onClick={() => changeMonth(-1)} aria-label="Previous period">
-              <ChevronLeft size={18} />
-            </button>
-            <button onClick={() => changeMonth(1)} aria-label="Next period">
-              <ChevronRight size={18} />
-            </button>
-          </div>
+          <Pagination
+            className="calendar-pagination"
+            ariaLabel="Calendar navigation"
+            onPrev={() => changeMonth(-1)}
+            onNext={() => changeMonth(1)}
+          />
           <span className="calendar-readonly-note">Events are managed by their source calendars</span>
         </div>
       </div>

@@ -1,5 +1,6 @@
 import { useMemo } from 'react'
-import { Bot, Search, Pin, User, Users, QrCode } from 'lucide-react'
+import { Bot, Pin, User, Users, QrCode } from 'lucide-react'
+import { SearchBar } from '../ui'
 
 export function WhatsAppChatList({
   chats = [],
@@ -60,16 +61,13 @@ export function WhatsAppChatList({
         </div>
       </div>
 
-      <div className="whatsapp-search-box">
-        <Search size={16} className="whatsapp-search-icon" />
-        <input
-          type="text"
-          className="whatsapp-search-input"
-          placeholder="Search chats or messages..."
-          value={searchQuery}
-          onChange={(e) => onSearchChange(e.target.value)}
-        />
-      </div>
+      <SearchBar
+        className="whatsapp-search-box"
+        placeholder="Search chats or messages..."
+        ariaLabel="Search WhatsApp chats"
+        value={searchQuery}
+        onChange={onSearchChange}
+      />
 
       <div className="whatsapp-chat-list">
         {filteredChats.length === 0 ? (

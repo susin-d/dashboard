@@ -8,7 +8,7 @@ import {
   sendGoogleMessage, updateGoogleMessage,
 } from '../lib/googleMail'
 import { getGmailAccounts, getGmailStatus } from '../lib/gmailApi'
-import { ConfirmDialog, MailModal, PageHeader, TabNav } from '../components/ui'
+import { ConfirmDialog, MailModal, PageHeader, Pagination, SearchBar, TabNav } from '../components/ui'
 import { usePersistentState } from '../hooks/usePersistentState'
 
 const FOLDERS = [
@@ -365,18 +365,17 @@ export function MailsPage({ onNavigate }) {
           <>
             <div className="mail-toolbar">
               <form onSubmit={(event) => { event.preventDefault(); refresh(query, folder, '', false, selectedAccountEmail) }}>
-                <Search size={17} />
-                <input
+                <SearchBar
                   value={query}
-                  onChange={(event) => setQuery(event.target.value)}
+                  onChange={setQuery}
+                  onClear={() => {
+                    setQuery('')
+                    refresh('', folder, '', false, selectedAccountEmail)
+                  }}
                   placeholder="Search mail"
-                  aria-label="Search mail"
+                  ariaLabel="Search mail"
+                  iconSize={17}
                 />
-                {query && (
-                  <button type="button" onClick={() => { setQuery(''); refresh('', folder, '', false, selectedAccountEmail) }} aria-label="Clear search">
-                    <X size={15} />
-                  </button>
-                )}
               </form>
               <button onClick={() => refresh(query, folder, pageToken, true, selectedAccountEmail)} disabled={loading} aria-label="Refresh inbox">
                 <RefreshCw size={17} className={loading ? 'mail-spin' : ''} />
@@ -441,10 +440,15 @@ export function MailsPage({ onNavigate }) {
           ))}
         </div>
 
-        <nav className="mail-pagination" aria-label="Mail pages">
-          <button onClick={openNewerMessages} disabled={!previousPageTokens.length || loading} aria-label="Previous page">
-            <ChevronLeft size={17} />
-          </button>
+        <Pagination
+          className="mail-pagination"
+          ariaLabel="Mail pages"
+          onPrev={openNewerMessages}
+          onNext={openOlderMessages}
+          hasPrev={Boolean(previousPageTokens.length && !loading)}
+          hasNext={Boolean(nextPageToken && !loading)}
+          disabled={loading}
+        >
           <input
             className="mail-page-indicator"
             type="number"
@@ -453,10 +457,7 @@ export function MailsPage({ onNavigate }) {
             readOnly
             aria-label="Current mail page"
           />
-          <button onClick={openOlderMessages} disabled={!nextPageToken || loading} aria-label="Next page">
-            <ChevronRight size={17} />
-          </button>
-        </nav>
+        </Pagination>
       </div>
 
       {/* Message Reader Modal */}

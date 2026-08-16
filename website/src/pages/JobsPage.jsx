@@ -7,7 +7,7 @@ import {
   FileText,
   MapPin,
   Pencil,
-Plus,
+  Plus,
   Trash2,
   Search,
   SlidersHorizontal,
@@ -15,7 +15,7 @@ Plus,
 } from 'lucide-react'
 import { usePersistentState } from '../hooks/usePersistentState'
 import { createJob, deleteJob, updateJob } from '../lib/workspaceApi'
-import { ConfirmDialog, Modal, PageHeader } from '../components/ui'
+import { ConfirmDialog, CustomDropdown, EmptyState, FilterBar, Modal, PageHeader, SearchBar } from '../components/ui'
 import { buildApplicationTimeline } from '../utils/jobTimeline'
 
 const emptyJob = {
@@ -217,10 +217,50 @@ export function JobsPage({ jobs, setJobs, documents, createIntent, canLoadMore, 
         </div>
       </article>
 
-      <div className="jobs-toolbar">
-        <label className="jobs-search"><Search size={16} /><span className="sr-only">Search jobs</span><input value={searchQuery} onChange={(event) => setSearchQuery(event.target.value)} placeholder="Search role, company, or location" /></label>
-        <div className="jobs-filter-group"><SlidersHorizontal size={15} /><select aria-label="Filter by status" value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}><option>All</option>{jobStatuses.map((status) => <option key={status}>{status}</option>)}</select><select aria-label="Filter by work type" value={workTypeFilter} onChange={(event) => setWorkTypeFilter(event.target.value)}><option>All</option>{workTypes.map((type) => <option key={type}>{type}</option>)}</select><select aria-label="Sort jobs" value={sortOrder} onChange={(event) => setSortOrder(event.target.value)}><option value="recent">Recently updated</option><option value="deadline">Deadline soonest</option><option value="company">Company A–Z</option></select>{activeFilters && <button className="jobs-reset" onClick={() => { setSearchQuery(''); setStatusFilter('All'); setWorkTypeFilter('All') }}><RotateCcw size={13} /> Reset</button>}</div>
-      </div>
+      <FilterBar
+        className="jobs-toolbar"
+        search={
+          <SearchBar
+            value={searchQuery}
+            onChange={setSearchQuery}
+            placeholder="Search role, company, or location"
+            ariaLabel="Search jobs"
+          />
+        }
+        filters={
+          <>
+            <SlidersHorizontal size={15} className="text-muted" aria-hidden="true" />
+            <CustomDropdown
+              value={statusFilter}
+              onChange={setStatusFilter}
+              ariaLabel="Filter by status"
+              options={[{ value: 'All', label: 'All statuses' }, ...jobStatuses.map((s) => ({ value: s, label: s }))]}
+            />
+            <CustomDropdown
+              value={workTypeFilter}
+              onChange={setWorkTypeFilter}
+              ariaLabel="Filter by work type"
+              options={[{ value: 'All', label: 'All work types' }, ...workTypes.map((t) => ({ value: t, label: t }))]}
+            />
+            <CustomDropdown
+              value={sortOrder}
+              onChange={setSortOrder}
+              ariaLabel="Sort jobs"
+              options={[
+                { value: 'recent', label: 'Recently updated' },
+                { value: 'deadline', label: 'Deadline soonest' },
+                { value: 'company', label: 'Company A–Z' },
+              ]}
+            />
+          </>
+        }
+        isFiltered={Boolean(activeFilters)}
+        onReset={() => {
+          setSearchQuery('')
+          setStatusFilter('All')
+          setWorkTypeFilter('All')
+        }}
+      />
 
       <div className="job-list">
         {filteredJobs.map((job) => {
@@ -338,7 +378,28 @@ export function JobsPage({ jobs, setJobs, documents, createIntent, canLoadMore, 
             </article>
           )
         })}
-        {!filteredJobs.length && <div className="jobs-empty"><Search size={22} /><strong>No jobs match these filters</strong><span>Try a different search or reset your filters.</span>{activeFilters && <button className="secondary-button" onClick={() => { setSearchQuery(''); setStatusFilter('All'); setWorkTypeFilter('All') }}>Clear filters</button>}</div>}
+        {!filteredJobs.length && (
+          <EmptyState
+            icon={Search}
+            title="No jobs match these filters"
+            description="Try a different search or reset your filters."
+            action={
+              activeFilters ? (
+                <button
+                  className="secondary-button"
+                  type="button"
+                  onClick={() => {
+                    setSearchQuery('')
+                    setStatusFilter('All')
+                    setWorkTypeFilter('All')
+                  }}
+                >
+                  Clear filters
+                </button>
+              ) : null
+            }
+          />
+        )}
       </div>
 
       {canLoadMore && <button className="secondary-button" type="button" onClick={onLoadMore} disabled={loadingMore}>{loadingMore ? 'Loading…' : 'Load more jobs'}</button>}

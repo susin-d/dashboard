@@ -13,7 +13,7 @@ import {
 } from 'lucide-react'
 import { usePersistentState } from '../hooks/usePersistentState'
 import { createHackathon, deleteHackathon, updateHackathon } from '../lib/workspaceApi'
-import { ConfirmDialog, MetricCard, Modal, PageHeader } from '../components/ui'
+import { ConfirmDialog, CustomDropdown, EmptyState, FilterBar, MetricCard, Modal, PageHeader, SearchBar } from '../components/ui'
 
 const emptyHackathon = {
   title: '',
@@ -197,36 +197,66 @@ export function HackathonsPage({ hackathons, setHackathons, canLoadMore, loading
         <MetricCard className="compact" label="Next step" value={hackathons.length ? 'Choose' : 'Add one'} detail={hackathons.length ? 'a challenge to pursue' : 'your first challenge'} />
       </div>
 
-      <div className="hackathon-toolbar" aria-label="Filter hackathons">
-        <label className="hackathon-search">
-          <Search size={16} aria-hidden="true" />
-          <span className="sr-only">Search hackathons</span>
-          <input value={searchQuery} onChange={(event) => setSearchQuery(event.target.value)} placeholder="Search by name, organizer, or skill" />
-        </label>
-        <div className="hackathon-filter-group">
-          <Filter size={15} aria-hidden="true" />
-          <select value={modeFilter} onChange={(event) => setModeFilter(event.target.value)} aria-label="Filter by format">
-            <option>All formats</option><option>Online</option><option>In person</option><option>Hybrid</option>
-          </select>
-          <select value={sourceFilter} onChange={(event) => setSourceFilter(event.target.value)} aria-label="Filter by source">
-            <option>All sources</option>{sourceOptions.map((source) => <option key={source} value={source}>{source === 'manual' ? 'Manual' : source.toUpperCase()}</option>)}
-          </select>
-          <select value={sortOrder} onChange={(event) => setSortOrder(event.target.value)} aria-label="Sort hackathons">
-            <option>Soonest</option><option>Latest</option>
-          </select>
-          <label className="hackathon-layout-control">
-            Layout
-            <select value={cardLayout} onChange={(event) => setCardLayout(event.target.value)} aria-label="Customize card layout">
-              <option value="compact">Compact</option>
-              <option value="balanced">Balanced</option>
-              <option value="spacious">Spacious</option>
-            </select>
-          </label>
-        </div>
-        {(searchQuery || modeFilter !== 'All formats' || sourceFilter !== 'All sources' || sortOrder !== 'Soonest') && (
-          <button className="text-button" type="button" onClick={clearFilters}>Reset</button>
-        )}
-      </div>
+      <FilterBar
+        className="hackathon-toolbar"
+        search={
+          <SearchBar
+            value={searchQuery}
+            onChange={setSearchQuery}
+            placeholder="Search by name, organizer, or skill"
+            ariaLabel="Search hackathons"
+          />
+        }
+        filters={
+          <>
+            <Filter size={15} className="text-muted" aria-hidden="true" />
+            <CustomDropdown
+              value={modeFilter}
+              onChange={setModeFilter}
+              ariaLabel="Filter by format"
+              options={[
+                { value: 'All formats', label: 'All formats' },
+                { value: 'Online', label: 'Online' },
+                { value: 'In person', label: 'In person' },
+                { value: 'Hybrid', label: 'Hybrid' },
+              ]}
+            />
+            <CustomDropdown
+              value={sourceFilter}
+              onChange={setSourceFilter}
+              ariaLabel="Filter by source"
+              options={[
+                { value: 'All sources', label: 'All sources' },
+                ...sourceOptions.map((source) => ({
+                  value: source,
+                  label: source === 'manual' ? 'Manual' : source.toUpperCase(),
+                })),
+              ]}
+            />
+            <CustomDropdown
+              value={sortOrder}
+              onChange={setSortOrder}
+              ariaLabel="Sort hackathons"
+              options={[
+                { value: 'Soonest', label: 'Soonest' },
+                { value: 'Latest', label: 'Latest' },
+              ]}
+            />
+            <CustomDropdown
+              value={cardLayout}
+              onChange={setCardLayout}
+              ariaLabel="Customize card layout"
+              options={[
+                { value: 'compact', label: 'Compact' },
+                { value: 'balanced', label: 'Balanced' },
+                { value: 'spacious', label: 'Spacious' },
+              ]}
+            />
+          </>
+        }
+        isFiltered={Boolean(searchQuery || modeFilter !== 'All formats' || sourceFilter !== 'All sources' || sortOrder !== 'Soonest')}
+        onReset={clearFilters}
+      />
       <div className="hackathon-results-meta"><span>{filteredHackathons.length} of {hackathons.length} opportunities</span><span>{filteredHackathons.length ? 'Open one to see the details' : 'Try a different filter'}</span></div>
 
       <div className={`hackathon-list hackathon-layout-${cardLayout}`}>
@@ -365,7 +395,18 @@ export function HackathonsPage({ hackathons, setHackathons, canLoadMore, loading
             </article>
           )
         })}
-        {!filteredHackathons.length && <div className="hackathon-empty-state"><Rocket size={22} /><strong>No hackathons match these filters</strong><span>Adjust your search or reset the filters to see more opportunities.</span><button className="secondary-button" type="button" onClick={clearFilters}>Reset filters</button></div>}
+        {!filteredHackathons.length && (
+          <EmptyState
+            icon={Rocket}
+            title="No hackathons match these filters"
+            description="Adjust your search or reset the filters to see more opportunities."
+            action={
+              <button className="secondary-button" type="button" onClick={clearFilters}>
+                Reset filters
+              </button>
+            }
+          />
+        )}
       </div>
 
       {canLoadMore && <button className="secondary-button" type="button" onClick={onLoadMore} disabled={loadingMore}>{loadingMore ? 'Loading…' : 'Load more hackathons'}</button>}

@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { Brain, Plus, Search, Trash2 } from 'lucide-react'
+import { Brain, Plus, Trash2 } from 'lucide-react'
+import { EmptyState, SearchBar } from '../../components/ui'
 
 export function EveMemorySection({
   memories,
@@ -63,34 +64,30 @@ export function EveMemorySection({
       </div>
 
       <div className="eve-sessions-toolbar">
-        <div className="eve-search-field">
-          <Search size={15} />
-          <input
-            type="text"
-            placeholder="Search remembered facts…"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-        </div>
+        <SearchBar
+          className="eve-search-field"
+          placeholder="Search remembered facts…"
+          ariaLabel="Search remembered facts"
+          value={searchQuery}
+          onChange={setSearchQuery}
+        />
         <span className="eve-sessions-count">
           {filteredMemories.length} {filteredMemories.length === 1 ? 'memory' : 'memories'}
         </span>
       </div>
 
       {isLoading ? (
-        <div className="eve-subpage-empty">
-          <p>Loading remembered facts…</p>
-        </div>
+        <EmptyState description="Loading remembered facts…" />
       ) : filteredMemories.length === 0 ? (
-        <div className="eve-subpage-empty">
-          <Brain size={32} />
-          <h3>{searchQuery ? 'No matching memories' : 'No memories saved yet'}</h3>
-          <p>
-            {searchQuery
+        <EmptyState
+          icon={Brain}
+          title={searchQuery ? 'No matching memories' : 'No memories saved yet'}
+          description={
+            searchQuery
               ? 'Try searching with different terms.'
-              : 'Add a fact above, or simply tell Eve to “remember that…” during chat.'}
-          </p>
-        </div>
+              : 'Add a fact above, or simply tell Eve to “remember that…” during chat.'
+          }
+        />
       ) : (
         <div className="eve-memory-grid" role="list">
           {filteredMemories.map((memory) => (

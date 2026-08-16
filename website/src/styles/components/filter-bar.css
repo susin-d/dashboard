@@ -1,0 +1,57 @@
+/* FilterBar Component Styles */
+
+.filter-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  width: 100%;
+}
+
+.filter-bar-search {
+  flex: 1 1 260px;
+  max-width: 420px;
+}
+
+.filter-bar-group {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.filter-bar-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.filter-bar-reset {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 40px;
+  padding: 0 12px;
+  background: transparent;
+  color: var(--text-muted);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md, 8px);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-fast, 0.18s ease);
+}
+
+.filter-bar-reset:hover {
+  color: var(--text-primary);
+  background: var(--bg-hover);
+  border-color: var(--border-heavy, var(--text-muted));
+}
+
+.filter-bar-reset:focus-visible {
+  outline: 2px solid var(--text-primary);
+  outline-offset: 2px;
+}

@@ -21,7 +21,7 @@ import {
   uploadGoogleDriveFile,
 } from '../lib/googleDriveApi'
 import { deleteDocument, persistDocument } from '../lib/documentsApi'
-import { ConfirmDialog, Modal, PageHeader } from '../components/ui'
+import { ConfirmDialog, Modal, PageHeader, SearchBar } from '../components/ui'
 
 const emptyDocument = {
   name: '',
@@ -130,9 +130,20 @@ export function DocumentsPage({ documents, setDocuments, createIntent, onOpenDoc
       const payload = await loadGoogleDriveFiles()
       setDriveFiles(payload.files ?? [])
     } catch (error) {
-      if (error.message === 'Connect Google Drive first.') {
-        await beginGoogleDriveOAuth()
-        return
+      if (
+        error.message === 'Connect Google Drive first.' ||
+        error.message?.includes('Google Drive') ||
+        error.message?.includes('409')
+      ) {
+        try {
+          await beginGoogleDriveOAuth()
+          const payload = await loadGoogleDriveFiles()
+          setDriveFiles(payload.files ?? [])
+          return
+        } catch (oauthError) {
+          setDriveError(oauthError.message || 'Google Drive authorization was cancelled.')
+          return
+        }
       }
       setDriveError(error.message || 'Google Drive could not be connected.')
     } finally {
@@ -487,21 +498,14 @@ export function DocumentsPage({ documents, setDocuments, createIntent, onOpenDoc
         title="Import a document"
       >
         {!driveLoading && !driveError && driveFiles.length > 0 && (
-          <label className="drive-search">
-            <Search size={16} />
-            <input
-              value={driveQuery}
-              onChange={(event) => setDriveQuery(event.target.value)}
-              placeholder="Search Drive files"
-              aria-label="Search Google Drive files"
-              data-modal-initial-focus
-            />
-            {driveQuery && (
-              <button type="button" onClick={() => setDriveQuery('')} aria-label="Clear Drive search">
-                <X size={15} />
-              </button>
-            )}
-          </label>
+          <SearchBar
+            value={driveQuery}
+            onChange={setDriveQuery}
+            placeholder="Search Drive files"
+            ariaLabel="Search Google Drive files"
+            className="drive-search-bar"
+            data-modal-initial-focus
+          />
         )}
         <div className="drive-file-list">
           {driveLoading && <div className="drive-state">Loading your recent Drive files…</div>}
