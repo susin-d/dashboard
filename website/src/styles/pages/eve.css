@@ -84,7 +84,7 @@
   border-radius: var(--radius-lg, 12px);
   padding: 0.75rem;
   position: sticky;
-  top: 80px;
+  top: 0;
 }
 
 .eve-nav-list {

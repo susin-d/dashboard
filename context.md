@@ -4,7 +4,7 @@ Living project snapshot for AI agents. `AGENTS.md` holds the permanent rules;
 this file holds the **current state** of the codebase and must be kept up to
 date whenever the implementation changes.
 
-> **Last updated:** 2026-08-16 (Refactored global application layout to desktop viewport-aware flex shell, eliminating window scrollbars across all pages)
+> **Last updated:** 2026-08-16 (Fixed sidebar active navigation background overlay and eliminated full-width indicator strip)
 
 ---
 
