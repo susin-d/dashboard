@@ -63,21 +63,23 @@ export function AppLayout({
         onWorkspaceChanged={onWorkspaceChanged}
         onSignOut={onSignOut}
       />
-      <Sidebar
-        activePage={activePage}
-        isExpanded={isSidebarExpanded}
-        isOpen={sidebarOpen}
-        onNavigate={onNavigate}
-        onClose={() => setSidebarOpen(false)}
-      />
-      <main
-        ref={contentRef}
-        id="main-content"
-        className={`content ${activePage === 'calendar' ? 'calendar-content' : ''}`}
-        tabIndex={-1}
-      >
-        {children}
-      </main>
+      <div className="app-body">
+        <Sidebar
+          activePage={activePage}
+          isExpanded={isSidebarExpanded}
+          isOpen={sidebarOpen}
+          onNavigate={onNavigate}
+          onClose={() => setSidebarOpen(false)}
+        />
+        <main
+          ref={contentRef}
+          id="main-content"
+          className={`app-main content ${activePage === 'calendar' ? 'calendar-content' : ''}`}
+          tabIndex={-1}
+        >
+          {children}
+        </main>
+      </div>
     </div>
   )
 }

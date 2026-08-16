@@ -3,6 +3,7 @@
 .wave-loader {
   display: grid;
   min-height: 100vh;
+  min-height: 100dvh;
   place-items: center;
   padding: 24px 16px;
   background: var(--bg-secondary);

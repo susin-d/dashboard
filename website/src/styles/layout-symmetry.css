@@ -1,15 +1,9 @@
-/* Shared page geometry. This file intentionally loads after page styles. */
-
 .content {
-  width: calc(100% - 72px);
+  width: 100%;
   max-width: none;
-  margin-right: 0;
+  margin: 0;
   padding-right: var(--layout-gutter);
   padding-left: var(--layout-gutter);
-}
-
-.sidebar-expanded .content {
-  width: calc(100% - 244px);
 }
 
 .content > :where(
@@ -221,7 +215,6 @@
   .content,
   .sidebar-expanded .content {
     width: 100%;
-    margin-left: 0;
     padding-right: var(--layout-gutter);
     padding-left: var(--layout-gutter);
   }

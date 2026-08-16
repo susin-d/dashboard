@@ -4,7 +4,7 @@ Living project snapshot for AI agents. `AGENTS.md` holds the permanent rules;
 this file holds the **current state** of the codebase and must be kept up to
 date whenever the implementation changes.
 
-> **Last updated:** 2026-08-16 (Created inbound WhatsApp webhook in FastAPI with automated Eve AI replies when @eve or eve is mentioned in incoming messages)
+> **Last updated:** 2026-08-16 (Refactored global application layout to desktop viewport-aware flex shell, eliminating window scrollbars across all pages)
 
 ---
 

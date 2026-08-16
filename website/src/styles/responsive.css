@@ -56,10 +56,6 @@
 }
 
 @media (max-width: 1024px) {
-  .content {
-    padding-top: 90px;
-  }
-
   .calendar-content {
     padding-right: 16px;
     padding-left: 16px;
@@ -77,7 +73,6 @@
 
 @media (max-width: 768px) {
   .content {
-    padding-top: 78px;
     padding-right: 16px;
     padding-bottom: 24px;
     padding-left: 16px;
@@ -111,14 +106,8 @@
   }
 
   .calendar-content {
-    height: auto;
-    min-height: 100dvh;
-    overflow: visible;
-    padding-top: 78px;
-  }
-
-  .calendar-page {
-    min-height: calc(100dvh - 102px);
+    height: 100%;
+    overflow: auto;
   }
 
   .calendar-grid {
@@ -129,11 +118,6 @@
   .calendar-day {
     min-width: 92px;
     padding: 7px;
-  }
-
-  .chats-page {
-    height: auto;
-    min-height: calc(100dvh - 102px);
   }
 
   .chats-container {
