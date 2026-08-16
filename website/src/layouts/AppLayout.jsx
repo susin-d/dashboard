@@ -1,9 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
-import { Plus } from 'lucide-react'
 import { Header } from '../components/Header'
 import { Sidebar } from '../components/Sidebar'
 import { NetworkStatus } from '../components/NetworkStatus'
-import { navigationItems } from '../config/navigation'
 import '../App.css'
 
 const MOBILE_NAV_BREAKPOINT = 900
@@ -21,7 +19,6 @@ export function AppLayout({
   notificationsLoading,
   onLoadMoreNotifications,
   onWorkspaceChanged,
-  onEveNewChat,
   onSignOut,
 }) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -29,7 +26,6 @@ export function AppLayout({
     () => localStorage.getItem('starwaves.sidebar-expanded') !== 'false',
   )
   const contentRef = useRef(null)
-  const activeItem = navigationItems.find(({ id }) => id === activePage)
   const isSidebarExpanded = sidebarExpanded
 
   useEffect(() => {
@@ -80,24 +76,6 @@ export function AppLayout({
         className={`content ${activePage === 'calendar' ? 'calendar-content' : ''}`}
         tabIndex={-1}
       >
-        {activeItem && (
-          <nav className="app-breadcrumbs" aria-label="Breadcrumb">
-            <span>Workspace</span>
-            <span aria-hidden="true">/</span>
-            <span aria-current="page">{activeItem.label}</span>
-            {activePage === 'eve' && (
-              <button
-                type="button"
-                className="breadcrumb-action-btn"
-                onClick={onEveNewChat}
-                title="Start a new conversation with Eve"
-              >
-                <Plus size={14} />
-                <span>New chat</span>
-              </button>
-            )}
-          </nav>
-        )}
         {children}
       </main>
     </div>
