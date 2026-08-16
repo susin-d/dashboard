@@ -16,8 +16,8 @@ programming, and an AI assistant into one dashboard.
 
 - **Frontend** (`/website`): React 19 + Vite + Vanilla CSS (monochrome design system) + Monaco Editor.
 - **Desktop Shell** (`/website/src-tauri`): Tauri v2 scaffold with native FS, dialog, shell, and file watching plugins.
-- **Backend** (`/server`): FastAPI (Python) + Supabase (PostgreSQL) / Async SQLAlchemy 2.0 / Firebase Firestore fallback. Containerized with Docker & Nginx.
-- **Auth**: Firebase Authentication / Bearer token validation; serverless deployment targets Vercel, dockerized server for standalone VM/cloud deployment.
+- **Backend** (`/server`): FastAPI (Python) + Supabase (PostgreSQL) / Async SQLAlchemy 2.0. Containerized with Docker & Nginx.
+- **Auth**: Bearer token authentication & Google OAuth; serverless deployment targets Vercel, dockerized server for standalone VM/cloud deployment.
 
 ## 2. Repository structure
 
@@ -36,8 +36,9 @@ Starwaves/
 │   ├── app/
 │   │   ├── api/routes/      HTTP endpoints, WebSockets, and OAuth callbacks (whatsapp.py, whatsapp_ws.py, workspace_files.py)
 │   │   ├── core/            Configuration, authentication, and WebSocket managers (whatsapp_ws_manager.py)
-│   │   ├── db/              Firestore client
-│   │   ├── repositories/    Firestore data access & file storage (whatsapp.py, workspace_files.py)
+│   │   ├── db/              SQLAlchemy async engine, session factory, models, and compat adapter
+│   │   ├── models/          SQLAlchemy declarative models for PostgreSQL
+│   │   ├── repositories/    Data access & file storage (whatsapp.py, workspace_files.py)
 │   │   ├── schemas/         API request and response models (whatsapp.py, workspace_files.py)
 │   │   └── services/        External integration services (whatsapp.py, eve.py coding & WhatsApp tools)
 │   ├── tests/               Backend unittest suite

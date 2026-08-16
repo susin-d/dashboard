@@ -1,11 +1,18 @@
 import logging
+import firebase_admin
 from firebase_admin import messaging
-from app.db.firestore import get_firebase_app
 
 logger = logging.getLogger(__name__)
 
 # Token rejection codes that mean the device token is no longer valid.
 PRUNABLE_CODES = {"UNREGISTERED", "INVALID_ARGUMENT", "NOT_FOUND", "MISMATCH_SENDER_ID"}
+
+
+def _get_fcm_app() -> firebase_admin.App | None:
+    try:
+        return firebase_admin.get_app()
+    except Exception:
+        return None
 
 
 def send_push_notification(
@@ -14,7 +21,10 @@ def send_push_notification(
     body: str,
     data: dict[str, str] | None = None,
 ) -> str:
-    app = get_firebase_app()
+    app = _get_fcm_app()
+    if not app:
+        logger.debug("Firebase messaging app not initialized; skipping push notification.")
+        return ""
     message = messaging.Message(
         notification=messaging.Notification(
             title=title,

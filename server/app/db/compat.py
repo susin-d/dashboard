@@ -92,7 +92,7 @@ class SqlQuery:
         self._limit: int | None = None
         self._start_after_doc_id: str | None = None
 
-    def where(self, field_or_filter: Any, op: str | None = None, value: Any = None) -> SqlQuery:
+    def where(self, field_or_filter: Any = None, op: str | None = None, value: Any = None, filter: Any = None) -> SqlQuery:
         q = SqlQuery(self.coll)
         q.filters = list(self.filters)
         q._order_by = self._order_by
@@ -100,13 +100,13 @@ class SqlQuery:
         q._limit = self._limit
         q._start_after_doc_id = self._start_after_doc_id
 
-        # Support FieldFilter or (field, op, value)
-        if op is None and hasattr(field_or_filter, "field_path"):
-            q.filters.append((field_or_filter.field_path, field_or_filter.op_string, field_or_filter.value))
-        elif hasattr(field_or_filter, "field_name"):
-            q.filters.append((getattr(field_or_filter, "field_name"), getattr(field_or_filter, "operator", "=="), getattr(field_or_filter, "value")))
-        elif op is not None:
-            q.filters.append((str(field_or_filter), op, value))
+        actual_filter = filter if filter is not None else field_or_filter
+        if op is None and hasattr(actual_filter, "field_path"):
+            q.filters.append((actual_filter.field_path, actual_filter.op_string, actual_filter.value))
+        elif hasattr(actual_filter, "field_name"):
+            q.filters.append((getattr(actual_filter, "field_name"), getattr(actual_filter, "operator", "=="), getattr(actual_filter, "value")))
+        elif op is not None and actual_filter is not None:
+            q.filters.append((str(actual_filter), op, value))
         return q
 
     def order_by(self, field: str, direction: Any = None) -> SqlQuery:
@@ -149,8 +149,8 @@ class SqlCollectionRef:
         target_id = doc_id or uuid.uuid4().hex
         return SqlDocRef(self.db, self.path_parts, target_id)
 
-    def where(self, field_or_filter: Any, op: str | None = None, value: Any = None) -> SqlQuery:
-        return SqlQuery(self).where(field_or_filter, op, value)
+    def where(self, field_or_filter: Any = None, op: str | None = None, value: Any = None, filter: Any = None) -> SqlQuery:
+        return SqlQuery(self).where(field_or_filter, op, value, filter=filter)
 
     def order_by(self, field: str, direction: Any = None) -> SqlQuery:
         return SqlQuery(self).order_by(field, direction)
@@ -987,3 +987,18 @@ class SqlClient:
                 ]
 
         return []
+
+
+_sql_client_instance: SqlClient | None = None
+
+
+def get_db_client() -> SqlClient:
+    global _sql_client_instance
+    if _sql_client_instance is None:
+        _sql_client_instance = SqlClient()
+    return _sql_client_instance
+
+
+def get_firestore() -> SqlClient:
+    """Alias for get_db_client for backward compatibility across existing routes."""
+    return get_db_client()
