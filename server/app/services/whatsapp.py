@@ -1,0 +1,318 @@
+import base64
+import io
+import json
+import logging
+from datetime import datetime, timezone
+from typing import Any, List, Optional
+from uuid import uuid4
+
+from google.cloud.firestore_v1 import Client
+
+from app.core.whatsapp_ws_manager import whatsapp_ws_manager
+from app.repositories import whatsapp as whatsapp_repo
+from app.schemas.whatsapp import (
+    WhatsAppChatResponse,
+    WhatsAppMediaAttachment,
+    WhatsAppMessageCreate,
+    WhatsAppMessageResponse,
+    WhatsAppPairResponse,
+    WhatsAppSettings,
+    WhatsAppStatusResponse,
+)
+
+logger = logging.getLogger(__name__)
+
+# Sample QR pattern for standard SVG/Canvas representation when pairing
+DUMMY_QR_SVG = (
+    "data:image/svg+xml;utf8,"
+    "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'>"
+    "<rect width='200' height='200' fill='white'/>"
+    "<rect x='20' y='20' width='40' height='40' fill='black'/>"
+    "<rect x='30' y='30' width='20' height='20' fill='white'/>"
+    "<rect x='140' y='20' width='40' height='40' fill='black'/>"
+    "<rect x='150' y='30' width='20' height='20' fill='white'/>"
+    "<rect x='20' y='140' width='40' height='40' fill='black'/>"
+    "<rect x='30' y='150' width='20' height='20' fill='white'/>"
+    "<rect x='80' y='40' width='15' height='15' fill='black'/>"
+    "<rect x='105' y='40' width='15' height='15' fill='black'/>"
+    "<rect x='70' y='80' width='60' height='40' fill='black'/>"
+    "<rect x='85' y='95' width='30' height='10' fill='white'/>"
+    "<rect x='140' y='100' width='40' height='40' fill='black'/>"
+    "<rect x='80' y='140' width='40' height='40' fill='black'/>"
+    "<rect x='140' y='160' width='20' height='20' fill='black'/>"
+    "</svg>"
+)
+
+
+class WhatsAppService:
+    @staticmethod
+    def get_status(database: Client, user_id: str) -> WhatsAppStatusResponse:
+        return whatsapp_repo.get_whatsapp_status(database, user_id)
+
+    @staticmethod
+    async def initiate_pairing(
+        database: Client, user_id: str, phone_number: Optional[str] = None
+    ) -> WhatsAppPairResponse:
+        pairing_code = None
+        if phone_number:
+            clean_phone = "".join(c for c in phone_number if c.isdigit())
+            pairing_code = f"{clean_phone[-4:] if len(clean_phone) >= 4 else '1234'}-{uuid4().hex[:4].upper()}"
+
+        # Generate pairing token & QR
+        qr_code = DUMMY_QR_SVG
+        response = WhatsAppPairResponse(
+            status="qr_ready",
+            qr_code=qr_code,
+            pairing_code=pairing_code,
+            expires_at=datetime.now(timezone.utc),
+            message="Scan the QR code with WhatsApp on your phone or use pairing code.",
+        )
+
+        # Notify via WebSocket
+        await whatsapp_ws_manager.broadcast_to_user(
+            user_id,
+            {
+                "type": "qr_update",
+                "status": "qr_ready",
+                "qr_code": qr_code,
+                "pairing_code": pairing_code,
+            },
+        )
+        return response
+
+    @staticmethod
+    async def confirm_connection(
+        database: Client,
+        user_id: str,
+        phone_number: str = "+1 (555) 019-2834",
+        push_name: str = "Starwaves User",
+    ) -> WhatsAppStatusResponse:
+        whatsapp_repo.save_whatsapp_session(
+            database=database,
+            user_id=user_id,
+            connected=True,
+            phone_number=phone_number,
+            push_name=push_name,
+        )
+
+        # Ensure Eve AI contact exists in WhatsApp chats
+        WhatsAppService._ensure_eve_chat(database, user_id)
+
+        status_resp = WhatsAppStatusResponse(
+            connected=True,
+            phone_number=phone_number,
+            push_name=push_name,
+            platform="web",
+            last_sync_at=datetime.now(timezone.utc),
+        )
+
+        await whatsapp_ws_manager.broadcast_to_user(
+            user_id,
+            {
+                "type": "connection_state",
+                "connected": True,
+                "phone_number": phone_number,
+                "push_name": push_name,
+            },
+        )
+        return status_resp
+
+    @staticmethod
+    def _ensure_eve_chat(database: Client, user_id: str):
+        chats = whatsapp_repo.list_whatsapp_chats(database, user_id)
+        eve_exists = any(c.id == "eve" or c.is_eve for c in chats)
+        if not eve_exists:
+            whatsapp_repo.upsert_whatsapp_chat(
+                database=database,
+                user_id=user_id,
+                chat_id="eve",
+                name="Eve AI Assistant",
+                phone_number="eve@starwaves.app",
+                is_group=False,
+                is_eve=True,
+                unread_count=0,
+                pinned=True,
+                eve_auto_reply=True,
+            )
+            # Add welcome message from Eve
+            welcome_msg = WhatsAppMessageResponse(
+                id=f"msg-{uuid4().hex[:10]}",
+                chat_id="eve",
+                sender_id="eve",
+                sender_name="Eve AI",
+                is_from_me=False,
+                is_eve=True,
+                content="Hello! I'm Eve, your Starwaves AI assistant on WhatsApp. You can ask me questions, have me manage your workspace, draft replies, or message your contacts.",
+                timestamp=datetime.now(timezone.utc),
+                status="read",
+            )
+            whatsapp_repo.save_whatsapp_message(database, user_id, "eve", welcome_msg)
+
+    @staticmethod
+    async def disconnect(database: Client, user_id: str) -> dict:
+        whatsapp_repo.clear_whatsapp_session(database, user_id)
+        await whatsapp_ws_manager.broadcast_to_user(
+            user_id,
+            {
+                "type": "connection_state",
+                "connected": False,
+            },
+        )
+        return {"status": "disconnected"}
+
+    @staticmethod
+    def list_chats(database: Client, user_id: str) -> List[WhatsAppChatResponse]:
+        chats = whatsapp_repo.list_whatsapp_chats(database, user_id)
+        if not any(c.id == "eve" for c in chats):
+            WhatsAppService._ensure_eve_chat(database, user_id)
+            chats = whatsapp_repo.list_whatsapp_chats(database, user_id)
+        return chats
+
+    @staticmethod
+    def get_messages(
+        database: Client, user_id: str, chat_id: str, limit: int = 50
+    ) -> List[WhatsAppMessageResponse]:
+        return whatsapp_repo.list_whatsapp_messages(database, user_id, chat_id, limit=limit)
+
+    @staticmethod
+    async def send_message(
+        database: Client,
+        user_id: str,
+        chat_id: str,
+        content: str,
+        media: Optional[WhatsAppMediaAttachment] = None,
+        reply_to_message_id: Optional[str] = None,
+    ) -> WhatsAppMessageResponse:
+        message_id = f"msg-{uuid4().hex[:12]}"
+        now = datetime.now(timezone.utc)
+
+        msg = WhatsAppMessageResponse(
+            id=message_id,
+            chat_id=chat_id,
+            sender_id="me",
+            sender_name="Me",
+            is_from_me=True,
+            is_eve=False,
+            content=content,
+            timestamp=now,
+            status="sent",
+            media=media,
+            reply_to_message_id=reply_to_message_id,
+        )
+
+        whatsapp_repo.save_whatsapp_message(database, user_id, chat_id, msg)
+
+        # Broadcast user message via WebSocket
+        await whatsapp_ws_manager.broadcast_to_user(
+            user_id,
+            {
+                "type": "new_message",
+                "message": msg.model_dump(mode="json"),
+            },
+        )
+
+        # Handle Eve interaction if messaging Eve or @Eve
+        if chat_id == "eve" or "@Eve" in content or "@eve" in content:
+            await WhatsAppService._handle_eve_response(database, user_id, chat_id, content)
+
+        return msg
+
+    @staticmethod
+    async def _handle_eve_response(
+        database: Client, user_id: str, chat_id: str, user_prompt: str
+    ):
+        from app.services.eve import chat_with_eve
+
+        # Fetch recent messages for context
+        recent_messages = whatsapp_repo.list_whatsapp_messages(database, user_id, chat_id, limit=10)
+        eve_conversation = []
+        for m in recent_messages:
+            role = "assistant" if (m.is_eve or not m.is_from_me) else "user"
+            eve_conversation.append({"role": role, "content": m.content})
+
+        if not eve_conversation or eve_conversation[-1]["content"] != user_prompt:
+            eve_conversation.append({"role": "user", "content": user_prompt})
+
+        try:
+            user_dict = {"uid": user_id}
+            eve_reply_text, _, _ = chat_with_eve(
+                database=database,
+                user=user_dict,
+                messages=eve_conversation,
+                session_id=f"whatsapp-{chat_id}",
+            )
+        except Exception as err:
+            logger.exception("Eve error processing WhatsApp message: %s", err)
+            eve_reply_text = "I'm having trouble processing that right now. Please try again in a moment."
+
+        eve_msg_id = f"msg-{uuid4().hex[:12]}"
+        eve_msg = WhatsAppMessageResponse(
+            id=eve_msg_id,
+            chat_id=chat_id,
+            sender_id="eve",
+            sender_name="Eve AI",
+            is_from_me=False,
+            is_eve=True,
+            content=eve_reply_text,
+            timestamp=datetime.now(timezone.utc),
+            status="delivered",
+        )
+
+        whatsapp_repo.save_whatsapp_message(database, user_id, chat_id, eve_msg)
+
+        await whatsapp_ws_manager.broadcast_to_user(
+            user_id,
+            {
+                "type": "new_message",
+                "message": eve_msg.model_dump(mode="json"),
+            },
+        )
+
+    @staticmethod
+    async def generate_draft(
+        database: Client, user_id: str, chat_id: str, instruction: str
+    ) -> str:
+        from app.services.eve import chat_with_eve
+
+        recent = whatsapp_repo.list_whatsapp_messages(database, user_id, chat_id, limit=10)
+        history_text = "\n".join(
+            f"[{'Me' if m.is_from_me else (m.sender_name or 'Them')}]: {m.content}" for m in recent
+        )
+        prompt = (
+            f"Here is the recent WhatsApp chat history:\n{history_text}\n\n"
+            f"Instruction: {instruction}\n\n"
+            f"Generate only the concise suggested reply message text to send. Do not include quotes or conversational preamble."
+        )
+
+        try:
+            draft, _, _ = chat_with_eve(
+                database=database,
+                user={"uid": user_id},
+                messages=[{"role": "user", "content": prompt}],
+            )
+            return draft.strip()
+        except Exception as err:
+            logger.warning("Could not generate Eve draft: %s", err)
+            return "Thanks for reaching out! Let me check and get back to you shortly."
+
+    @staticmethod
+    async def summarize_chat(database: Client, user_id: str, chat_id: str) -> str:
+        from app.services.eve import chat_with_eve
+
+        recent = whatsapp_repo.list_whatsapp_messages(database, user_id, chat_id, limit=20)
+        history_text = "\n".join(
+            f"[{'Me' if m.is_from_me else (m.sender_name or 'Them')}]: {m.content}" for m in recent
+        )
+        prompt = (
+            f"Summarize the following WhatsApp conversation with key points and any action items:\n\n{history_text}"
+        )
+        try:
+            summary, _, _ = chat_with_eve(
+                database=database,
+                user={"uid": user_id},
+                messages=[{"role": "user", "content": prompt}],
+            )
+            return summary.strip()
+        except Exception as err:
+            logger.warning("Could not summarize chat: %s", err)
+            return "Could not generate summary at this time."

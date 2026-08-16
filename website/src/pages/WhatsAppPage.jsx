@@ -1,0 +1,335 @@
+import { useEffect, useRef, useState } from 'react'
+import {
+  fetchWhatsAppStatus,
+  fetchWhatsAppChats,
+  fetchWhatsAppMessages,
+  sendWhatsAppMessage,
+  markWhatsAppChatRead,
+  initiateWhatsAppPairing,
+  confirmWhatsAppPairing,
+  generateEveWhatsAppDraft,
+  summarizeWhatsAppChat,
+  whatsappSocket,
+} from '../lib'
+import { WhatsAppChatList } from '../components/whatsapp/WhatsAppChatList'
+import { WhatsAppConversation } from '../components/whatsapp/WhatsAppConversation'
+import { WhatsAppQrModal } from '../components/whatsapp/WhatsAppQrModal'
+import { WhatsAppInfoDrawer } from '../components/whatsapp/WhatsAppInfoDrawer'
+import { MessageSquare, QrCode, Bot } from 'lucide-react'
+
+export function WhatsAppPage() {
+  const [status, setStatus] = useState({ connected: false })
+  const [chats, setChats] = useState([])
+  const [selectedChatId, setSelectedChatId] = useState(null)
+  const selectedChatIdRef = useRef(null)
+  selectedChatIdRef.current = selectedChatId
+
+  const [messages, setMessages] = useState([])
+  const [searchQuery, setSearchQuery] = useState('')
+  const [isQrModalOpen, setIsQrModalOpen] = useState(false)
+  const [pairingData, setPairingData] = useState({ qr_code: null, pairing_code: null })
+  const [isInfoDrawerOpen, setIsInfoDrawerOpen] = useState(false)
+  const [isDrafting, setIsDrafting] = useState(false)
+  const [summaryModalText, setSummaryModalText] = useState(null)
+
+  // Load initial status and chats
+  useEffect(() => {
+    let mounted = true
+    async function loadInitial() {
+      try {
+        setLoading(true)
+        const stat = await fetchWhatsAppStatus().catch(() => ({ connected: false }))
+        if (mounted) setStatus(stat)
+
+        const chatList = await fetchWhatsAppChats().catch(() => [])
+        if (mounted) {
+          setChats(chatList)
+          setSelectedChatId((current) => current || (chatList.length > 0 ? chatList[0].id : null))
+        }
+      } finally {
+        if (mounted) setLoading(false)
+      }
+    }
+
+    loadInitial()
+
+    // Subscribe to WebSocket
+    const unsubscribe = whatsappSocket.subscribe((event) => {
+      if (!event || !event.type) return
+
+      if (event.type === 'connection_state') {
+        setStatus((prev) => ({
+          ...prev,
+          connected: event.connected,
+          phone_number: event.phone_number,
+          push_name: event.push_name,
+        }))
+        // Refresh chats on reconnect
+        fetchWhatsAppChats().then(setChats).catch(() => {})
+      } else if (event.type === 'qr_update') {
+        setPairingData({
+          qr_code: event.qr_code,
+          pairing_code: event.pairing_code,
+        })
+      } else if (event.type === 'new_message') {
+        const incomingMsg = event.message
+        if (incomingMsg) {
+          const currentSelected = selectedChatIdRef.current
+          // If current conversation is active
+          if (incomingMsg.chat_id === currentSelected) {
+            setMessages((prev) => {
+              if (prev.some((m) => m.id === incomingMsg.id)) return prev
+              return [...prev, incomingMsg]
+            })
+          }
+          // Update chat list last message
+          setChats((prev) =>
+            prev.map((c) =>
+              c.id === incomingMsg.chat_id
+                ? {
+                    ...c,
+                    last_message: incomingMsg,
+                    unread_count:
+                      incomingMsg.chat_id === currentSelected ? 0 : (c.unread_count || 0) + 1,
+                    updated_at: incomingMsg.timestamp,
+                  }
+                : c,
+            ),
+          )
+        }
+      }
+    })
+
+    return () => {
+      mounted = false
+      unsubscribe()
+    }
+  }, [])
+
+  // Load messages when selectedChatId changes
+  useEffect(() => {
+    if (!selectedChatId) {
+      setMessages([])
+      return
+    }
+
+    fetchWhatsAppMessages(selectedChatId)
+      .then((msgs) => {
+        setMessages(msgs)
+        markWhatsAppChatRead(selectedChatId).catch(() => {})
+        setChats((prev) =>
+          prev.map((c) => (c.id === selectedChatId ? { ...c, unread_count: 0 } : c)),
+        )
+      })
+      .catch((err) => console.error('Could not load messages:', err))
+  }, [selectedChatId])
+
+  const handleOpenQrModal = async () => {
+    setIsQrModalOpen(true)
+    try {
+      const pair = await initiateWhatsAppPairing()
+      setPairingData(pair)
+    } catch (err) {
+      console.error('Pairing error:', err)
+    }
+  }
+
+  const handleConfirmPairing = async (phoneNumber, pushName) => {
+    try {
+      const updated = await confirmWhatsAppPairing(phoneNumber, pushName)
+      setStatus(updated)
+      const chatList = await fetchWhatsAppChats()
+      setChats(chatList)
+      if (chatList.length > 0) setSelectedChatId(chatList[0].id)
+    } catch (err) {
+      console.error('Confirm pairing error:', err)
+    }
+  }
+
+  const handleSendMessage = async ({ chatId, content, media, replyToMessageId }) => {
+    try {
+      // Optimistic update
+      const tempId = `temp-${Date.now()}`
+      const optimisticMsg = {
+        id: tempId,
+        chat_id: chatId,
+        sender_id: 'me',
+        sender_name: 'Me',
+        is_from_me: true,
+        is_eve: false,
+        content,
+        timestamp: new Date().toISOString(),
+        status: 'pending',
+        media,
+      }
+      setMessages((prev) => [...prev, optimisticMsg])
+
+      const sentMsg = await sendWhatsAppMessage({ chatId, content, media, replyToMessageId })
+      setMessages((prev) => prev.map((m) => (m.id === tempId ? sentMsg : m)))
+
+      setChats((prev) =>
+        prev.map((c) =>
+          c.id === chatId ? { ...c, last_message: sentMsg, updated_at: sentMsg.timestamp } : c,
+        ),
+      )
+    } catch (err) {
+      console.error('Failed to send WhatsApp message:', err)
+    }
+  }
+
+  const handleGenerateEveDraft = async (chatId) => {
+    try {
+      setIsDrafting(true)
+      const res = await generateEveWhatsAppDraft(chatId)
+      return res.draft
+    } catch (err) {
+      console.error('Failed to draft with Eve:', err)
+      return null
+    } finally {
+      setIsDrafting(false)
+    }
+  }
+
+  const handleSummarizeChat = async (chatId) => {
+    try {
+      const res = await summarizeWhatsAppChat(chatId)
+      setSummaryModalText(res.summary)
+    } catch {
+      alert('Could not summarize conversation at this time.')
+    }
+  }
+
+  const selectedChat = chats.find((c) => c.id === selectedChatId)
+
+  return (
+    <div className="page-container" style={{ padding: '16px', maxWidth: '1600px', margin: '0 auto' }}>
+      <div className="whatsapp-page">
+        {/* Chat List Sidebar */}
+        <WhatsAppChatList
+          chats={chats}
+          selectedChatId={selectedChatId}
+          onSelectChat={setSelectedChatId}
+          onOpenQrModal={handleOpenQrModal}
+          isConnected={status.connected}
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+        />
+
+        {/* Conversation View */}
+        {selectedChat ? (
+          <WhatsAppConversation
+            chat={selectedChat}
+            messages={messages}
+            onSendMessage={handleSendMessage}
+            onOpenInfoDrawer={() => setIsInfoDrawerOpen((prev) => !prev)}
+            onGenerateEveDraft={handleGenerateEveDraft}
+            onSummarizeChat={handleSummarizeChat}
+            isDrafting={isDrafting}
+          />
+        ) : (
+          <div className="whatsapp-main-empty">
+            <div
+              style={{
+                width: 64,
+                height: 64,
+                borderRadius: '50%',
+                background: 'var(--bg-secondary)',
+                border: '1px solid var(--border-color)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                marginBottom: 16,
+              }}
+            >
+              <MessageSquare size={32} color="var(--text-secondary)" />
+            </div>
+            <h3 style={{ margin: '0 0 8px 0', fontSize: '1.25rem', fontWeight: 600 }}>
+              Starwaves WhatsApp
+            </h3>
+            <p style={{ maxWidth: 360, color: 'var(--text-secondary)', fontSize: '0.875rem', lineHeight: 1.5 }}>
+              Send and receive WhatsApp messages, record voice notes, and collaborate with Eve AI directly inside Starwaves.
+            </p>
+            {!status.connected && (
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={handleOpenQrModal}
+                style={{ marginTop: 16, display: 'inline-flex', alignItems: 'center', gap: 6 }}
+              >
+                <QrCode size={16} />
+                Link WhatsApp Account
+              </button>
+            )}
+          </div>
+        )}
+
+        {/* Info Drawer */}
+        {isInfoDrawerOpen && selectedChat && (
+          <WhatsAppInfoDrawer
+            chat={selectedChat}
+            onClose={() => setIsInfoDrawerOpen(false)}
+            onSummarizeChat={handleSummarizeChat}
+            onToggleEveAutoReply={(chatId, enabled) => {
+              setChats((prev) =>
+                prev.map((c) => (c.id === chatId ? { ...c, eve_auto_reply: enabled } : c)),
+              )
+            }}
+          />
+        )}
+      </div>
+
+      {/* QR Pairing Modal */}
+      <WhatsAppQrModal
+        isOpen={isQrModalOpen}
+        onClose={() => setIsQrModalOpen(false)}
+        qrCode={pairingData.qr_code}
+        pairingCode={pairingData.pairing_code}
+        onRefresh={handleOpenQrModal}
+        onConfirmPairing={handleConfirmPairing}
+      />
+
+      {/* Summary Alert Modal */}
+      {summaryModalText && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0,0,0,0.7)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 9999,
+          }}
+        >
+          <div
+            style={{
+              background: 'var(--bg-secondary)',
+              border: '1px solid var(--border-color)',
+              borderRadius: '12px',
+              padding: '24px',
+              maxWidth: '500px',
+              width: '90%',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+              <Bot size={20} />
+              <h3 style={{ margin: 0, fontSize: '1.1rem' }}>Eve Chat Summary</h3>
+            </div>
+            <div style={{ fontSize: '0.875rem', lineHeight: 1.6, whiteSpace: 'pre-wrap', color: 'var(--text-secondary)' }}>
+              {summaryModalText}
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 16 }}>
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={() => setSummaryModalText(null)}
+              >
+                Done
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}

@@ -10,6 +10,7 @@ import { HackathonsPage } from './pages/HackathonsPage'
 import { HackathonDetailPage } from './pages/HackathonDetailPage'
 import { JobsPage } from './pages/JobsPage'
 import { MailsPage } from './pages/MailsPage'
+import { WhatsAppPage } from './pages/WhatsAppPage'
 import { ChatsPage } from './pages/ChatsPage'
 import { CallsPage } from './pages/CallsPage'
 import { ContactsPage } from './pages/ContactsPage'
@@ -449,6 +450,7 @@ function App() {
       />
     ),
     mails: <MailsPage onNavigate={navigateWorkspace} />,
+    whatsapp: <WhatsAppPage />,
     chats: <ChatsPage onNavigate={navigateWorkspace} />,
     calls: <CallsPage callCenter={callCenter} user={userProfile} />,
     contacts: <ContactsPage callCenter={callCenter} onNavigate={navigateWorkspace} />,

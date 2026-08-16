@@ -23,11 +23,13 @@ from app.api.routes import (
     notifications,
     profiles,
     todos,
+    whatsapp,
     workspace,
     workspace_files,
 )
 
 api_router = APIRouter()
+api_router.include_router(whatsapp.router, tags=["WhatsApp integration"])
 api_router.include_router(ai_models.router, tags=["AI models settings"])
 api_router.include_router(auth.router, tags=["auth"])
 api_router.include_router(calls.router, tags=["calls"])

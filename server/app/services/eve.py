@@ -48,6 +48,7 @@ WORKSPACE_PAGES = (
     "jobs",
     "documents",
     "workspace",
+    "whatsapp",
     "profile",
     "setting",
 )
@@ -419,6 +420,61 @@ EVE_TOOLS = [
             "type": "object",
             "properties": {"command": {"type": "string", "minLength": 1}},
             "required": ["command"],
+            "additionalProperties": False,
+        },
+        "strict": True,
+    },
+    {
+        "type": "function",
+        "name": "list_whatsapp_chats",
+        "description": "List the user's recent WhatsApp conversations, active contacts, unread counts, and last messages.",
+        "parameters": {
+            "type": "object",
+            "properties": {},
+            "additionalProperties": False,
+        },
+        "strict": True,
+    },
+    {
+        "type": "function",
+        "name": "read_whatsapp_messages",
+        "description": "Read recent WhatsApp message history for a specific chat or contact.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "chat_id": {"type": "string", "description": "The chat ID, phone number, or 'eve' to read messages from"},
+                "limit": {"type": "integer", "description": "Number of recent messages to fetch (default 20, max 50)"},
+            },
+            "required": ["chat_id"],
+            "additionalProperties": False,
+        },
+        "strict": False,
+    },
+    {
+        "type": "function",
+        "name": "send_whatsapp_message",
+        "description": "Send a WhatsApp message to a specific contact or phone number on behalf of the user.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "chat_id": {"type": "string", "description": "The contact JID or phone number (e.g. +1234567890 or 1234567890@s.whatsapp.net)"},
+                "content": {"type": "string", "description": "The message text to send"},
+            },
+            "required": ["chat_id", "content"],
+            "additionalProperties": False,
+        },
+        "strict": True,
+    },
+    {
+        "type": "function",
+        "name": "summarize_whatsapp_chat",
+        "description": "Generate a concise summary and action points for a WhatsApp chat.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "chat_id": {"type": "string", "description": "The chat ID to summarize"},
+            },
+            "required": ["chat_id"],
             "additionalProperties": False,
         },
         "strict": True,
@@ -819,6 +875,40 @@ def _run_tool(database: Client, user_id: str, name: str, arguments: dict[str, An
             }, None, None
         except subprocess.TimeoutExpired:
             raise ValueError("Command timed out after 30 seconds.")
+    if name == "list_whatsapp_chats":
+        from app.repositories import whatsapp as wa_repo
+        chats = wa_repo.list_whatsapp_chats(database, user_id)
+        return {"chats": [c.model_dump(mode="json") for c in chats]}, None, None
+    if name == "read_whatsapp_messages":
+        from app.repositories import whatsapp as wa_repo
+        chat_id = arguments["chat_id"]
+        limit = arguments.get("limit", 20)
+        messages = wa_repo.list_whatsapp_messages(database, user_id, chat_id, limit=limit)
+        return {"chat_id": chat_id, "messages": [m.model_dump(mode="json") for m in messages]}, None, None
+    if name == "send_whatsapp_message":
+        from app.schemas.whatsapp import WhatsAppMessageResponse
+        from app.repositories import whatsapp as wa_repo
+        chat_id = arguments["chat_id"]
+        content = arguments["content"]
+        msg = WhatsAppMessageResponse(
+            id=f"msg-{uuid4().hex[:12]}",
+            chat_id=chat_id,
+            sender_id="me",
+            sender_name="Me",
+            is_from_me=True,
+            is_eve=False,
+            content=content,
+            timestamp=datetime.now(timezone.utc),
+            status="sent",
+        )
+        wa_repo.save_whatsapp_message(database, user_id, chat_id, msg)
+        return {"sent": True, "message_id": msg.id, "chat_id": chat_id, "content": content}, None, None
+    if name == "summarize_whatsapp_chat":
+        from app.repositories import whatsapp as wa_repo
+        chat_id = arguments["chat_id"]
+        messages = wa_repo.list_whatsapp_messages(database, user_id, chat_id, limit=20)
+        formatted = "\n".join(f"{'Me' if m.is_from_me else (m.sender_name or 'Them')}: {m.content}" for m in messages)
+        return {"chat_id": chat_id, "transcript": formatted}, None, None
     if name == "navigate_page":
         page = arguments["page"]
         if page not in WORKSPACE_PAGES:

@@ -8,11 +8,13 @@ import { EveVoiceSection } from './settings/EveVoiceSection'
 import { HackathonSourcesSection } from './settings/HackathonSourcesSection'
 import { ProfileSection } from './settings/ProfileSection'
 import { ThemeSection } from './settings/ThemeSection'
+import { WhatsAppSection } from './settings/WhatsAppSection'
 
 const SETTINGS_SECTIONS = [
   { id: 'settings-profile', href: '#settings-profile', label: 'Profile' },
   { id: 'settings-themes', href: '#settings-themes', label: 'Themes & Appearance' },
   { id: 'settings-apps', href: '#settings-apps', label: 'Integrations' },
+  { id: 'settings-whatsapp', href: '#settings-whatsapp', label: 'WhatsApp' },
   { id: 'settings-ai-models', href: '#settings-ai-models', label: 'AI Models' },
   { id: 'settings-coding', href: '#settings-coding', label: 'Coding profiles' },
   { id: 'settings-hackathons', href: '#settings-hackathons', label: 'Hackathons' },
@@ -108,6 +110,9 @@ export function SettingPage({
         setImportedIcsCalendars={setImportedIcsCalendars}
         setImportedIcsEvents={setImportedIcsEvents}
       />
+      <div id="settings-whatsapp">
+        <WhatsAppSection />
+      </div>
       <AiModelsSection />
       <CodingSection user={user} onContestSitesChange={onContestSitesChange} />
       <HackathonSourcesSection user={user} onHackathonsChange={onHackathonsChange} />

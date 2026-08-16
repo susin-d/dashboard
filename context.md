@@ -4,14 +4,14 @@ Living project snapshot for AI agents. `AGENTS.md` holds the permanent rules;
 this file holds the **current state** of the codebase and must be kept up to
 date whenever the implementation changes.
 
-> **Last updated:** 2026-08-16 (Added Workspace code editor page with Monaco multi-tab editor, file tree with .sdignore, Eve coding agent tools, cloud-fallback files API, and Tauri desktop scaffold)
+> **Last updated:** 2026-08-16 (Added WhatsApp integration with dedicated monochrome WhatsApp page, QR Web pairing, real-time WebSocket messaging, Firestore persistence, and Eve AI assistant tools)
 
 ---
 
 ## 1. Project overview
 
 StarWaves is a personal productivity workspace that brings projects, job
-applications, tasks, documents, code workspace, calendars, email, hackathons, competitive
+applications, tasks, documents, code workspace, calendars, email, WhatsApp, hackathons, competitive
 programming, and an AI assistant into one dashboard.
 
 - **Frontend** (`/website`): React 19 + Vite + Vanilla CSS (monochrome design system) + Monaco Editor.
@@ -24,9 +24,9 @@ programming, and an AI assistant into one dashboard.
 ```text
 Starwaves/
 ├── website/                 React frontend
-│   ├── src/components/      Shared UI components (+ ui/ primitives)
+│   ├── src/components/      Shared UI components (+ ui/ primitives, whatsapp/ components)
 │   ├── src/hooks/           Auth, routing, theme, workspace data hooks
-│   ├── src/lib/             Frontend API clients (workspaceFilesApi, workspaceApi/ split by feature)
+│   ├── src/lib/             Frontend API clients (whatsappApi, whatsappSocket, workspaceFilesApi, workspaceApi/ split by feature)
 │   ├── src/pages/           Workspace pages (+ settings/ feature sections, workspace/ components)
 │   ├── src/styles/          Tokens, components, and page styles
 │   ├── src/themes/          Theme presets + customizer options/engine
@@ -34,12 +34,12 @@ Starwaves/
 │   └── src-tauri/           Tauri v2 desktop shell scaffold
 ├── server/                  FastAPI backend
 │   ├── app/
-│   │   ├── api/routes/      HTTP endpoints and OAuth callbacks (workspace_files.py)
-│   │   ├── core/            Configuration and authentication
+│   │   ├── api/routes/      HTTP endpoints, WebSockets, and OAuth callbacks (whatsapp.py, whatsapp_ws.py, workspace_files.py)
+│   │   ├── core/            Configuration, authentication, and WebSocket managers (whatsapp_ws_manager.py)
 │   │   ├── db/              Firestore client
-│   │   ├── repositories/    Firestore data access & file storage (workspace_files.py)
-│   │   ├── schemas/         API request and response models (workspace_files.py)
-│   │   └── services/        External integration services (eve.py coding agent tools)
+│   │   ├── repositories/    Firestore data access & file storage (whatsapp.py, workspace_files.py)
+│   │   ├── schemas/         API request and response models (whatsapp.py, workspace_files.py)
+│   │   └── services/        External integration services (whatsapp.py, eve.py coding & WhatsApp tools)
 │   ├── tests/               Backend unittest suite
 │   ├── templates/email/     Email HTML templates
 │   ├── Dockerfile           Python 3.12-slim container build
@@ -56,9 +56,9 @@ Starwaves/
 
 ## 3. Backend (FastAPI)
 
-- **App factory**: `server/app/main.py` → `create_app()` with `@asynccontextmanager` `lifespan` manager (CORS + `/api/v1` router + `/ws/calls` WebSocket endpoint + `ServerBackgroundWorker` daemon thread).
+- **App factory**: `server/app/main.py` → `create_app()` with `@asynccontextmanager` `lifespan` manager (CORS + `/api/v1` router + `/ws/calls` and `/ws/whatsapp` WebSocket endpoints + `ServerBackgroundWorker` daemon thread).
 - **Background Worker Daemon**: `server/app/core/worker.py` -> `ServerBackgroundWorker` runs in long-running server environments (Docker / Uvicorn daemons / systemd) to auto-execute due Eve schedules, trigger voice calls, and expire stale calls every 30s.
-- **WebSocket Manager**: `server/app/core/ws_manager.py` -> `CallWSManager` handles active user WebSocket connections and dispatches real-time call events (`incoming_call`, `call_signal`, `call_updated`).
+- **WebSocket Managers**: `server/app/core/ws_manager.py` (`CallWSManager`) for real-time WebRTC call signaling and `server/app/core/whatsapp_ws_manager.py` (`WhatsAppWSManager`) for instant WhatsApp message streaming, QR updates, typing indicators, and Eve events.
 - **Route registry**: `server/app/api/router.py` includes all top-level routers.
 - **Prefix**: `/api/v1` (see `server/app/core/config.py`).
 - **Auth**: Firebase ID tokens via `server/app/core/auth.py`.
@@ -70,6 +70,7 @@ Starwaves/
 | Auth            | `app/api/routes/auth/`                                                                 | `oauth`, `credentials`, `password`, `account`, `combine`                                             |
 | Workspace Data  | `app/api/routes/workspace/`                                                            | `jobs`, `hackathons`, `projects`, `notifications`, `contests`, `calendar`                          |
 | Workspace Files | `app/api/routes/workspace_files.py`                                                    | `/workspace-files/tree`, `/{path}`, `/sync` (cloud storage & sync fallback)                                    |
+| WhatsApp        | `app/api/routes/whatsapp.py`, `app/api/routes/whatsapp_ws.py`                          | `/whatsapp/status`, `/pair`, `/chats`, `/send`, `/settings`, `/eve-draft`, `/ws/whatsapp` WebSocket           |
 | Integrations    | `google_calendar`, `google_contacts`, `google_drive`, `gmail`, `github`, `google_chat` | OAuth callbacks under`/integrations/*/callback`                                                              |
 | Features        | `documents`, `todos`, `contacts`, `profiles`, `notifications`, `email`, `eve`, `calls` | EVE = AI assistant;`calls` = WebRTC signaling; `contacts` = Address book / contacts directory                 |
 | Coding          | `coding_stats`, `competitive_coding_profile`                                         | Contests + profile stats                                                                                       |
@@ -80,11 +81,11 @@ Starwaves/
 
 `password`, `users`, `account_combine`, `account_deletion`, `jobs`, `projects`,
 `notifications`, `pagination`, `documents`, `contacts`, `profiles`, `todos`, `eve`,
-`eve_sessions`, `calls`, `workspace_files`.
+`eve_sessions`, `calls`, `workspace_files`, `whatsapp`.
 
 ### Services (`server/app/services/`)
 
-`coding_stats`, `contests`, `email`, `eve` (includes coding agent tools `read_workspace_file`, `write_workspace_file`, `list_workspace_files`, `search_workspace_files`, `run_workspace_command`), `github`, `google_calendar`, `google_contacts`,
+`coding_stats`, `contests`, `email`, `eve` (includes coding agent tools `read_workspace_file`, `write_workspace_file`, `list_workspace_files`, `search_workspace_files`, `run_workspace_command` and WhatsApp tools `list_whatsapp_chats`, `read_whatsapp_messages`, `send_whatsapp_message`, `summarize_whatsapp_chat`), `whatsapp` (session pairing, message dispatch, Eve AI hooks), `github`, `google_calendar`, `google_contacts`,
 `hackathon_sources`, `notifications`, plus `oauth/` package (`_shared.py`,
 `google.py`, `github.py`) that centralizes provider-agnostic OAuth helpers
 (`format_oauth_error`, state-serializer factory, `integration_account_id`,
@@ -135,7 +136,7 @@ SMTP, Firestore database id, CORS origins. Loads `.env.prod` before `.env`.
   `useSpeechVoices`.
 - **API clients** (`src/lib/`): one per backend feature (`todosApi`,
   `workspaceApi/` (package split by feature: jobs, projects, hackathons,
-  notifications, contests, calendar, email), `workspaceFilesApi` (cloud code files), `gmailApi`, `googleCalendar`,
+  notifications, contests, calendar, email), `workspaceFilesApi`, `whatsappApi`, `whatsappSocket`, `gmailApi`, `googleCalendar`,
   `googleContacts`, `googleDriveApi`, `eveApi`, `eveSchedulesApi`, `emailApi`, `githubApi`,
   `googleChatApi`, `codingStatsApi`, `competitiveCodingProfileApi`,
   `documentsApi`, `contactsApi`, `callsApi`, `callsSocket`, `aiModelsApi`, `eveSpeechApi`), plus shared `request.js`
@@ -152,12 +153,13 @@ SMTP, Firestore database id, CORS origins. Loads `.env.prod` before `.env`.
   `callWebRTC`, `callDisplay`, `speech`.
 - **Pages** (`src/pages/`): Dashboard, Projects, ProjectDetail, Jobs,
   Hackathons, HackathonDetail, Todo, Documents, DocumentOpener, Workspace, Mails,
-  Calendar, Chats, Calls, Contacts, CompetitiveCoding, Stats, Eve, Settings, Themes,
+  WhatsApp, Calendar, Chats, Calls, Contacts, CompetitiveCoding, Stats, Eve, Settings, Themes,
   Profile, Onboarding, Auth, ForgotPassword, Landing, TermsOfService, PrivacyPolicy.
 - **Call components** (`src/components/calls/`): `CallScreen`,
   `IncomingCallOverlay`.
+- **WhatsApp components** (`src/components/whatsapp/`): `WhatsAppChatList`, `WhatsAppConversation`, `WhatsAppQrModal`, `WhatsAppInfoDrawer`.
 - **Settings sections** (`src/pages/settings/`): Profile, Account, Apps,
-  WorkspaceApps, Theme, Calendar, IcsCalendar, Gmail, Github, GoogleChat,
+  WhatsAppSection, WorkspaceApps, Theme, Calendar, IcsCalendar, Gmail, Github, GoogleChat,
   Coding, HackathonSources, DataSources, PushNotifications, EveVoice,
   AiModels.
 - **Dashboard config**: `src/dashboard/dashboardConfig.js` (React Grid Layout).
