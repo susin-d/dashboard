@@ -88,6 +88,20 @@ func (s *SessionState) handleEvent(userId string, evt interface{}) {
 	defer s.Unlock()
 
 	switch v := evt.(type) {
+	case *events.HistorySync:
+		log.Printf("[User %s] Received HistorySync chunk (%s): %d conversations", userId, v.Data.GetSyncType().String(), len(v.Data.GetConversations()))
+		for _, conv := range v.Data.GetConversations() {
+			chatJID := conv.GetId()
+			chatName := conv.GetName()
+			if chatName == "" {
+				chatName = chatJID
+			}
+
+			// Read messages inside conversation
+			historyMsgs := conv.GetMessages()
+			log.Printf("[User %s] Syncing chat %s with %d historical messages", userId, chatName, len(historyMsgs))
+		}
+
 	case *events.Connected:
 		s.Connected = true
 		s.QRCode = ""
