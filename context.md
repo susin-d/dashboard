@@ -4,7 +4,7 @@ Living project snapshot for AI agents. `AGENTS.md` holds the permanent rules;
 this file holds the **current state** of the codebase and must be kept up to
 date whenever the implementation changes.
 
-> **Last updated:** 2026-08-16 (Fixed text blur by removing 3D perspective/translateZ transforms and applying crisp subpixel font smoothing)
+> **Last updated:** 2026-08-16 (Enhanced sidebar expanding/collapsing transitions and item hover animations with smooth cubic-bezier easing)
 
 ---
 
