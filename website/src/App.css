@@ -20,9 +20,13 @@
 @import './styles/components/section-heading.css';
 @import './styles/components/settings-card.css';
 @import './styles/components/metric-card.css';
+@import './styles/components/metric-grid.css';
 @import './styles/components/search-bar.css';
 @import './styles/components/pagination.css';
 @import './styles/components/filter-bar.css';
+@import './styles/components/alerts.css';
+@import './styles/components/filter-pills.css';
+@import './styles/components/loading-state.css';
 
 /* Page Styles */
 @import './styles/pages/dashboard.css';

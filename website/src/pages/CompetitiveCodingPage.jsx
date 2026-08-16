@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
-import { CalendarDays, ChevronDown, Clock3, Filter, Search, SlidersHorizontal, Trophy } from 'lucide-react'
-import { CustomDropdown, EmptyState, FilterBar, MetricCard, PageHeader, SearchBar } from '../components/ui'
+import { CalendarDays, ChevronDown, Clock3, Filter, SlidersHorizontal, Trophy } from 'lucide-react'
+import { CustomDropdown, EmptyState, FilterBar, MetricCard, MetricGrid, PageHeader, SearchBar } from '../components/ui'
 import { usePersistentState } from '../hooks/usePersistentState'
 
 export function CompetitiveCodingPage({ contestSites }) {
@@ -42,7 +42,7 @@ export function CompetitiveCodingPage({ contestSites }) {
         </div>}
       />
 
-      <div className="workspace-insight-grid" aria-label="Competitive coding overview">
+      <MetricGrid className="workspace-insight-grid" ariaLabel="Competitive coding overview">
         <MetricCard className="compact" label="Platforms" value={contestSites.length} detail="connected sources" />
         <MetricCard className="compact" label="Upcoming" value={allContests.length} detail="contests to explore" />
         <MetricCard
@@ -51,7 +51,7 @@ export function CompetitiveCodingPage({ contestSites }) {
           value={contestSites.some((site) => (site.contests || []).length > 0) ? 'Pick one' : 'Connect'}
           detail={contestSites.some((site) => (site.contests || []).length > 0) ? 'and reserve your slot' : 'a contest source in Settings'}
         />
-      </div>
+      </MetricGrid>
 
       <FilterBar
         className="contest-controls"

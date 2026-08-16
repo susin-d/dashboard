@@ -14,7 +14,7 @@ import {
 } from 'lucide-react'
 import { usePersistentState } from '../hooks/usePersistentState'
 import { createJob, deleteJob, updateJob } from '../lib/workspaceApi'
-import { ConfirmDialog, CustomDropdown, EmptyState, FilterBar, Modal, PageHeader, SearchBar } from '../components/ui'
+import { Alert, ConfirmDialog, CustomDropdown, EmptyState, FilterBar, Modal, PageHeader, SearchBar } from '../components/ui'
 import { buildApplicationTimeline } from '../utils/jobTimeline'
 
 const emptyJob = {
@@ -403,7 +403,7 @@ export function JobsPage({ jobs, setJobs, documents, createIntent, canLoadMore, 
 
       {canLoadMore && <button className="secondary-button" type="button" onClick={onLoadMore} disabled={loadingMore}>{loadingMore ? 'Loading…' : 'Load more jobs'}</button>}
 
-<Modal
+      <Modal
         isOpen={formOpen}
         onClose={() => setFormOpen(false)}
         className="job-modal"
@@ -411,7 +411,11 @@ export function JobsPage({ jobs, setJobs, documents, createIntent, canLoadMore, 
         title="Add job record"
       >
         <form className="project-edit-form" onSubmit={addJob}>
-          {jobError && <div className="todo-api-error" role="alert">{jobError}</div>}
+          {jobError && (
+            <Alert variant="error" onDismiss={() => setJobError('')}>
+              {jobError}
+            </Alert>
+          )}
           <div className="project-edit-form-row">
             <label>Company<input value={form.company} onChange={(event) => updateField('company', event.target.value)} required data-modal-initial-focus /></label>
             <label>Role<input value={form.role} onChange={(event) => updateField('role', event.target.value)} required /></label>
@@ -457,13 +461,13 @@ export function JobsPage({ jobs, setJobs, documents, createIntent, canLoadMore, 
         title="Edit job record"
       >
         <form className="project-edit-form" onSubmit={saveJobEdit}>
-          {editError && <div className="todo-api-error" role="alert">{editError}</div>}
+          {editError && (
+            <Alert variant="error" onDismiss={() => setEditError('')}>
+              {editError}
+            </Alert>
+          )}
           <div className="project-edit-form-row">
             <label>Company<input value={editForm.company} onChange={(event) => updateEditField('company', event.target.value)} required data-modal-initial-focus /></label>
-                <label>Role<input value={editForm.role} onChange={(event) => updateEditField('role', event.target.value)} required /></label>
-                <label>Status<select value={editForm.status} onChange={(event) => updateEditField('status', event.target.value)}><option>Saved</option><option>Applied</option><option>Interview</option><option>Offer</option><option>Rejected</option></select></label>
-              </div>
-              <div className="project-edit-form-row">
                 <label>Location<input value={editForm.location} onChange={(event) => updateEditField('location', event.target.value)} /></label>
                 <label>Work type<select value={editForm.workType} onChange={(event) => updateEditField('workType', event.target.value)}><option>Full-time</option><option>Part-time</option><option>Contract</option><option>Internship</option><option>Hybrid</option></select></label>
                 <label>Salary<input value={editForm.salary} onChange={(event) => updateEditField('salary', event.target.value)} /></label>

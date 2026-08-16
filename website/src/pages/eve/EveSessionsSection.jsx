@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import { MessageSquare, Plus, Trash2, ArrowRight } from 'lucide-react'
-import { EmptyState, SearchBar } from '../../components/ui'
+import { ArrowRight, MessageSquare, Plus, Trash2 } from 'lucide-react'
+import { EmptyState, LoadingState, SearchBar } from '../../components/ui'
 
 export function EveSessionsSection({
   sessions,
@@ -54,7 +54,7 @@ export function EveSessionsSection({
       </div>
 
       {isLoading ? (
-        <EmptyState description="Loading past conversations…" />
+        <LoadingState message="Loading past conversations…" />
       ) : filteredSessions.length === 0 ? (
         <EmptyState
           icon={MessageSquare}

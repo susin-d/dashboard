@@ -8,7 +8,7 @@ import {
   sendGoogleMessage, updateGoogleMessage,
 } from '../lib/googleMail'
 import { getGmailAccounts, getGmailStatus } from '../lib/gmailApi'
-import { ConfirmDialog, MailModal, PageHeader, Pagination, SearchBar, TabNav } from '../components/ui'
+import { Alert, ConfirmDialog, EmptyState, LoadingState, MailModal, PageHeader, Pagination, SearchBar, TabNav } from '../components/ui'
 import { usePersistentState } from '../hooks/usePersistentState'
 
 const FOLDERS = [
@@ -402,21 +402,30 @@ export function MailsPage({ onNavigate }) {
       <div className="mail-layout">
         <div className="mail-list">
           {error && (
-            <div className="mail-state error" role="alert">
-              <strong>Could not load mail</strong>
-              <span>{error}</span>
-              <button className="secondary-button" type="button" onClick={() => refresh(query, folder, pageToken, true, selectedAccountEmail)} disabled={loading}>
-                <RefreshCw size={15} /> {loading ? 'Retrying…' : 'Try again'}
+            <Alert
+              variant="error"
+              title="Could not load mail"
+              className="mail-alert-error"
+            >
+              <p>{error}</p>
+              <button
+                className="secondary-button"
+                type="button"
+                style={{ marginTop: '8px' }}
+                onClick={() => refresh(query, folder, pageToken, true, selectedAccountEmail)}
+                disabled={loading}
+              >
+                <RefreshCw size={14} /> {loading ? 'Retrying…' : 'Try again'}
               </button>
-            </div>
+            </Alert>
           )}
-          {loading && !messages.length && <div className="mail-state"><LoaderCircle className="mail-spin" />Loading mail…</div>}
+          {loading && !messages.length && <LoadingState message="Loading mail…" />}
           {!loading && !error && !messages.length && (
-            <div className="mail-state">
-              <Mail size={28} />
-              <strong>No messages here</strong>
-              <span>You're all caught up.</span>
-            </div>
+            <EmptyState
+              icon={Mail}
+              title="No messages here"
+              description="You're all caught up."
+            />
           )}
           {messages.map((message) => (
             <div

@@ -10,7 +10,6 @@ import {
   Trash2,
   Upload,
   RefreshCw,
-  CheckCircle2,
   FileText,
   X,
 } from 'lucide-react'
@@ -27,11 +26,11 @@ import {
   parseGoogleContactsCsv,
   parseVCard,
 } from '../lib/googleContacts'
-import { CustomDropdown, EmptyState, SearchBar } from '../components/ui'
+import { Alert, CustomDropdown, EmptyState, FilterPills, LoadingState, SearchBar } from '../components/ui'
 
 const CATEGORIES = [
   { id: 'all', label: 'All' },
-  { id: 'starred', label: 'Starred' },
+  { id: 'starred', label: 'Starred', icon: Star },
   { id: 'work', label: 'Work' },
   { id: 'personal', label: 'Personal' },
   { id: 'recruiter', label: 'Recruiter' },
@@ -340,16 +339,15 @@ export function ContactsPage({ callCenter, onNavigate }) {
       </header>
 
       {error && (
-        <div className="error-banner" role="alert">
-          <span>{error}</span>
-        </div>
+        <Alert variant="error" onDismiss={() => setError(null)}>
+          {error}
+        </Alert>
       )}
 
       {successMessage && (
-        <div className="success-banner" role="status">
-          <CheckCircle2 size={16} />
-          <span>{successMessage}</span>
-        </div>
+        <Alert variant="success" onDismiss={() => setSuccessMessage(null)}>
+          {successMessage}
+        </Alert>
       )}
 
       {/* Controls: Search + Categories */}
@@ -362,26 +360,18 @@ export function ContactsPage({ callCenter, onNavigate }) {
           onChange={setSearchQuery}
         />
 
-        <div className="contacts-filter-tabs" role="tablist" aria-label="Contact categories">
-          {CATEGORIES.map((cat) => (
-            <button
-              key={cat.id}
-              type="button"
-              role="tab"
-              aria-selected={activeCategory === cat.id}
-              className={`contacts-filter-pill ${activeCategory === cat.id ? 'active' : ''}`}
-              onClick={() => setActiveCategory(cat.id)}
-            >
-              {cat.id === 'starred' && <Star size={12} />}
-              <span>{cat.label}</span>
-            </button>
-          ))}
-        </div>
+        <FilterPills
+          className="contacts-filter-tabs"
+          items={CATEGORIES}
+          activeId={activeCategory}
+          onChange={setActiveCategory}
+          ariaLabel="Contact categories"
+        />
       </div>
 
       {/* Directory Grid */}
       {loading ? (
-        <EmptyState description="Loading contacts directory…" />
+        <LoadingState message="Loading contacts directory…" />
       ) : filteredContacts.length === 0 ? (
         <EmptyState
           icon={Contact}

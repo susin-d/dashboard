@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { CalendarDays, Check, Pencil, Plus, Trash2 } from 'lucide-react'
 import { createTodo, deleteTodo, updateTodo } from '../lib/todosApi'
-import { ConfirmDialog, Modal, PageHeader } from '../components/ui'
+import { Alert, ConfirmDialog, FilterPills, Modal, PageHeader } from '../components/ui'
 import { usePersistentState } from '../hooks/usePersistentState'
 
 export function TodoPage({ tasks, setTasks, createIntent }) {
@@ -120,18 +120,22 @@ export function TodoPage({ tasks, setTasks, createIntent }) {
       />
 
       <div className="todo-container">
-        {taskError && <div className="todo-api-error" role="alert">{taskError}</div>}
-        <div className="todo-filters" aria-label="Filter tasks">
-          {['all', 'active', 'completed'].map((item) => (
-            <button
-              className={filter === item ? 'active' : ''}
-              key={item}
-              onClick={() => setFilter(item)}
-            >
-              {item}
-            </button>
-          ))}
-        </div>
+        {taskError && (
+          <Alert variant="error" onDismiss={() => setTaskError('')}>
+            {taskError}
+          </Alert>
+        )}
+        <FilterPills
+          className="todo-filters"
+          ariaLabel="Filter tasks"
+          items={[
+            { id: 'all', label: 'All', count: tasks.length },
+            { id: 'active', label: 'Active', count: tasks.filter((t) => !t.completed).length },
+            { id: 'completed', label: 'Completed', count: tasks.filter((t) => t.completed).length },
+          ]}
+          activeId={filter}
+          onChange={setFilter}
+        />
 
         <div className="todo-list">
           {visibleTasks.length ? (
@@ -212,7 +216,11 @@ export function TodoPage({ tasks, setTasks, createIntent }) {
             onChange={(event) => setDueDate(event.target.value)}
             disabled={taskSaving}
           />
-          {taskError && <div className="todo-api-error" role="alert">{taskError}</div>}
+          {taskError && (
+            <Alert variant="error" onDismiss={() => setTaskError('')}>
+              {taskError}
+            </Alert>
+          )}
           <div className="todo-modal-actions">
             <button
               className="secondary-button"
@@ -256,7 +264,11 @@ export function TodoPage({ tasks, setTasks, createIntent }) {
             onChange={(event) => setEditDueDate(event.target.value)}
             disabled={editSaving}
           />
-          {editError && <div className="todo-api-error" role="alert">{editError}</div>}
+          {editError && (
+            <Alert variant="error" onDismiss={() => setEditError('')}>
+              {editError}
+            </Alert>
+          )}
           <div className="todo-modal-actions">
             <button
               className="secondary-button"

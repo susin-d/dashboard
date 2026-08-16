@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Brain, Plus, Trash2 } from 'lucide-react'
-import { EmptyState, SearchBar } from '../../components/ui'
+import { EmptyState, LoadingState, SearchBar } from '../../components/ui'
 
 export function EveMemorySection({
   memories,
@@ -77,7 +77,7 @@ export function EveMemorySection({
       </div>
 
       {isLoading ? (
-        <EmptyState description="Loading remembered facts…" />
+        <LoadingState message="Loading remembered facts…" />
       ) : filteredMemories.length === 0 ? (
         <EmptyState
           icon={Brain}

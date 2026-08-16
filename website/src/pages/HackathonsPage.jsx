@@ -12,7 +12,7 @@ import {
 } from 'lucide-react'
 import { usePersistentState } from '../hooks/usePersistentState'
 import { createHackathon, deleteHackathon, updateHackathon } from '../lib/workspaceApi'
-import { ConfirmDialog, CustomDropdown, EmptyState, FilterBar, MetricCard, Modal, PageHeader, SearchBar } from '../components/ui'
+import { ConfirmDialog, CustomDropdown, EmptyState, FilterBar, MetricCard, MetricGrid, Modal, PageHeader, SearchBar, Alert } from '../components/ui'
 
 const emptyHackathon = {
   title: '',
@@ -190,11 +190,11 @@ export function HackathonsPage({ hackathons, setHackathons, canLoadMore, loading
         }
       />
 
-      <div className="workspace-insight-grid" aria-label="Hackathon overview">
+      <MetricGrid className="workspace-insight-grid" ariaLabel="Hackathon overview">
         <MetricCard className="compact" label="Opportunities" value={hackathons.length} detail="in your pipeline" />
         <MetricCard className="compact" label="Online" value={hackathons.filter((item) => item.mode === 'Online').length} detail="join from anywhere" />
         <MetricCard className="compact" label="Next step" value={hackathons.length ? 'Choose' : 'Add one'} detail={hackathons.length ? 'a challenge to pursue' : 'your first challenge'} />
-      </div>
+      </MetricGrid>
 
       <FilterBar
         className="hackathon-toolbar"
@@ -418,7 +418,11 @@ export function HackathonsPage({ hackathons, setHackathons, canLoadMore, loading
         title="Add hackathon"
       >
         <form className="project-edit-form" onSubmit={submitHackathon}>
-          {error && <div className="todo-api-error" role="alert">{error}</div>}
+          {error && (
+            <Alert variant="error" onDismiss={() => setError('')}>
+              {error}
+            </Alert>
+          )}
           <div className="project-edit-form-row">
             <label>Title<input value={form.title} onChange={(event) => updateField('title', event.target.value)} required data-modal-initial-focus /></label>
             <label>Organizer<input value={form.organizer} onChange={(event) => updateField('organizer', event.target.value)} /></label>
@@ -448,7 +452,11 @@ export function HackathonsPage({ hackathons, setHackathons, canLoadMore, loading
         title="Edit hackathon"
       >
         <form className="project-edit-form" onSubmit={saveHackathonEdit}>
-          {editError && <div className="todo-api-error" role="alert">{editError}</div>}
+          {editError && (
+            <Alert variant="error" onDismiss={() => setEditError('')}>
+              {editError}
+            </Alert>
+          )}
           <div className="project-edit-form-row">
             <label>Title<input value={editForm.title} onChange={(event) => updateEditField('title', event.target.value)} required data-modal-initial-focus /></label>
             <label>Organizer<input value={editForm.organizer} onChange={(event) => updateEditField('organizer', event.target.value)} /></label>

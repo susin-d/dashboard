@@ -15,7 +15,7 @@ import {
   Users,
 } from 'lucide-react'
 import { createProject, deleteProject, updateProject } from '../lib/workspaceApi'
-import { ConfirmDialog, CustomDropdown, EmptyState, FilterBar, Modal, PageHeader, SearchBar } from '../components/ui'
+import { Alert, ConfirmDialog, CustomDropdown, EmptyState, FilterBar, FilterPills, MetricGrid, Modal, PageHeader, SearchBar } from '../components/ui'
 import { ProjectPhaseDots } from '../components/ProjectLifecycleCard'
 import {
   getProjectPhase,
@@ -235,9 +235,9 @@ export function ProjectsPage({
         }
       />
 
-      <div
+      <MetricGrid
         className="workspace-insight-grid project-insight-grid"
-        aria-label="Project overview"
+        ariaLabel="Project overview"
       >
         <div
           className={`workspace-insight-card clickable ${
@@ -281,29 +281,19 @@ export function ProjectsPage({
           </strong>
           <small>across all projects</small>
         </div>
-      </div>
+      </MetricGrid>
 
-      <div
+      <FilterPills
         className="project-status-chips"
-        role="tablist"
-        aria-label="Status filter options"
-      >
-        {['All', 'Active', 'Planning', 'On hold', 'Completed'].map((status) => (
-          <button
-            key={status}
-            type="button"
-            className={`project-status-chip ${
-              statusFilter === status ? 'active' : ''
-            }`}
-            onClick={() => setStatusFilter(status)}
-            role="tab"
-            aria-selected={statusFilter === status}
-          >
-            <span>{status === 'All' ? 'All projects' : status}</span>
-            <span className="chip-count">{statusCounts[status] || 0}</span>
-          </button>
-        ))}
-      </div>      <FilterBar
+        ariaLabel="Status filter options"
+        items={['All', 'Active', 'Planning', 'On hold', 'Completed'].map((status) => ({
+          id: status,
+          label: status === 'All' ? 'All projects' : status,
+          count: statusCounts[status] || 0,
+        }))}
+        activeId={statusFilter}
+        onChange={setStatusFilter}
+      />      <FilterBar
         className="project-toolbar"
         search={
           <SearchBar
@@ -687,9 +677,9 @@ export function ProjectsPage({
       >
         <form className="project-edit-form" onSubmit={submitProject}>
           {error && (
-            <div className="todo-api-error" role="alert">
+            <Alert variant="error" onDismiss={() => setError('')}>
               {error}
-            </div>
+            </Alert>
           )}
           <label>
             Name

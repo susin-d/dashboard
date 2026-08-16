@@ -16,7 +16,7 @@ import {
   getGoogleChatSpaces,
   sendGoogleChatMessage,
 } from '../lib/googleChatApi'
-import { PageHeader, SearchBar } from '../components/ui'
+import { FilterPills, LoadingState, PageHeader, SearchBar } from '../components/ui'
 
 export function ChatsPage({ onNavigate }) {
   const [accounts, setAccounts] = useState([])
@@ -230,22 +230,22 @@ export function ChatsPage({ onNavigate }) {
             />
 
             {/* Filter chips */}
-            <div className="chats-filter-chips">
-              {['all', 'spaces', 'dms'].map((f) => (
-                <button
-                  key={f}
-                  className={`chip ${filterType === f ? 'active' : ''}`}
-                  onClick={() => setFilterType(f)}
-                >
-                  {f === 'all' ? 'All' : f === 'spaces' ? 'Spaces' : 'DMs'}
-                </button>
-              ))}
-            </div>
+            <FilterPills
+              className="chats-filter-chips"
+              ariaLabel="Filter chat spaces"
+              items={[
+                { id: 'all', label: 'All' },
+                { id: 'spaces', label: 'Spaces' },
+                { id: 'dms', label: 'DMs' },
+              ]}
+              activeId={filterType}
+              onChange={setFilterType}
+            />
 
             {/* Space list */}
             <div className="chats-list">
               {loading ? (
-                <div className="empty-chats">Loading spaces…</div>
+                <LoadingState message="Loading spaces…" />
               ) : filteredSpaces.length === 0 ? (
                 <div className="empty-chats">
                   {spaces.length === 0
