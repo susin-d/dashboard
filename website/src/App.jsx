@@ -21,6 +21,7 @@ import { SettingPage } from './pages/SettingPage'
 import { ThemesPage } from './pages/ThemesPage'
 import { StatsPage } from './pages/StatsPage'
 import { TodoPage } from './pages/TodoPage'
+import { WorkspacePage } from './pages/WorkspacePage'
 import { AuthPage } from './pages/AuthPage'
 import { ForgotPasswordPage } from './pages/ForgotPasswordPage'
 import { OnboardingPage } from './pages/OnboardingPage'
@@ -410,6 +411,7 @@ function App() {
     documents: (
       <DocumentsPage documents={documents} setDocuments={setDocuments} createIntent={creationIntent} onOpenDocument={(documentId) => navigate('document-opener', { documentId })} />
     ),
+    workspace: <WorkspacePage />,
     'document-opener': (
       <DocumentOpenerPage
         document={selectedDocument}

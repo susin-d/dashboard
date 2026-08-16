@@ -4,17 +4,18 @@ Living project snapshot for AI agents. `AGENTS.md` holds the permanent rules;
 this file holds the **current state** of the codebase and must be kept up to
 date whenever the implementation changes.
 
-> **Last updated:** 2026-08-14 (Improved Google People API error handling and logging to accurately report 403 Forbidden / API not enabled states)
+> **Last updated:** 2026-08-16 (Added Workspace code editor page with Monaco multi-tab editor, file tree with .sdignore, Eve coding agent tools, cloud-fallback files API, and Tauri desktop scaffold)
 
 ---
 
 ## 1. Project overview
 
 StarWaves is a personal productivity workspace that brings projects, job
-applications, tasks, documents, calendars, email, hackathons, competitive
+applications, tasks, documents, code workspace, calendars, email, hackathons, competitive
 programming, and an AI assistant into one dashboard.
 
-- **Frontend** (`/website`): React 19 + Vite + Vanilla CSS (monochrome design system).
+- **Frontend** (`/website`): React 19 + Vite + Vanilla CSS (monochrome design system) + Monaco Editor.
+- **Desktop Shell** (`/website/src-tauri`): Tauri v2 scaffold with native FS, dialog, shell, and file watching plugins.
 - **Backend** (`/server`): FastAPI (Python) + Firebase Firestore. Containerized with Docker & Nginx.
 - **Auth**: Firebase Authentication; serverless deployment targets Vercel, dockerized server for standalone VM/cloud deployment.
 
@@ -25,19 +26,20 @@ Starwaves/
 ├── website/                 React frontend
 │   ├── src/components/      Shared UI components (+ ui/ primitives)
 │   ├── src/hooks/           Auth, routing, theme, workspace data hooks
-│   ├── src/lib/             Frontend API clients (workspaceApi/ split by feature)
-│   ├── src/pages/           Workspace pages (+ settings/ feature sections)
+│   ├── src/lib/             Frontend API clients (workspaceFilesApi, workspaceApi/ split by feature)
+│   ├── src/pages/           Workspace pages (+ settings/ feature sections, workspace/ components)
 │   ├── src/styles/          Tokens, components, and page styles
 │   ├── src/themes/          Theme presets + customizer options/engine
-│   └── src/utils/           Pure parsers/transformers
+│   ├── src/utils/           Pure parsers/transformers
+│   └── src-tauri/           Tauri v2 desktop shell scaffold
 ├── server/                  FastAPI backend
 │   ├── app/
-│   │   ├── api/routes/      HTTP endpoints and OAuth callbacks
+│   │   ├── api/routes/      HTTP endpoints and OAuth callbacks (workspace_files.py)
 │   │   ├── core/            Configuration and authentication
 │   │   ├── db/              Firestore client
-│   │   ├── repositories/    Firestore data access
-│   │   ├── schemas/         API request and response models
-│   │   └── services/        External integration services
+│   │   ├── repositories/    Firestore data access & file storage (workspace_files.py)
+│   │   ├── schemas/         API request and response models (workspace_files.py)
+│   │   └── services/        External integration services (eve.py coding agent tools)
 │   ├── tests/               Backend unittest suite
 │   ├── templates/email/     Email HTML templates
 │   ├── Dockerfile           Python 3.12-slim container build
@@ -63,25 +65,26 @@ Starwaves/
 
 ### Route groups
 
-| Group        | Router module                                                                            | Notes                                                                                                          |
-| ------------ | ---------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
-| Auth         | `app/api/routes/auth/`                                                                 | `oauth`, `credentials`, `password`, `account`, `combine`                                             |
-| Workspace    | `app/api/routes/workspace/`                                                            | `jobs`, `hackathons`, `projects`, `notifications`, `contests`, `calendar`                          |
-| Integrations | `google_calendar`, `google_contacts`, `google_drive`, `gmail`, `github`, `google_chat` | OAuth callbacks under`/integrations/*/callback`                                                              |
-| Features     | `documents`, `todos`, `contacts`, `profiles`, `notifications`, `email`, `eve`, `calls` | EVE = AI assistant;`calls` = WebRTC signaling; `contacts` = Address book / contacts directory                 |
-| Coding       | `coding_stats`, `competitive_coding_profile`                                         | Contests + profile stats                                                                                       |
-| Settings     | `ai_models`, `eve_speech`                                                            | `/settings/ai-models` AI provider/model + `/settings/eve-speech` STT/TTS provider/voice preference for EVE |
-| Misc         | `health`                                                                               | `/api/v1/health`                                                                                             |
+| Group           | Router module                                                                            | Notes                                                                                                          |
+| --------------- | ---------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| Auth            | `app/api/routes/auth/`                                                                 | `oauth`, `credentials`, `password`, `account`, `combine`                                             |
+| Workspace Data  | `app/api/routes/workspace/`                                                            | `jobs`, `hackathons`, `projects`, `notifications`, `contests`, `calendar`                          |
+| Workspace Files | `app/api/routes/workspace_files.py`                                                    | `/workspace-files/tree`, `/{path}`, `/sync` (cloud storage & sync fallback)                                    |
+| Integrations    | `google_calendar`, `google_contacts`, `google_drive`, `gmail`, `github`, `google_chat` | OAuth callbacks under`/integrations/*/callback`                                                              |
+| Features        | `documents`, `todos`, `contacts`, `profiles`, `notifications`, `email`, `eve`, `calls` | EVE = AI assistant;`calls` = WebRTC signaling; `contacts` = Address book / contacts directory                 |
+| Coding          | `coding_stats`, `competitive_coding_profile`                                         | Contests + profile stats                                                                                       |
+| Settings        | `ai_models`, `eve_speech`                                                            | `/settings/ai-models` AI provider/model + `/settings/eve-speech` STT/TTS provider/voice preference for EVE |
+| Misc            | `health`                                                                               | `/api/v1/health`                                                                                             |
 
 ### Repositories (`server/app/repositories/`)
 
 `password`, `users`, `account_combine`, `account_deletion`, `jobs`, `projects`,
 `notifications`, `pagination`, `documents`, `contacts`, `profiles`, `todos`, `eve`,
-`eve_sessions`, `calls`.
+`eve_sessions`, `calls`, `workspace_files`.
 
 ### Services (`server/app/services/`)
 
-`coding_stats`, `contests`, `email`, `eve`, `github`, `google_calendar`, `google_contacts`,
+`coding_stats`, `contests`, `email`, `eve` (includes coding agent tools `read_workspace_file`, `write_workspace_file`, `list_workspace_files`, `search_workspace_files`, `run_workspace_command`), `github`, `google_calendar`, `google_contacts`,
 `hackathon_sources`, `notifications`, plus `oauth/` package (`_shared.py`,
 `google.py`, `github.py`) that centralizes provider-agnostic OAuth helpers
 (`format_oauth_error`, state-serializer factory, `integration_account_id`,
@@ -111,6 +114,7 @@ OAuth secrets, Gmail/Drive/Chat callbacks, AI provider keys for EVE
 `GEMINI_API_KEY`/`GEMINI_URL`/`GEMINI_MODEL`), EVE speech keys
 (`GROQ_API_KEY`/`GROQ_URL`/`GROQ_STT_MODEL`,
 `GOOGLE_CLOUD_TTS_API_KEY`/`GOOGLE_CLOUD_TTS_URL`/`GOOGLE_CLOUD_TTS_VOICE`),
+`is_serverless`, `workspace_storage_path`,
 SMTP, Firestore database id, CORS origins. Loads `.env.prod` before `.env`.
 
 ## 4. Frontend (React)
@@ -131,7 +135,7 @@ SMTP, Firestore database id, CORS origins. Loads `.env.prod` before `.env`.
   `useSpeechVoices`.
 - **API clients** (`src/lib/`): one per backend feature (`todosApi`,
   `workspaceApi/` (package split by feature: jobs, projects, hackathons,
-  notifications, contests, calendar, email), `gmailApi`, `googleCalendar`,
+  notifications, contests, calendar, email), `workspaceFilesApi` (cloud code files), `gmailApi`, `googleCalendar`,
   `googleContacts`, `googleDriveApi`, `eveApi`, `eveSchedulesApi`, `emailApi`, `githubApi`,
   `googleChatApi`, `codingStatsApi`, `competitiveCodingProfileApi`,
   `documentsApi`, `contactsApi`, `callsApi`, `callsSocket`, `aiModelsApi`, `eveSpeechApi`), plus shared `request.js`
@@ -147,7 +151,7 @@ SMTP, Firestore database id, CORS origins. Loads `.env.prod` before `.env`.
   `calendarReminders`, `icsParser`, `popupOAuth`, `projectLifecycle`,
   `callWebRTC`, `callDisplay`, `speech`.
 - **Pages** (`src/pages/`): Dashboard, Projects, ProjectDetail, Jobs,
-  Hackathons, HackathonDetail, Todo, Documents, DocumentOpener, Mails,
+  Hackathons, HackathonDetail, Todo, Documents, DocumentOpener, Workspace, Mails,
   Calendar, Chats, Calls, Contacts, CompetitiveCoding, Stats, Eve, Settings, Themes,
   Profile, Onboarding, Auth, ForgotPassword, Landing, TermsOfService, PrivacyPolicy.
 - **Call components** (`src/components/calls/`): `CallScreen`,

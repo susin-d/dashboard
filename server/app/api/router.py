@@ -24,6 +24,7 @@ from app.api.routes import (
     profiles,
     todos,
     workspace,
+    workspace_files,
 )
 
 api_router = APIRouter()
@@ -62,4 +63,5 @@ api_router.include_router(
 )
 api_router.include_router(todos.router, tags=["todos"])
 api_router.include_router(workspace.router, tags=["workspace data"])
+api_router.include_router(workspace_files.router, tags=["workspace files"])
 

@@ -111,6 +111,8 @@ class Settings:
     smtp_use_tls: bool = os.getenv("SMTP_USE_TLS", "true").lower() == "true"
     smtp_use_ssl: bool = os.getenv("SMTP_USE_SSL", "false").lower() == "true"
     cron_secret: str | None = os.getenv("CRON_SECRET", "starwaves-cron-secret")
+    is_serverless: bool = os.getenv("IS_SERVERLESS", "false").lower() == "true"
+    workspace_storage_path: str = os.getenv("WORKSPACE_STORAGE_PATH", "workspaces")
 
     @property
     def cors_origins(self) -> list[str]:

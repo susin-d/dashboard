@@ -15,6 +15,7 @@ import {
   Contact,
   Rocket,
   Settings,
+  SquareTerminal,
   UserRound,
 } from 'lucide-react'
 
@@ -24,6 +25,7 @@ export const navigationItems = [
   { id: 'todo', label: 'Todo List', icon: ListTodo, group: 'Work' },
   { id: 'projects', label: 'Projects', icon: FolderKanban, group: 'Work' },
   { id: 'documents', label: 'Documents', icon: Files, group: 'Work' },
+  { id: 'workspace', label: 'Workspace', icon: SquareTerminal, group: 'Work' },
   { id: 'competitive-coding', label: 'Competitive Coding', icon: Code2, group: 'Growth' },
   { id: 'hackathons', label: 'Hackathons', icon: Rocket, group: 'Growth' },
   { id: 'jobs', label: 'Jobs', icon: BriefcaseBusiness, group: 'Growth' },
