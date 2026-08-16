@@ -1,8 +1,12 @@
+from datetime import datetime, timezone
+import logging
 from typing import List
+from uuid import uuid4
 from fastapi import APIRouter, Depends, Query, status
 from google.cloud.firestore_v1 import Client
 
 from app.core.auth import get_current_user
+from app.core.whatsapp_ws_manager import whatsapp_ws_manager
 from app.db import get_firestore
 from app.repositories import whatsapp as whatsapp_repo
 from app.schemas.whatsapp import (
@@ -17,6 +21,8 @@ from app.schemas.whatsapp import (
     WhatsAppStatusResponse,
 )
 from app.services.whatsapp import WhatsAppService
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/whatsapp", tags=["whatsapp"])
 
@@ -97,6 +103,68 @@ async def send_whatsapp_message(
         media=payload.media,
         reply_to_message_id=payload.reply_to_message_id,
     )
+
+
+@router.post("/webhook")
+async def whatsapp_incoming_webhook(
+    payload: dict,
+    database: Client = Depends(get_firestore),
+):
+    """
+    Webhook endpoint called by whatsmeow worker when an incoming message is received.
+    If the message mentions @eve, @Eve, or eve (case-insensitive) or comes from another user,
+    Eve generates an AI reply and dispatches it back to the WhatsApp chat.
+    """
+    user_id = payload.get("userId")
+    chat_id = payload.get("chatId")
+    content = payload.get("content", "")
+    sender_id = payload.get("senderId", "")
+    sender_name = payload.get("senderName") or "Contact"
+    is_from_me = payload.get("isFromMe", False)
+
+    if not user_id or not chat_id:
+        return {"status": "ignored", "reason": "missing user or chat id"}
+
+    # Process and save incoming message into repository
+    now = datetime.now(timezone.utc)
+    incoming_msg = WhatsAppMessageResponse(
+        id=payload.get("messageId") or f"msg-{uuid4().hex[:12]}",
+        chat_id=chat_id,
+        sender_id=sender_id,
+        sender_name=sender_name,
+        is_from_me=is_from_me,
+        is_eve=False,
+        content=content,
+        timestamp=now,
+        status="delivered",
+    )
+    whatsapp_repo.save_whatsapp_message(database, user_id, chat_id, incoming_msg)
+
+    # Broadcast incoming message via WebSocket
+    await whatsapp_ws_manager.broadcast_to_user(
+        user_id,
+        {
+            "type": "new_message",
+            "message": incoming_msg.model_dump(mode="json"),
+        },
+    )
+
+    # Check if Eve should reply (mentions @eve, eve, or if in eve chat or auto-reply enabled for chat)
+    text_lower = content.lower()
+    should_reply = (
+        not is_from_me
+        and (
+            "@eve" in text_lower
+            or "eve" in text_lower
+            or chat_id == "eve"
+        )
+    )
+
+    if should_reply:
+        logger.info(f"Eve triggered for inbound WhatsApp message from {sender_name} in {chat_id}")
+        await WhatsAppService._handle_eve_response(database, user_id, chat_id, content)
+
+    return {"status": "processed"}
 
 
 @router.post("/chats/{chat_id}/read")

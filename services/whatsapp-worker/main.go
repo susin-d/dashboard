@@ -1,8 +1,10 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -119,7 +121,47 @@ func (s *SessionState) handleEvent(userId string, evt interface{}) {
 		log.Printf("[User %s] WhatsApp Logged Out", userId)
 
 	case *events.Message:
-		log.Printf("[User %s] New message from %s: %s", userId, v.Info.Sender.String(), v.Message.GetConversation())
+		text := v.Message.GetConversation()
+		if text == "" && v.Message.GetExtendedTextMessage() != nil {
+			text = v.Message.GetExtendedTextMessage().GetText()
+		}
+		senderJID := v.Info.Sender.String()
+		chatJID := v.Info.Chat.String()
+		isFromMe := v.Info.IsFromMe
+		senderName := v.Info.PushName
+		if senderName == "" {
+			senderName = v.Info.Sender.User
+		}
+
+		log.Printf("[User %s] New message from %s in %s: %s", userId, senderName, chatJID, text)
+
+		// Post to StarWaves FastAPI backend webhook
+		backendWebhookURL := os.Getenv("BACKEND_WEBHOOK_URL")
+		if backendWebhookURL == "" {
+			backendWebhookURL = "http://127.0.0.1:8000/api/v1/whatsapp/webhook"
+		}
+
+		go func() {
+			payload := map[string]interface{}{
+				"userId":     userId,
+				"chatId":     chatJID,
+				"senderId":   senderJID,
+				"senderName": senderName,
+				"isFromMe":   isFromMe,
+				"content":    text,
+				"messageId":  v.Info.ID,
+			}
+			jsonBytes, err := json.Marshal(payload)
+			if err != nil {
+				return
+			}
+			req, err := http.NewRequest("POST", backendWebhookURL, bytes.NewBuffer(jsonBytes))
+			if err == nil {
+				req.Header.Set("Content-Type", "application/json")
+				client := &http.Client{Timeout: 5 * time.Second}
+				_, _ = client.Do(req)
+			}
+		}()
 	}
 }
 
