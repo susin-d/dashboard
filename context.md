@@ -4,7 +4,7 @@ Living project snapshot for AI agents. `AGENTS.md` holds the permanent rules;
 this file holds the **current state** of the codebase and must be kept up to
 date whenever the implementation changes.
 
-> **Last updated:** 2026-08-16 (Redesigned Mails page empty connection onboarding view and polished monochrome styles)
+> **Last updated:** 2026-08-16 (Redesigned Mails and WhatsApp empty connection onboarding views with polished monochrome styling)
 
 ---
 
