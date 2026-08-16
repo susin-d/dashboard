@@ -97,20 +97,23 @@
   border-bottom: 1px solid var(--border-color, #27272a);
 }
 
-.whatsapp-search-input {
+input.whatsapp-search-input,
+.whatsapp-search-box input[type="text"] {
   width: 100%;
-  padding: 8px 12px 8px 36px;
+  height: 38px;
+  padding: 0 12px 0 38px !important;
   background: var(--bg-primary, #09090b);
   border: 1px solid var(--border-color, #27272a);
   border-radius: var(--radius-md, 8px);
   color: var(--text-primary, #ffffff);
   font-size: 0.875rem;
   outline: none;
-  transition: border-color 0.15s ease;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
-.whatsapp-search-input:focus {
-  border-color: var(--text-primary, #ffffff);
+input.whatsapp-search-input:focus,
+.whatsapp-search-box input[type="text"]:focus {
+  border-color: var(--border-focus, var(--text-primary, #ffffff));
 }
 
 .whatsapp-search-icon {
@@ -120,6 +123,7 @@
   transform: translateY(-50%);
   color: var(--text-muted, #71717a);
   pointer-events: none;
+  z-index: 1;
 }
 
 .whatsapp-chat-list {
