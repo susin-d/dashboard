@@ -73,24 +73,30 @@
 .contacts-search-box svg {
   position: absolute;
   left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
   color: var(--text-muted);
   pointer-events: none;
+  z-index: 1;
 }
 
-.contacts-search-input {
+input.contacts-search-input,
+.contacts-search-box input[type="text"] {
   width: 100%;
-  padding: 0.55rem 0.85rem 0.55rem 36px;
-  border-radius: var(--radius-xs, 6px);
+  height: 38px;
+  padding: 0 12px 0 38px !important;
+  border-radius: var(--radius-sm, 8px);
   background: var(--bg-card);
   border: 1px solid var(--border-color);
   color: var(--text-primary);
   font-size: 0.85rem;
   outline: none;
-  transition: border-color var(--transition-fast);
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
 }
 
-.contacts-search-input:focus {
-  border-color: var(--border-heavy, var(--text-primary));
+input.contacts-search-input:focus,
+.contacts-search-box input[type="text"]:focus {
+  border-color: var(--border-focus, var(--text-primary));
 }
 
 .contacts-filter-tabs {
