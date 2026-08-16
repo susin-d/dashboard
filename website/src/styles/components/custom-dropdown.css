@@ -28,6 +28,19 @@
   border-color: var(--border-heavy, var(--text-muted));
 }
 
+.filter-bar .custom-dropdown-trigger,
+.custom-dropdown.compact .custom-dropdown-trigger {
+  min-height: 32px;
+  padding: 4px 10px;
+  font-size: 11.5px;
+}
+
+.filter-bar .custom-dropdown-option,
+.custom-dropdown.compact .custom-dropdown-option {
+  padding: 5px 9px;
+  font-size: 11.5px;
+}
+
 .custom-dropdown-trigger:focus-visible {
   outline: 2px solid var(--text-primary);
   outline-offset: 2px;

@@ -9,7 +9,7 @@ export const SearchBar = forwardRef(function SearchBar(
     placeholder = 'Search...',
     ariaLabel = 'Search',
     className = '',
-    iconSize = 16,
+    iconSize = 14,
     disabled = false,
     autoFocus = false,
     id,
