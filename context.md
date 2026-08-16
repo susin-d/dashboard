@@ -4,7 +4,7 @@ Living project snapshot for AI agents. `AGENTS.md` holds the permanent rules;
 this file holds the **current state** of the codebase and must be kept up to
 date whenever the implementation changes.
 
-> **Last updated:** 2026-08-16 (Created and normalized UI primitives: Alert, FilterPills, LoadingState, MetricGrid, SearchBar, Pagination, FilterBar, CustomDropdown, and EmptyState across all dashboard pages)
+> **Last updated:** 2026-08-16 (Redesigned Mails page empty connection onboarding view and polished monochrome styles)
 
 ---
 
