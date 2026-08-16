@@ -643,13 +643,13 @@ export function LandingPage({ user, onNavigate }) {
           <p className="section-eyebrow">Frequently Asked Questions</p>
           <h2>Everything you need to know</h2>
         </div>
-        <div className="landing-faq-list">
+        <div className="landing-faq-list scroll-reveal reveal-delay-2">
           {faqItems.map((item, index) => {
             const isOpen = openFaq === index
             return (
               <div
                 key={item.question}
-                className={`faq-item scroll-reveal reveal-delay-${Math.min(index + 1, 6)} ${isOpen ? 'open' : ''}`}
+                className={`faq-item ${isOpen ? 'open' : ''}`}
                 onClick={() => setOpenFaq(isOpen ? -1 : index)}
               >
                 <div className="faq-question">
