@@ -56,12 +56,12 @@ func getOrCreateSession(userId string) (*SessionState, error) {
 
 	userDbPath := filepath.Join(dataDir, fmt.Sprintf("wa_%s.db", userId))
 	dbLog := waLog.Stdout("Database", "WARN", true)
-	container, err := sqlstore.New("sqlite3", fmt.Sprintf("file:%s?_foreign_keys=on", userDbPath), dbLog)
+	container, err := sqlstore.New(context.Background(), "sqlite3", fmt.Sprintf("file:%s?_foreign_keys=on", userDbPath), dbLog)
 	if err != nil {
 		return nil, fmt.Errorf("failed to init sqlstore: %w", err)
 	}
 
-	deviceStore, err := container.GetFirstDevice()
+	deviceStore, err := container.GetFirstDevice(context.Background())
 	if err != nil {
 		return nil, fmt.Errorf("failed to get first device: %w", err)
 	}
@@ -91,7 +91,7 @@ func (s *SessionState) handleEvent(userId string, evt interface{}) {
 	case *events.HistorySync:
 		log.Printf("[User %s] Received HistorySync chunk (%s): %d conversations", userId, v.Data.GetSyncType().String(), len(v.Data.GetConversations()))
 		for _, conv := range v.Data.GetConversations() {
-			chatJID := conv.GetId()
+			chatJID := conv.GetID()
 			chatName := conv.GetName()
 			if chatName == "" {
 				chatName = chatJID
@@ -192,7 +192,7 @@ func main() {
 				return
 			}
 
-			code, err := sess.Client.PairPhone(cleanPhone, true, whatsmeow.PairClientChrome, "Chrome (Linux)")
+			code, err := sess.Client.PairPhone(context.Background(), cleanPhone, true, whatsmeow.PairClientChrome, "Chrome (Linux)")
 			if err != nil {
 				c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("pairing code failed: %v", err)})
 				return
@@ -331,7 +331,7 @@ func main() {
 
 		if ok && sess != nil {
 			if sess.Client != nil {
-				_ = sess.Client.Logout()
+				_ = sess.Client.Logout(context.Background())
 				sess.Client.Disconnect()
 			}
 			userDbPath := filepath.Join(dataDir, fmt.Sprintf("wa_%s.db", req.UserID))
