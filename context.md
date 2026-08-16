@@ -4,7 +4,7 @@ Living project snapshot for AI agents. `AGENTS.md` holds the permanent rules;
 this file holds the **current state** of the codebase and must be kept up to
 date whenever the implementation changes.
 
-> **Last updated:** 2026-08-16 (Added WhatsApp integration with dedicated monochrome WhatsApp page, QR Web pairing, real-time WebSocket messaging, Firestore persistence, and Eve AI assistant tools)
+> **Last updated:** 2026-08-16 (Migrated backend database engine to Supabase PostgreSQL with Async SQLAlchemy 2.0, relational schema models, and compat adapter)
 
 ---
 

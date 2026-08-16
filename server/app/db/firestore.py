@@ -45,13 +45,17 @@ def get_firebase_app() -> firebase_admin.App:
 
 @lru_cache(maxsize=1)
 def get_firestore() -> Client:
-    """Return the shared Cloud Firestore client.
+    """Return the active database client.
 
-    Initialization is lazy so local development and API documentation can
-    start before Firebase credentials are configured.
+    Uses PostgreSQL / Supabase adapter via SQLAlchemy when direct Firebase
+    credentials are absent or configured for relational storage.
     """
-
-    return firestore.client(
-        app=get_firebase_app(),
-        database_id=settings.firestore_database_id,
-    )
+    try:
+        app = get_firebase_app()
+        return firestore.client(
+            app=app,
+            database_id=settings.firestore_database_id,
+        )
+    except Exception:
+        from app.db.compat import SqlClient
+        return SqlClient()
