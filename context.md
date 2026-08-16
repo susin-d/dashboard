@@ -48,8 +48,8 @@ Starwaves/
 ├── nginx/                   Nginx reverse proxy configuration
 │   ├── nginx.conf           Global Nginx configuration (Gzip, buffers, security)
 │   └── conf.d/default.conf  Reverse proxy virtual host (port 80/443, WebSocket, health)
-├── docker-compose.yml       Multi-container orchestration for server & Nginx
-├── .env.docker.example      Docker deployment environment template
+├── docker-compose.yml       Multi-container orchestration for PostgreSQL 16, FastAPI server, & Nginx
+├── .env.docker.example      Docker deployment environment template (PostgreSQL DATABASE_URL)
 ├── DOCKER.md                Container setup & operational documentation
 ├── SPEECH_PROVIDERS.md      TTS/STT provider comparison for Eve voice
 └── vercel.json              Serverless rewrites
