@@ -89,35 +89,16 @@ export function WhatsAppSection() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
       <SettingsCard
+        icon={<MessageSquare size={19} />}
         title="WhatsApp Integration"
         description="Connect personal or workspace WhatsApp to chat, receive notifications, and allow Eve to assist with messages."
-      >
-        {message && (
-          <div style={{ padding: '8px 12px', background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', borderRadius: '6px', fontSize: '0.875rem', marginBottom: '16px' }}>
-            {message}
-          </div>
-        )}
-
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px', background: 'var(--bg-secondary)', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'var(--bg-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid var(--border-color)' }}>
-              <MessageSquare size={20} />
-            </div>
-            <div>
-              <div style={{ fontWeight: 600 }}>{status.connected ? status.phone_number || 'Linked WhatsApp' : 'Not Connected'}</div>
-              <div style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)' }}>
-                {status.connected ? `Device: ${status.push_name || 'Active Session'}` : 'Link via QR code to sync chats with Starwaves'}
-              </div>
-            </div>
-          </div>
-
-          {status.connected ? (
+        action={
+          status.connected ? (
             <button
               type="button"
-              className="btn btn-danger"
+              className="workspace-connected"
               onClick={() => setDisconnectRequested(true)}
               disabled={busy}
-              style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
             >
               <Trash2 size={14} />
               Disconnect
@@ -125,58 +106,94 @@ export function WhatsAppSection() {
           ) : (
             <button
               type="button"
-              className="btn btn-primary"
               onClick={handleOpenQr}
               disabled={busy}
-              style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
             >
               <QrCode size={14} />
               Link Device
             </button>
+          )
+        }
+      >
+        <div className="whatsapp-settings-body">
+          {message && (
+            <div className="whatsapp-settings-alert">
+              {message}
+            </div>
           )}
+
+          <div className="whatsapp-status-card">
+            <div className="whatsapp-status-left">
+              <div className="whatsapp-status-avatar">
+                <MessageSquare size={20} />
+              </div>
+              <div className="whatsapp-status-info">
+                <strong>{status.connected ? status.phone_number || 'Linked WhatsApp' : 'Not Connected'}</strong>
+                <small>
+                  {status.connected ? `Device: ${status.push_name || 'Active Session'}` : 'Link via QR code to sync chats with Starwaves'}
+                </small>
+              </div>
+            </div>
+            {status.connected && (
+              <span className="whatsapp-status-badge">
+                Connected
+              </span>
+            )}
+          </div>
         </div>
       </SettingsCard>
 
       <SettingsCard
+        icon={<Bot size={19} />}
         title="Eve AI WhatsApp Automation"
         description="Configure how Eve interacts with your WhatsApp messages and contacts."
       >
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <Bot size={18} />
-              <div>
-                <div style={{ fontWeight: 500, fontSize: '0.9rem' }}>Global Eve Auto-Responder</div>
-                <div style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)' }}>
-                  Allow Eve to draft and auto-respond to incoming WhatsApp inquiries
+        <div className="whatsapp-settings-body">
+          <div className="whatsapp-automation-list">
+            <label className="whatsapp-automation-item">
+              <div className="whatsapp-automation-left">
+                <div className="whatsapp-automation-icon">
+                  <Bot size={18} />
+                </div>
+                <div className="whatsapp-automation-text">
+                  <strong>Global Eve Auto-Responder</strong>
+                  <small>
+                    Allow Eve to draft and auto-respond to incoming WhatsApp inquiries
+                  </small>
                 </div>
               </div>
-            </div>
-            <input
-              type="checkbox"
-              checked={Boolean(settings.auto_reply_enabled)}
-              onChange={(e) => handleSaveSettings({ auto_reply_enabled: e.target.checked })}
-              style={{ cursor: 'pointer' }}
-            />
-          </label>
+              <div className="whatsapp-toggle-switch">
+                <input
+                  type="checkbox"
+                  checked={Boolean(settings.auto_reply_enabled)}
+                  onChange={(e) => handleSaveSettings({ auto_reply_enabled: e.target.checked })}
+                />
+                <span className="whatsapp-toggle-slider" />
+              </div>
+            </label>
 
-          <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <Bell size={18} />
-              <div>
-                <div style={{ fontWeight: 500, fontSize: '0.9rem' }}>Desktop & Push Notifications</div>
-                <div style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)' }}>
-                  Receive instant alerts in Starwaves when new WhatsApp messages arrive
+            <label className="whatsapp-automation-item">
+              <div className="whatsapp-automation-left">
+                <div className="whatsapp-automation-icon">
+                  <Bell size={18} />
+                </div>
+                <div className="whatsapp-automation-text">
+                  <strong>Desktop & Push Notifications</strong>
+                  <small>
+                    Receive instant alerts in Starwaves when new WhatsApp messages arrive
+                  </small>
                 </div>
               </div>
-            </div>
-            <input
-              type="checkbox"
-              checked={Boolean(settings.notifications_enabled)}
-              onChange={(e) => handleSaveSettings({ notifications_enabled: e.target.checked })}
-              style={{ cursor: 'pointer' }}
-            />
-          </label>
+              <div className="whatsapp-toggle-switch">
+                <input
+                  type="checkbox"
+                  checked={Boolean(settings.notifications_enabled)}
+                  onChange={(e) => handleSaveSettings({ notifications_enabled: e.target.checked })}
+                />
+                <span className="whatsapp-toggle-slider" />
+              </div>
+            </label>
+          </div>
         </div>
       </SettingsCard>
 
