@@ -47,17 +47,13 @@ export function WhatsAppQrModal({
         {!useCode ? (
           <>
             <div className="whatsapp-qr-box">
-              {loading ? (
+              {loading || !qrCode ? (
                 <div className="whatsapp-qr-loading">
-                  <RefreshCw size={28} className="animate-spin" />
-                  <span>Loading QR code...</span>
+                  <RefreshCw size={32} className="animate-spin" />
+                  <span style={{ marginTop: '8px', fontSize: '0.8125rem' }}>Fetching live WhatsApp QR...</span>
                 </div>
-              ) : qrCode ? (
-                <img src={qrCode} alt="WhatsApp QR Code" className="whatsapp-qr-image" />
               ) : (
-                <div className="whatsapp-qr-placeholder">
-                  <QrCode size={140} color="#000000" />
-                </div>
+                <img src={qrCode} alt="WhatsApp QR Code" className="whatsapp-qr-image" />
               )}
             </div>
 

@@ -4,7 +4,7 @@ Living project snapshot for AI agents. `AGENTS.md` holds the permanent rules;
 this file holds the **current state** of the codebase and must be kept up to
 date whenever the implementation changes.
 
-> **Last updated:** 2026-08-17 (Added multi-workspace management support: unlimited named workspaces per user stored under server/workspaces/<user_id>/<workspace_id>/, workspace switcher dropdown, rename/delete/create modals, and workspace-scoped file API routes)
+> **Last updated:** 2026-08-17 (Connected FastAPI backend to whatsapp-worker on Docker bridge network, removed mock QR placeholder icon in favor of live streaming WhatsApp QR code)
 
 ---
 

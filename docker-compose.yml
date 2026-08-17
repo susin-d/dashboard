@@ -33,6 +33,7 @@ services:
       - APP_ENV=production
       - PORT=8000
       - DATABASE_URL=postgresql+asyncpg://starwaves:starwaves_password@postgres:5432/starwaves
+      - WHATSAPP_GATEWAY_URL=http://whatsapp-worker:3001
     expose:
       - "8000"
     ports:
@@ -75,6 +76,7 @@ services:
     environment:
       - PORT=3001
       - DATA_DIR=/app/data
+      - BACKEND_WEBHOOK_URL=http://server:8000/api/v1/whatsapp/webhook
     ports:
       - "3001:3001"
     volumes:

@@ -117,7 +117,10 @@ class Settings:
     cron_secret: str | None = os.getenv("CRON_SECRET", "starwaves-cron-secret")
     is_serverless: bool = os.getenv("IS_SERVERLESS", "false").lower() == "true"
     workspace_storage_path: str = os.getenv("WORKSPACE_STORAGE_PATH", "workspaces")
-    whatsapp_gateway_url: str = os.getenv("WHATSAPP_GATEWAY_URL", "http://127.0.0.1:3001")
+    whatsapp_gateway_url: str = os.getenv(
+        "WHATSAPP_GATEWAY_URL",
+        "http://whatsapp-worker:3001" if os.path.exists("/.dockerenv") else "http://127.0.0.1:3001",
+    )
 
     @property
     def cors_origins(self) -> list[str]:
