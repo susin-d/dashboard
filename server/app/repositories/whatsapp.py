@@ -132,6 +132,8 @@ def list_whatsapp_chats(database: Client, user_id: str) -> List[WhatsAppChatResp
                 avatar_url=data.get("avatar_url"),
                 is_group=bool(data.get("is_group", False)),
                 is_eve=bool(data.get("is_eve", False)),
+                participants=data.get("participants") or [],
+                description=data.get("description"),
                 unread_count=int(data.get("unread_count", 0)),
                 pinned=bool(data.get("pinned", False)),
                 last_message=last_message,
@@ -151,6 +153,8 @@ def upsert_whatsapp_chat(
     avatar_url: Optional[str] = None,
     is_group: bool = False,
     is_eve: bool = False,
+    participants: Optional[List[str]] = None,
+    description: Optional[str] = None,
     unread_count: Optional[int] = None,
     pinned: Optional[bool] = None,
     last_message: Optional[dict] = None,
@@ -167,6 +171,10 @@ def upsert_whatsapp_chat(
         payload["phone_number"] = phone_number
     if avatar_url is not None:
         payload["avatar_url"] = avatar_url
+    if participants is not None:
+        payload["participants"] = participants
+    if description is not None:
+        payload["description"] = description
     if unread_count is not None:
         payload["unread_count"] = unread_count
     if pinned is not None:
@@ -205,6 +213,10 @@ def list_whatsapp_messages(
                 status=data.get("status", "sent"),
                 media=media,
                 reply_to_message_id=data.get("reply_to_message_id"),
+                reactions=data.get("reactions") or [],
+                is_forwarded=bool(data.get("is_forwarded", False)),
+                is_starred=bool(data.get("is_starred", False)),
+                is_pinned=bool(data.get("is_pinned", False)),
             )
         )
     return results
@@ -228,6 +240,47 @@ def save_whatsapp_message(
         },
         merge=True,
     )
+
+
+def add_message_reaction(
+    database: Client,
+    user_id: str,
+    chat_id: str,
+    message_id: str,
+    emoji: str,
+    sender: str = "me",
+):
+    msg_ref = _messages_col(database, user_id, chat_id).document(message_id)
+    snap = msg_ref.get()
+    if snap.exists:
+        data = snap.to_dict() or {}
+        reactions = data.get("reactions") or []
+        # Filter existing reaction from same sender
+        reactions = [r for r in reactions if r.get("sender") != sender]
+        if emoji:
+            reactions.append({"emoji": emoji, "sender": sender})
+        msg_ref.set({"reactions": reactions}, merge=True)
+
+
+def star_whatsapp_message(
+    database: Client,
+    user_id: str,
+    chat_id: str,
+    message_id: str,
+    is_starred: bool,
+):
+    msg_ref = _messages_col(database, user_id, chat_id).document(message_id)
+    msg_ref.set({"is_starred": is_starred}, merge=True)
+
+
+def delete_whatsapp_message(
+    database: Client,
+    user_id: str,
+    chat_id: str,
+    message_id: str,
+):
+    msg_ref = _messages_col(database, user_id, chat_id).document(message_id)
+    msg_ref.delete()
 
 
 def mark_chat_as_read(database: Client, user_id: str, chat_id: str):

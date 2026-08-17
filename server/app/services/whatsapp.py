@@ -202,6 +202,8 @@ class WhatsAppService:
                         name=wc.get("name") or wc.get("id"),
                         phone_number=wc.get("phoneNumber"),
                         is_group=bool(wc.get("isGroup", False)),
+                        participants=wc.get("participants"),
+                        description=wc.get("description"),
                         unread_count=int(wc.get("unreadCount", 0)),
                     )
         except Exception:

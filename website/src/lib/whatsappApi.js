@@ -99,3 +99,28 @@ export async function summarizeWhatsAppChat(chatId) {
     errorMessage: 'Could not summarize WhatsApp chat.',
   })
 }
+
+export async function reactToWhatsAppMessage(chatId, messageId, emoji) {
+  return apiRequest(`/whatsapp/chats/${encodeURIComponent(chatId)}/messages/${encodeURIComponent(messageId)}/react`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ emoji }),
+    errorMessage: 'Could not react to message.',
+  })
+}
+
+export async function starWhatsAppMessage(chatId, messageId, isStarred = true) {
+  return apiRequest(`/whatsapp/chats/${encodeURIComponent(chatId)}/messages/${encodeURIComponent(messageId)}/star`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ is_starred: isStarred }),
+    errorMessage: 'Could not star message.',
+  })
+}
+
+export async function deleteWhatsAppMessage(chatId, messageId) {
+  return apiRequest(`/whatsapp/chats/${encodeURIComponent(chatId)}/messages/${encodeURIComponent(messageId)}`, {
+    method: 'DELETE',
+    errorMessage: 'Could not delete message.',
+  })
+}

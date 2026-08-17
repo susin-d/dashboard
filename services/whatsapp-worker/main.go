@@ -31,13 +31,14 @@ import (
 )
 
 type SessionChat struct {
-	ID          string    `json:"id"`
-	Name        string    `json:"name"`
-	PhoneNumber string    `json:"phoneNumber,omitempty"`
-	IsGroup     bool      `json:"isGroup"`
-	UnreadCount int       `json:"unreadCount"`
-	LastMessage string    `json:"lastMessage"`
-	UpdatedAt   time.Time `json:"updatedAt"`
+	ID           string    `json:"id"`
+	Name         string    `json:"name"`
+	PhoneNumber  string    `json:"phoneNumber,omitempty"`
+	IsGroup      bool      `json:"isGroup"`
+	Participants []string  `json:"participants,omitempty"`
+	UnreadCount  int       `json:"unreadCount"`
+	LastMessage  string    `json:"lastMessage"`
+	UpdatedAt    time.Time `json:"updatedAt"`
 }
 
 type SessionMessage struct {
@@ -545,11 +546,8 @@ func main() {
 
 	r.GET("/session/chats/:userId", func(c *gin.Context) {
 		userId := c.Param("userId")
-		sessionsLock.RLock()
-		sess, ok := sessions[userId]
-		sessionsLock.RUnlock()
-
-		if !ok || sess == nil {
+		sess, err := getOrCreateSession(userId)
+		if err != nil || sess == nil {
 			c.JSON(http.StatusOK, gin.H{"chats": []interface{}{}})
 			return
 		}
@@ -561,6 +559,64 @@ func main() {
 		}
 		sess.RUnlock()
 
+		// If memory chats is empty, populate from Device Contacts store
+		if len(chatList) == 0 && sess.Device != nil && sess.Device.Contacts != nil {
+			contacts, err := sess.Device.Contacts.GetAllContacts(context.Background())
+			if err == nil {
+				for jid, contact := range contacts {
+					name := contact.FullName
+					if name == "" {
+						name = contact.PushName
+					}
+					if name == "" {
+						name = contact.BusinessName
+					}
+					if name == "" {
+						name = jid.User
+					}
+					isGroup := strings.HasSuffix(jid.String(), "@g.us")
+					chatList = append(chatList, &SessionChat{
+						ID:          jid.String(),
+						Name:        name,
+						PhoneNumber: jid.User,
+						IsGroup:     isGroup,
+						UnreadCount: 0,
+						UpdatedAt:   time.Now(),
+					})
+				}
+			}
+		}
+
+		// Enhance group chats with real group titles and participant member names
+		for _, chat := range chatList {
+			if (chat.IsGroup || strings.HasSuffix(chat.ID, "@g.us")) && sess.Client != nil && sess.Client.IsConnected() {
+				groupJID, err := types.ParseJID(chat.ID)
+				if err == nil {
+					info, err := sess.Client.GetGroupInfo(context.Background(), groupJID)
+					if err == nil && info != nil {
+						if info.GroupName.Name != "" {
+							chat.Name = info.GroupName.Name
+						}
+						var pList []string
+						for _, p := range info.Participants {
+							pName := p.JID.User
+							if sess.Device != nil && sess.Device.Contacts != nil {
+								if contact, err := sess.Device.Contacts.GetContact(context.Background(), p.JID); err == nil {
+									if contact.FullName != "" {
+										pName = contact.FullName
+									} else if contact.PushName != "" {
+										pName = contact.PushName
+									}
+								}
+							}
+							pList = append(pList, pName)
+						}
+						chat.Participants = pList
+					}
+				}
+			}
+		}
+
 		c.JSON(http.StatusOK, gin.H{"chats": chatList})
 	})
 
@@ -568,11 +624,8 @@ func main() {
 		userId := c.Param("userId")
 		chatId := c.Param("chatId")
 
-		sessionsLock.RLock()
-		sess, ok := sessions[userId]
-		sessionsLock.RUnlock()
-
-		if !ok || sess == nil {
+		sess, err := getOrCreateSession(userId)
+		if err != nil || sess == nil {
 			c.JSON(http.StatusOK, gin.H{"messages": []interface{}{}})
 			return
 		}
@@ -585,6 +638,43 @@ func main() {
 		sess.RUnlock()
 
 		c.JSON(http.StatusOK, gin.H{"messages": msgs})
+	})
+
+	r.POST("/session/react", func(c *gin.Context) {
+		var req struct {
+			UserID    string `json:"userId" binding:"required"`
+			ChatID    string `json:"chatId" binding:"required"`
+			MessageID string `json:"messageId" binding:"required"`
+			Reaction  string `json:"reaction"`
+		}
+		if err := c.ShouldBindJSON(&req); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+
+		sessionsLock.RLock()
+		sess, ok := sessions[req.UserID]
+		sessionsLock.RUnlock()
+
+		if !ok || sess == nil || !sess.Connected {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "WhatsApp is not connected for this user"})
+			return
+		}
+
+		targetJID, err := types.ParseJID(req.ChatID)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("invalid JID: %v", err)})
+			return
+		}
+
+		msg := sess.Client.BuildReaction(targetJID, types.EmptyJID, req.MessageID, req.Reaction)
+		resp, err := sess.Client.SendMessage(context.Background(), targetJID, msg)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("react error: %v", err)})
+			return
+		}
+
+		c.JSON(http.StatusOK, gin.H{"success": true, "messageId": resp.ID})
 	})
 
 	r.POST("/session/send", func(c *gin.Context) {

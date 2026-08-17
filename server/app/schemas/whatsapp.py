@@ -53,6 +53,10 @@ class WhatsAppMessageResponse(BaseModel):
     status: str = Field(default="sent", description="'pending', 'sent', 'delivered', 'read'")
     media: Optional[WhatsAppMediaAttachment] = None
     reply_to_message_id: Optional[str] = None
+    reactions: Optional[List[dict]] = Field(default_factory=list, description="List of emoji reactions [{emoji, sender}]")
+    is_forwarded: bool = False
+    is_starred: bool = False
+    is_pinned: bool = False
 
 
 class WhatsAppChatResponse(BaseModel):
@@ -62,6 +66,8 @@ class WhatsAppChatResponse(BaseModel):
     avatar_url: Optional[str] = None
     is_group: bool = False
     is_eve: bool = False
+    participants: Optional[List[str]] = Field(default_factory=list, description="List of group participant names or JIDs")
+    description: Optional[str] = None
     unread_count: int = 0
     pinned: bool = False
     last_message: Optional[WhatsAppMessageResponse] = None

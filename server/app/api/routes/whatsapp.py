@@ -299,3 +299,82 @@ async def summarize_whatsapp_chat(
 ):
     summary = await WhatsAppService.summarize_chat(database, current_user["uid"], chat_id)
     return {"summary": summary}
+
+
+@router.post("/chats/{chat_id}/messages/{message_id}/react")
+async def react_to_message(
+    chat_id: str,
+    message_id: str,
+    payload: dict,
+    current_user: dict = Depends(get_current_user),
+    database: Client = Depends(get_firestore),
+):
+    emoji = payload.get("emoji", "")
+    whatsapp_repo.add_message_reaction(
+        database, current_user["uid"], chat_id, message_id, emoji=emoji, sender="me"
+    )
+    # Forward reaction to whatsmeow worker if external WhatsApp chat
+    if chat_id != "eve":
+        try:
+            worker_url = settings.whatsapp_gateway_url
+            async with httpx.AsyncClient(timeout=4.0) as client:
+                await client.post(
+                    f"{worker_url}/session/react",
+                    json={
+                        "userId": current_user["uid"],
+                        "chatId": chat_id,
+                        "messageId": message_id,
+                        "reaction": emoji,
+                    },
+                )
+        except Exception:
+            pass
+
+    # Broadcast reaction event over WebSocket
+    await whatsapp_ws_manager.broadcast_to_user(
+        current_user["uid"],
+        {
+            "type": "message_reaction",
+            "chat_id": chat_id,
+            "message_id": message_id,
+            "emoji": emoji,
+            "sender": "me",
+        },
+    )
+    return {"status": "ok"}
+
+
+@router.post("/chats/{chat_id}/messages/{message_id}/star")
+async def star_message_endpoint(
+    chat_id: str,
+    message_id: str,
+    payload: dict,
+    current_user: dict = Depends(get_current_user),
+    database: Client = Depends(get_firestore),
+):
+    is_starred = bool(payload.get("is_starred", True))
+    whatsapp_repo.star_whatsapp_message(
+        database, current_user["uid"], chat_id, message_id, is_starred=is_starred
+    )
+    return {"status": "ok", "is_starred": is_starred}
+
+
+@router.delete("/chats/{chat_id}/messages/{message_id}")
+async def delete_message_endpoint(
+    chat_id: str,
+    message_id: str,
+    current_user: dict = Depends(get_current_user),
+    database: Client = Depends(get_firestore),
+):
+    whatsapp_repo.delete_whatsapp_message(
+        database, current_user["uid"], chat_id, message_id
+    )
+    await whatsapp_ws_manager.broadcast_to_user(
+        current_user["uid"],
+        {
+            "type": "message_deleted",
+            "chat_id": chat_id,
+            "message_id": message_id,
+        },
+    )
+    return {"status": "ok"}

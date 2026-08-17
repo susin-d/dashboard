@@ -9,6 +9,9 @@ import {
   confirmWhatsAppPairing,
   generateEveWhatsAppDraft,
   summarizeWhatsAppChat,
+  reactToWhatsAppMessage,
+  starWhatsAppMessage,
+  deleteWhatsAppMessage,
   whatsappSocket,
 } from '../lib'
 import { WhatsAppChatList } from '../components/whatsapp/WhatsAppChatList'
@@ -105,6 +108,23 @@ export function WhatsAppPage() {
                 : c,
             ),
           )
+        }
+      } else if (event.type === 'message_reaction') {
+        if (event.chat_id === selectedChatIdRef.current) {
+          setMessages((prev) =>
+            prev.map((m) => {
+              if (m.id !== event.message_id) return m
+              const existingReactions = (m.reactions || []).filter((r) => r.sender !== event.sender)
+              if (event.emoji) {
+                existingReactions.push({ emoji: event.emoji, sender: event.sender, count: 1 })
+              }
+              return { ...m, reactions: existingReactions }
+            }),
+          )
+        }
+      } else if (event.type === 'message_deleted') {
+        if (event.chat_id === selectedChatIdRef.current) {
+          setMessages((prev) => prev.filter((m) => m.id !== event.message_id))
         }
       }
     })
@@ -277,6 +297,43 @@ export function WhatsAppPage() {
     }
   }
 
+  const handleReactToMessage = async (chatId, messageId, emoji) => {
+    // Optimistic update
+    setMessages((prev) =>
+      prev.map((m) => {
+        if (m.id !== messageId) return m
+        const existing = (m.reactions || []).filter((r) => r.sender !== 'me')
+        if (emoji) existing.push({ emoji, sender: 'me', count: 1 })
+        return { ...m, reactions: existing }
+      }),
+    )
+    try {
+      await reactToWhatsAppMessage(chatId, messageId, emoji)
+    } catch (err) {
+      console.error('Failed to react to message:', err)
+    }
+  }
+
+  const handleStarMessage = async (chatId, messageId, isStarred) => {
+    setMessages((prev) =>
+      prev.map((m) => (m.id === messageId ? { ...m, is_starred: isStarred } : m)),
+    )
+    try {
+      await starWhatsAppMessage(chatId, messageId, isStarred)
+    } catch (err) {
+      console.error('Failed to star message:', err)
+    }
+  }
+
+  const handleDeleteMessage = async (chatId, messageId) => {
+    setMessages((prev) => prev.filter((m) => m.id !== messageId))
+    try {
+      await deleteWhatsAppMessage(chatId, messageId)
+    } catch (err) {
+      console.error('Failed to delete message:', err)
+    }
+  }
+
   const selectedChat = chats.find((c) => c.id === selectedChatId)
 
   return (
@@ -302,6 +359,9 @@ export function WhatsAppPage() {
             onOpenInfoDrawer={() => setIsInfoDrawerOpen((prev) => !prev)}
             onGenerateEveDraft={handleGenerateEveDraft}
             onSummarizeChat={handleSummarizeChat}
+            onReactToMessage={handleReactToMessage}
+            onStarMessage={handleStarMessage}
+            onDeleteMessage={handleDeleteMessage}
             isDrafting={isDrafting}
           />
         ) : (
