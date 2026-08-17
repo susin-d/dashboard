@@ -4,7 +4,7 @@ Living project snapshot for AI agents. `AGENTS.md` holds the permanent rules;
 this file holds the **current state** of the codebase and must be kept up to
 date whenever the implementation changes.
 
-> **Last updated:** 2026-08-17 (Removed floating hover quick reactions bar and simplified message options menu)
+> **Last updated:** 2026-08-17 (Added WebSocket connection_upgrade mapping, proxy buffering optimization in Nginx, and added get_whatsapp_chat helper)
 
 ---
 
