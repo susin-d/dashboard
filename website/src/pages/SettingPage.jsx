@@ -112,9 +112,7 @@ export function SettingPage({
         setImportedIcsCalendars={setImportedIcsCalendars}
         setImportedIcsEvents={setImportedIcsEvents}
       />
-      <div id="settings-whatsapp">
-        <WhatsAppSection />
-      </div>
+      <WhatsAppSection />
       <AiModelsSection />
       <CodingSection user={user} onContestSitesChange={onContestSitesChange} />
       <HackathonSourcesSection user={user} onHackathonsChange={onHackathonsChange} />

@@ -16,8 +16,8 @@ export function AppsSection({
   return (
     <div className="setting-section" id="settings-apps">
       <SectionHeading
-        title="Apps"
-        description="Connect Google Workspace to use cloud files across StarWaves."
+        title="Integrations"
+        description="Connect Google Workspace, Calendars, Gmail, Google Chat, and GitHub to synchronize data across StarWaves."
       />
 
       <div className="apps-settings-stack">

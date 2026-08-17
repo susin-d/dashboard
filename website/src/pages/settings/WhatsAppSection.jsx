@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { MessageSquare, QrCode, Trash2, Bot, Bell } from 'lucide-react'
-import { ConfirmDialog, SettingsCard } from '../../components/ui'
+import { ConfirmDialog, SectionHeading, SettingsCard } from '../../components/ui'
 import {
   fetchWhatsAppStatus,
   disconnectWhatsApp,
@@ -87,11 +87,17 @@ export function WhatsAppSection() {
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-      <SettingsCard
-        icon={<MessageSquare size={19} />}
-        title="WhatsApp Integration"
-        description="Connect personal or workspace WhatsApp to chat, receive notifications, and allow Eve to assist with messages."
+    <div className="setting-section" id="settings-whatsapp">
+      <SectionHeading
+        title="WhatsApp"
+        description="Connect personal or workspace WhatsApp to chat, receive notifications, and configure Eve AI automations."
+      />
+
+      <div className="apps-settings-stack">
+        <SettingsCard
+          icon={<MessageSquare size={19} />}
+          title="WhatsApp Account"
+          description="Link your WhatsApp account to sync conversations, contacts, and real-time alerts."
         action={
           status.connected ? (
             <button
@@ -196,6 +202,7 @@ export function WhatsAppSection() {
           </div>
         </div>
       </SettingsCard>
+      </div>
 
       <WhatsAppQrModal
         isOpen={isQrModalOpen}
