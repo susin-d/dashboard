@@ -4,7 +4,7 @@ Living project snapshot for AI agents. `AGENTS.md` holds the permanent rules;
 this file holds the **current state** of the codebase and must be kept up to
 date whenever the implementation changes.
 
-> **Last updated:** 2026-08-17 (Added sender profile photos and avatar fallbacks in group chats and enhanced chat list avatars)
+> **Last updated:** 2026-08-17 (Resolved group participant usernames and sender names in group headers and chat subtitles)
 
 ---
 
