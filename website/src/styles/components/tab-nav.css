@@ -71,13 +71,16 @@
   font-weight: 700;
 }
 
-/* ── Variant: sticky nav (settings-style) ─────────────────────────────── */
-
 .tab-nav.sticky-nav {
   position: sticky;
-  z-index: 10;
-  top: 76px;
-  background: var(--bg-overlay);
+  z-index: 20;
+  top: 0;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  background: var(--bg-card);
   backdrop-filter: blur(12px);
+  border: 1px solid var(--border-color);
   border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
 }

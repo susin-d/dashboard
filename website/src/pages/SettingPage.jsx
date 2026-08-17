@@ -39,13 +39,15 @@ export function SettingPage({
 
   useEffect(() => {
     let rafId = null
+    const scrollContainer = document.querySelector('.content') || window
 
     const handleScroll = () => {
       if (isClickScrollingRef.current) return
 
       if (rafId) cancelAnimationFrame(rafId)
       rafId = requestAnimationFrame(() => {
-        const scrollPos = window.scrollY + 160
+        const scrollTop = scrollContainer === window ? window.scrollY : scrollContainer.scrollTop
+        const scrollPos = scrollTop + 100
         let current = SETTINGS_SECTIONS[0].id
 
         for (const section of SETTINGS_SECTIONS) {
@@ -58,12 +60,12 @@ export function SettingPage({
       })
     }
 
-    window.addEventListener('scroll', handleScroll, { passive: true })
+    scrollContainer.addEventListener('scroll', handleScroll, { passive: true })
     handleScroll()
 
     return () => {
       if (rafId) cancelAnimationFrame(rafId)
-      window.removeEventListener('scroll', handleScroll)
+      scrollContainer.removeEventListener('scroll', handleScroll)
       if (clickTimeoutRef.current) clearTimeout(clickTimeoutRef.current)
     }
   }, [])
