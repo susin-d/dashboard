@@ -164,8 +164,8 @@ func extractMessageInfo(rawMsg *waE2E.Message) (content string, isForwarded bool
 	} else if sticker := msg.GetStickerMessage(); sticker != nil {
 		ctxInfo = sticker.GetContextInfo()
 		thumb := ""
-		if len(sticker.GetPNGThumbnail()) > 0 {
-			thumb = "data:image/png;base64," + base64.StdEncoding.EncodeToString(sticker.GetPNGThumbnail())
+		if len(sticker.GetPngThumbnail()) > 0 {
+			thumb = "data:image/png;base64," + base64.StdEncoding.EncodeToString(sticker.GetPngThumbnail())
 		}
 		media = &SessionMedia{
 			Type:            "sticker",
