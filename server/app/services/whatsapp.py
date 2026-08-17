@@ -238,6 +238,22 @@ class WhatsAppService:
 
         whatsapp_repo.save_whatsapp_message(database, user_id, chat_id, msg)
 
+        # Dispatch message to whatsmeow worker if it is an external WhatsApp chat
+        if chat_id != "eve":
+            try:
+                worker_url = settings.whatsapp_gateway_url
+                async with httpx.AsyncClient(timeout=5.0) as client:
+                    await client.post(
+                        f"{worker_url}/session/send",
+                        json={
+                            "userId": user_id,
+                            "chatId": chat_id,
+                            "content": content,
+                        },
+                    )
+            except Exception as e:
+                logger.warning(f"Could not forward message to whatsmeow worker: {e}")
+
         # Broadcast user message via WebSocket
         await whatsapp_ws_manager.broadcast_to_user(
             user_id,
@@ -295,6 +311,22 @@ class WhatsAppService:
         )
 
         whatsapp_repo.save_whatsapp_message(database, user_id, chat_id, eve_msg)
+
+        # Forward Eve's response to whatsmeow worker for external WhatsApp contacts
+        if chat_id != "eve":
+            try:
+                worker_url = settings.whatsapp_gateway_url
+                async with httpx.AsyncClient(timeout=5.0) as client:
+                    await client.post(
+                        f"{worker_url}/session/send",
+                        json={
+                            "userId": user_id,
+                            "chatId": chat_id,
+                            "content": eve_reply_text,
+                        },
+                    )
+            except Exception as e:
+                logger.warning(f"Could not forward Eve reply to whatsmeow worker: {e}")
 
         await whatsapp_ws_manager.broadcast_to_user(
             user_id,

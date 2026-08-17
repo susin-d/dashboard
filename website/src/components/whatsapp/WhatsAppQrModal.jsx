@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Modal } from '../ui/Modal'
-import { QrCode, RefreshCw, CheckCircle2 } from 'lucide-react'
+import { QrCode, RefreshCw, Smartphone, Copy, Check, Radio } from 'lucide-react'
 
 export function WhatsAppQrModal({
   isOpen,
@@ -8,15 +8,31 @@ export function WhatsAppQrModal({
   qrCode,
   pairingCode,
   onRefresh,
-  onConfirmPairing,
+  onRequestPairingCode,
+  onCheckStatus,
   loading = false,
 }) {
   const [phoneNumber, setPhoneNumber] = useState('')
   const [useCode, setUseCode] = useState(false)
+  const [copied, setCopied] = useState(false)
+  const [requestingCode, setRequestingCode] = useState(false)
 
-  const handleSimulateScan = () => {
-    onConfirmPairing(phoneNumber || '+1 (555) 019-2834', 'Starwaves User')
-    onClose()
+  const handleCopyCode = (code) => {
+    if (!code) return
+    navigator.clipboard?.writeText(code)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
+
+  const handleGetPairingCode = async (e) => {
+    e?.preventDefault()
+    if (!phoneNumber.trim() || !onRequestPairingCode) return
+    try {
+      setRequestingCode(true)
+      await onRequestPairingCode(phoneNumber.trim())
+    } finally {
+      setRequestingCode(false)
+    }
   }
 
   return (
@@ -25,84 +41,148 @@ export function WhatsAppQrModal({
       onClose={onClose}
       title="Link WhatsApp"
       subtitle="Connect your WhatsApp account to Starwaves and Eve AI"
+      className="whatsapp-qr-modal-dialog"
     >
       <div className="whatsapp-qr-container">
         {!useCode ? (
           <>
             <div className="whatsapp-qr-box">
-              {qrCode ? (
-                <img src={qrCode} alt="WhatsApp QR Code" />
+              {loading ? (
+                <div className="whatsapp-qr-loading">
+                  <RefreshCw size={28} className="animate-spin" />
+                  <span>Loading QR code...</span>
+                </div>
+              ) : qrCode ? (
+                <img src={qrCode} alt="WhatsApp QR Code" className="whatsapp-qr-image" />
               ) : (
-                <QrCode size={160} color="#000000" />
+                <div className="whatsapp-qr-placeholder">
+                  <QrCode size={140} color="#000000" />
+                </div>
               )}
             </div>
 
+            <div className="whatsapp-qr-status-pill">
+              <span className="whatsapp-qr-pulse-dot" />
+              <span>Waiting for WhatsApp scan...</span>
+            </div>
+
             <ol className="whatsapp-qr-steps">
-              <li>Open <strong>WhatsApp</strong> on your phone</li>
-              <li>Tap <strong>Menu (⋮)</strong> or <strong>Settings (⚙)</strong> and select <strong>Linked Devices</strong></li>
-              <li>Tap <strong>Link a Device</strong> and point your camera at this QR code</li>
+              <li className="whatsapp-qr-step-item">
+                <span className="whatsapp-qr-step-num">1</span>
+                <span>Open <strong>WhatsApp</strong> on your phone</span>
+              </li>
+              <li className="whatsapp-qr-step-item">
+                <span className="whatsapp-qr-step-num">2</span>
+                <span>Tap <strong>Menu (⋮)</strong> or <strong>Settings (⚙)</strong> and select <strong>Linked Devices</strong></span>
+              </li>
+              <li className="whatsapp-qr-step-item">
+                <span className="whatsapp-qr-step-num">3</span>
+                <span>Tap <strong>Link a Device</strong> and point your camera at this QR code</span>
+              </li>
             </ol>
 
-            <div style={{ display: 'flex', gap: '8px', width: '100%', justifyContent: 'center' }}>
+            <div className="whatsapp-qr-actions">
               <button
                 type="button"
-                className="btn btn-secondary"
+                className="secondary-button"
                 onClick={onRefresh}
                 disabled={loading}
-                style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
               >
                 <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
                 Refresh QR
               </button>
+
               <button
                 type="button"
-                className="btn btn-secondary"
+                className="secondary-button"
                 onClick={() => setUseCode(true)}
               >
+                <Smartphone size={14} />
                 Link with phone number
               </button>
+
               <button
                 type="button"
-                className="btn btn-primary"
-                onClick={handleSimulateScan}
-                style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                className="primary-button"
+                onClick={onCheckStatus}
+                disabled={loading}
               >
-                <CheckCircle2 size={14} />
-                Confirm Link
+                <Radio size={14} />
+                Check Status
               </button>
             </div>
           </>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', width: '100%', textAlign: 'left' }}>
-            <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
-              Enter your phone number to receive an 8-digit pairing code to enter on your phone.
+          <div className="whatsapp-phone-pairing-container">
+            <p className="whatsapp-phone-pairing-desc">
+              Enter your phone number (including country code) to receive an 8-character pairing code to enter on your phone.
             </p>
-            <input
-              type="tel"
-              className="form-input"
-              placeholder="+1 (555) 000-0000"
-              value={phoneNumber}
-              onChange={(e) => setPhoneNumber(e.target.value)}
-              style={{ width: '100%' }}
-            />
+
+            <form className="whatsapp-phone-form" onSubmit={handleGetPairingCode}>
+              <div className="whatsapp-phone-input-row">
+                <input
+                  type="tel"
+                  className="whatsapp-phone-input"
+                  placeholder="+1 (555) 000-0000"
+                  value={phoneNumber}
+                  onChange={(e) => setPhoneNumber(e.target.value)}
+                  autoFocus
+                />
+                <button
+                  type="submit"
+                  className="primary-button"
+                  disabled={!phoneNumber.trim() || requestingCode}
+                >
+                  {requestingCode ? (
+                    <>
+                      <RefreshCw size={14} className="animate-spin" />
+                      Requesting...
+                    </>
+                  ) : (
+                    'Get Code'
+                  )}
+                </button>
+              </div>
+            </form>
+
             {pairingCode && (
-              <div style={{ padding: '12px', background: 'var(--bg-secondary)', borderRadius: '8px', textAlign: 'center', border: '1px solid var(--border-color)' }}>
-                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>YOUR PAIRING CODE</div>
-                <div style={{ fontSize: '1.5rem', fontWeight: 700, letterSpacing: '0.15em', marginTop: '4px' }}>
-                  {pairingCode}
+              <div className="whatsapp-pairing-card">
+                <div className="whatsapp-pairing-label">YOUR PAIRING CODE</div>
+                <div className="whatsapp-pairing-code-row">
+                  <span className="whatsapp-pairing-digits">{pairingCode}</span>
+                  <button
+                    type="button"
+                    className="secondary-button"
+                    onClick={() => handleCopyCode(pairingCode)}
+                    title="Copy pairing code"
+                    style={{ minHeight: '34px', padding: '6px 10px' }}
+                  >
+                    {copied ? <Check size={14} /> : <Copy size={14} />}
+                    {copied ? 'Copied' : 'Copy'}
+                  </button>
                 </div>
+                <p className="whatsapp-pairing-instruction">
+                  On WhatsApp: <strong>Settings &gt; Linked Devices &gt; Link a Device &gt; Link with phone number instead</strong> and type the code above.
+                </p>
               </div>
             )}
-            <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', marginTop: '8px' }}>
-              <button type="button" className="btn btn-secondary" onClick={() => setUseCode(false)}>
-                Back to QR Code
-              </button>
+
+            <div className="whatsapp-qr-actions" style={{ marginTop: '8px' }}>
               <button
                 type="button"
-                className="btn btn-primary"
-                onClick={handleSimulateScan}
+                className="secondary-button"
+                onClick={() => setUseCode(false)}
               >
-                Confirm Device
+                Back to QR Code
+              </button>
+
+              <button
+                type="button"
+                className="primary-button"
+                onClick={onCheckStatus}
+              >
+                <Radio size={14} />
+                Check Status
               </button>
             </div>
           </div>

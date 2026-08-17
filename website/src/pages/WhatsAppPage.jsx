@@ -123,13 +123,76 @@ export function WhatsAppPage() {
       .catch((err) => console.error('Could not load messages:', err))
   }, [selectedChatId])
 
+  const [isQrLoading, setIsQrLoading] = useState(false)
+
+  // Auto-poll status when QR modal is open to detect scan instantly
+  useEffect(() => {
+    if (!isQrModalOpen || status.connected) return
+
+    const timer = setInterval(async () => {
+      try {
+        const stat = await fetchWhatsAppStatus()
+        if (stat.connected) {
+          setStatus(stat)
+          setIsQrModalOpen(false)
+          const chatList = await fetchWhatsAppChats().catch(() => [])
+          setChats(chatList)
+          if (chatList.length > 0) setSelectedChatId((curr) => curr || chatList[0].id)
+        }
+      } catch {
+        // ignore polling errors
+      }
+    }, 2500)
+
+    return () => clearInterval(timer)
+  }, [isQrModalOpen, status.connected])
+
   const handleOpenQrModal = async () => {
     setIsQrModalOpen(true)
+    setIsQrLoading(true)
     try {
       const pair = await initiateWhatsAppPairing()
       setPairingData(pair)
     } catch (err) {
       console.error('Pairing error:', err)
+    } finally {
+      setIsQrLoading(false)
+    }
+  }
+
+  const handleRequestPairingCode = async (phoneNumber) => {
+    try {
+      const pair = await initiateWhatsAppPairing(phoneNumber)
+      setPairingData((prev) => ({
+        ...prev,
+        pairing_code: pair.pairing_code,
+        qr_code: pair.qr_code || prev.qr_code,
+      }))
+      return pair
+    } catch (err) {
+      console.error('Request pairing code error:', err)
+      throw err
+    }
+  }
+
+  const handleCheckStatus = async () => {
+    setIsQrLoading(true)
+    try {
+      const stat = await fetchWhatsAppStatus()
+      setStatus(stat)
+      if (stat.connected) {
+        setIsQrModalOpen(false)
+        const chatList = await fetchWhatsAppChats().catch(() => [])
+        setChats(chatList)
+        if (chatList.length > 0) setSelectedChatId((curr) => curr || chatList[0].id)
+      } else {
+        const pair = await initiateWhatsAppPairing()
+        setPairingData(pair)
+      }
+    } catch (err) {
+      console.error('Check status error:', err)
+    } finally {
+      setIsQrLoading(false)
     }
   }
 
@@ -137,6 +200,7 @@ export function WhatsAppPage() {
     try {
       const updated = await confirmWhatsAppPairing(phoneNumber, pushName)
       setStatus(updated)
+      setIsQrModalOpen(false)
       const chatList = await fetchWhatsAppChats()
       setChats(chatList)
       if (chatList.length > 0) setSelectedChatId(chatList[0].id)
@@ -306,7 +370,9 @@ export function WhatsAppPage() {
         qrCode={pairingData.qr_code}
         pairingCode={pairingData.pairing_code}
         onRefresh={handleOpenQrModal}
-        onConfirmPairing={handleConfirmPairing}
+        onRequestPairingCode={handleRequestPairingCode}
+        onCheckStatus={handleCheckStatus}
+        loading={isQrLoading}
       />
 
       {/* Summary Alert Modal */}
@@ -315,21 +381,23 @@ export function WhatsAppPage() {
           style={{
             position: 'fixed',
             inset: 0,
-            background: 'rgba(0,0,0,0.7)',
+            background: 'var(--bg-backdrop, rgba(0,0,0,0.7))',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             zIndex: 9999,
+            padding: '16px',
           }}
         >
           <div
             style={{
-              background: 'var(--bg-secondary)',
+              background: 'var(--bg-card)',
               border: '1px solid var(--border-color)',
-              borderRadius: '12px',
+              borderRadius: 'var(--radius-xl, 12px)',
               padding: '24px',
               maxWidth: '500px',
-              width: '90%',
+              width: '100%',
+              boxShadow: 'var(--shadow-lg)',
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
@@ -342,7 +410,7 @@ export function WhatsAppPage() {
             <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 16 }}>
               <button
                 type="button"
-                className="btn btn-primary"
+                className="primary-button"
                 onClick={() => setSummaryModalText(null)}
               >
                 Done

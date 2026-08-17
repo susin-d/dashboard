@@ -147,8 +147,8 @@ export function WhatsAppConversation({
         <div className="whatsapp-header-actions">
           <button
             type="button"
-            className="btn btn-secondary"
-            style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '0.8125rem' }}
+            className="secondary-button"
+            style={{ minHeight: '34px', padding: '6px 12px', fontSize: '0.8125rem' }}
             onClick={() => onSummarizeChat?.(chat.id)}
             title="Summarize conversation with Eve"
           >
@@ -343,10 +343,10 @@ export function WhatsAppConversation({
 
         <button
           type="button"
-          className={`whatsapp-icon-btn ${isRecording ? 'btn-danger' : ''}`}
+          className={`whatsapp-icon-btn ${isRecording ? 'recording' : ''}`}
           onClick={handleSimulateVoiceNote}
           title={isRecording ? 'Stop & send voice note' : 'Record voice note'}
-          style={isRecording ? { background: '#ffffff', color: '#000000' } : {}}
+          style={isRecording ? { background: 'var(--text-primary)', color: 'var(--bg-primary)' } : {}}
         >
           {isRecording ? <Square size={16} /> : <Mic size={18} />}
         </button>

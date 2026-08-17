@@ -66,9 +66,9 @@ export function WhatsAppInfoDrawer({
 
           <button
             type="button"
-            className="btn btn-secondary"
+            className="secondary-button"
             onClick={() => onSummarizeChat?.(chat.id)}
-            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', width: '100%' }}
+            style={{ width: '100%', minHeight: '36px', marginTop: '6px' }}
           >
             <Sparkles size={14} />
             Generate Summary & Actions
