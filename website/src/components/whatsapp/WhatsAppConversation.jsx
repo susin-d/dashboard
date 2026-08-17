@@ -219,7 +219,29 @@ export function WhatsAppConversation({
       <div className="whatsapp-main-header">
         <div className="whatsapp-contact-header">
           <div className={`whatsapp-avatar ${isEve ? 'is-eve' : chat?.is_group ? 'is-group' : ''}`}>
-            {isEve ? <Bot size={22} /> : chat?.is_group ? <Users size={20} /> : <User size={20} />}
+            {isEve ? (
+              <Bot size={22} />
+            ) : chat?.avatar_url ? (
+              <img
+                src={chat.avatar_url}
+                alt={chat.name}
+                className="whatsapp-avatar-img"
+                onError={(e) => {
+                  e.currentTarget.style.display = 'none'
+                  if (e.currentTarget.nextSibling) {
+                    e.currentTarget.nextSibling.style.display = 'flex'
+                  }
+                }}
+              />
+            ) : null}
+            {!isEve && (
+              <div
+                className="whatsapp-avatar-fallback"
+                style={chat?.avatar_url ? { display: 'none' } : {}}
+              >
+                {chat?.is_group ? <Users size={20} /> : <User size={20} />}
+              </div>
+            )}
           </div>
           <div className="whatsapp-contact-details">
             <h3 title={chat?.name}>{chat?.name || 'Conversation'}</h3>

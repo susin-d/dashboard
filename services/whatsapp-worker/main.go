@@ -34,6 +34,7 @@ type SessionChat struct {
 	ID           string    `json:"id"`
 	Name         string    `json:"name"`
 	PhoneNumber  string    `json:"phoneNumber,omitempty"`
+	AvatarURL    string    `json:"avatarUrl,omitempty"`
 	IsGroup      bool      `json:"isGroup"`
 	Participants []string  `json:"participants,omitempty"`
 	UnreadCount  int       `json:"unreadCount"`
@@ -587,31 +588,40 @@ func main() {
 			}
 		}
 
-		// Enhance group chats with real group titles and participant member names
+		// Enhance chats with real group titles, participant member names, and profile pictures
 		for _, chat := range chatList {
-			if (chat.IsGroup || strings.HasSuffix(chat.ID, "@g.us")) && sess.Client != nil && sess.Client.IsConnected() {
-				groupJID, err := types.ParseJID(chat.ID)
+			if sess.Client != nil && sess.Client.IsConnected() {
+				parsedJID, err := types.ParseJID(chat.ID)
 				if err == nil {
-					info, err := sess.Client.GetGroupInfo(context.Background(), groupJID)
-					if err == nil && info != nil {
-						if info.GroupName.Name != "" {
-							chat.Name = info.GroupName.Name
-						}
-						var pList []string
-						for _, p := range info.Participants {
-							pName := p.JID.User
-							if sess.Device != nil && sess.Device.Contacts != nil {
-								if contact, err := sess.Device.Contacts.GetContact(context.Background(), p.JID); err == nil {
-									if contact.FullName != "" {
-										pName = contact.FullName
-									} else if contact.PushName != "" {
-										pName = contact.PushName
+					if chat.IsGroup || strings.HasSuffix(chat.ID, "@g.us") {
+						info, err := sess.Client.GetGroupInfo(context.Background(), parsedJID)
+						if err == nil && info != nil {
+							if info.GroupName.Name != "" {
+								chat.Name = info.GroupName.Name
+							}
+							var pList []string
+							for _, p := range info.Participants {
+								pName := p.JID.User
+								if sess.Device != nil && sess.Device.Contacts != nil {
+									if contact, err := sess.Device.Contacts.GetContact(context.Background(), p.JID); err == nil {
+										if contact.FullName != "" {
+											pName = contact.FullName
+										} else if contact.PushName != "" {
+											pName = contact.PushName
+										}
 									}
 								}
+								pList = append(pList, pName)
 							}
-							pList = append(pList, pName)
+							chat.Participants = pList
 						}
-						chat.Participants = pList
+					}
+					// Fetch profile picture URL
+					picInfo, err := sess.Client.GetProfilePictureInfo(context.Background(), parsedJID, &whatsmeow.GetProfilePictureParams{
+						Preview: true,
+					})
+					if err == nil && picInfo != nil && picInfo.URL != "" {
+						chat.AvatarURL = picInfo.URL
 					}
 				}
 			}

@@ -213,6 +213,7 @@ class WhatsAppService:
                         chat_id=chat_id,
                         name=wc.get("name") or chat_id,
                         phone_number=wc.get("phoneNumber"),
+                        avatar_url=wc.get("avatarUrl"),
                         is_group=bool(wc.get("isGroup", False)),
                         participants=wc.get("participants"),
                         description=wc.get("description"),

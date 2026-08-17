@@ -181,6 +181,22 @@
   color: var(--text-primary, #ffffff);
 }
 
+.whatsapp-avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+  display: block;
+}
+
+.whatsapp-avatar-fallback {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .whatsapp-chat-info {
   flex: 1;
   min-width: 0;
