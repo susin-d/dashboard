@@ -4,7 +4,7 @@ Living project snapshot for AI agents. `AGENTS.md` holds the permanent rules;
 this file holds the **current state** of the codebase and must be kept up to
 date whenever the implementation changes.
 
-> **Last updated:** 2026-08-17 (Modularized WhatsApp worker service and fixed 1-on-1 contact name resolution from WhatsMeow contact store)
+> **Last updated:** 2026-08-17 (Implemented Fullscreen Media Lightbox viewer, Shared Media & Docs gallery tabs in Info Drawer, and multi-emoji reaction selection)
 
 ---
 
