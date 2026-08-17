@@ -348,6 +348,7 @@ class WhatsAppService:
         if not eve_conversation or eve_conversation[-1]["content"] != user_prompt:
             eve_conversation.append({"role": "user", "content": user_prompt})
 
+        is_error = False
         try:
             user_dict = {"uid": user_id}
             eve_reply_text, _, _ = chat_with_eve(
@@ -356,9 +357,25 @@ class WhatsAppService:
                 messages=eve_conversation,
                 session_id=None,
             )
+            eve_reply_text = (eve_reply_text or "").strip()
+            if not eve_reply_text or "could not generate a response" in eve_reply_text.lower() or "trouble processing" in eve_reply_text.lower():
+                is_error = True
+                logger.error(
+                    f"[Eve WhatsApp Error] Eve produced empty or error response for user {user_id} in chat {chat_id}: {eve_reply_text}"
+                )
         except Exception as err:
-            logger.exception("Eve error processing WhatsApp message: %s", err)
-            eve_reply_text = "I'm having trouble processing that right now. Please try again in a moment."
+            is_error = True
+            logger.exception(f"[Eve WhatsApp Error] Exception generating response for user {user_id} in chat {chat_id}: {err}")
+            eve_reply_text = ""
+
+        if is_error:
+            logger.warning(
+                f"[Eve WhatsApp Blocked] Suppressing error message from being sent to external WhatsApp chat {chat_id} (user {user_id})"
+            )
+            if chat_id != "eve":
+                # Do not send failure text to external contacts or groups
+                return
+            eve_reply_text = "I could not generate a response. Please check the server logs for details."
 
         eve_msg_id = f"msg-{uuid4().hex[:12]}"
         eve_msg = WhatsAppMessageResponse(
@@ -376,7 +393,7 @@ class WhatsAppService:
         whatsapp_repo.save_whatsapp_message(database, user_id, chat_id, eve_msg)
 
         # Forward Eve's response to whatsmeow worker for external WhatsApp contacts
-        if chat_id != "eve":
+        if chat_id != "eve" and eve_reply_text:
             try:
                 worker_url = settings.whatsapp_gateway_url
                 async with httpx.AsyncClient(timeout=5.0) as client:
@@ -421,10 +438,14 @@ class WhatsAppService:
                 user={"uid": user_id},
                 messages=[{"role": "user", "content": prompt}],
             )
-            return draft.strip()
+            draft = (draft or "").strip()
+            if not draft or "could not generate a response" in draft.lower():
+                logger.error(f"[Eve Draft Error] Could not generate draft reply for user {user_id} in chat {chat_id}: {draft}")
+                return ""
+            return draft
         except Exception as err:
-            logger.warning("Could not generate Eve draft: %s", err)
-            return "Thanks for reaching out! Let me check and get back to you shortly."
+            logger.exception(f"[Eve Draft Error] Failed generating draft for chat {chat_id}: {err}")
+            return ""
 
     @staticmethod
     async def summarize_chat(database: Client, user_id: str, chat_id: str) -> str:
@@ -443,7 +464,11 @@ class WhatsAppService:
                 user={"uid": user_id},
                 messages=[{"role": "user", "content": prompt}],
             )
-            return summary.strip()
+            summary = (summary or "").strip()
+            if not summary or "could not generate a response" in summary.lower():
+                logger.error(f"[Eve Summary Error] Could not generate summary for user {user_id} in chat {chat_id}: {summary}")
+                return ""
+            return summary
         except Exception as err:
-            logger.warning("Could not summarize chat: %s", err)
-            return "Could not generate summary at this time."
+            logger.exception(f"[Eve Summary Error] Failed summarizing chat {chat_id}: {err}")
+            return ""
