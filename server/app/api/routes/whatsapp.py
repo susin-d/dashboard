@@ -213,6 +213,16 @@ async def whatsapp_incoming_webhook(
                 name = c.get("name")
                 if not name or (is_group and name == "Contact"):
                     name = "Group conversation" if is_group else c_id
+
+                existing_chat = whatsapp_repo.get_whatsapp_chat(database, user_id, c_id)
+                if (
+                    existing_chat
+                    and existing_chat.name
+                    and existing_chat.name not in ("Contact", "Group conversation", c_id, "You")
+                    and (not name or name in ("Contact", "Group conversation", c_id, "You") or name.startswith("+"))
+                ):
+                    name = existing_chat.name
+
                 whatsapp_repo.upsert_whatsapp_chat(
                     database,
                     user_id,
@@ -292,10 +302,31 @@ async def whatsapp_incoming_webhook(
     )
     whatsapp_repo.save_whatsapp_message(database, user_id, chat_id, incoming_msg)
 
-    # Upsert chat with last_message without overwriting group name with participant sender name
+    # Upsert chat with last_message without overwriting contact name with user's sender name
     existing_chat = whatsapp_repo.get_whatsapp_chat(database, user_id, chat_id)
-    resolved_name = chat_name or ("Group conversation" if is_group else sender_name)
-    if existing_chat and existing_chat.name and existing_chat.name not in ("Contact", "Group conversation", chat_id):
+    resolved_name = chat_name
+    if not resolved_name or resolved_name in ("Contact", "Group conversation", chat_id, "You"):
+        if is_group:
+            resolved_name = (
+                existing_chat.name
+                if (existing_chat and existing_chat.name and existing_chat.name not in ("Contact", chat_id))
+                else "Group conversation"
+            )
+        else:
+            if not is_from_me and sender_name and sender_name not in ("You", "Contact"):
+                resolved_name = sender_name
+            elif existing_chat and existing_chat.name and existing_chat.name not in ("Contact", "Group conversation", chat_id, "You"):
+                resolved_name = existing_chat.name
+            else:
+                clean_num = chat_id.replace("@s.whatsapp.net", "").replace("@g.us", "")
+                resolved_name = f"+{clean_num}" if clean_num.isdigit() else clean_num
+
+    if (
+        existing_chat
+        and existing_chat.name
+        and existing_chat.name not in ("Contact", "Group conversation", chat_id, "You")
+        and (not chat_name or chat_name in ("Contact", "Group conversation", chat_id, "You"))
+    ):
         resolved_name = existing_chat.name
 
     whatsapp_repo.upsert_whatsapp_chat(
