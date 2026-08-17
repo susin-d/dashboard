@@ -187,12 +187,31 @@ export async function beginGoogleOAuth() {
       resolve(userData)
     }
 
-    const apiOrigin = API_URL.startsWith('http')
-      ? new URL(API_URL).origin
-      : (typeof window !== 'undefined' ? window.location.origin : '')
+    const isAllowedAuthOrigin = (origin) => {
+      if (!origin) return false
+      if (typeof window === 'undefined') return true
+      if (origin === window.location.origin) return true
+      if (API_URL.startsWith('http')) {
+        try {
+          if (new URL(API_URL).origin === origin) return true
+        } catch {}
+      }
+      const isLocalHost = (host) => /^(localhost|127\.0\.0\.1|\[::1\])(:\d+)?$/.test(host)
+      try {
+        const originHost = new URL(origin).host
+        const winHost = window.location.host
+        if (isLocalHost(originHost) && isLocalHost(winHost)) {
+          return true
+        }
+      } catch {}
+      if (origin.endsWith('.susindran.in') || origin.endsWith('.vercel.app')) {
+        return true
+      }
+      return false
+    }
 
     const messageHandler = (event) => {
-      if (apiOrigin && event.origin !== apiOrigin && event.origin !== window.location.origin) return
+      if (!isAllowedAuthOrigin(event.origin)) return
       if (event.data?.type === 'STARWAVES_AUTH_SUCCESS' && event.data?.data) {
         const { token, user } = event.data.data
         processAuthSuccess(user, token)
@@ -238,8 +257,17 @@ export async function beginGoogleOAuth() {
         }
         try {
           if (popup && popup.closed) {
-            cleanup()
-            reject(new Error('Google sign-in was cancelled.'))
+            setTimeout(() => {
+              if (isDone) return
+              const recheckUser = getStoredUser()
+              if (recheckUser && getStoredAuthToken()) {
+                cleanup()
+                resolve(recheckUser)
+                return
+              }
+              cleanup()
+              reject(new Error('Google sign-in was cancelled.'))
+            }, 800)
           }
         } catch {
           // COOP restriction: safely ignore
