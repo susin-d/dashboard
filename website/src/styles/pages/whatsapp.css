@@ -1140,6 +1140,31 @@
   gap: 2px;
 }
 
+.whatsapp-context-react-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 8px;
+  background: var(--bg-primary, #09090b);
+  border-radius: 6px;
+  margin-bottom: 2px;
+}
+
+.whatsapp-context-react-btn {
+  background: transparent;
+  border: none;
+  font-size: 1.05rem;
+  padding: 3px 4px;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: transform 0.1s ease, background 0.1s ease;
+}
+
+.whatsapp-context-react-btn:hover {
+  transform: scale(1.25);
+  background: var(--bg-hover, #27272a);
+}
+
 .whatsapp-context-item {
   display: flex;
   align-items: center;
@@ -1596,6 +1621,90 @@
   background: var(--bg-secondary, #18181b);
   font-weight: 600;
   color: var(--text-primary, #ffffff);
+}
+
+/* Lightbox Modal for Fullscreen Media */
+.whatsapp-media-preview-container.is-clickable {
+  cursor: pointer;
+}
+
+.whatsapp-media-preview-container.is-clickable:hover img {
+  opacity: 0.92;
+  transition: opacity 0.15s ease;
+}
+
+.whatsapp-lightbox-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.88);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  animation: fadeIn 0.15s ease;
+}
+
+.whatsapp-lightbox-container {
+  max-width: 90vw;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-secondary, #121212);
+  border: 1px solid var(--border-color, #27272a);
+  border-radius: var(--radius-lg, 12px);
+  overflow: hidden;
+  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.9);
+}
+
+.whatsapp-lightbox-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 18px;
+  background: var(--bg-secondary, #121212);
+  border-bottom: 1px solid var(--border-color, #27272a);
+  gap: 16px;
+}
+
+.whatsapp-lightbox-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.whatsapp-lightbox-sender {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-primary, #ffffff);
+}
+
+.whatsapp-lightbox-time {
+  font-size: 0.75rem;
+  color: var(--text-secondary, #a1a1aa);
+}
+
+.whatsapp-lightbox-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.whatsapp-lightbox-body {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  max-height: calc(90vh - 70px);
+  background: #000000;
+  overflow: auto;
+}
+
+.whatsapp-lightbox-media {
+  max-width: 100%;
+  max-height: calc(85vh - 70px);
+  object-fit: contain;
+  border-radius: 4px;
 }
 
 

@@ -26,6 +26,7 @@ import {
   Share2,
   X,
   Pin,
+  Download,
 } from 'lucide-react'
 import { Markdown } from '../ui/Markdown'
 
@@ -95,6 +96,7 @@ export function WhatsAppConversation({
   const [inChatSearchQuery, setInChatSearchQuery] = useState('')
   const [copiedToast, setCopiedToast] = useState(false)
   const [infoModalMessage, setInfoModalMessage] = useState(null)
+  const [activeLightboxMedia, setActiveLightboxMedia] = useState(null)
 
   const messagesEndRef = useRef(null)
   const messagesFeedRef = useRef(null)
@@ -602,17 +604,22 @@ export function WhatsAppConversation({
                             <span>Copy</span>
                           </button>
 
-                          <button
-                            type="button"
-                            className="whatsapp-context-item"
-                            onClick={() => {
-                              onReactToMessage?.(chat.id, msg.id, '👍')
-                              setActiveMenuMessageId(null)
-                            }}
-                          >
-                            <Smile size={15} />
-                            <span>React (👍)</span>
-                          </button>
+                          <div className="whatsapp-context-react-row">
+                            {['👍', '❤️', '😂', '😮', '😢', '🙏'].map((emoji) => (
+                              <button
+                                key={emoji}
+                                type="button"
+                                className="whatsapp-context-react-btn"
+                                onClick={() => {
+                                  onReactToMessage?.(chat.id, msg.id, emoji)
+                                  setActiveMenuMessageId(null)
+                                }}
+                                title={`React ${emoji}`}
+                              >
+                                {emoji}
+                              </button>
+                            ))}
+                          </div>
 
                           <button
                             type="button"
@@ -737,7 +744,21 @@ export function WhatsAppConversation({
                         <span style={{ fontSize: '0.75rem', opacity: 0.8 }}>0:08</span>
                       </div>
                     ) : (msg.media && (msg.media.thumbnail_base64 || ['image', 'gif', 'video', 'sticker'].includes(msg.media.type) || msg.media.url)) ? (
-                      <div className={`whatsapp-media-preview-container ${msg.media.type === 'sticker' ? 'is-sticker' : ''}`}>
+                      <div
+                        className={`whatsapp-media-preview-container ${msg.media.type === 'sticker' ? 'is-sticker' : 'is-clickable'}`}
+                        onClick={() => {
+                          if (msg.media.type !== 'sticker') {
+                            setActiveLightboxMedia({
+                              url: msg.media.url || msg.media.thumbnail_base64,
+                              type: msg.media.type || 'image',
+                              filename: msg.media.filename || 'Media file',
+                              timestamp: msg.timestamp,
+                              sender: msg.is_from_me ? 'You' : msg.sender_name || 'Contact',
+                            })
+                          }
+                        }}
+                        title={msg.media.type !== 'sticker' ? 'Click to open fullscreen' : undefined}
+                      >
                         {msg.media.thumbnail_base64 || (msg.media.url && (msg.media.url.startsWith('data:') || msg.media.url.startsWith('blob:') || msg.media.url.startsWith('/') || msg.media.url.includes('giphy.com') || msg.media.url.includes('tenor.com'))) ? (
                           <div style={{ position: 'relative', display: 'inline-block', width: '100%' }}>
                             <img
@@ -1023,6 +1044,58 @@ export function WhatsAppConversation({
               <div className="whatsapp-info-preview-box">
                 <p>{infoModalMessage.content}</p>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Fullscreen Media Viewer Lightbox */}
+      {activeLightboxMedia && (
+        <div className="whatsapp-lightbox-backdrop" onClick={() => setActiveLightboxMedia(null)}>
+          <div className="whatsapp-lightbox-container" onClick={(e) => e.stopPropagation()}>
+            <div className="whatsapp-lightbox-header">
+              <div className="whatsapp-lightbox-meta">
+                <span className="whatsapp-lightbox-sender">{activeLightboxMedia.sender}</span>
+                {activeLightboxMedia.timestamp && (
+                  <span className="whatsapp-lightbox-time">{new Date(activeLightboxMedia.timestamp).toLocaleString()}</span>
+                )}
+              </div>
+              <div className="whatsapp-lightbox-actions">
+                <a
+                  href={activeLightboxMedia.url}
+                  download={activeLightboxMedia.filename || 'whatsapp-media'}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="whatsapp-icon-btn small"
+                  title="Download / Open original"
+                >
+                  <Download size={16} />
+                </a>
+                <button
+                  type="button"
+                  className="whatsapp-icon-btn small"
+                  onClick={() => setActiveLightboxMedia(null)}
+                  title="Close viewer"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+            </div>
+            <div className="whatsapp-lightbox-body">
+              {activeLightboxMedia.type === 'video' ? (
+                <video
+                  src={activeLightboxMedia.url}
+                  controls
+                  autoPlay
+                  className="whatsapp-lightbox-media"
+                />
+              ) : (
+                <img
+                  src={activeLightboxMedia.url}
+                  alt={activeLightboxMedia.filename || 'Fullscreen media'}
+                  className="whatsapp-lightbox-media"
+                />
+              )}
             </div>
           </div>
         </div>

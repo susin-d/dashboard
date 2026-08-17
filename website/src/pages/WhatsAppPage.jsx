@@ -517,6 +517,7 @@ export function WhatsAppPage() {
         {isInfoDrawerOpen && selectedChat && (
           <WhatsAppInfoDrawer
             chat={selectedChat}
+            messages={messages}
             onClose={() => setIsInfoDrawerOpen(false)}
             onSummarizeChat={handleSummarizeChat}
             onToggleEveAutoReply={(chatId, enabled) => {
