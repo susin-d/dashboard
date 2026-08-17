@@ -4,7 +4,7 @@ Living project snapshot for AI agents. `AGENTS.md` holds the permanent rules;
 this file holds the **current state** of the codebase and must be kept up to
 date whenever the implementation changes.
 
-> **Last updated:** 2026-08-17 (Fixed deadlock in Go whatsmeow worker, stream real WhatsApp Base64 PNG QR code from official protocol, and removed dummy fallback)
+> **Last updated:** 2026-08-17 (Added multi-workspace management support: unlimited named workspaces per user stored under server/workspaces/<user_id>/<workspace_id>/, workspace switcher dropdown, rename/delete/create modals, and workspace-scoped file API routes)
 
 ---
 
@@ -70,7 +70,7 @@ Starwaves/
 | --------------- | ---------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
 | Auth            | `app/api/routes/auth/`                                                                 | `oauth`, `credentials`, `password`, `account`, `combine`                                             |
 | Workspace Data  | `app/api/routes/workspace/`                                                            | `jobs`, `hackathons`, `projects`, `notifications`, `contests`, `calendar`                          |
-| Workspace Files | `app/api/routes/workspace_files.py`                                                    | `/workspace-files/tree`, `/{path}`, `/sync` (cloud storage & sync fallback)                                    |
+| Workspace Files | `app/api/routes/workspace_files.py`                                                    | `/workspace-files/workspaces` (list/create/rename/delete), `/tree`, `/{path}`, `/sync` (scoped by `workspace_id`) |
 | WhatsApp        | `app/api/routes/whatsapp.py`, `app/api/routes/whatsapp_ws.py`                          | `/whatsapp/status`, `/pair`, `/chats`, `/send`, `/settings`, `/eve-draft`, `/ws/whatsapp` WebSocket           |
 | Integrations    | `google_calendar`, `google_contacts`, `google_drive`, `gmail`, `github`, `google_chat` | OAuth callbacks under`/integrations/*/callback`                                                              |
 | Features        | `documents`, `todos`, `contacts`, `profiles`, `notifications`, `email`, `eve`, `calls` | EVE = AI assistant;`calls` = WebRTC signaling; `contacts` = Address book / contacts directory                 |

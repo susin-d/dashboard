@@ -41,3 +41,25 @@ class WorkspaceSyncRequest(BaseModel):
 class WorkspaceSyncResponse(BaseModel):
     synced: int
     errors: list[str] = Field(default_factory=list)
+
+
+class WorkspaceItem(BaseModel):
+    id: str
+    name: str
+    created_at: str
+    updated_at: str
+    file_count: int = 0
+
+
+class WorkspaceListResponse(BaseModel):
+    workspaces: list[WorkspaceItem]
+    active_id: str = "default"
+
+
+class WorkspaceCreateRequest(BaseModel):
+    name: str = Field(min_length=1, max_length=100)
+
+
+class WorkspaceRenameRequest(BaseModel):
+    name: str = Field(min_length=1, max_length=100)
+

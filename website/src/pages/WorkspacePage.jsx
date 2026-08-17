@@ -5,6 +5,7 @@ import { WorkspaceFileTree } from './workspace/WorkspaceFileTree'
 import { WorkspaceEditor } from './workspace/WorkspaceEditor'
 import { WorkspaceTerminal } from './workspace/WorkspaceTerminal'
 import { WorkspaceEvePanel } from './workspace/WorkspaceEvePanel'
+import { Modal, ConfirmDialog, FormField } from '../components/ui'
 
 export function WorkspacePage() {
   const workspace = useWorkspace()
@@ -13,8 +14,19 @@ export function WorkspacePage() {
   const [newFilePrompt, setNewFilePrompt] = useState(false)
   const [newFileName, setNewFileName] = useState('')
 
+  // Workspace management modal states
+  const [createWorkspaceOpen, setCreateWorkspaceOpen] = useState(false)
+  const [newWorkspaceName, setNewWorkspaceName] = useState('')
+  const [workspaceToRename, setWorkspaceToRename] = useState(null)
+  const [renameWorkspaceName, setRenameWorkspaceName] = useState('')
+  const [workspaceToDelete, setWorkspaceToDelete] = useState(null)
+
   useEffect(() => {
-    workspace.refreshTree()
+    const init = async () => {
+      await workspace.fetchWorkspaces()
+      await workspace.refreshTree()
+    }
+    init()
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleCreateFile = useCallback(() => {
@@ -29,6 +41,44 @@ export function WorkspacePage() {
     setNewFilePrompt(false)
     setNewFileName('')
   }, [newFileName, workspace])
+
+  const handleConfirmCreateWorkspace = useCallback(async () => {
+    const name = newWorkspaceName.trim()
+    if (!name) return
+    try {
+      await workspace.createWorkspace(name)
+      setCreateWorkspaceOpen(false)
+      setNewWorkspaceName('')
+    } catch {
+      // Error handled by workspace hook
+    }
+  }, [newWorkspaceName, workspace])
+
+  const handleOpenRenameWorkspace = useCallback((ws) => {
+    setWorkspaceToRename(ws)
+    setRenameWorkspaceName(ws.name)
+  }, [])
+
+  const handleConfirmRenameWorkspace = useCallback(async () => {
+    if (!workspaceToRename || !renameWorkspaceName.trim()) return
+    try {
+      await workspace.renameWorkspace(workspaceToRename.id, renameWorkspaceName.trim())
+      setWorkspaceToRename(null)
+      setRenameWorkspaceName('')
+    } catch {
+      // Error handled by workspace hook
+    }
+  }, [renameWorkspaceName, workspace, workspaceToRename])
+
+  const handleConfirmDeleteWorkspace = useCallback(async () => {
+    if (!workspaceToDelete) return
+    try {
+      await workspace.deleteWorkspace(workspaceToDelete.id)
+      setWorkspaceToDelete(null)
+    } catch {
+      // Error handled by workspace hook
+    }
+  }, [workspace, workspaceToDelete])
 
   const handleKeyboardSave = useCallback(
     (event) => {
@@ -50,6 +100,15 @@ export function WorkspacePage() {
   return (
     <div className="workspace-page">
       <WorkspaceToolbar
+        workspaces={workspace.workspaces}
+        activeWorkspace={workspace.activeWorkspace}
+        onSwitchWorkspace={workspace.switchWorkspace}
+        onOpenCreateWorkspace={() => {
+          setNewWorkspaceName('')
+          setCreateWorkspaceOpen(true)
+        }}
+        onOpenRenameWorkspace={handleOpenRenameWorkspace}
+        onOpenDeleteWorkspace={(ws) => setWorkspaceToDelete(ws)}
         isTauri={workspace.isTauri}
         loading={workspace.loading}
         onRefresh={workspace.refreshTree}
@@ -125,6 +184,106 @@ export function WorkspacePage() {
           </div>
         </div>
       )}
+
+      {/* Create Workspace Modal */}
+      <Modal
+        isOpen={createWorkspaceOpen}
+        onClose={() => setCreateWorkspaceOpen(false)}
+        title="Create New Workspace"
+        subtitle="Create an isolated workspace for your project files"
+      >
+        <form
+          onSubmit={(e) => {
+            e.preventDefault()
+            handleConfirmCreateWorkspace()
+          }}
+        >
+          <FormField label="Workspace Name" id="new-workspace-name">
+            <input
+              id="new-workspace-name"
+              type="text"
+              className="text-input"
+              value={newWorkspaceName}
+              onChange={(e) => setNewWorkspaceName(e.target.value)}
+              placeholder="e.g., Portfolio Website, Backend API, Notes"
+              autoFocus
+              data-modal-initial-focus
+            />
+          </FormField>
+          <div className="modal-actions">
+            <button
+              type="button"
+              className="secondary-button"
+              onClick={() => setCreateWorkspaceOpen(false)}
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="primary-button"
+              disabled={!newWorkspaceName.trim()}
+            >
+              Create Workspace
+            </button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* Rename Workspace Modal */}
+      <Modal
+        isOpen={Boolean(workspaceToRename)}
+        onClose={() => setWorkspaceToRename(null)}
+        title="Rename Workspace"
+        subtitle={`Update display name for workspace`}
+      >
+        <form
+          onSubmit={(e) => {
+            e.preventDefault()
+            handleConfirmRenameWorkspace()
+          }}
+        >
+          <FormField label="Workspace Name" id="rename-workspace-name">
+            <input
+              id="rename-workspace-name"
+              type="text"
+              className="text-input"
+              value={renameWorkspaceName}
+              onChange={(e) => setRenameWorkspaceName(e.target.value)}
+              placeholder="e.g., Project Name"
+              autoFocus
+              data-modal-initial-focus
+            />
+          </FormField>
+          <div className="modal-actions">
+            <button
+              type="button"
+              className="secondary-button"
+              onClick={() => setWorkspaceToRename(null)}
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="primary-button"
+              disabled={!renameWorkspaceName.trim()}
+            >
+              Save Changes
+            </button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* Delete Workspace Confirmation */}
+      <ConfirmDialog
+        isOpen={Boolean(workspaceToDelete)}
+        title="Delete Workspace"
+        message={`Are you sure you want to delete "${workspaceToDelete?.name}"? All files and folders inside this workspace will be permanently removed.`}
+        confirmLabel="Delete Workspace"
+        destructive={true}
+        onConfirm={handleConfirmDeleteWorkspace}
+        onCancel={() => setWorkspaceToDelete(null)}
+      />
     </div>
   )
 }
+

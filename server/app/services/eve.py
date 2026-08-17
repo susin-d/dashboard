@@ -835,18 +835,21 @@ def _run_tool(database: Client, user_id: str, name: str, arguments: dict[str, An
         }, None, {"type": "trigger_eve_call", "call_id": call["id"]}
     if name == "read_workspace_file":
         from app.repositories import workspace_files as ws_repo
+        ws_id = arguments.get("workspace_id", "default")
         try:
-            content, size = ws_repo.read_file(user_id, arguments["path"])
+            content, size = ws_repo.read_file(user_id, arguments["path"], workspace_id=ws_id)
         except FileNotFoundError:
             raise ValueError(f"File not found: {arguments['path']}")
         return {"path": arguments["path"], "content": content, "size": size}, None, None
     if name == "write_workspace_file":
         from app.repositories import workspace_files as ws_repo
-        size = ws_repo.write_file(user_id, arguments["path"], arguments["content"])
+        ws_id = arguments.get("workspace_id", "default")
+        size = ws_repo.write_file(user_id, arguments["path"], arguments["content"], workspace_id=ws_id)
         return {"path": arguments["path"], "size": size, "written": True}, "workspace-files", None
     if name == "list_workspace_files":
         from app.repositories import workspace_files as ws_repo
-        files = ws_repo.list_tree(user_id)
+        ws_id = arguments.get("workspace_id", "default")
+        files = ws_repo.list_tree(user_id, workspace_id=ws_id)
         directory = arguments.get("directory")
         if directory:
             prefix = directory.rstrip("/") + "/"
@@ -854,7 +857,8 @@ def _run_tool(database: Client, user_id: str, name: str, arguments: dict[str, An
         return {"files": files, "total": len(files)}, None, None
     if name == "search_workspace_files":
         from app.repositories import workspace_files as ws_repo
-        matches = ws_repo.search_files(user_id, arguments["query"], arguments.get("file_glob"))
+        ws_id = arguments.get("workspace_id", "default")
+        matches = ws_repo.search_files(user_id, arguments["query"], arguments.get("file_glob"), workspace_id=ws_id)
         return {"matches": matches, "total": len(matches)}, None, None
     if name == "run_workspace_command":
         from app.core.config import settings
@@ -862,7 +866,8 @@ def _run_tool(database: Client, user_id: str, name: str, arguments: dict[str, An
             raise ValueError("Command execution is not available in serverless mode.")
         import subprocess
         from app.repositories.workspace_files import _workspace_root
-        cwd = _workspace_root(user_id)
+        ws_id = arguments.get("workspace_id", "default")
+        cwd = _workspace_root(user_id, workspace_id=ws_id)
         try:
             result = subprocess.run(
                 arguments["command"], shell=True, capture_output=True, text=True,
