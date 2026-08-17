@@ -4,7 +4,7 @@ Living project snapshot for AI agents. `AGENTS.md` holds the permanent rules;
 this file holds the **current state** of the codebase and must be kept up to
 date whenever the implementation changes.
 
-> **Last updated:** 2026-08-17 (Added contact/username resolution for group participants and formatted in-message user mentions in WhatsApp)
+> **Last updated:** 2026-08-17 (Fixed scroll-up pagination and older message history syncing in WhatsApp conversation feed)
 
 ---
 
