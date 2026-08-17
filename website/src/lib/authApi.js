@@ -165,49 +165,91 @@ export async function beginGoogleOAuth() {
       return
     }
 
-    if (!popup.opener) {
-      popup.opener = window
+    let isDone = false
+    let broadcastChannel = null
+
+    const cleanup = () => {
+      isDone = true
+      window.removeEventListener('message', messageHandler)
+      window.removeEventListener('storage', storageHandler)
+      window.removeEventListener('focus', focusHandler)
+      if (broadcastChannel) {
+        try {
+          broadcastChannel.close()
+        } catch {}
+      }
     }
 
-    let isClosed = false
-    try {
-      isClosed = Boolean(popup.closed)
-    } catch {
-      // COOP restriction: ignore cross-origin access error
-    }
-
-    if (isClosed) {
-      reject(new Error('Google sign-in was cancelled.'))
-      return
+    const processAuthSuccess = (userData, token) => {
+      if (isDone) return
+      cleanup()
+      setStoredAuthToken(token, userData)
+      resolve(userData)
     }
 
     const apiOrigin = API_URL.startsWith('http')
       ? new URL(API_URL).origin
       : (typeof window !== 'undefined' ? window.location.origin : '')
+
     const messageHandler = (event) => {
       if (apiOrigin && event.origin !== apiOrigin && event.origin !== window.location.origin) return
       if (event.data?.type === 'STARWAVES_AUTH_SUCCESS' && event.data?.data) {
-        window.removeEventListener('message', messageHandler)
-        clearInterval(pollTimer)
         const { token, user } = event.data.data
-        setStoredAuthToken(token, user)
-        resolve(user)
+        processAuthSuccess(user, token)
       }
     }
 
-    window.addEventListener('message', messageHandler)
+    const storageHandler = (event) => {
+      if (event.key === 'starwaves_auth_sync' && event.newValue) {
+        try {
+          const parsed = JSON.parse(event.newValue)
+          if (parsed?.type === 'STARWAVES_AUTH_SUCCESS' && parsed?.data) {
+            const { token, user } = parsed.data
+            processAuthSuccess(user, token)
+          }
+        } catch {}
+      }
+    }
 
-    const pollTimer = setInterval(() => {
+    if (typeof BroadcastChannel !== 'undefined') {
       try {
-        if (popup.closed) {
-          clearInterval(pollTimer)
-          window.removeEventListener('message', messageHandler)
-          reject(new Error('Google sign-in was cancelled.'))
+        broadcastChannel = new BroadcastChannel('starwaves_auth')
+        broadcastChannel.onmessage = (event) => {
+          if (event.data?.type === 'STARWAVES_AUTH_SUCCESS' && event.data?.data) {
+            const { token, user } = event.data.data
+            processAuthSuccess(user, token)
+          }
         }
       } catch {
-        // Cross-Origin-Opener-Policy prevents reading popup.closed while on Google Auth domain
+        broadcastChannel = null
       }
-    }, 500)
+    }
+
+    const focusHandler = () => {
+      if (isDone) return
+      // When the main window regains focus, check if auth succeeded or if popup closed
+      setTimeout(() => {
+        if (isDone) return
+        const storedUser = getStoredUser()
+        if (storedUser && getStoredAuthToken()) {
+          cleanup()
+          resolve(storedUser)
+          return
+        }
+        try {
+          if (popup && popup.closed) {
+            cleanup()
+            reject(new Error('Google sign-in was cancelled.'))
+          }
+        } catch {
+          // COOP restriction: safely ignore
+        }
+      }, 500)
+    }
+
+    window.addEventListener('message', messageHandler)
+    window.addEventListener('storage', storageHandler)
+    window.addEventListener('focus', focusHandler)
   })
 }
 

@@ -136,12 +136,27 @@ async def google_callback(
               emailVerified: true
             }}
           }};
-          if (window.opener) {{
-            window.opener.postMessage({{ type: "STARWAVES_AUTH_SUCCESS", data: authData }}, "*");
+          try {{
+            if (typeof BroadcastChannel !== 'undefined') {{
+              const channel = new BroadcastChannel('starwaves_auth');
+              channel.postMessage({{ type: 'STARWAVES_AUTH_SUCCESS', data: authData }});
+              channel.close();
+            }}
+          }} catch (e) {{}}
+          try {{
+            localStorage.setItem('starwaves_auth_sync', JSON.stringify({{ type: 'STARWAVES_AUTH_SUCCESS', data: authData, time: Date.now() }}));
+          }} catch (e) {{}}
+          try {{
+            if (window.opener) {{
+              window.opener.postMessage({{ type: "STARWAVES_AUTH_SUCCESS", data: authData }}, "*");
+            }}
+          }} catch (e) {{}}
+          try {{
             window.close();
-          }} else {{
+          }} catch (e) {{}}
+          setTimeout(() => {{
             window.location.href = "{settings.frontend_url}/#token=" + encodeURIComponent(token);
-          }}
+          }}, 300);
         </script>
         <p>Authentication successful. You can close this window.</p>
       </body>
