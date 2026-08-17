@@ -561,71 +561,95 @@ func main() {
 		sess.RUnlock()
 
 		// If memory chats is empty, populate from Device Contacts store
-		if len(chatList) == 0 && sess.Device != nil && sess.Device.Contacts != nil {
+		if sess.Device != nil && sess.Device.Contacts != nil {
 			contacts, err := sess.Device.Contacts.GetAllContacts(context.Background())
 			if err == nil {
+				sess.Lock()
 				for jid, contact := range contacts {
-					name := contact.FullName
-					if name == "" {
-						name = contact.PushName
+					jidStr := jid.String()
+					if _, exists := sess.Chats[jidStr]; !exists {
+						name := contact.FullName
+						if name == "" {
+							name = contact.PushName
+						}
+						if name == "" {
+							name = contact.BusinessName
+						}
+						if name == "" {
+							name = jid.User
+						}
+						isGroup := strings.HasSuffix(jidStr, "@g.us")
+						sess.Chats[jidStr] = &SessionChat{
+							ID:          jidStr,
+							Name:        name,
+							PhoneNumber: jid.User,
+							IsGroup:     isGroup,
+							UnreadCount: 0,
+							UpdatedAt:   time.Now(),
+						}
 					}
-					if name == "" {
-						name = contact.BusinessName
-					}
-					if name == "" {
-						name = jid.User
-					}
-					isGroup := strings.HasSuffix(jid.String(), "@g.us")
-					chatList = append(chatList, &SessionChat{
-						ID:          jid.String(),
-						Name:        name,
-						PhoneNumber: jid.User,
-						IsGroup:     isGroup,
-						UnreadCount: 0,
-						UpdatedAt:   time.Now(),
-					})
 				}
+				sess.Unlock()
 			}
 		}
 
-		// Enhance chats with real group titles, participant member names, and profile pictures
-		for _, chat := range chatList {
-			if sess.Client != nil && sess.Client.IsConnected() {
-				parsedJID, err := types.ParseJID(chat.ID)
-				if err == nil {
-					if chat.IsGroup || strings.HasSuffix(chat.ID, "@g.us") {
-						info, err := sess.Client.GetGroupInfo(context.Background(), parsedJID)
-						if err == nil && info != nil {
-							if info.GroupName.Name != "" {
-								chat.Name = info.GroupName.Name
-							}
-							var pList []string
-							for _, p := range info.Participants {
-								pName := p.JID.User
-								if sess.Device != nil && sess.Device.Contacts != nil {
-									if contact, err := sess.Device.Contacts.GetContact(context.Background(), p.JID); err == nil {
-										if contact.FullName != "" {
-											pName = contact.FullName
-										} else if contact.PushName != "" {
-											pName = contact.PushName
+		sess.RLock()
+		chatList = make([]*SessionChat, 0, len(sess.Chats))
+		for _, chat := range sess.Chats {
+			chatList = append(chatList, chat)
+		}
+		sess.RUnlock()
+
+		// Asynchronously enhance uncached chats in the background without blocking the HTTP response
+		go func(currentSess *SessionState, list []*SessionChat) {
+			if currentSess.Client == nil || !currentSess.Client.IsConnected() {
+				return
+			}
+			for _, chat := range list {
+				// Only fetch if avatar or group info is not yet populated
+				if chat.AvatarURL == "" || (chat.IsGroup && len(chat.Participants) == 0) {
+					parsedJID, err := types.ParseJID(chat.ID)
+					if err == nil {
+						ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+						if chat.IsGroup || strings.HasSuffix(chat.ID, "@g.us") {
+							info, err := currentSess.Client.GetGroupInfo(ctx, parsedJID)
+							if err == nil && info != nil {
+								currentSess.Lock()
+								if info.GroupName.Name != "" {
+									chat.Name = info.GroupName.Name
+								}
+								var pList []string
+								for _, p := range info.Participants {
+									pName := p.JID.User
+									if currentSess.Device != nil && currentSess.Device.Contacts != nil {
+										if contact, err := currentSess.Device.Contacts.GetContact(context.Background(), p.JID); err == nil {
+											if contact.FullName != "" {
+												pName = contact.FullName
+											} else if contact.PushName != "" {
+												pName = contact.PushName
+											}
 										}
 									}
+									pList = append(pList, pName)
 								}
-								pList = append(pList, pName)
+								chat.Participants = pList
+								currentSess.Unlock()
 							}
-							chat.Participants = pList
 						}
-					}
-					// Fetch profile picture URL
-					picInfo, err := sess.Client.GetProfilePictureInfo(context.Background(), parsedJID, &whatsmeow.GetProfilePictureParams{
-						Preview: true,
-					})
-					if err == nil && picInfo != nil && picInfo.URL != "" {
-						chat.AvatarURL = picInfo.URL
+						// Fetch profile picture URL
+						picInfo, err := currentSess.Client.GetProfilePictureInfo(ctx, parsedJID, &whatsmeow.GetProfilePictureParams{
+							Preview: true,
+						})
+						if err == nil && picInfo != nil && picInfo.URL != "" {
+							currentSess.Lock()
+							chat.AvatarURL = picInfo.URL
+							currentSess.Unlock()
+						}
+						cancel()
 					}
 				}
 			}
-		}
+		}(sess, chatList)
 
 		c.JSON(http.StatusOK, gin.H{"chats": chatList})
 	})
@@ -642,6 +666,18 @@ func main() {
 
 		sess.RLock()
 		msgs := sess.Messages[chatId]
+		if len(msgs) == 0 {
+			// Try JID suffix variations
+			if !strings.Contains(chatId, "@") {
+				msgs = sess.Messages[chatId+"@s.whatsapp.net"]
+				if len(msgs) == 0 {
+					msgs = sess.Messages[chatId+"@g.us"]
+				}
+			} else {
+				userPart := strings.Split(chatId, "@")[0]
+				msgs = sess.Messages[userPart]
+			}
+		}
 		if msgs == nil {
 			msgs = []*SessionMessage{}
 		}

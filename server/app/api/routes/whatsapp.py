@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
 import logging
-from typing import List
+from typing import List, Optional
 from uuid import uuid4
 from fastapi import APIRouter, Depends, Query, status
 from google.cloud.firestore_v1 import Client

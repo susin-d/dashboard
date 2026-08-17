@@ -191,7 +191,7 @@ class WhatsAppService:
         # Sync chats from worker if available
         try:
             worker_url = settings.whatsapp_gateway_url
-            resp = requests.get(f"{worker_url}/session/chats/{user_id}", timeout=2.0)
+            resp = requests.get(f"{worker_url}/session/chats/{user_id}", timeout=0.6)
             if resp.ok:
                 worker_chats = resp.json().get("chats") or []
                 for wc in worker_chats:
@@ -252,7 +252,7 @@ class WhatsAppService:
         if len(msgs) == 0 and chat_id != "eve" and not before:
             try:
                 worker_url = settings.whatsapp_gateway_url
-                resp = requests.get(f"{worker_url}/session/messages/{user_id}/{chat_id}", timeout=2.0)
+                resp = requests.get(f"{worker_url}/session/messages/{user_id}/{chat_id}", timeout=0.6)
                 if resp.ok:
                     worker_msgs = resp.json().get("messages") or []
                     for wm in worker_msgs:
