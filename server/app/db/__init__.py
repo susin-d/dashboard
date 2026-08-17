@@ -1,7 +1,7 @@
-"""Database clients used by the application."""
+"""Database clients and session factories used by the application."""
 
-from app.db.compat import SqlClient, get_db_client, get_firestore
 from app.db.session import Base, async_session_factory, engine, get_db, init_db
+from app.db.sql import SqlClient, get_db_client, get_firestore
 
 __all__ = [
     "Base",
@@ -13,4 +13,3 @@ __all__ = [
     "get_firestore",
     "init_db",
 ]
-

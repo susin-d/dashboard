@@ -1,0 +1,87 @@
+"""SQL handlers for the 'users/{user_id}/contacts' collection."""
+
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Any
+
+from sqlalchemy import select
+from sqlalchemy.orm import Session
+
+from app.db.sql._shared import coerce_model_value
+from app.db.sql.query import SqlSnapshot
+from app.models import Contact
+
+if TYPE_CHECKING:
+    from app.db.sql.query import SqlQuery
+
+
+def contact_to_dict(c: Contact) -> dict[str, Any]:
+    """Serialize Contact model to snapshot dictionary."""
+    return {
+        "id": c.id,
+        "name": c.name,
+        "email": c.email,
+        "phone": c.phone,
+        "company": c.company,
+        "role": c.role,
+        "notes": c.notes,
+        "deleted": c.deleted,
+        "deleted_at": c.deleted_at.isoformat() if c.deleted_at else None,
+        "created_at": c.created_at.isoformat() if c.created_at else "",
+        "updated_at": c.updated_at.isoformat() if c.updated_at else "",
+    }
+
+
+def get_contact_doc(session: Session, user_id: str, doc_id: str) -> SqlSnapshot:
+    """Fetch contact document by user ID and document ID."""
+    c = session.get(Contact, doc_id)
+    if not c or c.user_id != user_id:
+        return SqlSnapshot(doc_id, None, exists=False)
+    return SqlSnapshot(doc_id, contact_to_dict(c))
+
+
+def set_contact_doc(
+    session: Session,
+    user_id: str,
+    doc_id: str,
+    data: dict[str, Any],
+    merge: bool = False,
+) -> None:
+    """Create or update a contact document."""
+    c = session.get(Contact, doc_id)
+    if not c:
+        c = Contact(
+            id=doc_id,
+            user_id=user_id,
+            name=data.get("name", ""),
+            email=data.get("email"),
+            phone=data.get("phone"),
+            company=data.get("company"),
+            role=data.get("role"),
+            notes=data.get("notes"),
+        )
+        session.add(c)
+    else:
+        for k, val in data.items():
+            if hasattr(c, k):
+                setattr(c, k, coerce_model_value(k, val))
+    session.commit()
+
+
+def delete_contact_doc(session: Session, doc_id: str) -> None:
+    """Delete a contact document by ID."""
+    c = session.get(Contact, doc_id)
+    if c:
+        session.delete(c)
+        session.commit()
+
+
+def query_contacts(session: Session, user_id: str, query: SqlQuery) -> list[SqlSnapshot]:
+    """Execute query on the user's contacts collection."""
+    stmt = select(Contact).where(Contact.user_id == user_id)
+    if query._order_by == "created_at":
+        stmt = stmt.order_by(Contact.created_at.desc() if query._direction == "DESC" else Contact.created_at.asc())
+    if query._limit:
+        stmt = stmt.limit(query._limit)
+    contacts = session.scalars(stmt).all()
+    return [SqlSnapshot(c.id, contact_to_dict(c)) for c in contacts]

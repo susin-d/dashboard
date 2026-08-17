@@ -4,7 +4,7 @@ Living project snapshot for AI agents. `AGENTS.md` holds the permanent rules;
 this file holds the **current state** of the codebase and must be kept up to
 date whenever the implementation changes.
 
-> **Last updated:** 2026-08-17 (Added website Dockerfile and integrated frontend SPA into Docker Compose with Nginx reverse proxy)
+> **Last updated:** 2026-08-17 (Modularized database compatibility layer into server/app/db/sql/ package)
 
 ---
 
@@ -40,6 +40,7 @@ Starwaves/
 │   │   ├── api/routes/      HTTP endpoints, WebSockets, and OAuth callbacks (whatsapp.py, whatsapp_ws.py, workspace_files.py)
 │   │   ├── core/            Configuration, authentication, and WebSocket managers (whatsapp_ws_manager.py)
 │   │   ├── db/              SQLAlchemy async engine, session factory, models, and compat adapter
+│   │   │   └── sql/         Modular entity handlers (users, calls, todos, jobs, projects, hackathons, documents, contacts, notifications, eve, settings, whatsapp, fallback)
 │   │   ├── models/          SQLAlchemy declarative models for PostgreSQL
 │   │   ├── repositories/    Data access & file storage (whatsapp.py, workspace_files.py)
 │   │   ├── schemas/         API request and response models (whatsapp.py, workspace_files.py)
@@ -232,7 +233,8 @@ SMTP, Firestore database id, CORS origins. Loads `.env.prod` before `.env`.
   - Tools added to Eve assistant (`create_eve_schedule`, `list_eve_schedules`, `delete_eve_schedule`) so users can schedule reminders conversationally in chat or via the `EveSchedulesCard` sidebar component.
   - Vercel Cron Integration: `vercel.json` registers background cron job (`/api/v1/cron/execute-schedules` every 15 minutes `*/15 * * * *`) targeting FastAPI backend route `app/api/routes/cron.py`.
 - Calls & Eve AI Voice Calling: app-wide WebRTC voice/video calls between StarWaves users and bidirectional voice calls with Eve AI Assistant (`eve@starwaves.app` / `eve-bot`).
-  - SQL-backed call records (`server/app/db/compat.py`): the `calls` collection now round-trips Firestore-shaped documents — nested `caller`/`callee` identities are reconstructed from the `users` table (with a built-in `eve-bot` identity), `messages` are persisted as a JSON column, participant queries (`array_contains` on `participants`) map to `caller_id`/`receiver_id` OR-checks, and both compat and `firebase_admin` `ArrayUnion` values are normalized on writes. `init_db` (`server/app/db/session.py`) idempotently backfills the `calls.messages` column on existing deployments (Postgres `ADD COLUMN IF NOT EXISTS` / SQLite PRAGMA check) since the project has no alembic migrations.
+  - SQL-backed call records (`server/app/db/sql/calls.py` / `compat.py`): the `calls` collection now round-trips Firestore-shaped documents — nested `caller`/`callee` identities are reconstructed from the `users` table (with a built-in `eve-bot` identity), `messages` are persisted as a JSON column, participant queries (`array_contains` on `participants`) map to `caller_id`/`receiver_id` OR-checks, and both compat and `firebase_admin` `ArrayUnion` values are normalized on writes. `init_db` (`server/app/db/session.py`) idempotently backfills the `calls.messages` column on existing deployments (Postgres `ADD COLUMN IF NOT EXISTS` / SQLite PRAGMA check) since the project has no alembic migrations.
+  - Modular SQL Compatibility Layer (`server/app/db/sql/`): the former monolithic `server/app/db/compat.py` is decomposed into a structured package with single-responsibility modules for entities (`users.py`, `calls.py`, `todos.py`, `jobs.py`, `projects.py`, `hackathons.py`, `documents.py`, `contacts.py`, `notifications.py`, `eve.py`, `settings.py`, `whatsapp.py`), shared timestamp/coercion utilities (`_shared.py`), Firestore query/collection emulation primitives (`query.py`), in-memory fallback store (`fallback.py`), and a central dispatcher (`client.py`). `server/app/db/compat.py` is preserved as a clean backward-compatibility facade re-exporting all symbols.
   - Real-time WebSocket signaling: uses persistent `/ws/calls` connection (`callsSocket.js` + `ws_manager.py`) with zero HTTP polling. Incoming calls, WebRTC offers/answers/ICE candidates, and call status transitions are pushed instantaneously to participants upon write operations.
   - Users can dial `eve` or `eve@starwaves.app`, click quick-action buttons ("Call Eve" / "Receive call from Eve"), or ask Eve in chat ("Eve, call me") to trigger immediate incoming voice calls.
   - Active Eve calls launch a dedicated monochrome AI pulse wave visualizer (`CallScreen.jsx`), integrated Web Speech API STT (Speech-to-Text) voice recognition, and TTS (Text-to-Speech) voice synthesis with real-time speech captions overlay and mute/audio controls.
