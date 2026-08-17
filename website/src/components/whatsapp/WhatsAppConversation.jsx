@@ -246,9 +246,27 @@ export function WhatsAppConversation({
     }
   }
 
+  const participantNameMap = useMemo(() => {
+    const map = new Map()
+    for (const m of messages) {
+      if (m.sender_id && m.sender_name && m.sender_name !== 'Contact' && m.sender_name !== '1289') {
+        const userPart = m.sender_id.replace(/@s\.whatsapp\.net|@g\.us|@lid/g, '')
+        map.set(userPart, m.sender_name)
+        map.set(m.sender_id, m.sender_name)
+      }
+    }
+    return map
+  }, [messages])
+
   const formatParticipantsSubtitle = (participants) => {
     if (!participants || participants.length === 0) return 'Group conversation'
-    return participants.slice(0, 8).join(', ') + (participants.length > 8 ? ` and ${participants.length - 8} more...` : '')
+    const formatted = participants.map((p) => {
+      if (participantNameMap.has(p)) {
+        return participantNameMap.get(p)
+      }
+      return formatSenderName(p, p)
+    })
+    return formatted.slice(0, 8).join(', ') + (formatted.length > 8 ? ` and ${formatted.length - 8} more...` : '')
   }
 
   const quickReactions = ['👍', '❤️', '😂', '😮', '😢', '🙏']

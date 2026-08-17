@@ -952,13 +952,14 @@ func main() {
 								}
 								var pList []string
 								for _, p := range info.Participants {
-									pName := p.JID.User
-									if currentSess.Device != nil && currentSess.Device.Contacts != nil {
-										if contact, err := currentSess.Device.Contacts.GetContact(context.Background(), p.JID); err == nil {
-											if contact.FullName != "" {
-												pName = contact.FullName
-											} else if contact.PushName != "" {
-												pName = contact.PushName
+									pName := resolveContactName(currentSess, p.JID, "")
+									if pName == "Contact" || pName == "+"+p.JID.User || pName == p.JID.User {
+										if currentSess.Messages != nil {
+											for _, m := range currentSess.Messages[chat.ID] {
+												if strings.Contains(m.SenderID, p.JID.User) && m.SenderName != "" && m.SenderName != "Contact" && m.SenderName != "1289" && !strings.HasPrefix(m.SenderName, "+") {
+													pName = m.SenderName
+													break
+												}
 											}
 										}
 									}
