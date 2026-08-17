@@ -4,7 +4,7 @@ Living project snapshot for AI agents. `AGENTS.md` holds the permanent rules;
 this file holds the **current state** of the codebase and must be kept up to
 date whenever the implementation changes.
 
-> **Last updated:** 2026-08-17 (Connected FastAPI backend to whatsapp-worker on Docker bridge network, removed mock QR placeholder icon in favor of live streaming WhatsApp QR code)
+> **Last updated:** 2026-08-17 (Registered /app/whatsapp and /app/workspace URL paths in useRouter hook for proper browser history and direct URL navigation)
 
 ---
 
