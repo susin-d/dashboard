@@ -82,13 +82,20 @@ func getOrCreateSession(userId string) (*SessionState, error) {
 	})
 
 	sessions[userId] = sess
+
+	// If device is already logged in, connect automatically
+	if client.Store.ID != nil {
+		go func() {
+			if err := client.Connect(); err != nil {
+				log.Printf("[User %s] Auto-connect error: %v", userId, err)
+			}
+		}()
+	}
+
 	return sess, nil
 }
 
 func (s *SessionState) handleEvent(userId string, evt interface{}) {
-	s.Lock()
-	defer s.Unlock()
-
 	switch v := evt.(type) {
 	case *events.HistorySync:
 		log.Printf("[User %s] Received HistorySync chunk (%s): %d conversations", userId, v.Data.GetSyncType().String(), len(v.Data.GetConversations()))
@@ -98,26 +105,30 @@ func (s *SessionState) handleEvent(userId string, evt interface{}) {
 			if chatName == "" {
 				chatName = chatJID
 			}
-
-			// Read messages inside conversation
 			historyMsgs := conv.GetMessages()
 			log.Printf("[User %s] Syncing chat %s with %d historical messages", userId, chatName, len(historyMsgs))
 		}
 
 	case *events.Connected:
+		s.Lock()
 		s.Connected = true
 		s.QRCode = ""
 		if s.Client != nil && s.Client.Store != nil && s.Client.Store.ID != nil {
 			s.PhoneNumber = s.Client.Store.ID.User
 			s.PushName = s.Client.Store.PushName
 		}
-		log.Printf("[User %s] WhatsApp Connected: %s (%s)", userId, s.PhoneNumber, s.PushName)
+		phone := s.PhoneNumber
+		push := s.PushName
+		s.Unlock()
+		log.Printf("[User %s] WhatsApp Connected: %s (%s)", userId, phone, push)
 
 	case *events.LoggedOut:
+		s.Lock()
 		s.Connected = false
 		s.QRCode = ""
 		s.PhoneNumber = ""
 		s.PushName = ""
+		s.Unlock()
 		log.Printf("[User %s] WhatsApp Logged Out", userId)
 
 	case *events.Message:
@@ -204,20 +215,20 @@ func main() {
 			return
 		}
 
-		sess.Lock()
-		defer sess.Unlock()
+		sess.RLock()
+		isConnected := sess.Connected || (sess.Client != nil && sess.Client.IsConnected())
+		phoneNum := sess.PhoneNumber
+		pushName := sess.PushName
+		existingQR := sess.QRCode
+		sess.RUnlock()
 
-		if sess.Connected || (sess.Client != nil && sess.Client.IsConnected()) {
+		if isConnected {
 			c.JSON(http.StatusOK, gin.H{
 				"connected":   true,
-				"phoneNumber": sess.PhoneNumber,
-				"pushName":    sess.PushName,
+				"phoneNumber": phoneNum,
+				"pushName":    pushName,
 			})
 			return
-		}
-
-		if sess.Client.IsConnected() {
-			sess.Client.Disconnect()
 		}
 
 		if req.PhoneNumber != "" {
@@ -229,9 +240,8 @@ func main() {
 				return -1
 			}, req.PhoneNumber)
 
-			if err := sess.Client.Connect(); err != nil {
-				c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to connect client"})
-				return
+			if !sess.Client.IsConnected() {
+				_ = sess.Client.Connect()
 			}
 
 			code, err := sess.Client.PairPhone(context.Background(), cleanPhone, true, whatsmeow.PairClientChrome, "Chrome (Linux)")
@@ -239,7 +249,10 @@ func main() {
 				c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("pairing code failed: %v", err)})
 				return
 			}
+			sess.Lock()
 			sess.PairingCode = code
+			sess.Unlock()
+
 			c.JSON(http.StatusOK, gin.H{
 				"connected":   false,
 				"pairingCode": code,
@@ -249,34 +262,63 @@ func main() {
 		}
 
 		// QR Code Channel flow
-		qrChan, _ := sess.Client.GetQRChannel(context.Background())
-		if err := sess.Client.Connect(); err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to connect client for QR"})
+		if sess.Client.IsConnected() {
+			sess.Client.Disconnect()
+		}
+
+		qrChan, err := sess.Client.GetQRChannel(context.Background())
+		if err != nil {
+			if existingQR != "" {
+				c.JSON(http.StatusOK, gin.H{"connected": false, "qrCode": existingQR})
+				return
+			}
+			c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("GetQRChannel error: %v", err)})
 			return
 		}
 
-		select {
-		case evt, ok := <-qrChan:
-			if !ok {
-				c.JSON(http.StatusOK, gin.H{
-					"connected": sess.Connected,
-					"qrCode":    sess.QRCode,
-				})
-				return
-			}
-			if evt.Event == "code" {
-				// Convert raw QR string to standard Base64 PNG data URL
-				pngBytes, err := qrcode.Encode(evt.Code, qrcode.Medium, 256)
-				if err == nil {
-					sess.QRCode = "data:image/png;base64," + base64.StdEncoding.EncodeToString(pngBytes)
+		if err := sess.Client.Connect(); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("connect error: %v", err)})
+			return
+		}
+
+		var returnQR string
+		qrReceived := make(chan struct{})
+
+		go func() {
+			for evt := range qrChan {
+				if evt.Event == "code" {
+					pngBytes, err := qrcode.Encode(evt.Code, qrcode.Medium, 256)
+					if err == nil {
+						qrData := "data:image/png;base64," + base64.StdEncoding.EncodeToString(pngBytes)
+						sess.Lock()
+						sess.QRCode = qrData
+						sess.Unlock()
+						log.Printf("[User %s] Real WhatsApp QR code generated successfully", req.UserID)
+					}
+					select {
+					case qrReceived <- struct{}{}:
+					default:
+					}
+				} else if evt.Event == "success" {
+					log.Printf("[User %s] WhatsApp QR scan confirmed successfully", req.UserID)
 				}
 			}
+		}()
+
+		select {
+		case <-qrReceived:
+			sess.RLock()
+			returnQR = sess.QRCode
+			sess.RUnlock()
 		case <-time.After(5 * time.Second):
+			sess.RLock()
+			returnQR = sess.QRCode
+			sess.RUnlock()
 		}
 
 		c.JSON(http.StatusOK, gin.H{
 			"connected": sess.Connected,
-			"qrCode":    sess.QRCode,
+			"qrCode":    returnQR,
 		})
 	})
 

@@ -43,11 +43,17 @@ class TestWhatsAppEndpoints(unittest.TestCase):
         self.assertEqual(data["phone_number"], "+15551234567")
 
     def test_whatsapp_pair_endpoint(self):
-        response = self.client.post("/api/v1/whatsapp/pair", json={"phone_number": "+15551234567"})
+        # QR pairing
+        response = self.client.post("/api/v1/whatsapp/pair", json={})
         self.assertEqual(response.status_code, 200)
         data = response.json()
-        self.assertEqual(data["status"], "qr_ready")
-        self.assertIsNotNone(data["qr_code"])
+        self.assertIn(data["status"], ["qr_ready", "waiting", "paired"])
+
+        # Phone pairing
+        phone_response = self.client.post("/api/v1/whatsapp/pair", json={"phone_number": "+15551234567"})
+        self.assertEqual(phone_response.status_code, 200)
+        phone_data = phone_response.json()
+        self.assertIn(phone_data["status"], ["qr_ready", "waiting", "paired"])
 
 
 if __name__ == "__main__":

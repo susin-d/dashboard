@@ -4,7 +4,7 @@ Living project snapshot for AI agents. `AGENTS.md` holds the permanent rules;
 this file holds the **current state** of the codebase and must be kept up to
 date whenever the implementation changes.
 
-> **Last updated:** 2026-08-17 (Centered EmptyState across multi-column grid layouts such as Hackathons and Jobs by setting full column span)
+> **Last updated:** 2026-08-17 (Fixed deadlock in Go whatsmeow worker, stream real WhatsApp Base64 PNG QR code from official protocol, and removed dummy fallback)
 
 ---
 

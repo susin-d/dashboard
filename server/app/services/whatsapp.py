@@ -25,27 +25,6 @@ from app.schemas.whatsapp import (
 
 logger = logging.getLogger(__name__)
 
-# Sample QR pattern for standard SVG/Canvas representation when pairing
-DUMMY_QR_SVG = (
-    "data:image/svg+xml;utf8,"
-    "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'>"
-    "<rect width='200' height='200' fill='white'/>"
-    "<rect x='20' y='20' width='40' height='40' fill='black'/>"
-    "<rect x='30' y='30' width='20' height='20' fill='white'/>"
-    "<rect x='140' y='20' width='40' height='40' fill='black'/>"
-    "<rect x='150' y='30' width='20' height='20' fill='white'/>"
-    "<rect x='20' y='140' width='40' height='40' fill='black'/>"
-    "<rect x='30' y='150' width='20' height='20' fill='white'/>"
-    "<rect x='80' y='40' width='15' height='15' fill='black'/>"
-    "<rect x='105' y='40' width='15' height='15' fill='black'/>"
-    "<rect x='70' y='80' width='60' height='40' fill='black'/>"
-    "<rect x='85' y='95' width='30' height='10' fill='white'/>"
-    "<rect x='140' y='100' width='40' height='40' fill='black'/>"
-    "<rect x='80' y='140' width='40' height='40' fill='black'/>"
-    "<rect x='140' y='160' width='20' height='20' fill='black'/>"
-    "</svg>"
-)
-
 
 class WhatsAppService:
     @staticmethod
@@ -73,7 +52,7 @@ class WhatsAppService:
         database: Client, user_id: str, phone_number: Optional[str] = None
     ) -> WhatsAppPairResponse:
         pairing_code = None
-        qr_code = DUMMY_QR_SVG
+        qr_code = None
 
         # Call Go whatsmeow worker service
         try:
@@ -82,7 +61,7 @@ class WhatsAppService:
             if phone_number:
                 payload["phoneNumber"] = phone_number
 
-            async with httpx.AsyncClient(timeout=10.0) as client:
+            async with httpx.AsyncClient(timeout=12.0) as client:
                 resp = await client.post(f"{worker_url}/session/pair", json=payload)
                 if resp.is_success:
                     data = resp.json()
@@ -92,16 +71,13 @@ class WhatsAppService:
                         pairing_code = data["pairingCode"]
         except Exception as e:
             logger.warning(f"Could not reach whatsmeow worker at {settings.whatsapp_gateway_url}: {e}")
-            if phone_number:
-                clean_phone = "".join(c for c in phone_number if c.isdigit())
-                pairing_code = f"{clean_phone[-4:] if len(clean_phone) >= 4 else '1234'}-{uuid4().hex[:4].upper()}"
 
         response = WhatsAppPairResponse(
-            status="qr_ready",
+            status="qr_ready" if qr_code else "waiting",
             qr_code=qr_code,
             pairing_code=pairing_code,
             expires_at=datetime.now(timezone.utc),
-            message="Scan the dynamic QR code with WhatsApp on your phone or use pairing code.",
+            message="Scan the real WhatsApp QR code on your phone or use pairing code." if qr_code else "Connecting to WhatsApp gateway...",
         )
 
         # Broadcast update via WebSocket to connected clients
@@ -109,7 +85,7 @@ class WhatsAppService:
             user_id,
             {
                 "type": "qr_update",
-                "status": "qr_ready",
+                "status": "qr_ready" if qr_code else "waiting",
                 "qr_code": qr_code,
                 "pairing_code": pairing_code,
             },
