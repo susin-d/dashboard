@@ -21,8 +21,10 @@
   padding-top: 18px;
 }
 
+.hackathon-list > .empty-state,
 .hackathon-empty-state {
   grid-column: 1 / -1;
+  width: 100%;
 }
 
 .hackathon-toolbar {
