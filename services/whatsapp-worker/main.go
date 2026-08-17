@@ -173,7 +173,7 @@ func resolveContactName(s *SessionState, jid types.JID, pushName string) string 
 		return pushName
 	}
 	if s != nil && s.Client != nil && s.Client.Store != nil && s.Client.Store.Contacts != nil {
-		if contact, found, err := s.Client.Store.Contacts.GetContact(context.Background(), jid); err == nil && found {
+		if contact, err := s.Client.Store.Contacts.GetContact(context.Background(), jid); err == nil && contact.Found {
 			if contact.FullName != "" {
 				return contact.FullName
 			}
