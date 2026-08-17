@@ -176,7 +176,7 @@ export function WhatsAppPage() {
         if (isCurrent && selectedChatIdRef.current === selectedChatId) {
           const validMsgs = (msgs || []).filter((m) => !m.chat_id || m.chat_id === selectedChatId)
           setMessages(validMsgs)
-          setHasMoreMessages(validMsgs.length >= 50)
+          setHasMoreMessages(validMsgs.length > 0)
           markWhatsAppChatRead(selectedChatId).catch(() => {})
           setChats((prev) =>
             prev.map((c) => (c.id === selectedChatId ? { ...c, unread_count: 0 } : c)),
@@ -200,7 +200,8 @@ export function WhatsAppPage() {
     if (isLoadingMore || !hasMoreMessages || messages.length === 0 || !selectedChatId) return
     setIsLoadingMore(true)
     try {
-      const earliestMsg = messages[0]
+      const sorted = [...messages].sort((a, b) => new Date(a.timestamp || 0) - new Date(b.timestamp || 0))
+      const earliestMsg = sorted[0]
       const beforeTimestamp = earliestMsg?.timestamp
       const olderMsgs = await fetchWhatsAppMessages(selectedChatId, 50, beforeTimestamp)
       const validOlder = (olderMsgs || []).filter((m) => !m.chat_id || m.chat_id === selectedChatId)
@@ -208,16 +209,18 @@ export function WhatsAppPage() {
         setHasMoreMessages(false)
       } else {
         setMessages((prev) => {
-          const existingIds = new Set(prev.map((m) => m.id))
-          const fresh = validOlder.filter((m) => !existingIds.has(m.id))
+          const prevIds = new Set(prev.map((m) => m.id))
+          const fresh = validOlder.filter((m) => !prevIds.has(m.id))
+          if (fresh.length === 0) {
+            setHasMoreMessages(false)
+            return prev
+          }
           return [...fresh, ...prev]
         })
-        if (validOlder.length < 50) {
-          setHasMoreMessages(false)
-        }
       }
     } catch (err) {
       console.error('Failed to load older WhatsApp messages:', err)
+      setHasMoreMessages(false)
     } finally {
       setIsLoadingMore(false)
     }

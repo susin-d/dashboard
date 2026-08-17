@@ -421,6 +421,34 @@
   animation: fadeIn 0.15s ease;
 }
 
+.whatsapp-loading-older-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 12px;
+  align-self: center;
+}
+
+.whatsapp-load-more-btn {
+  background: var(--bg-secondary, #18181b);
+  border: 1px solid var(--border-color, #3f3f46);
+  color: var(--text-secondary, #a1a1aa);
+  padding: 5px 16px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  user-select: none;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.whatsapp-load-more-btn:hover {
+  background: var(--bg-hover, #27272a);
+  color: var(--text-primary, #ffffff);
+  border-color: var(--text-muted, #71717a);
+}
+
 .whatsapp-loading-spinner {
   width: 13px;
   height: 13px;

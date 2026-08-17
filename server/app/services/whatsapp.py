@@ -269,26 +269,32 @@ class WhatsAppService:
         database: Client, user_id: str, chat_id: str, limit: int = 50, before: Optional[str] = None
     ) -> List[WhatsAppMessageResponse]:
         msgs = whatsapp_repo.list_whatsapp_messages(database, user_id, chat_id, limit=limit, before=before)
-        if len(msgs) == 0 and chat_id != "eve" and not before:
+        if len(msgs) < limit and chat_id != "eve":
             try:
                 worker_url = settings.whatsapp_gateway_url
                 resp = requests.get(f"{worker_url}/session/messages/{user_id}/{chat_id}", timeout=0.6)
                 if resp.ok:
                     worker_msgs = resp.json().get("messages") or []
-                    for wm in worker_msgs:
-                        msg_obj = WhatsAppMessageResponse(
-                            id=wm.get("id") or f"msg-{uuid4().hex[:12]}",
-                            chat_id=chat_id,
-                            sender_id=wm.get("senderId") or "me",
-                            sender_name=wm.get("senderName"),
-                            is_from_me=bool(wm.get("isFromMe", False)),
-                            is_eve=False,
-                            content=wm.get("content") or "",
-                            timestamp=datetime.fromisoformat(wm["timestamp"].replace("Z", "+00:00")) if isinstance(wm.get("timestamp"), str) else datetime.now(timezone.utc),
-                            status=wm.get("status", "delivered"),
-                        )
-                        whatsapp_repo.save_whatsapp_message(database, user_id, chat_id, msg_obj)
-                    msgs = whatsapp_repo.list_whatsapp_messages(database, user_id, chat_id, limit=limit)
+                    if worker_msgs:
+                        for wm in worker_msgs:
+                            media_data = wm.get("media")
+                            media_obj = WhatsAppMediaAttachment(**media_data) if media_data else None
+                            msg_obj = WhatsAppMessageResponse(
+                                id=wm.get("id") or f"msg-{uuid4().hex[:12]}",
+                                chat_id=chat_id,
+                                sender_id=wm.get("senderId") or "me",
+                                sender_name=wm.get("senderName"),
+                                is_from_me=bool(wm.get("isFromMe", False)),
+                                is_eve=False,
+                                is_forwarded=bool(wm.get("isForwarded", False)),
+                                content=wm.get("content") or "",
+                                media=media_obj,
+                                reply_to_message_id=wm.get("replyToMessageId"),
+                                timestamp=datetime.fromisoformat(wm["timestamp"].replace("Z", "+00:00")) if isinstance(wm.get("timestamp"), str) else datetime.now(timezone.utc),
+                                status=wm.get("status", "delivered"),
+                            )
+                            whatsapp_repo.save_whatsapp_message(database, user_id, chat_id, msg_obj)
+                        msgs = whatsapp_repo.list_whatsapp_messages(database, user_id, chat_id, limit=limit, before=before)
             except Exception:
                 pass
         return msgs

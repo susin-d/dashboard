@@ -81,10 +81,23 @@ export function WhatsAppConversation({
 
   const isEve = chat?.is_eve || chat?.id === 'eve'
 
+  // Reset scroll and load tracking when active chat changes
+  useEffect(() => {
+    initialScrollDoneRef.current = false
+    previousScrollHeightRef.current = null
+    isFetchingMoreRef.current = false
+  }, [chat?.id])
+
+  useEffect(() => {
+    if (!isLoadingMore) {
+      isFetchingMoreRef.current = false
+    }
+  }, [isLoadingMore])
+
   const handleFeedScroll = (e) => {
     const { scrollTop, scrollHeight } = e.currentTarget
     if (
-      scrollTop < 80 &&
+      scrollTop < 150 &&
       hasMoreMessages &&
       !isLoadingMore &&
       !isFetchingMoreRef.current &&
@@ -402,13 +415,28 @@ export function WhatsAppConversation({
         ref={messagesFeedRef}
         onScroll={handleFeedScroll}
       >
-        {/* Loading Older Messages Spinner */}
-        {isLoadingMore && (
+        {/* Loading Older Messages Spinner / Load Earlier Messages Button */}
+        {isLoadingMore ? (
           <div className="whatsapp-loading-older">
             <div className="whatsapp-loading-spinner" />
             <span>Loading earlier messages...</span>
           </div>
-        )}
+        ) : hasMoreMessages && displayedMessages.length > 0 ? (
+          <div className="whatsapp-loading-older-wrapper">
+            <button
+              type="button"
+              className="whatsapp-load-more-btn"
+              onClick={() => {
+                if (messagesFeedRef.current) {
+                  previousScrollHeightRef.current = messagesFeedRef.current.scrollHeight
+                }
+                onLoadMoreMessages?.()
+              }}
+            >
+              Load earlier messages
+            </button>
+          </div>
+        ) : null}
 
         {displayedMessages.length === 0 ? (
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)', textAlign: 'center', padding: '40px 20px', minHeight: '260px' }}>
