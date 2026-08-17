@@ -227,19 +227,16 @@ async def whatsapp_incoming_webhook(
         },
     )
 
-    # Check if Eve should reply (mentions @eve, eve, or if in eve chat or auto-reply enabled for chat)
+    # Check if Eve should reply (mentions @eve, eve, or if in eve chat)
     text_lower = content.lower()
-    should_reply = (
-        not is_from_me
-        and (
-            "@eve" in text_lower
-            or "eve" in text_lower
-            or chat_id == "eve"
-        )
-    )
+    is_eve_chat = chat_id == "eve"
+    has_eve_mention = "@eve" in text_lower or text_lower.startswith("eve ") or text_lower == "eve"
+    not_from_eve = sender_id != "eve" and not sender_name.lower().startswith("eve")
+
+    should_reply = not_from_eve and (has_eve_mention or (is_eve_chat and not is_from_me))
 
     if should_reply:
-        logger.info(f"Eve triggered for inbound WhatsApp message from {sender_name} in {chat_id}")
+        logger.info(f"Eve triggered for WhatsApp message from {sender_name} (from_me={is_from_me}) in {chat_id}")
         await WhatsAppService._handle_eve_response(database, user_id, chat_id, content)
 
     return {"status": "processed"}

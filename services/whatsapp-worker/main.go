@@ -688,11 +688,8 @@ func main() {
 			return
 		}
 
-		sessionsLock.RLock()
-		sess, ok := sessions[req.UserID]
-		sessionsLock.RUnlock()
-
-		if !ok || sess == nil || !sess.Connected {
+		sess, err := getOrCreateSession(req.UserID)
+		if err != nil || sess == nil || sess.Client == nil || !sess.Client.IsConnected() {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "WhatsApp is not connected for this user"})
 			return
 		}
