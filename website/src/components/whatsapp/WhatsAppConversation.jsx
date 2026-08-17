@@ -25,6 +25,8 @@ import {
   Trash2,
   Share2,
   X,
+  Pin,
+  Plus,
 } from 'lucide-react'
 import { Markdown } from '../ui/Markdown'
 
@@ -50,6 +52,7 @@ export function WhatsAppConversation({
   const [isSearchOpen, setIsSearchOpen] = useState(false)
   const [inChatSearchQuery, setInChatSearchQuery] = useState('')
   const [copiedToast, setCopiedToast] = useState(false)
+  const [infoModalMessage, setInfoModalMessage] = useState(null)
 
   const messagesEndRef = useRef(null)
   const fileInputRef = useRef(null)
@@ -384,12 +387,24 @@ export function WhatsAppConversation({
                             type="button"
                             className="whatsapp-context-item"
                             onClick={() => {
+                              setInfoModalMessage(msg)
+                              setActiveMenuMessageId(null)
+                            }}
+                          >
+                            <Info size={15} />
+                            <span>Message info</span>
+                          </button>
+
+                          <button
+                            type="button"
+                            className="whatsapp-context-item"
+                            onClick={() => {
                               setReplyingTo(msg)
                               setActiveMenuMessageId(null)
                             }}
                           >
-                            <CornerUpLeft size={14} />
-                            Reply
+                            <CornerUpLeft size={15} />
+                            <span>Reply</span>
                           </button>
 
                           <button
@@ -397,8 +412,56 @@ export function WhatsAppConversation({
                             className="whatsapp-context-item"
                             onClick={() => handleCopyMessage(msg.content)}
                           >
-                            <Copy size={14} />
-                            Copy
+                            <Copy size={15} />
+                            <span>Copy</span>
+                          </button>
+
+                          <button
+                            type="button"
+                            className="whatsapp-context-item"
+                            onClick={() => {
+                              setShowEmojiPicker(true)
+                              setActiveMenuMessageId(null)
+                            }}
+                          >
+                            <Smile size={15} />
+                            <span>React</span>
+                          </button>
+
+                          <button
+                            type="button"
+                            className="whatsapp-context-item"
+                            onClick={() => {
+                              setActiveMenuMessageId(null)
+                              setInputText(`Forwarded: ${msg.content}`)
+                              setCopiedToast('Message copied to composer for forwarding')
+                              setTimeout(() => setCopiedToast(false), 2000)
+                            }}
+                          >
+                            <Share2 size={15} />
+                            <span>Forward</span>
+                          </button>
+
+                          <button
+                            type="button"
+                            className="whatsapp-context-item"
+                            onClick={() => {
+                              setActiveMenuMessageId(null)
+                              setCopiedToast(msg.is_pinned ? 'Message unpinned' : 'Message pinned')
+                              setTimeout(() => setCopiedToast(false), 2000)
+                            }}
+                          >
+                            <Pin size={15} />
+                            <span>{msg.is_pinned ? 'Unpin' : 'Pin'}</span>
+                          </button>
+
+                          <button
+                            type="button"
+                            className="whatsapp-context-item eve-action"
+                            onClick={() => handleAskEveAboutMessage(msg)}
+                          >
+                            <Sparkles size={15} />
+                            <span>Ask Eve AI</span>
                           </button>
 
                           <button
@@ -409,17 +472,8 @@ export function WhatsAppConversation({
                               setActiveMenuMessageId(null)
                             }}
                           >
-                            <Star size={14} fill={msg.is_starred ? 'currentColor' : 'none'} />
-                            {msg.is_starred ? 'Unstar' : 'Star'}
-                          </button>
-
-                          <button
-                            type="button"
-                            className="whatsapp-context-item eve-action"
-                            onClick={() => handleAskEveAboutMessage(msg)}
-                          >
-                            <Sparkles size={14} />
-                            Ask Eve AI
+                            <Star size={15} fill={msg.is_starred ? 'currentColor' : 'none'} />
+                            <span>{msg.is_starred ? 'Unstar' : 'Star'}</span>
                           </button>
 
                           <button
@@ -430,16 +484,23 @@ export function WhatsAppConversation({
                               setActiveMenuMessageId(null)
                             }}
                           >
-                            <Trash2 size={14} />
-                            Delete
+                            <Trash2 size={15} />
+                            <span>Delete</span>
                           </button>
                         </div>
                       )}
                     </div>
                   )}
 
-                  {/* Main Message Bubble */}
-                  <div className="whatsapp-message-bubble">
+                  {/* Main Message Bubble with Right-Click Context Menu Trigger */}
+                  <div
+                    className="whatsapp-message-bubble"
+                    onContextMenu={(e) => {
+                      e.preventDefault()
+                      e.stopPropagation()
+                      setActiveMenuMessageId(msg.id)
+                    }}
+                  >
                     {/* Forwarded Tag */}
                     {msg.is_forwarded && (
                       <div className="whatsapp-forwarded-tag">
@@ -672,6 +733,45 @@ export function WhatsAppConversation({
           <Send size={16} />
         </button>
       </form>
+
+      {/* Message Info Modal */}
+      {infoModalMessage && (
+        <div className="whatsapp-info-modal-backdrop" onClick={() => setInfoModalMessage(null)}>
+          <div className="whatsapp-info-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="whatsapp-info-modal-header">
+              <h3>Message Info</h3>
+              <button
+                type="button"
+                className="whatsapp-icon-btn small"
+                onClick={() => setInfoModalMessage(null)}
+              >
+                <X size={16} />
+              </button>
+            </div>
+            <div className="whatsapp-info-modal-body">
+              <div className="whatsapp-info-row">
+                <span className="info-label">Sender</span>
+                <span className="info-value">{infoModalMessage.is_from_me ? 'You' : infoModalMessage.sender_name || 'Contact'}</span>
+              </div>
+              <div className="whatsapp-info-row">
+                <span className="info-label">Sent</span>
+                <span className="info-value">{new Date(infoModalMessage.timestamp).toLocaleString()}</span>
+              </div>
+              <div className="whatsapp-info-row">
+                <span className="info-label">Status</span>
+                <span className="info-value" style={{ textTransform: 'capitalize' }}>{infoModalMessage.status || 'Delivered'}</span>
+              </div>
+              <div className="whatsapp-info-row">
+                <span className="info-label">Length</span>
+                <span className="info-value">{infoModalMessage.content?.length || 0} characters</span>
+              </div>
+              <div className="whatsapp-info-preview-box">
+                <p>{infoModalMessage.content}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
