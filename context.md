@@ -4,7 +4,7 @@ Living project snapshot for AI agents. `AGENTS.md` holds the permanent rules;
 this file holds the **current state** of the codebase and must be kept up to
 date whenever the implementation changes.
 
-> **Last updated:** 2026-08-17 (Fixed documents repository snapshot instantiation and WhatsApp WebSocket authentication handshake)
+> **Last updated:** 2026-08-17 (Added website Dockerfile and integrated frontend SPA into Docker Compose with Nginx reverse proxy)
 
 ---
 
@@ -14,7 +14,7 @@ StarWaves is a personal productivity workspace that brings projects, job
 applications, tasks, documents, code workspace, calendars, email, WhatsApp, hackathons, competitive
 programming, and an AI assistant into one dashboard.
 
-- **Frontend** (`/website`): React 19 + Vite + Vanilla CSS (monochrome design system) + Monaco Editor.
+- **Frontend** (`/website`): React 19 + Vite + Vanilla CSS (monochrome design system) + Monaco Editor. Containerized with Docker multi-stage build & Nginx.
 - **Desktop Shell** (`/website/src-tauri`): Tauri v2 scaffold with native FS, dialog, shell, and file watching plugins.
 - **Backend** (`/server`): FastAPI (Python) + Supabase (PostgreSQL) / Async SQLAlchemy 2.0. Containerized with Docker & Nginx.
 - **Auth**: Bearer token authentication & Google OAuth; serverless deployment targets Vercel, dockerized server for standalone VM/cloud deployment.
@@ -31,7 +31,10 @@ Starwaves/
 │   ├── src/styles/          Tokens, components, and page styles
 │   ├── src/themes/          Theme presets + customizer options/engine
 │   ├── src/utils/           Pure parsers/transformers
-│   └── src-tauri/           Tauri v2 desktop shell scaffold
+│   ├── src-tauri/           Tauri v2 desktop shell scaffold
+│   ├── Dockerfile           Multi-stage Node.js build + Nginx runtime
+│   ├── nginx.conf           SPA routing & caching Nginx config
+│   └── .dockerignore        Container build exclusions
 ├── server/                  FastAPI backend
 │   ├── app/
 │   │   ├── api/routes/      HTTP endpoints, WebSockets, and OAuth callbacks (whatsapp.py, whatsapp_ws.py, workspace_files.py)
@@ -47,8 +50,8 @@ Starwaves/
 │   └── .dockerignore        Container build exclusions
 ├── nginx/                   Nginx reverse proxy configuration
 │   ├── nginx.conf           Global Nginx configuration (Gzip, buffers, security)
-│   └── conf.d/default.conf  Reverse proxy virtual host (port 80/443, WebSocket, health)
-├── docker-compose.yml       Multi-container orchestration for PostgreSQL 16, FastAPI server, & Nginx
+│   └── conf.d/default.conf  Reverse proxy virtual host (port 80/443, WebSocket, health, frontend SPA)
+├── docker-compose.yml       Multi-container orchestration for PostgreSQL 16, FastAPI server, React website, WhatsApp worker, & Nginx
 ├── .env.docker.example      Docker deployment environment template (PostgreSQL DATABASE_URL)
 ├── DOCKER.md                Container setup & operational documentation
 ├── SPEECH_PROVIDERS.md      TTS/STT provider comparison for Eve voice
@@ -237,7 +240,7 @@ SMTP, Firestore database id, CORS origins. Loads `.env.prod` before `.env`.
   - Calls integrate with notifications: starting a call, missing a call, or declining a call automatically creates workspace notifications in Firestore via `NotificationRepository`, dispatches FCM push notifications to user devices, and triggers browser desktop notifications. Calls are also surfaced in the sidebar navigation, Header notification drawer (with dedicated call icons), and landing page "Remind me" CTA routes to signup.
 - Eve voice call UX (Web Speech API, `for now` approach): Eve voice calls surface STT state via `sttSupported`/`sttStatus` (`listening`/`unsupported`/`permission`/`error`) in the `CallScreen.jsx` status line, and show an on-call text fallback input whenever voice input is not listening (unsupported browser, denied mic permission, or STT error). An echo-loop guard in `useCallCenter.js` ignores speech-recognition results while Eve's TTS is playing (plus a 700ms cooldown) so her own spoken words are never transcribed back into the conversation. Speech preferences (language, voice, rate, pitch) persist under `starwaves.eve_voice_prefs` via `src/utils/speech.js` (pure helpers + vitest suite), the `useSpeechVoices` hook, and the new Settings "Eve voice" section (`EveVoiceSection.jsx`). Note: Web Speech STT runs through the browser's speech service (Chrome uses Google servers, not on-device); TTS uses local OS voices.
 - Eve voice call server STT/TTS integration: `useCallCenter.js` loads the user's speech provider choice (`loadEveSpeech` → `GET /settings/eve-speech`) whenever an Eve call becomes active and stores it in `speechPrefs` (`sttProvider`/`sttModel`/`ttsProvider`/`ttsVoice`). When the TTS provider is `google`, Eve's replies are synthesized server-side via `synthesizeEveSpeech` (`POST /eve/synthesize`, Google Cloud TTS) and played through an `Audio` element with the same `isEveSpeaking`/echo-guard wiring as browser TTS. When the STT provider is `groq`, browser SpeechRecognition is skipped in favor of push-to-talk: `startSttRecording`/`stopSttRecording` capture mic audio (`MediaRecorder`, webm/opus) and `transcribeEveAudio` (`POST /eve/transcribe`, Groq Whisper) sends the transcript through the normal Eve reply path. `CallScreen.jsx` renders a hold-to-talk mic button when `sttProvider === 'groq'`, with release-to-send hints and the text fallback still available.
-- Docker & Nginx containerization: `/server` containerized using Python 3.12-slim with non-root security context (`appuser`), Uvicorn 4-worker runtime, and container healthchecks. Nginx reverse proxy configured in `nginx/` with Gzip compression, 20MB client upload ceiling, security headers, WebSocket upgrade support, and health route proxying. Orchestrated via root `docker-compose.yml` with `.env.docker.example` and [`DOCKER.md`](file:///c:/project/starwaves/DOCKER.md).
+- Docker & Nginx containerization: Fullstack multi-container stack orchestrated via root `docker-compose.yml` with `.env.docker.example` and [`DOCKER.md`](file:///c:/project/starwaves/DOCKER.md). Includes React frontend (`/website`) multi-stage build (`node:20-alpine` + `nginx:alpine`) on port 3000/80 with SPA routing, `/server` containerized with Python 3.12-slim (`appuser`, Uvicorn), PostgreSQL 16 database, WhatsApp worker, and Nginx edge reverse proxy (`nginx/`) routing frontend SPA requests (`/`), API endpoints (`/api/`), WebSockets (`/ws/`), docs (`/docs`), and health checks (`/health`) with Gzip, 20MB payload ceiling, and security headers.
 - Global CORS & Exception Middleware: `server/app/main.py` features outer CORS middleware and exception wrapping ensuring proper `Access-Control-Allow-Origin`, `Access-Control-Allow-Credentials`, and allowed header response headers across all HTTP endpoints, preflight `OPTIONS` requests, 4xx/500 status responses, and unhandled server exceptions for local development (`localhost`, `127.0.0.1`, Capacitor `capacitor://localhost`, custom ports) and production (`https://starwaves.susindran.in`, `https://*.susindran.in`, `https://*.vercel.app`).
 - Email & Google OAuth single-account unification: automatic merging of duplicate account records in Firestore (`merge_duplicate_user_accounts`), seamless password attachment to Google OAuth accounts upon signup (`create_user_with_password`), and on-demand `/api/v1/auth/merge-accounts` endpoint.
 - User session signout: explicit Sign Out actions provided in the topbar profile dropdown (`Header.jsx`), Profile Card (`ProfileCard.jsx`), and Account & Security settings (`AccountSection.jsx`). Invoking sign out clears local authentication session tokens via `clearAuthSession()`, resets workspace state, and redirects the user to the `/login` route.

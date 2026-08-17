@@ -19,7 +19,15 @@ const BACKOFF_FACTOR = 2
 function buildWsUrl(token) {
   // Convert http(s):// → ws(s):// and strip the /api/v1 suffix — the WS
   // endpoint lives at /ws/calls directly on the server.
-  const base = API_URL.replace(/^http/, 'ws').replace(/\/api\/v1$/, '')
+  let base
+  if (API_URL.startsWith('http://') || API_URL.startsWith('https://')) {
+    base = API_URL.replace(/^http/, 'ws').replace(/\/api\/v1\/?$/, '')
+  } else if (typeof window !== 'undefined' && window.location) {
+    const proto = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
+    base = `${proto}//${window.location.host}`
+  } else {
+    base = ''
+  }
   return `${base}/ws/calls?token=${encodeURIComponent(token)}`
 }
 

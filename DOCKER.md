@@ -1,6 +1,18 @@
-# StarWaves Server Docker Deployment Guide
+# StarWaves Docker Deployment Guide
 
-This guide explains how to build, run, and manage the StarWaves FastAPI backend containerized alongside Nginx reverse proxy.
+This guide explains how to build, run, and manage the full StarWaves stack (React website frontend, FastAPI backend, PostgreSQL database, WhatsApp worker, and Nginx reverse proxy) containerized with Docker and Docker Compose.
+
+---
+
+## 🚀 Architecture Overview
+
+| Service | Container Name | Internal Port | Host Port | Description |
+| --- | --- | --- | --- | --- |
+| **nginx** | `starwaves-nginx` | `80`, `443` | `80`, `443` | Edge reverse proxy routing `/` to website, `/api/` & `/ws/` to backend |
+| **website** | `starwaves-website` | `80` | `3000` | React 19 + Vite frontend SPA with client-side routing |
+| **server** | `starwaves-server` | `8000` | `8000` | FastAPI backend with Uvicorn, WebSockets, & background worker |
+| **postgres** | `starwaves-postgres` | `5432` | `5432` | PostgreSQL 16 relational database |
+| **whatsapp-worker** | `starwaves-whatsapp-worker` | `3001` | `3001` | Go WhatsApp Baileys/Whatsmeow worker daemon |
 
 ---
 
@@ -35,6 +47,10 @@ docker compose ps
 
 ## 🔍 Verification & Health Check
 
+### Access the Application
+- **Web App**: [http://localhost](http://localhost) (or [http://localhost:3000](http://localhost:3000) for direct website container)
+- **API Documentation**: [http://localhost/docs](http://localhost/docs) or [http://localhost:8000/docs](http://localhost:8000/docs)
+
 ### Test Server Health via Nginx Proxy
 ```bash
 curl -i http://localhost/health
@@ -54,19 +70,26 @@ Content-Type: application/json
 curl -i http://localhost:8000/api/v1/health
 ```
 
+### Direct Website Container Check
+```bash
+curl -i http://localhost:3000/
+```
+
 ---
 
 ## 🛠 Useful Commands
 
 | Action | Command |
 | --- | --- |
-| **View logs** | `docker compose logs -f` |
-| **View server logs only** | `docker compose logs -f server` |
-| **View nginx logs only** | `docker compose logs -f nginx` |
+| **View all logs** | `docker compose logs -f` |
+| **View website logs** | `docker compose logs -f website` |
+| **View server logs** | `docker compose logs -f server` |
+| **View nginx logs** | `docker compose logs -f nginx` |
 | **Restart services** | `docker compose restart` |
 | **Stop stack** | `docker compose down` |
 | **Stop stack & remove volumes** | `docker compose down -v` |
 | **Run server unit tests inside container** | `docker compose exec server python -m unittest discover tests` |
+| **Rebuild website image without cache** | `docker compose build --no-cache website` |
 | **Rebuild server image without cache** | `docker compose build --no-cache server` |
 
 ---

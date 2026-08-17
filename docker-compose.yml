@@ -50,6 +50,27 @@ services:
       retries: 3
       start_period: 10s
 
+  website:
+    build:
+      context: ./website
+      dockerfile: Dockerfile
+      args:
+        - VITE_API_URL=/api/v1
+    container_name: starwaves-website
+    restart: unless-stopped
+    expose:
+      - "80"
+    ports:
+      - "3000:80"
+    networks:
+      - starwaves-network
+    healthcheck:
+      test: ["CMD-SHELL", "wget --spider -q http://localhost:80/ || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+
   nginx:
     image: nginx:alpine
     container_name: starwaves-nginx
@@ -63,6 +84,8 @@ services:
       - nginx-logs:/var/log/nginx
     depends_on:
       server:
+        condition: service_healthy
+      website:
         condition: service_healthy
     networks:
       - starwaves-network
