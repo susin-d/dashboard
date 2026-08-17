@@ -292,7 +292,6 @@ export function WhatsAppConversation({
     return formatted.slice(0, 4).join(', ') + (formatted.length > 4 ? ` and ${formatted.length - 4} more...` : '')
   }
 
-  const quickReactions = ['👍', '❤️', '😂', '😮', '😢', '🙏']
   const commonEmojis = ['👍', '❤️', '🙌', '🔥', '🎉', '😊', '🚀', '✅', '🙏', '💯']
 
   // Search & chat-isolated filtered messages sorted chronologically (oldest to newest)
@@ -552,37 +551,24 @@ export function WhatsAppConversation({
                   onMouseLeave={() => setHoveredMessageId((curr) => (curr === msg.id ? null : curr))}
                 >
                   <div className="whatsapp-message-bubble-container">
-                  {/* Floating Quick Action & Reaction Bar on Hover */}
-                  {(isHovered || isMenuOpen) && (
-                    <div className="whatsapp-message-action-bar">
-                      {/* Quick Reactions */}
-                      <div className="whatsapp-quick-reactions">
-                        {quickReactions.map((emoji) => (
-                          <button
-                            key={emoji}
-                            type="button"
-                            className="whatsapp-reaction-btn"
-                            onClick={() => onReactToMessage?.(chat.id, msg.id, emoji)}
-                            title={`React ${emoji}`}
-                          >
-                            {emoji}
-                          </button>
-                        ))}
-                      </div>
+                    {/* Message Options Menu Trigger on Hover */}
+                    {(isHovered || isMenuOpen) && (
+                      <div className="whatsapp-bubble-menu-container">
+                        <button
+                          type="button"
+                          className="whatsapp-bubble-menu-btn"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            setActiveMenuMessageId((curr) => (curr === msg.id ? null : msg.id))
+                          }}
+                          title="Message menu"
+                        >
+                          <ChevronDown size={14} />
+                        </button>
 
-                      {/* Dropdown Menu Trigger */}
-                      <button
-                        type="button"
-                        className="whatsapp-action-menu-btn"
-                        onClick={() => setActiveMenuMessageId((curr) => (curr === msg.id ? null : msg.id))}
-                        title="Message menu"
-                      >
-                        <ChevronDown size={14} />
-                      </button>
-
-                      {/* Context Dropdown Menu */}
-                      {isMenuOpen && (
-                        <div className="whatsapp-context-menu" ref={menuRef}>
+                        {/* Context Dropdown Menu */}
+                        {isMenuOpen && (
+                          <div className="whatsapp-context-menu" ref={menuRef}>
                           <button
                             type="button"
                             className="whatsapp-context-item"
@@ -620,12 +606,12 @@ export function WhatsAppConversation({
                             type="button"
                             className="whatsapp-context-item"
                             onClick={() => {
-                              setShowEmojiPicker(true)
+                              onReactToMessage?.(chat.id, msg.id, '👍')
                               setActiveMenuMessageId(null)
                             }}
                           >
                             <Smile size={15} />
-                            <span>React</span>
+                            <span>React (👍)</span>
                           </button>
 
                           <button
