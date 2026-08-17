@@ -11,7 +11,16 @@ def _collection(database: Client, user_id: str):
 
 
 def _from_snapshot(snapshot) -> DocumentResponse:
-    return DocumentResponse(id=snapshot.id, **(snapshot.to_dict() or {}))
+    data = dict(snapshot.to_dict() or {})
+    data.setdefault("id", snapshot.id)
+    data.setdefault("name", data.get("title") or "Untitled")
+    data.setdefault("url", data.get("url") or "")
+    data.setdefault("category", data.get("folder") or "General")
+    data.setdefault("description", data.get("content") or "")
+    data.setdefault("type", "FILE")
+    data.setdefault("size", "Unknown")
+    data.setdefault("modified_at", data.get("updated_at") or data.get("created_at") or datetime.now(timezone.utc).isoformat())
+    return DocumentResponse(**data)
 
 
 def list_documents(database: Client, user_id: str) -> list[DocumentResponse]:

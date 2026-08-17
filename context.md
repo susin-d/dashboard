@@ -4,7 +4,7 @@ Living project snapshot for AI agents. `AGENTS.md` holds the permanent rules;
 this file holds the **current state** of the codebase and must be kept up to
 date whenever the implementation changes.
 
-> **Last updated:** 2026-08-17 (Suppressed AI generation error boilerplate from sending to external WhatsApp contacts and added comprehensive server error logging)
+> **Last updated:** 2026-08-17 (Fixed documents repository snapshot instantiation and WhatsApp WebSocket authentication handshake)
 
 ---
 

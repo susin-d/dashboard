@@ -49,6 +49,11 @@ def _utc_now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
+def _is_array_union(value: Any) -> bool:
+    """True for the compat or firebase_admin ArrayUnion (duck-typed)."""
+    return type(value).__name__ == "ArrayUnion" and hasattr(value, "values")
+
+
 def _json_safe(obj: Any) -> Any:
     if isinstance(obj, datetime):
         return obj.isoformat()
@@ -381,8 +386,14 @@ class SqlClient:
                 return SqlSnapshot(doc_id, {
                     "id": d.id,
                     "title": d.title,
+                    "name": d.title or "Untitled",
                     "content": d.content,
+                    "description": d.content or "",
                     "folder": d.folder,
+                    "category": d.folder or "General",
+                    "url": "",
+                    "type": "FILE",
+                    "size": "Unknown",
                     "tags": d.tags or [],
                     "deleted": d.deleted,
                     "deleted_at": d.deleted_at.isoformat() if d.deleted_at else None,
@@ -1116,6 +1127,8 @@ class SqlClient:
                 stmt = select(Document).where(Document.user_id == user_id)
                 if query._order_by == "created_at":
                     stmt = stmt.order_by(Document.created_at.desc() if query._direction == "DESC" else Document.created_at.asc())
+                elif query._order_by == "modified_at":
+                    stmt = stmt.order_by(Document.updated_at.desc() if query._direction == "DESC" else Document.updated_at.asc())
                 if query._limit:
                     stmt = stmt.limit(query._limit)
                 docs = session.scalars(stmt).all()
@@ -1123,8 +1136,14 @@ class SqlClient:
                     SqlSnapshot(d.id, {
                         "id": d.id,
                         "title": d.title,
+                        "name": d.title or "Untitled",
                         "content": d.content,
+                        "description": d.content or "",
                         "folder": d.folder,
+                        "category": d.folder or "General",
+                        "url": "",
+                        "type": "FILE",
+                        "size": "Unknown",
                         "tags": d.tags or [],
                         "deleted": d.deleted,
                         "deleted_at": d.deleted_at.isoformat() if d.deleted_at else None,

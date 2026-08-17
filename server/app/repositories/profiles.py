@@ -9,7 +9,9 @@ COLLECTION = "profiles"
 
 
 def _profile_from_snapshot(snapshot) -> ProfileResponse:
-    return ProfileResponse(id=snapshot.id, **(snapshot.to_dict() or {}))
+    data = dict(snapshot.to_dict() or {})
+    data.setdefault("id", snapshot.id)
+    return ProfileResponse(**data)
 
 
 def create_profile(database: Client, profile: ProfileCreate) -> ProfileResponse:

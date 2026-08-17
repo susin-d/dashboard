@@ -20,7 +20,9 @@ async def whatsapp_websocket(
     """Persistent WebSocket connection for WhatsApp live updates."""
     try:
         user = get_current_user_from_token(token)
-    except Exception:
+    except Exception as e:
+        logger.warning("WhatsApp WS auth failed: %s", e)
+        await websocket.accept()
         await websocket.close(code=4001)
         return
 
