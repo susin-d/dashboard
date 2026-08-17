@@ -4,7 +4,7 @@ Living project snapshot for AI agents. `AGENTS.md` holds the permanent rules;
 this file holds the **current state** of the codebase and must be kept up to
 date whenever the implementation changes.
 
-> **Last updated:** 2026-08-17 (Full-page direct Google OAuth redirect, PostgreSQL Sentinel normalization, unified Settings layout and WhatsApp section headers)
+> **Last updated:** 2026-08-17 (Eager WhatsApp worker session initialization from SQLite device store & live WebSocket status synchronization in Settings)
 
 ---
 
