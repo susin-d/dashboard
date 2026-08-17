@@ -53,19 +53,26 @@ type SessionMedia struct {
 	DurationSeconds float64 `json:"duration_seconds,omitempty"`
 }
 
+type SessionReaction struct {
+	Emoji  string `json:"emoji"`
+	Sender string `json:"sender"`
+	Count  int    `json:"count"`
+}
+
 type SessionMessage struct {
-	ID               string        `json:"id"`
-	ChatID           string        `json:"chatId"`
-	SenderID         string        `json:"senderId"`
-	SenderName       string        `json:"senderName"`
-	SenderAvatarURL  string        `json:"senderAvatarUrl,omitempty"`
-	IsFromMe         bool          `json:"isFromMe"`
-	IsForwarded      bool          `json:"isForwarded"`
-	Content          string        `json:"content"`
-	Media            *SessionMedia `json:"media,omitempty"`
-	ReplyToMessageID string        `json:"replyToMessageId,omitempty"`
-	Timestamp        time.Time     `json:"timestamp"`
-	Status           string        `json:"status"`
+	ID               string             `json:"id"`
+	ChatID           string             `json:"chatId"`
+	SenderID         string             `json:"senderId"`
+	SenderName       string             `json:"senderName"`
+	SenderAvatarURL  string             `json:"senderAvatarUrl,omitempty"`
+	IsFromMe         bool               `json:"isFromMe"`
+	IsForwarded      bool               `json:"isForwarded"`
+	Content          string             `json:"content"`
+	Media            *SessionMedia      `json:"media,omitempty"`
+	ReplyToMessageID string             `json:"replyToMessageId,omitempty"`
+	Reactions        []*SessionReaction `json:"reactions,omitempty"`
+	Timestamp        time.Time          `json:"timestamp"`
+	Status           string             `json:"status"`
 }
 
 type SessionState struct {
@@ -371,9 +378,24 @@ func (s *SessionState) handleEvent(userId string, evt interface{}) {
 			var lastTime time.Time
 
 			for _, hMsg := range conv.GetMessages() {
+				webMsg := hMsg.GetMessage()
+				if webMsg == nil {
+					continue
+				}
 				rawM := webMsg.GetMessage()
 				if rawM == nil {
 					continue
+				}
+
+				msgID := ""
+				fromMe := false
+				senderJID := chatJID
+				if key := webMsg.GetKey(); key != nil {
+					msgID = key.GetID()
+					fromMe = key.GetFromMe()
+					if key.GetParticipant() != "" {
+						senderJID = key.GetParticipant()
+					}
 				}
 
 				// Check if this history message is a reaction
@@ -398,16 +420,6 @@ func (s *SessionState) handleEvent(userId string, evt interface{}) {
 					continue
 				}
 
-				msgID := ""
-				fromMe := false
-				senderJID := chatJID
-				if key := webMsg.GetKey(); key != nil {
-					msgID = key.GetID()
-					fromMe = key.GetFromMe()
-					if key.GetParticipant() != "" {
-						senderJID = key.GetParticipant()
-					}
-				}
 				ts := time.Unix(int64(webMsg.GetMessageTimestamp()), 0)
 				if text != "" {
 					lastText = text
@@ -580,62 +592,6 @@ func (s *SessionState) handleEvent(userId string, evt interface{}) {
 		s.PushName = ""
 		s.Unlock()
 		log.Printf("[User %s] WhatsApp Logged Out", userId)
-
-	case *events.Reaction:
-		targetID := ""
-		if key := v.Reaction.GetKey(); key != nil {
-			targetID = key.GetID()
-		}
-		if targetID == "" {
-			return
-		}
-		emoji := v.Reaction.GetText()
-		chatJID := v.Info.Chat.String()
-		senderJID := v.Info.Sender.String()
-		senderName := resolveContactName(s, v.Info.Sender, v.Info.PushName)
-
-		s.Lock()
-		if msgs, ok := s.Messages[chatJID]; ok {
-			for _, m := range msgs {
-				if m.ID == targetID {
-					var filtered []*SessionReaction
-					for _, r := range m.Reactions {
-						if r.Sender != senderName && r.Sender != senderJID {
-							filtered = append(filtered, r)
-						}
-					}
-					if emoji != "" {
-						filtered = append(filtered, &SessionReaction{
-							Emoji:  emoji,
-							Sender: senderName,
-							Count:  1,
-						})
-					}
-					m.Reactions = filtered
-					break
-				}
-			}
-		}
-		s.Unlock()
-
-		go func() {
-			payload := map[string]interface{}{
-				"type":      "message_reaction",
-				"userId":    userId,
-				"chatId":    chatJID,
-				"messageId": targetID,
-				"senderId":  senderJID,
-				"emoji":     emoji,
-			}
-			if jsonBytes, err := json.Marshal(payload); err == nil {
-				req, err := http.NewRequest("POST", backendWebhookURL, bytes.NewBuffer(jsonBytes))
-				if err == nil {
-					req.Header.Set("Content-Type", "application/json")
-					client := &http.Client{Timeout: 5 * time.Second}
-					_, _ = client.Do(req)
-				}
-			}
-		}()
 
 	case *events.Message:
 		senderJID := v.Info.Sender.String()
