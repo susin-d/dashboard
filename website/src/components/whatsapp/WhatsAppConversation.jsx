@@ -270,7 +270,7 @@ export function WhatsAppConversation({
       }
       return formatSenderName(p, p)
     })
-    return formatted.slice(0, 8).join(', ') + (formatted.length > 8 ? ` and ${formatted.length - 8} more...` : '')
+    return formatted.slice(0, 4).join(', ') + (formatted.length > 4 ? ` and ${formatted.length - 4} more...` : '')
   }
 
   const quickReactions = ['👍', '❤️', '😂', '😮', '😢', '🙏']
