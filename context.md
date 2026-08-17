@@ -4,7 +4,7 @@ Living project snapshot for AI agents. `AGENTS.md` holds the permanent rules;
 this file holds the **current state** of the codebase and must be kept up to
 date whenever the implementation changes.
 
-> **Last updated:** 2026-08-17 (Added real-time WhatsApp read and delivery status receipt tracking and Message Info status breakdown)
+> **Last updated:** 2026-08-17 (Modularized WhatsApp worker service into internal Go packages)
 
 ---
 
@@ -17,6 +17,7 @@ programming, and an AI assistant into one dashboard.
 - **Frontend** (`/website`): React 19 + Vite + Vanilla CSS (monochrome design system) + Monaco Editor. Containerized with Docker multi-stage build & Nginx.
 - **Desktop Shell** (`/website/src-tauri`): Tauri v2 scaffold with native FS, dialog, shell, and file watching plugins.
 - **Backend** (`/server`): FastAPI (Python) + Supabase (PostgreSQL) / Async SQLAlchemy 2.0. Containerized with Docker & Nginx.
+- **WhatsApp Worker** (`/services/whatsapp-worker`): Go (WhatsMeow) bridge containerized for multi-device WhatsApp pairing, chat/message synchronization, reaction handling, and real-time webhook dispatching.
 - **Auth**: Bearer token authentication & Google OAuth; serverless deployment targets Vercel, dockerized server for standalone VM/cloud deployment.
 
 ## 2. Repository structure
@@ -49,6 +50,11 @@ Starwaves/
 │   ├── templates/email/     Email HTML templates
 │   ├── Dockerfile           Python 3.12-slim container build
 │   └── .dockerignore        Container build exclusions
+├── services/                Microservices and background workers
+│   └── whatsapp-worker/     Go WhatsMeow WhatsApp bridge service
+│       ├── internal/        Internal modular packages (models, parser, contacts, webhook, events, session, api)
+│       ├── Dockerfile       Alpine multi-stage Go build
+│       └── main.go          Service entry point & router initialization
 ├── nginx/                   Nginx reverse proxy configuration
 │   ├── nginx.conf           Global Nginx configuration (Gzip, buffers, security)
 │   └── conf.d/default.conf  Reverse proxy virtual host (port 80/443, WebSocket, health, frontend SPA)
