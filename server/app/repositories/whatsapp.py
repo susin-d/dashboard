@@ -144,6 +144,29 @@ def list_whatsapp_chats(database: Client, user_id: str) -> List[WhatsAppChatResp
     return results
 
 
+def get_whatsapp_chat(database: Client, user_id: str, chat_id: str) -> Optional[WhatsAppChatResponse]:
+    doc_ref = _chats_col(database, user_id).document(chat_id)
+    snap = doc_ref.get()
+    if not snap.exists:
+        return None
+    data = snap.to_dict() or {}
+    return WhatsAppChatResponse(
+        id=snap.id,
+        name=data.get("name", chat_id),
+        phone_number=data.get("phone_number"),
+        avatar_url=data.get("avatar_url"),
+        is_group=bool(data.get("is_group", False)),
+        is_eve=bool(data.get("is_eve", False)),
+        participants=data.get("participants"),
+        description=data.get("description"),
+        unread_count=data.get("unread_count", 0),
+        pinned=bool(data.get("pinned", False)),
+        last_message=data.get("last_message"),
+        updated_at=data.get("updated_at", datetime.now(timezone.utc)),
+        eve_auto_reply=bool(data.get("eve_auto_reply", False)),
+    )
+
+
 def upsert_whatsapp_chat(
     database: Client,
     user_id: str,
