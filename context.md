@@ -4,7 +4,7 @@ Living project snapshot for AI agents. `AGENTS.md` holds the permanent rules;
 this file holds the **current state** of the codebase and must be kept up to
 date whenever the implementation changes.
 
-> **Last updated:** 2026-08-17 (Optimized WhatsApp message loading latency, non-blocking chat retrieval, and real-time most-recent message sorting)
+> **Last updated:** 2026-08-17 (Streamlined WhatsApp unselected state with minimal placeholder, removed marketing cards)
 
 ---
 
