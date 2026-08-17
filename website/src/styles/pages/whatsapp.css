@@ -1343,17 +1343,50 @@
 .whatsapp-reactions-badge-list {
   display: flex;
   align-items: center;
-  gap: 4px;
-  margin-top: 2px;
+  margin-top: -10px;
+  margin-bottom: 4px;
+  position: relative;
+  z-index: 2;
+  user-select: none;
+}
+
+.whatsapp-message-wrapper.outgoing .whatsapp-reactions-badge-list {
+  justify-content: flex-end;
+  margin-right: 6px;
+}
+
+.whatsapp-message-wrapper.incoming .whatsapp-reactions-badge-list {
+  justify-content: flex-start;
+  margin-left: 6px;
 }
 
 .whatsapp-reaction-pill {
-  font-size: 0.75rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.8125rem;
   background: var(--bg-secondary, #18181b);
   border: 1px solid var(--border-color, #3f3f46);
-  padding: 1px 6px;
-  border-radius: 12px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  padding: 2px 8px;
+  border-radius: 14px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+  cursor: pointer;
+  transition: transform 0.15s ease;
+}
+
+.whatsapp-reaction-pill:hover {
+  transform: scale(1.06);
+}
+
+.whatsapp-reaction-emojis {
+  font-size: 0.875rem;
+  line-height: 1;
+}
+
+.whatsapp-reaction-count {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--text-secondary, #a1a1aa);
 }
 
 /* In-Chat Search Bar */

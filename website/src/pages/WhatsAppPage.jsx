@@ -132,22 +132,28 @@ export function WhatsAppPage() {
           )
         }
       } else if (event.type === 'message_reaction') {
-        if (event.chat_id === selectedChatIdRef.current) {
+        const targetChat = event.chat_id || event.chatId
+        const targetMsg = event.message_id || event.messageId
+        const targetSender = event.sender || event.senderId || 'other'
+        const currentSelected = selectedChatIdRef.current
+        const cleanSelected = currentSelected?.replace(/@s\.whatsapp\.net|@g\.us|@lid/g, '')
+        const cleanTargetChat = targetChat?.replace(/@s\.whatsapp\.net|@g\.us|@lid/g, '')
+
+        if (!targetChat || cleanTargetChat === cleanSelected || targetChat === currentSelected) {
           setMessages((prev) =>
             prev.map((m) => {
-              if (m.id !== event.message_id) return m
-              const existingReactions = (m.reactions || []).filter((r) => r.sender !== event.sender)
+              if (m.id !== targetMsg) return m
+              const existingReactions = (m.reactions || []).filter((r) => r.sender !== targetSender)
               if (event.emoji) {
-                existingReactions.push({ emoji: event.emoji, sender: event.sender, count: 1 })
+                existingReactions.push({ emoji: event.emoji, sender: targetSender, count: 1 })
               }
               return { ...m, reactions: existingReactions }
             }),
           )
         }
       } else if (event.type === 'message_deleted') {
-        if (event.chat_id === selectedChatIdRef.current) {
-          setMessages((prev) => prev.filter((m) => m.id !== event.message_id))
-        }
+        const targetMsg = event.message_id || event.messageId
+        setMessages((prev) => prev.filter((m) => m.id !== targetMsg))
       }
     })
 

@@ -108,6 +108,25 @@ func unwrapMessage(msg *waE2E.Message) *waE2E.Message {
 	return msg
 }
 
+func extractReactionInfo(rawMsg *waE2E.Message) (targetID string, emoji string) {
+	if rawMsg == nil {
+		return "", ""
+	}
+	msg := unwrapMessage(rawMsg)
+	if msg == nil {
+		return "", ""
+	}
+	if rx := msg.GetReactionMessage(); rx != nil {
+		targetID = ""
+		if key := rx.GetKey(); key != nil {
+			targetID = key.GetID()
+		}
+		emoji = rx.GetText()
+		return targetID, emoji
+	}
+	return "", ""
+}
+
 func extractMessageInfo(rawMsg *waE2E.Message) (content string, isForwarded bool, media *SessionMedia, replyToID string) {
 	if rawMsg == nil {
 		return "", false, nil, ""
@@ -352,11 +371,33 @@ func (s *SessionState) handleEvent(userId string, evt interface{}) {
 			var lastTime time.Time
 
 			for _, hMsg := range conv.GetMessages() {
-				webMsg := hMsg.GetMessage()
-				if webMsg == nil {
+				rawM := webMsg.GetMessage()
+				if rawM == nil {
 					continue
 				}
-				text, isFwd, media, replyToID := extractMessageInfo(webMsg.GetMessage())
+
+				// Check if this history message is a reaction
+				if rxTarget, rxEmoji := extractReactionInfo(rawM); rxTarget != "" {
+					for _, existing := range syncedMessages {
+						if existing.ID == rxTarget {
+							if rxEmoji != "" {
+								existing.Reactions = append(existing.Reactions, &SessionReaction{
+									Emoji:  rxEmoji,
+									Sender: senderJID,
+									Count:  1,
+								})
+							}
+							break
+						}
+					}
+					continue
+				}
+
+				text, isFwd, media, replyToID := extractMessageInfo(rawM)
+				if text == "" && media == nil {
+					continue
+				}
+
 				msgID := ""
 				fromMe := false
 				senderJID := chatJID
@@ -540,8 +581,63 @@ func (s *SessionState) handleEvent(userId string, evt interface{}) {
 		s.Unlock()
 		log.Printf("[User %s] WhatsApp Logged Out", userId)
 
+	case *events.Reaction:
+		targetID := ""
+		if key := v.Reaction.GetKey(); key != nil {
+			targetID = key.GetID()
+		}
+		if targetID == "" {
+			return
+		}
+		emoji := v.Reaction.GetText()
+		chatJID := v.Info.Chat.String()
+		senderJID := v.Info.Sender.String()
+		senderName := resolveContactName(s, v.Info.Sender, v.Info.PushName)
+
+		s.Lock()
+		if msgs, ok := s.Messages[chatJID]; ok {
+			for _, m := range msgs {
+				if m.ID == targetID {
+					var filtered []*SessionReaction
+					for _, r := range m.Reactions {
+						if r.Sender != senderName && r.Sender != senderJID {
+							filtered = append(filtered, r)
+						}
+					}
+					if emoji != "" {
+						filtered = append(filtered, &SessionReaction{
+							Emoji:  emoji,
+							Sender: senderName,
+							Count:  1,
+						})
+					}
+					m.Reactions = filtered
+					break
+				}
+			}
+		}
+		s.Unlock()
+
+		go func() {
+			payload := map[string]interface{}{
+				"type":      "message_reaction",
+				"userId":    userId,
+				"chatId":    chatJID,
+				"messageId": targetID,
+				"senderId":  senderJID,
+				"emoji":     emoji,
+			}
+			if jsonBytes, err := json.Marshal(payload); err == nil {
+				req, err := http.NewRequest("POST", backendWebhookURL, bytes.NewBuffer(jsonBytes))
+				if err == nil {
+					req.Header.Set("Content-Type", "application/json")
+					client := &http.Client{Timeout: 5 * time.Second}
+					_, _ = client.Do(req)
+				}
+			}
+		}()
+
 	case *events.Message:
-		text, isFwd, media, replyToID := extractMessageInfo(v.Message)
 		senderJID := v.Info.Sender.String()
 		chatJID := v.Info.Chat.String()
 		isFromMe := v.Info.IsFromMe
@@ -553,6 +649,58 @@ func (s *SessionState) handleEvent(userId string, evt interface{}) {
 		} else {
 			senderName = resolveContactName(s, v.Info.Sender, v.Info.PushName)
 			senderAvatar = resolveAvatarURL(s, v.Info.Sender)
+		}
+
+		// Check if message is a reaction
+		if rxTarget, rxEmoji := extractReactionInfo(v.Message); rxTarget != "" {
+			s.Lock()
+			if msgs, ok := s.Messages[chatJID]; ok {
+				for _, m := range msgs {
+					if m.ID == rxTarget {
+						var filtered []*SessionReaction
+						for _, r := range m.Reactions {
+							if r.Sender != senderName && r.Sender != senderJID {
+								filtered = append(filtered, r)
+							}
+						}
+						if rxEmoji != "" {
+							filtered = append(filtered, &SessionReaction{
+								Emoji:  rxEmoji,
+								Sender: senderName,
+								Count:  1,
+							})
+						}
+						m.Reactions = filtered
+						break
+					}
+				}
+			}
+			s.Unlock()
+
+			go func() {
+				payload := map[string]interface{}{
+					"type":      "message_reaction",
+					"userId":    userId,
+					"chatId":    chatJID,
+					"messageId": rxTarget,
+					"senderId":  senderJID,
+					"emoji":     rxEmoji,
+				}
+				if jsonBytes, err := json.Marshal(payload); err == nil {
+					req, err := http.NewRequest("POST", backendWebhookURL, bytes.NewBuffer(jsonBytes))
+					if err == nil {
+						req.Header.Set("Content-Type", "application/json")
+						client := &http.Client{Timeout: 5 * time.Second}
+						_, _ = client.Do(req)
+					}
+				}
+			}()
+			return
+		}
+
+		text, isFwd, media, replyToID := extractMessageInfo(v.Message)
+		if text == "" && media == nil {
+			return
 		}
 
 		s.Lock()

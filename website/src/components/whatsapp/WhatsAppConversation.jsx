@@ -50,6 +50,25 @@ function getSenderInitial(name) {
   return (clean[0] || '?').toUpperCase()
 }
 
+function formatReactions(reactions) {
+  if (!reactions || reactions.length === 0) return null
+  const emojiSet = []
+  let totalCount = 0
+  for (const r of reactions) {
+    if (r && r.emoji) {
+      if (!emojiSet.includes(r.emoji)) {
+        emojiSet.push(r.emoji)
+      }
+      totalCount += (r.count || 1)
+    }
+  }
+  if (emojiSet.length === 0) return null
+  return {
+    emojis: emojiSet.slice(0, 3),
+    totalCount: totalCount,
+  }
+}
+
 export function WhatsAppConversation({
   chat,
   messages = [],
@@ -809,16 +828,24 @@ export function WhatsAppConversation({
                     </div>
                   </div>
 
-                  {/* Emoji Reactions List Below Bubble */}
-                  {msg.reactions && msg.reactions.length > 0 && (
-                    <div className="whatsapp-reactions-badge-list">
-                      {msg.reactions.map((r, i) => (
-                        <span key={i} className="whatsapp-reaction-pill">
-                          {r.emoji} {r.count > 1 ? r.count : ''}
-                        </span>
-                      ))}
-                    </div>
-                  )}
+                  {/* Emoji Reactions List Attached to Bubble */}
+                  {(() => {
+                    const rxSummary = formatReactions(msg.reactions)
+                    if (!rxSummary) return null
+                    return (
+                      <div className="whatsapp-reactions-badge-list">
+                        <div
+                          className="whatsapp-reaction-pill"
+                          title={(msg.reactions || []).map((r) => `${r.sender || 'Someone'}: ${r.emoji}`).join('\n')}
+                        >
+                          <span className="whatsapp-reaction-emojis">{rxSummary.emojis.join(' ')}</span>
+                          {rxSummary.totalCount > 1 && (
+                            <span className="whatsapp-reaction-count">{rxSummary.totalCount}</span>
+                          )}
+                        </div>
+                      </div>
+                    )
+                  })()}
                 </div>
               </div>
             </div>

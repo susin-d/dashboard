@@ -153,6 +153,29 @@ async def whatsapp_incoming_webhook(
             )
         return {"status": "status_updated"}
 
+    # Handle incoming message reaction
+    if payload.get("type") == "message_reaction":
+        user_id = payload.get("userId")
+        chat_id = payload.get("chatId")
+        message_id = payload.get("messageId")
+        sender_id = payload.get("senderId") or "other"
+        emoji = payload.get("emoji")
+        if user_id and chat_id and message_id:
+            whatsapp_repo.add_message_reaction(
+                database, user_id, chat_id, message_id, emoji=emoji or "", sender=sender_id
+            )
+            await whatsapp_ws_manager.broadcast_to_user(
+                user_id,
+                {
+                    "type": "message_reaction",
+                    "chatId": chat_id,
+                    "messageId": message_id,
+                    "senderId": sender_id,
+                    "emoji": emoji,
+                },
+            )
+        return {"status": "reaction_updated"}
+
     # Handle bulk history sync from whatsmeow pairing
     if payload.get("type") == "history_sync":
         user_id = payload.get("userId")
