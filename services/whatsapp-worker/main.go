@@ -153,11 +153,16 @@ func getOrCreateSession(userId string) (*SessionState, error) {
 	return sess, nil
 }
 
-func (s *SessionState) handleEvent(userId string, evt interface{}) {
-	backendWebhookURL := os.Getenv("BACKEND_WEBHOOK_URL")
-	if backendWebhookURL == "" {
-		backendWebhookURL = "http://127.0.0.1:8000/api/v1/whatsapp/webhook"
+func getBackendWebhookURL() string {
+	url := os.Getenv("BACKEND_WEBHOOK_URL")
+	if url == "" {
+		return "http://127.0.0.1:8000/api/v1/whatsapp/webhook"
 	}
+	return url
+}
+
+func (s *SessionState) handleEvent(userId string, evt interface{}) {
+	backendWebhookURL := getBackendWebhookURL()
 
 	switch v := evt.(type) {
 	case *events.HistorySync:
@@ -773,7 +778,7 @@ func main() {
 										"messages": []*SessionMessage{},
 									}
 									if jsonBytes, err := json.Marshal(payload); err == nil {
-										req, err := http.NewRequest("POST", backendWebhookURL, bytes.NewBuffer(jsonBytes))
+										req, err := http.NewRequest("POST", getBackendWebhookURL(), bytes.NewBuffer(jsonBytes))
 										if err == nil {
 											req.Header.Set("Content-Type", "application/json")
 											client := &http.Client{Timeout: 5 * time.Second}
