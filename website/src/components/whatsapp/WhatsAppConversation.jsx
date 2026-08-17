@@ -221,15 +221,18 @@ export function WhatsAppConversation({
   const quickReactions = ['👍', '❤️', '😂', '😮', '😢', '🙏']
   const commonEmojis = ['👍', '❤️', '🙌', '🔥', '🎉', '😊', '🚀', '✅', '🙏', '💯']
 
-  // Search & chat-isolated filtered messages
+  // Search & chat-isolated filtered messages sorted chronologically (oldest to newest)
   const displayedMessages = useMemo(() => {
     const chatMsgs = (messages || []).filter((m) => !m.chat_id || m.chat_id === chat?.id)
-    if (!inChatSearchQuery.trim()) return chatMsgs
-    const q = inChatSearchQuery.toLowerCase()
-    return chatMsgs.filter(
-      (m) =>
-        m.content?.toLowerCase().includes(q) ||
-        m.sender_name?.toLowerCase().includes(q)
+    const filtered = !inChatSearchQuery.trim()
+      ? chatMsgs
+      : chatMsgs.filter(
+          (m) =>
+            m.content?.toLowerCase().includes(inChatSearchQuery.toLowerCase()) ||
+            m.sender_name?.toLowerCase().includes(inChatSearchQuery.toLowerCase()),
+        )
+    return [...filtered].sort(
+      (a, b) => new Date(a.timestamp || 0).getTime() - new Date(b.timestamp || 0).getTime(),
     )
   }, [messages, inChatSearchQuery, chat?.id])
 

@@ -47,15 +47,21 @@ export function WhatsAppChatList({
       )
     })
 
-    // Sort: Pinned first, then newest last_message / updated_at timestamp descending
+    // Sort: Pinned first, then chats with real messages by last_message.timestamp descending, then other contacts
     return list.sort((a, b) => {
       const aPinned = a.pinned || a.id === 'eve' ? 1 : 0
       const bPinned = b.pinned || b.id === 'eve' ? 1 : 0
       if (aPinned !== bPinned) return bPinned - aPinned
 
-      const aTime = new Date(a.last_message?.timestamp || a.updated_at || 0).getTime()
-      const bTime = new Date(b.last_message?.timestamp || b.updated_at || 0).getTime()
-      return bTime - aTime
+      const aHasMsg = Boolean(a.last_message?.content)
+      const bHasMsg = Boolean(b.last_message?.content)
+      if (aHasMsg !== bHasMsg) return bHasMsg ? 1 : -1
+
+      const aTime = a.last_message?.timestamp ? new Date(a.last_message.timestamp).getTime() : 0
+      const bTime = b.last_message?.timestamp ? new Date(b.last_message.timestamp).getTime() : 0
+      if (aTime !== bTime) return bTime - aTime
+
+      return (a.name || '').localeCompare(b.name || '')
     })
   }, [chats, searchQuery, activeFilter])
 

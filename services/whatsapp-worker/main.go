@@ -11,6 +11,7 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
+	"sort"
 	"strings"
 	"sync"
 	"syscall"
@@ -176,7 +177,7 @@ func (s *SessionState) handleEvent(userId string, evt interface{}) {
 			unread := int(conv.GetUnreadCount())
 			
 			lastText := ""
-			lastTime := time.Now()
+			var lastTime time.Time
 
 			for _, hMsg := range conv.GetMessages() {
 				webMsg := hMsg.GetMessage()
@@ -598,7 +599,7 @@ func main() {
 							PhoneNumber: jid.User,
 							IsGroup:     isGroup,
 							UnreadCount: 0,
-							UpdatedAt:   time.Now(),
+							UpdatedAt:   time.Time{},
 						}
 					}
 				}
@@ -612,6 +613,19 @@ func main() {
 			chatList = append(chatList, chat)
 		}
 		sess.RUnlock()
+
+		// Sort chats: chats with actual messages first (descending by UpdatedAt)
+		sort.Slice(chatList, func(i, j int) bool {
+			iHasMsg := chatList[i].LastMessage != "" && !chatList[i].UpdatedAt.IsZero()
+			jHasMsg := chatList[j].LastMessage != "" && !chatList[j].UpdatedAt.IsZero()
+			if iHasMsg != jHasMsg {
+				return iHasMsg
+			}
+			if !chatList[i].UpdatedAt.Equal(chatList[j].UpdatedAt) {
+				return chatList[i].UpdatedAt.After(chatList[j].UpdatedAt)
+			}
+			return strings.ToLower(chatList[i].Name) < strings.ToLower(chatList[j].Name)
+		})
 
 		// Asynchronously enhance uncached chats in the background without blocking the HTTP response
 		go func(currentSess *SessionState, list []*SessionChat) {
@@ -694,9 +708,16 @@ func main() {
 		if msgs == nil {
 			msgs = []*SessionMessage{}
 		}
+
+		// Make copy and sort chronologically
+		sortedMsgs := make([]*SessionMessage, len(msgs))
+		copy(sortedMsgs, msgs)
+		sort.Slice(sortedMsgs, func(i, j int) bool {
+			return sortedMsgs[i].Timestamp.Before(sortedMsgs[j].Timestamp)
+		})
 		sess.RUnlock()
 
-		c.JSON(http.StatusOK, gin.H{"messages": msgs})
+		c.JSON(http.StatusOK, gin.H{"messages": sortedMsgs})
 	})
 
 	r.POST("/session/react", func(c *gin.Context) {
