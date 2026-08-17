@@ -58,6 +58,7 @@ type SessionMessage struct {
 	ChatID           string        `json:"chatId"`
 	SenderID         string        `json:"senderId"`
 	SenderName       string        `json:"senderName"`
+	SenderAvatarURL  string        `json:"senderAvatarUrl,omitempty"`
 	IsFromMe         bool          `json:"isFromMe"`
 	IsForwarded      bool          `json:"isForwarded"`
 	Content          string        `json:"content"`
@@ -78,6 +79,7 @@ type SessionState struct {
 	PushName    string
 	Chats       map[string]*SessionChat
 	Messages    map[string][]*SessionMessage
+	AvatarCache map[string]string
 	sync.RWMutex
 }
 
@@ -229,6 +231,36 @@ func resolveContactName(s *SessionState, jid types.JID, pushName string) string 
 		return "+" + jid.User
 	}
 	return "Contact"
+}
+
+func resolveAvatarURL(s *SessionState, jid types.JID) string {
+	if s == nil || s.Client == nil || !s.Client.IsConnected() {
+		return ""
+	}
+	s.RLock()
+	if s.AvatarCache != nil {
+		if url, ok := s.AvatarCache[jid.String()]; ok {
+			s.RUnlock()
+			return url
+		}
+	}
+	s.RUnlock()
+
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+	picInfo, err := s.Client.GetProfilePictureInfo(ctx, jid, &whatsmeow.GetProfilePictureParams{
+		Preview: true,
+	})
+	if err == nil && picInfo != nil && picInfo.URL != "" {
+		s.Lock()
+		if s.AvatarCache == nil {
+			s.AvatarCache = make(map[string]string)
+		}
+		s.AvatarCache[jid.String()] = picInfo.URL
+		s.Unlock()
+		return picInfo.URL
+	}
+	return ""
 }
 
 func getOrCreateSession(userId string) (*SessionState, error) {
@@ -515,10 +547,12 @@ func (s *SessionState) handleEvent(userId string, evt interface{}) {
 		isFromMe := v.Info.IsFromMe
 		isGroup := v.Info.IsGroup || strings.HasSuffix(chatJID, "@g.us")
 		senderName := ""
+		senderAvatar := ""
 		if isFromMe {
 			senderName = "You"
 		} else {
 			senderName = resolveContactName(s, v.Info.Sender, v.Info.PushName)
+			senderAvatar = resolveAvatarURL(s, v.Info.Sender)
 		}
 
 		s.Lock()
@@ -527,6 +561,7 @@ func (s *SessionState) handleEvent(userId string, evt interface{}) {
 			ChatID:           chatJID,
 			SenderID:         senderJID,
 			SenderName:       senderName,
+			SenderAvatarURL:  senderAvatar,
 			IsFromMe:         isFromMe,
 			IsForwarded:      isFwd,
 			Content:          text,
@@ -600,6 +635,7 @@ func (s *SessionState) handleEvent(userId string, evt interface{}) {
 				"isGroup":          isGroup,
 				"senderId":         senderJID,
 				"senderName":       senderName,
+				"senderAvatarUrl":  senderAvatar,
 				"isFromMe":         isFromMe,
 				"isForwarded":      isFwd,
 				"content":          text,
@@ -958,6 +994,24 @@ func main() {
 							currentSess.Lock()
 							chat.AvatarURL = picInfo.URL
 							currentSess.Unlock()
+
+							// Sync updated avatar to backend
+							go func(c *SessionChat) {
+								payload := map[string]interface{}{
+									"type":     "history_sync",
+									"userId":   userId,
+									"chats":    []*SessionChat{c},
+									"messages": []*SessionMessage{},
+								}
+								if jsonBytes, err := json.Marshal(payload); err == nil {
+									req, err := http.NewRequest("POST", getBackendWebhookURL(), bytes.NewBuffer(jsonBytes))
+									if err == nil {
+										req.Header.Set("Content-Type", "application/json")
+										client := &http.Client{Timeout: 5 * time.Second}
+										_, _ = client.Do(req)
+									}
+								}
+							}(chat)
 						}
 						cancel()
 					}

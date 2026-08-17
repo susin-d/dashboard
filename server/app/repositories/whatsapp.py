@@ -234,6 +234,7 @@ def list_whatsapp_messages(
                 is_forwarded=bool(data.get("is_forwarded", False)),
                 is_starred=bool(data.get("is_starred", False)),
                 is_pinned=bool(data.get("is_pinned", False)),
+                sender_avatar_url=data.get("sender_avatar_url"),
             )
         )
     # Reverse so items are presented in chronological ascending order

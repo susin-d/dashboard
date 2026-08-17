@@ -58,6 +58,7 @@ class WhatsAppMessageResponse(BaseModel):
     is_forwarded: bool = False
     is_starred: bool = False
     is_pinned: bool = False
+    sender_avatar_url: Optional[str] = None
 
 
 class WhatsAppChatResponse(BaseModel):

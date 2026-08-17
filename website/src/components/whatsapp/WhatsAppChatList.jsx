@@ -11,6 +11,12 @@ function formatSenderName(name) {
   return clean
 }
 
+function getSenderInitial(name) {
+  if (!name) return '?'
+  const clean = name.trim().replace(/^[@+~]/, '')
+  return (clean[0] || '?').toUpperCase()
+}
+
 export function WhatsAppChatList({
   chats = [],
   selectedChatId = null,
@@ -198,7 +204,13 @@ export function WhatsAppChatList({
                       className="whatsapp-avatar-fallback"
                       style={chat.avatar_url ? { display: 'none' } : {}}
                     >
-                      {chat.is_group ? <Users size={20} /> : <User size={20} />}
+                      {chat.name && chat.name !== 'Contact' && chat.name !== chat.id ? (
+                        <span className="whatsapp-avatar-initial">{getSenderInitial(chat.name)}</span>
+                      ) : chat.is_group ? (
+                        <Users size={20} />
+                      ) : (
+                        <User size={20} />
+                      )}
                     </div>
                   )}
                 </div>

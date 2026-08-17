@@ -290,6 +290,7 @@ class WhatsAppService:
                                 content=wm.get("content") or "",
                                 media=media_obj,
                                 reply_to_message_id=wm.get("replyToMessageId"),
+                                sender_avatar_url=wm.get("senderAvatarUrl") or wm.get("sender_avatar_url"),
                                 timestamp=datetime.fromisoformat(wm["timestamp"].replace("Z", "+00:00")) if isinstance(wm.get("timestamp"), str) else datetime.now(timezone.utc),
                                 status=wm.get("status", "delivered"),
                             )

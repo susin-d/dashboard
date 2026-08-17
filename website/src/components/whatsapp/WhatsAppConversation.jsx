@@ -44,6 +44,12 @@ function formatMessageContent(text) {
   return text.replace(/@(\d{7,15})/g, '**@+$1**')
 }
 
+function getSenderInitial(name) {
+  if (!name) return '?'
+  const clean = name.trim().replace(/^[@+~]/, '')
+  return (clean[0] || '?').toUpperCase()
+}
+
 export function WhatsAppConversation({
   chat,
   messages = [],
@@ -461,13 +467,39 @@ export function WhatsAppConversation({
             return (
               <div
                 key={msg.id}
-                className={`whatsapp-message-wrapper ${
-                  isOutgoing ? 'outgoing' : 'incoming'
-                } ${isMsgEve ? 'is-eve' : ''}`}
-                onMouseEnter={() => setHoveredMessageId(msg.id)}
-                onMouseLeave={() => setHoveredMessageId((curr) => (curr === msg.id ? null : curr))}
+                className={`whatsapp-message-row ${isOutgoing ? 'outgoing' : 'incoming'}`}
               >
-                <div className="whatsapp-message-bubble-container">
+                {!isOutgoing && chat?.is_group && (
+                  <div className="whatsapp-sender-avatar" title={msg.sender_name || 'Sender'}>
+                    {msg.sender_avatar_url ? (
+                      <img
+                        src={msg.sender_avatar_url}
+                        alt={msg.sender_name || 'Sender'}
+                        className="whatsapp-sender-avatar-img"
+                        onError={(e) => {
+                          e.currentTarget.style.display = 'none'
+                          if (e.currentTarget.nextSibling) {
+                            e.currentTarget.nextSibling.style.display = 'flex'
+                          }
+                        }}
+                      />
+                    ) : null}
+                    <div
+                      className="whatsapp-sender-avatar-fallback"
+                      style={msg.sender_avatar_url ? { display: 'none' } : {}}
+                    >
+                      {getSenderInitial(msg.sender_name || msg.sender_id)}
+                    </div>
+                  </div>
+                )}
+                <div
+                  className={`whatsapp-message-wrapper ${
+                    isOutgoing ? 'outgoing' : 'incoming'
+                  } ${isMsgEve ? 'is-eve' : ''}`}
+                  onMouseEnter={() => setHoveredMessageId(msg.id)}
+                  onMouseLeave={() => setHoveredMessageId((curr) => (curr === msg.id ? null : curr))}
+                >
+                  <div className="whatsapp-message-bubble-container">
                   {/* Floating Quick Action & Reaction Bar on Hover */}
                   {(isHovered || isMenuOpen) && (
                     <div className="whatsapp-message-action-bar">
@@ -756,8 +788,9 @@ export function WhatsAppConversation({
                   )}
                 </div>
               </div>
-            )
-          })
+            </div>
+          )
+        })
         )}
         <div ref={messagesEndRef} />
       </div>

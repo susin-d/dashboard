@@ -320,6 +320,7 @@ class WhatsAppMessage(Base):
     is_forwarded = Column(Boolean, default=False, nullable=False)
     is_starred = Column(Boolean, default=False, nullable=False)
     is_pinned = Column(Boolean, default=False, nullable=False)
+    sender_avatar_url = Column(Text, nullable=True)
     created_at = Column(DateTime(timezone=True), default=utc_now, nullable=False)
     updated_at = Column(DateTime(timezone=True), default=utc_now, onupdate=utc_now, nullable=False)
 

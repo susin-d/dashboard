@@ -194,6 +194,7 @@ async def whatsapp_incoming_webhook(
                     content=m.get("content") or "",
                     media=media_obj,
                     reply_to_message_id=m.get("replyToMessageId"),
+                    sender_avatar_url=m.get("senderAvatarUrl") or m.get("sender_avatar_url"),
                     timestamp=datetime.fromisoformat(m["timestamp"].replace("Z", "+00:00")) if isinstance(m.get("timestamp"), str) else datetime.now(timezone.utc),
                     status=m.get("status", "delivered"),
                 )
@@ -213,6 +214,7 @@ async def whatsapp_incoming_webhook(
     content = payload.get("content", "")
     sender_id = payload.get("senderId", "")
     sender_name = payload.get("senderName") or "Contact"
+    sender_avatar_url = payload.get("senderAvatarUrl") or payload.get("sender_avatar_url")
     is_from_me = payload.get("isFromMe", False)
     is_forwarded = bool(payload.get("isForwarded", False))
     media_data = payload.get("media")
@@ -237,6 +239,7 @@ async def whatsapp_incoming_webhook(
         content=content,
         media=media_obj,
         reply_to_message_id=reply_to_id,
+        sender_avatar_url=sender_avatar_url,
         timestamp=now,
         status="delivered",
     )

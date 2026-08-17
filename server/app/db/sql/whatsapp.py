@@ -55,6 +55,7 @@ def whatsapp_message_to_dict(m: WhatsAppMessage) -> dict[str, Any]:
         "is_forwarded": m.is_forwarded,
         "is_starred": m.is_starred,
         "is_pinned": m.is_pinned,
+        "sender_avatar_url": m.sender_avatar_url,
         "created_at": m.created_at.isoformat() if m.created_at else "",
         "updated_at": m.updated_at.isoformat() if m.updated_at else "",
     }
@@ -193,6 +194,7 @@ def set_whatsapp_message_doc(
             is_forwarded=bool(data.get("is_forwarded", False)),
             is_starred=bool(data.get("is_starred", False)),
             is_pinned=bool(data.get("is_pinned", False)),
+            sender_avatar_url=data.get("sender_avatar_url"),
         )
         session.add(m)
     else:
@@ -208,6 +210,8 @@ def set_whatsapp_message_doc(
             m.is_pinned = bool(data["is_pinned"])
         if "media" in data:
             m.media = json_safe(data["media"])
+        if "sender_avatar_url" in data and data["sender_avatar_url"]:
+            m.sender_avatar_url = data["sender_avatar_url"]
     session.commit()
 
 
