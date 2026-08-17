@@ -448,47 +448,18 @@ export function WhatsAppPage() {
         ) : (
           <div className="whatsapp-main-empty">
             <div className="whatsapp-empty-badge-icon">
-              <MessageSquare size={32} strokeWidth={2} />
+              <MessageSquare size={28} strokeWidth={1.75} />
             </div>
 
             <h3 className="whatsapp-empty-title">
-              Starwaves WhatsApp
+              {status.connected ? 'Select a conversation' : 'WhatsApp is not connected'}
             </h3>
 
             <p className="whatsapp-empty-lead">
-              Send and receive WhatsApp messages, record voice notes, and collaborate with Eve AI directly inside Starwaves.
+              {status.connected
+                ? 'Choose a chat from the sidebar to view and send messages.'
+                : 'Link your device to start sending and receiving messages in Starwaves.'}
             </p>
-
-            <div className="whatsapp-empty-features-grid">
-              <div className="whatsapp-empty-feature">
-                <span className="whatsapp-feature-dot" />
-                <div>
-                  <strong>Real-Time Messaging</strong>
-                  <p>Instant two-way chat synchronization via WebSockets.</p>
-                </div>
-              </div>
-              <div className="whatsapp-empty-feature">
-                <span className="whatsapp-feature-dot" />
-                <div>
-                  <strong>Eve AI Assistant</strong>
-                  <p>Ask Eve to summarize chats, draft replies, or manage tasks.</p>
-                </div>
-              </div>
-              <div className="whatsapp-empty-feature">
-                <span className="whatsapp-feature-dot" />
-                <div>
-                  <strong>Media & Voice Notes</strong>
-                  <p>Exchange audio notes, documents, and images securely.</p>
-                </div>
-              </div>
-              <div className="whatsapp-empty-feature">
-                <span className="whatsapp-feature-dot" />
-                <div>
-                  <strong>End-to-End Encrypted</strong>
-                  <p>Direct device link via official WhatsApp pairing protocol.</p>
-                </div>
-              </div>
-            </div>
 
             {!status.connected && (
               <div className="whatsapp-empty-actions">
