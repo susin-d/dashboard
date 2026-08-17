@@ -1036,15 +1036,12 @@ func main() {
 		sess.RLock()
 		msgs := sess.Messages[chatId]
 		if len(msgs) == 0 {
-			// Try JID suffix variations
-			if !strings.Contains(chatId, "@") {
-				msgs = sess.Messages[chatId+"@s.whatsapp.net"]
-				if len(msgs) == 0 {
-					msgs = sess.Messages[chatId+"@g.us"]
+			cleanId := strings.Split(chatId, "@")[0]
+			for k, v := range sess.Messages {
+				if strings.Split(k, "@")[0] == cleanId {
+					msgs = v
+					break
 				}
-			} else {
-				userPart := strings.Split(chatId, "@")[0]
-				msgs = sess.Messages[userPart]
 			}
 		}
 		if msgs == nil {

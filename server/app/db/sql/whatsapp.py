@@ -225,7 +225,9 @@ def delete_whatsapp_message_doc(session: Session, doc_id: str) -> None:
 
 def query_whatsapp_messages(session: Session, user_id: str, chat_id: str, query: SqlQuery) -> list[SqlSnapshot]:
     """Execute query on the chat's messages collection."""
-    stmt = select(WhatsAppMessage).where(WhatsAppMessage.user_id == user_id, WhatsAppMessage.chat_id == chat_id)
+    clean_id = chat_id.split("@")[0]
+    chat_ids = {chat_id, clean_id, f"{clean_id}@g.us", f"{clean_id}@s.whatsapp.net", f"{clean_id}@lid"}
+    stmt = select(WhatsAppMessage).where(WhatsAppMessage.user_id == user_id, WhatsAppMessage.chat_id.in_(chat_ids))
     for field, op, val in query.filters:
         if field == "timestamp":
             val_dt = val

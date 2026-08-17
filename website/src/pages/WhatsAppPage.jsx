@@ -174,7 +174,12 @@ export function WhatsAppPage() {
     fetchWhatsAppMessages(selectedChatId, 50)
       .then((msgs) => {
         if (isCurrent && selectedChatIdRef.current === selectedChatId) {
-          const validMsgs = (msgs || []).filter((m) => !m.chat_id || m.chat_id === selectedChatId)
+          const cleanSelected = selectedChatId.replace(/@s\.whatsapp\.net|@g\.us|@lid/g, '')
+          const validMsgs = (msgs || []).filter((m) => {
+            if (!m.chat_id) return true
+            const cleanMsg = m.chat_id.replace(/@s\.whatsapp\.net|@g\.us|@lid/g, '')
+            return cleanMsg === cleanSelected || m.chat_id === selectedChatId
+          })
           setMessages(validMsgs)
           setHasMoreMessages(validMsgs.length > 0)
           markWhatsAppChatRead(selectedChatId).catch(() => {})
@@ -204,7 +209,12 @@ export function WhatsAppPage() {
       const earliestMsg = sorted[0]
       const beforeTimestamp = earliestMsg?.timestamp
       const olderMsgs = await fetchWhatsAppMessages(selectedChatId, 50, beforeTimestamp)
-      const validOlder = (olderMsgs || []).filter((m) => !m.chat_id || m.chat_id === selectedChatId)
+      const cleanSelected = selectedChatId.replace(/@s\.whatsapp\.net|@g\.us|@lid/g, '')
+      const validOlder = (olderMsgs || []).filter((m) => {
+        if (!m.chat_id) return true
+        const cleanMsg = m.chat_id.replace(/@s\.whatsapp\.net|@g\.us|@lid/g, '')
+        return cleanMsg === cleanSelected || m.chat_id === selectedChatId
+      })
       if (validOlder.length === 0) {
         setHasMoreMessages(false)
       } else {

@@ -264,6 +264,10 @@ export function WhatsAppConversation({
       if (participantNameMap.has(p)) {
         return participantNameMap.get(p)
       }
+      const clean = p.replace(/@s\.whatsapp\.net|@g\.us|@lid/g, '')
+      if (participantNameMap.has(clean)) {
+        return participantNameMap.get(clean)
+      }
       return formatSenderName(p, p)
     })
     return formatted.slice(0, 8).join(', ') + (formatted.length > 8 ? ` and ${formatted.length - 8} more...` : '')
@@ -274,7 +278,12 @@ export function WhatsAppConversation({
 
   // Search & chat-isolated filtered messages sorted chronologically (oldest to newest)
   const displayedMessages = useMemo(() => {
-    const chatMsgs = (messages || []).filter((m) => !m.chat_id || m.chat_id === chat?.id)
+    const cleanCurrentChat = chat?.id?.replace(/@s\.whatsapp\.net|@g\.us|@lid/g, '')
+    const chatMsgs = (messages || []).filter((m) => {
+      if (!m.chat_id || !cleanCurrentChat) return true
+      const cleanMsg = m.chat_id.replace(/@s\.whatsapp\.net|@g\.us|@lid/g, '')
+      return cleanMsg === cleanCurrentChat || m.chat_id === chat?.id
+    })
     const filtered = !inChatSearchQuery.trim()
       ? chatMsgs
       : chatMsgs.filter(
@@ -326,7 +335,13 @@ export function WhatsAppConversation({
                 className="whatsapp-avatar-fallback"
                 style={chat?.avatar_url ? { display: 'none' } : {}}
               >
-                {chat?.is_group ? <Users size={20} /> : <User size={20} />}
+                {chat?.name && chat.name !== 'Contact' && chat.name !== chat.id ? (
+                  <span className="whatsapp-avatar-initial">{getSenderInitial(chat.name)}</span>
+                ) : chat?.is_group ? (
+                  <Users size={20} />
+                ) : (
+                  <User size={20} />
+                )}
               </div>
             )}
           </div>
