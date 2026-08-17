@@ -11,7 +11,9 @@ def collection(database: Client, user_id: str):
 
 
 def from_snapshot(snapshot) -> TodoResponse:
-    return TodoResponse(id=snapshot.id, **(snapshot.to_dict() or {}))
+    data = dict(snapshot.to_dict() or {})
+    data.pop("id", None)
+    return TodoResponse(id=snapshot.id, **data)
 
 
 def values_for_firestore(values: dict) -> dict:
