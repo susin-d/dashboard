@@ -129,6 +129,70 @@ async def whatsapp_incoming_webhook(
             )
         return {"status": "qr_broadcasted"}
 
+    # Handle device connection status update
+    if payload.get("type") == "status_update":
+        user_id = payload.get("userId")
+        connected = bool(payload.get("connected", False))
+        if user_id:
+            whatsapp_repo.save_whatsapp_session(
+                database,
+                user_id,
+                connected=connected,
+                phone_number=payload.get("phoneNumber"),
+                push_name=payload.get("pushName"),
+            )
+            await whatsapp_ws_manager.broadcast_to_user(
+                user_id,
+                {
+                    "type": "status_update",
+                    "connected": connected,
+                    "phone_number": payload.get("phoneNumber"),
+                    "push_name": payload.get("pushName"),
+                },
+            )
+        return {"status": "status_updated"}
+
+    # Handle bulk history sync from whatsmeow pairing
+    if payload.get("type") == "history_sync":
+        user_id = payload.get("userId")
+        chats_data = payload.get("chats") or []
+        msgs_data = payload.get("messages") or []
+
+        if user_id:
+            for c in chats_data:
+                whatsapp_repo.upsert_whatsapp_chat(
+                    database,
+                    user_id,
+                    chat_id=c.get("id"),
+                    name=c.get("name") or c.get("id"),
+                    phone_number=c.get("phoneNumber"),
+                    is_group=bool(c.get("isGroup", False)),
+                    unread_count=int(c.get("unreadCount", 0)),
+                )
+
+            for m in msgs_data:
+                msg_obj = WhatsAppMessageResponse(
+                    id=m.get("id") or f"msg-{uuid4().hex[:12]}",
+                    chat_id=m.get("chatId"),
+                    sender_id=m.get("senderId") or "me",
+                    sender_name=m.get("senderName"),
+                    is_from_me=bool(m.get("isFromMe", False)),
+                    is_eve=False,
+                    content=m.get("content") or "",
+                    timestamp=datetime.fromisoformat(m["timestamp"].replace("Z", "+00:00")) if isinstance(m.get("timestamp"), str) else datetime.now(timezone.utc),
+                    status=m.get("status", "delivered"),
+                )
+                whatsapp_repo.save_whatsapp_message(database, user_id, m.get("chatId"), msg_obj)
+
+            await whatsapp_ws_manager.broadcast_to_user(
+                user_id,
+                {
+                    "type": "chats_synced",
+                    "count": len(chats_data),
+                },
+            )
+        return {"status": "synced", "chats": len(chats_data), "messages": len(msgs_data)}
+
     user_id = payload.get("userId")
     chat_id = payload.get("chatId")
     content = payload.get("content", "")

@@ -56,15 +56,25 @@ export function WhatsAppPage() {
     const unsubscribe = whatsappSocket.subscribe((event) => {
       if (!event || !event.type) return
 
-      if (event.type === 'connection_state') {
+      if (event.type === 'connection_state' || event.type === 'status_update') {
         setStatus((prev) => ({
           ...prev,
           connected: event.connected,
           phone_number: event.phone_number,
           push_name: event.push_name,
         }))
-        // Refresh chats on reconnect
-        fetchWhatsAppChats().then(setChats).catch(() => {})
+        if (event.connected) {
+          setIsQrModalOpen(false)
+          fetchWhatsAppChats().then((list) => {
+            setChats(list)
+            setSelectedChatId((curr) => curr || (list.length > 0 ? list[0].id : null))
+          }).catch(() => {})
+        }
+      } else if (event.type === 'chats_synced') {
+        fetchWhatsAppChats().then((list) => {
+          setChats(list)
+          setSelectedChatId((curr) => curr || (list.length > 0 ? list[0].id : null))
+        }).catch(() => {})
       } else if (event.type === 'qr_update') {
         setPairingData({
           qr_code: event.qr_code,

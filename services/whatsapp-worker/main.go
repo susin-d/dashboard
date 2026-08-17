@@ -30,6 +30,27 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
+type SessionChat struct {
+	ID          string    `json:"id"`
+	Name        string    `json:"name"`
+	PhoneNumber string    `json:"phoneNumber,omitempty"`
+	IsGroup     bool      `json:"isGroup"`
+	UnreadCount int       `json:"unreadCount"`
+	LastMessage string    `json:"lastMessage"`
+	UpdatedAt   time.Time `json:"updatedAt"`
+}
+
+type SessionMessage struct {
+	ID         string    `json:"id"`
+	ChatID     string    `json:"chatId"`
+	SenderID   string    `json:"senderId"`
+	SenderName string    `json:"senderName"`
+	IsFromMe   bool      `json:"isFromMe"`
+	Content    string    `json:"content"`
+	Timestamp  time.Time `json:"timestamp"`
+	Status     string    `json:"status"`
+}
+
 type SessionState struct {
 	Client      *whatsmeow.Client
 	Device      *store.Device
@@ -39,6 +60,8 @@ type SessionState struct {
 	Connected   bool
 	PhoneNumber string
 	PushName    string
+	Chats       map[string]*SessionChat
+	Messages    map[string][]*SessionMessage
 	sync.RWMutex
 }
 
@@ -47,6 +70,28 @@ var (
 	sessionsLock sync.RWMutex
 	dataDir      = "data"
 )
+
+func extractMessageContent(msg *waE2E.Message) string {
+	if msg == nil {
+		return ""
+	}
+	if msg.Conversation != nil && *msg.Conversation != "" {
+		return *msg.Conversation
+	}
+	if msg.ExtendedTextMessage != nil && msg.ExtendedTextMessage.Text != nil {
+		return *msg.ExtendedTextMessage.Text
+	}
+	if msg.ImageMessage != nil && msg.ImageMessage.Caption != nil {
+		return *msg.ImageMessage.Caption
+	}
+	if msg.VideoMessage != nil && msg.VideoMessage.Caption != nil {
+		return *msg.VideoMessage.Caption
+	}
+	if msg.DocumentMessage != nil && msg.DocumentMessage.Title != nil {
+		return *msg.DocumentMessage.Title
+	}
+	return ""
+}
 
 func getOrCreateSession(userId string) (*SessionState, error) {
 	sessionsLock.Lock()
@@ -75,6 +120,8 @@ func getOrCreateSession(userId string) (*SessionState, error) {
 		Client:    client,
 		Device:    deviceStore,
 		Container: container,
+		Chats:     make(map[string]*SessionChat),
+		Messages:  make(map[string][]*SessionMessage),
 	}
 
 	client.AddEventHandler(func(evt interface{}) {
@@ -96,18 +143,99 @@ func getOrCreateSession(userId string) (*SessionState, error) {
 }
 
 func (s *SessionState) handleEvent(userId string, evt interface{}) {
+	backendWebhookURL := os.Getenv("BACKEND_WEBHOOK_URL")
+	if backendWebhookURL == "" {
+		backendWebhookURL = "http://127.0.0.1:8000/api/v1/whatsapp/webhook"
+	}
+
 	switch v := evt.(type) {
 	case *events.HistorySync:
 		log.Printf("[User %s] Received HistorySync chunk (%s): %d conversations", userId, v.Data.GetSyncType().String(), len(v.Data.GetConversations()))
+		
+		var syncedChats []*SessionChat
+		var syncedMessages []*SessionMessage
+
+		s.Lock()
 		for _, conv := range v.Data.GetConversations() {
 			chatJID := conv.GetID()
 			chatName := conv.GetName()
 			if chatName == "" {
 				chatName = chatJID
 			}
-			historyMsgs := conv.GetMessages()
-			log.Printf("[User %s] Syncing chat %s with %d historical messages", userId, chatName, len(historyMsgs))
+			isGroup := strings.HasSuffix(chatJID, "@g.us")
+			unread := int(conv.GetUnreadCount())
+			
+			lastText := ""
+			lastTime := time.Now()
+
+			for _, hMsg := range conv.GetMessages() {
+				webMsg := hMsg.GetMessage()
+				if webMsg == nil {
+					continue
+				}
+				text := extractMessageContent(webMsg.GetMessage())
+				msgID := ""
+				fromMe := false
+				senderJID := chatJID
+				if key := webMsg.GetKey(); key != nil {
+					msgID = key.GetID()
+					fromMe = key.GetFromMe()
+					if key.GetParticipant() != "" {
+						senderJID = key.GetParticipant()
+					}
+				}
+				ts := time.Unix(int64(webMsg.GetMessageTimestamp()), 0)
+				if text != "" {
+					lastText = text
+					lastTime = ts
+				}
+
+				m := &SessionMessage{
+					ID:         msgID,
+					ChatID:     chatJID,
+					SenderID:   senderJID,
+					SenderName: chatName,
+					IsFromMe:   fromMe,
+					Content:    text,
+					Timestamp:  ts,
+					Status:     "delivered",
+				}
+				s.Messages[chatJID] = append(s.Messages[chatJID], m)
+				syncedMessages = append(syncedMessages, m)
+			}
+
+			chat := &SessionChat{
+				ID:          chatJID,
+				Name:        chatName,
+				IsGroup:     isGroup,
+				UnreadCount: unread,
+				LastMessage: lastText,
+				UpdatedAt:   lastTime,
+			}
+			s.Chats[chatJID] = chat
+			syncedChats = append(syncedChats, chat)
 		}
+		s.Unlock()
+
+		// Forward history sync batch to FastAPI backend
+		go func(chats []*SessionChat, msgs []*SessionMessage) {
+			payload := map[string]interface{}{
+				"type":     "history_sync",
+				"userId":   userId,
+				"chats":    chats,
+				"messages": msgs,
+			}
+			jsonBytes, err := json.Marshal(payload)
+			if err != nil {
+				return
+			}
+			req, err := http.NewRequest("POST", backendWebhookURL, bytes.NewBuffer(jsonBytes))
+			if err == nil {
+				req.Header.Set("Content-Type", "application/json")
+				client := &http.Client{Timeout: 10 * time.Second}
+				_, _ = client.Do(req)
+			}
+		}(syncedChats, syncedMessages)
 
 	case *events.Connected:
 		s.Lock()
@@ -122,6 +250,24 @@ func (s *SessionState) handleEvent(userId string, evt interface{}) {
 		s.Unlock()
 		log.Printf("[User %s] WhatsApp Connected: %s (%s)", userId, phone, push)
 
+		// Also notify backend that WhatsApp is now connected
+		go func() {
+			payload := map[string]interface{}{
+				"type":        "status_update",
+				"userId":      userId,
+				"connected":   true,
+				"phoneNumber": phone,
+				"pushName":    push,
+			}
+			jsonBytes, _ := json.Marshal(payload)
+			req, err := http.NewRequest("POST", backendWebhookURL, bytes.NewBuffer(jsonBytes))
+			if err == nil {
+				req.Header.Set("Content-Type", "application/json")
+				client := &http.Client{Timeout: 5 * time.Second}
+				_, _ = client.Do(req)
+			}
+		}()
+
 	case *events.LoggedOut:
 		s.Lock()
 		s.Connected = false
@@ -132,10 +278,7 @@ func (s *SessionState) handleEvent(userId string, evt interface{}) {
 		log.Printf("[User %s] WhatsApp Logged Out", userId)
 
 	case *events.Message:
-		text := v.Message.GetConversation()
-		if text == "" && v.Message.GetExtendedTextMessage() != nil {
-			text = v.Message.GetExtendedTextMessage().GetText()
-		}
+		text := extractMessageContent(v.Message)
 		senderJID := v.Info.Sender.String()
 		chatJID := v.Info.Chat.String()
 		isFromMe := v.Info.IsFromMe
@@ -144,16 +287,38 @@ func (s *SessionState) handleEvent(userId string, evt interface{}) {
 			senderName = v.Info.Sender.User
 		}
 
-		log.Printf("[User %s] New message from %s in %s: %s", userId, senderName, chatJID, text)
-
-		// Post to StarWaves FastAPI backend webhook
-		backendWebhookURL := os.Getenv("BACKEND_WEBHOOK_URL")
-		if backendWebhookURL == "" {
-			backendWebhookURL = "http://127.0.0.1:8000/api/v1/whatsapp/webhook"
+		s.Lock()
+		msg := &SessionMessage{
+			ID:         v.Info.ID,
+			ChatID:     chatJID,
+			SenderID:   senderJID,
+			SenderName: senderName,
+			IsFromMe:   isFromMe,
+			Content:    text,
+			Timestamp:  v.Info.Timestamp,
+			Status:     "delivered",
 		}
+		s.Messages[chatJID] = append(s.Messages[chatJID], msg)
+		if chat, ok := s.Chats[chatJID]; ok {
+			chat.LastMessage = text
+			chat.UpdatedAt = v.Info.Timestamp
+		} else {
+			s.Chats[chatJID] = &SessionChat{
+				ID:          chatJID,
+				Name:        senderName,
+				IsGroup:     strings.HasSuffix(chatJID, "@g.us"),
+				UnreadCount: 1,
+				LastMessage: text,
+				UpdatedAt:   v.Info.Timestamp,
+			}
+		}
+		s.Unlock()
+
+		log.Printf("[User %s] New message from %s in %s: %s", userId, senderName, chatJID, text)
 
 		go func() {
 			payload := map[string]interface{}{
+				"type":       "new_message",
 				"userId":     userId,
 				"chatId":     chatJID,
 				"senderId":   senderJID,
@@ -161,6 +326,7 @@ func (s *SessionState) handleEvent(userId string, evt interface{}) {
 				"isFromMe":   isFromMe,
 				"content":    text,
 				"messageId":  v.Info.ID,
+				"timestamp":  v.Info.Timestamp.Format(time.RFC3339),
 			}
 			jsonBytes, err := json.Marshal(payload)
 			if err != nil {
@@ -375,6 +541,50 @@ func main() {
 			"phoneNumber": sess.PhoneNumber,
 			"pushName":    sess.PushName,
 		})
+	})
+
+	r.GET("/session/chats/:userId", func(c *gin.Context) {
+		userId := c.Param("userId")
+		sessionsLock.RLock()
+		sess, ok := sessions[userId]
+		sessionsLock.RUnlock()
+
+		if !ok || sess == nil {
+			c.JSON(http.StatusOK, gin.H{"chats": []interface{}{}})
+			return
+		}
+
+		sess.RLock()
+		var chatList []*SessionChat
+		for _, chat := range sess.Chats {
+			chatList = append(chatList, chat)
+		}
+		sess.RUnlock()
+
+		c.JSON(http.StatusOK, gin.H{"chats": chatList})
+	})
+
+	r.GET("/session/messages/:userId/:chatId", func(c *gin.Context) {
+		userId := c.Param("userId")
+		chatId := c.Param("chatId")
+
+		sessionsLock.RLock()
+		sess, ok := sessions[userId]
+		sessionsLock.RUnlock()
+
+		if !ok || sess == nil {
+			c.JSON(http.StatusOK, gin.H{"messages": []interface{}{}})
+			return
+		}
+
+		sess.RLock()
+		msgs := sess.Messages[chatId]
+		if msgs == nil {
+			msgs = []*SessionMessage{}
+		}
+		sess.RUnlock()
+
+		c.JSON(http.StatusOK, gin.H{"messages": msgs})
 	})
 
 	r.POST("/session/send", func(c *gin.Context) {

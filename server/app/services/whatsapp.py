@@ -188,6 +188,25 @@ class WhatsAppService:
 
     @staticmethod
     def list_chats(database: Client, user_id: str) -> List[WhatsAppChatResponse]:
+        # Sync chats from worker if available
+        try:
+            worker_url = settings.whatsapp_gateway_url
+            resp = requests.get(f"{worker_url}/session/chats/{user_id}", timeout=2.0)
+            if resp.ok:
+                worker_chats = resp.json().get("chats") or []
+                for wc in worker_chats:
+                    whatsapp_repo.upsert_whatsapp_chat(
+                        database,
+                        user_id,
+                        chat_id=wc.get("id"),
+                        name=wc.get("name") or wc.get("id"),
+                        phone_number=wc.get("phoneNumber"),
+                        is_group=bool(wc.get("isGroup", False)),
+                        unread_count=int(wc.get("unreadCount", 0)),
+                    )
+        except Exception:
+            pass
+
         chats = whatsapp_repo.list_whatsapp_chats(database, user_id)
         if not any(c.id == "eve" for c in chats):
             WhatsAppService._ensure_eve_chat(database, user_id)
@@ -198,7 +217,30 @@ class WhatsAppService:
     def get_messages(
         database: Client, user_id: str, chat_id: str, limit: int = 50
     ) -> List[WhatsAppMessageResponse]:
-        return whatsapp_repo.list_whatsapp_messages(database, user_id, chat_id, limit=limit)
+        msgs = whatsapp_repo.list_whatsapp_messages(database, user_id, chat_id, limit=limit)
+        if len(msgs) == 0 and chat_id != "eve":
+            try:
+                worker_url = settings.whatsapp_gateway_url
+                resp = requests.get(f"{worker_url}/session/messages/{user_id}/{chat_id}", timeout=2.0)
+                if resp.ok:
+                    worker_msgs = resp.json().get("messages") or []
+                    for wm in worker_msgs:
+                        msg_obj = WhatsAppMessageResponse(
+                            id=wm.get("id") or f"msg-{uuid4().hex[:12]}",
+                            chat_id=chat_id,
+                            sender_id=wm.get("senderId") or "me",
+                            sender_name=wm.get("senderName"),
+                            is_from_me=bool(wm.get("isFromMe", False)),
+                            is_eve=False,
+                            content=wm.get("content") or "",
+                            timestamp=datetime.fromisoformat(wm["timestamp"].replace("Z", "+00:00")) if isinstance(wm.get("timestamp"), str) else datetime.now(timezone.utc),
+                            status=wm.get("status", "delivered"),
+                        )
+                        whatsapp_repo.save_whatsapp_message(database, user_id, chat_id, msg_obj)
+                    msgs = whatsapp_repo.list_whatsapp_messages(database, user_id, chat_id, limit=limit)
+            except Exception:
+                pass
+        return msgs
 
     @staticmethod
     async def send_message(
