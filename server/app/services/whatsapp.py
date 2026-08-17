@@ -323,7 +323,7 @@ class WhatsAppService:
                 database=database,
                 user=user_dict,
                 messages=eve_conversation,
-                session_id=f"whatsapp-{chat_id}",
+                session_id=None,
             )
         except Exception as err:
             logger.exception("Eve error processing WhatsApp message: %s", err)

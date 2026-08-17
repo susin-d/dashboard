@@ -4,7 +4,7 @@ Living project snapshot for AI agents. `AGENTS.md` holds the permanent rules;
 this file holds the **current state** of the codebase and must be kept up to
 date whenever the implementation changes.
 
-> **Last updated:** 2026-08-17 (Implemented HistorySync and live message ingestion pipeline from whatsmeow worker into FastAPI repository and real-time WebSocket sync to frontend)
+> **Last updated:** 2026-08-17 (Fixed Eve AI WhatsApp session lookup by permitting session_id=None for direct WhatsApp message generation)
 
 ---
 
