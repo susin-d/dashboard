@@ -26,6 +26,7 @@ import {
   Share2,
   X,
 } from 'lucide-react'
+import { Markdown } from '../ui/Markdown'
 
 export function WhatsAppConversation({
   chat,
@@ -510,7 +511,11 @@ export function WhatsAppConversation({
                     ) : null}
 
                     {/* Content */}
-                    {msg.content && <div className="whatsapp-message-text">{msg.content}</div>}
+                    {msg.content && (
+                      <div className="whatsapp-message-text">
+                        <Markdown content={msg.content} />
+                      </div>
+                    )}
 
                     {/* Meta: Star, Timestamp & Delivery Status */}
                     <div className="whatsapp-message-meta">

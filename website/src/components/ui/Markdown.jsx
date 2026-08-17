@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 
 const INLINE_REGEX =
-  /(`[^`]+`|\*\*[^*]+\*\*|\*[^*]+\*|\[[^\]]+\]\([^)]+\))/g
+  /(`[^`]+`|\*\*[^*]+\*\*|\*[^*]+\*|~~[^~]+~~|~[^~]+~|_[^_]+_|\[[^\]]+\]\([^)]+\)|https?:\/\/[^\s<]+[^<.,:;"')\]\s])/g
 
 function sanitizeHref(href) {
   const trimmed = (href || '').trim()
@@ -22,6 +22,15 @@ function renderInline(text, keyPrefix = '') {
     if (part.startsWith('*') && part.endsWith('*')) {
       return <em key={key}>{renderInline(part.slice(1, -1), key)}</em>
     }
+    if (part.startsWith('_') && part.endsWith('_')) {
+      return <em key={key}>{renderInline(part.slice(1, -1), key)}</em>
+    }
+    if (part.startsWith('~~') && part.endsWith('~~')) {
+      return <del key={key}>{renderInline(part.slice(2, -2), key)}</del>
+    }
+    if (part.startsWith('~') && part.endsWith('~')) {
+      return <del key={key}>{renderInline(part.slice(1, -1), key)}</del>
+    }
     const linkMatch = part.match(/^\[([^\]]+)\]\(([^)]+)\)$/)
     if (linkMatch) {
       const href = sanitizeHref(linkMatch[2])
@@ -33,6 +42,16 @@ function renderInline(text, keyPrefix = '') {
         )
       }
       return <span key={key}>{part}</span>
+    }
+    if (/^https?:\/\//i.test(part)) {
+      const href = sanitizeHref(part)
+      if (href) {
+        return (
+          <a key={key} href={href} target="_blank" rel="noopener noreferrer">
+            {part}
+          </a>
+        )
+      }
     }
     return part
   })

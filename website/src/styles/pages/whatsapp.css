@@ -430,6 +430,80 @@
   background: var(--bg-secondary, #18181b);
 }
 
+/* Markdown formatting inside WhatsApp message bubbles */
+.whatsapp-message-bubble .markdown-renderer {
+  font-size: 0.9rem;
+  line-height: 1.45;
+  color: inherit;
+}
+
+.whatsapp-message-bubble .markdown-renderer .md-paragraph {
+  margin: 0;
+  line-height: 1.45;
+  color: inherit;
+}
+
+.whatsapp-message-bubble .markdown-renderer .md-paragraph:not(:last-child) {
+  margin-bottom: 6px;
+}
+
+.whatsapp-message-bubble .markdown-renderer strong {
+  font-weight: 700;
+  color: inherit;
+}
+
+.whatsapp-message-bubble .markdown-renderer em {
+  font-style: italic;
+  color: inherit;
+}
+
+.whatsapp-message-bubble .markdown-renderer del {
+  text-decoration: line-through;
+  opacity: 0.75;
+}
+
+.whatsapp-message-bubble .markdown-renderer code {
+  font-family: var(--font-mono, 'SFMono-Regular', Consolas, Menlo, monospace);
+  font-size: 0.84em;
+  background: rgba(128, 128, 128, 0.2);
+  padding: 1px 5px;
+  border-radius: 4px;
+}
+
+.whatsapp-message-bubble .markdown-renderer .md-code-block {
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid var(--border-color, #3f3f46);
+  border-radius: 6px;
+  padding: 8px 10px;
+  margin: 6px 0;
+  overflow-x: auto;
+  font-size: 0.8125rem;
+}
+
+.whatsapp-message-wrapper.outgoing .whatsapp-message-bubble .markdown-renderer .md-code-block {
+  background: rgba(0, 0, 0, 0.08);
+  border-color: rgba(0, 0, 0, 0.15);
+  color: #000000;
+}
+
+.whatsapp-message-bubble .markdown-renderer a {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  font-weight: 500;
+}
+
+.whatsapp-message-bubble .markdown-renderer .md-list {
+  margin: 4px 0;
+  padding-left: 20px;
+}
+
+.whatsapp-message-bubble .markdown-renderer .md-heading {
+  margin: 6px 0 4px 0;
+  font-weight: 700;
+  color: inherit;
+}
+
 .whatsapp-message-meta {
   display: flex;
   align-items: center;
