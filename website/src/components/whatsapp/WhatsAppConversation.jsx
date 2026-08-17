@@ -318,221 +318,235 @@ export function WhatsAppConversation({
 
       {/* Messages Feed */}
       <div className="whatsapp-messages-feed">
-        {displayedMessages.map((msg) => {
-          const isOutgoing = msg.is_from_me
-          const isMsgEve = msg.is_eve || msg.sender_id === 'eve'
-          const isHovered = hoveredMessageId === msg.id
-          const isMenuOpen = activeMenuMessageId === msg.id
-          const quotedMsg = getQuotedMessage(msg.reply_to_message_id)
+        {displayedMessages.length === 0 ? (
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)', textAlign: 'center', padding: '40px 20px', minHeight: '260px' }}>
+            <div style={{ width: 44, height: 44, borderRadius: '50%', background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', display: 'grid', placeItems: 'center', marginBottom: 12 }}>
+              {isEve ? <Bot size={20} /> : chat?.is_group ? <Users size={20} /> : <User size={20} />}
+            </div>
+            <p style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--text-primary)', margin: '0 0 4px 0' }}>
+              No messages in this conversation yet
+            </p>
+            <p style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)', margin: 0, maxWidth: 320 }}>
+              {isEve ? 'Ask Eve anything to get started.' : `Send a message below to start chatting with ${chat?.name || 'this contact'}.`}
+            </p>
+          </div>
+        ) : (
+          displayedMessages.map((msg) => {
+            const isOutgoing = msg.is_from_me
+            const isMsgEve = msg.is_eve || msg.sender_id === 'eve'
+            const isHovered = hoveredMessageId === msg.id
+            const isMenuOpen = activeMenuMessageId === msg.id
+            const quotedMsg = getQuotedMessage(msg.reply_to_message_id)
 
-          return (
-            <div
-              key={msg.id}
-              className={`whatsapp-message-wrapper ${
-                isOutgoing ? 'outgoing' : 'incoming'
-              } ${isMsgEve ? 'is-eve' : ''}`}
-              onMouseEnter={() => setHoveredMessageId(msg.id)}
-              onMouseLeave={() => setHoveredMessageId((curr) => (curr === msg.id ? null : curr))}
-            >
-              <div className="whatsapp-message-bubble-container">
-                {/* Floating Quick Action & Reaction Bar on Hover */}
-                {(isHovered || isMenuOpen) && (
-                  <div className="whatsapp-message-action-bar">
-                    {/* Quick Reactions */}
-                    <div className="whatsapp-quick-reactions">
-                      {quickReactions.map((emoji) => (
-                        <button
-                          key={emoji}
-                          type="button"
-                          className="whatsapp-reaction-btn"
-                          onClick={() => onReactToMessage?.(chat.id, msg.id, emoji)}
-                          title={`React ${emoji}`}
-                        >
-                          {emoji}
-                        </button>
-                      ))}
-                    </div>
-
-                    {/* Dropdown Menu Trigger */}
-                    <button
-                      type="button"
-                      className="whatsapp-action-menu-btn"
-                      onClick={() => setActiveMenuMessageId((curr) => (curr === msg.id ? null : msg.id))}
-                      title="Message menu"
-                    >
-                      <ChevronDown size={14} />
-                    </button>
-
-                    {/* Context Dropdown Menu */}
-                    {isMenuOpen && (
-                      <div className="whatsapp-context-menu" ref={menuRef}>
-                        <button
-                          type="button"
-                          className="whatsapp-context-item"
-                          onClick={() => {
-                            setReplyingTo(msg)
-                            setActiveMenuMessageId(null)
-                          }}
-                        >
-                          <CornerUpLeft size={14} />
-                          Reply
-                        </button>
-
-                        <button
-                          type="button"
-                          className="whatsapp-context-item"
-                          onClick={() => handleCopyMessage(msg.content)}
-                        >
-                          <Copy size={14} />
-                          Copy
-                        </button>
-
-                        <button
-                          type="button"
-                          className="whatsapp-context-item"
-                          onClick={() => {
-                            onStarMessage?.(chat.id, msg.id, !msg.is_starred)
-                            setActiveMenuMessageId(null)
-                          }}
-                        >
-                          <Star size={14} fill={msg.is_starred ? 'currentColor' : 'none'} />
-                          {msg.is_starred ? 'Unstar' : 'Star'}
-                        </button>
-
-                        <button
-                          type="button"
-                          className="whatsapp-context-item eve-action"
-                          onClick={() => handleAskEveAboutMessage(msg)}
-                        >
-                          <Sparkles size={14} />
-                          Ask Eve AI
-                        </button>
-
-                        <button
-                          type="button"
-                          className="whatsapp-context-item danger"
-                          onClick={() => {
-                            onDeleteMessage?.(chat.id, msg.id)
-                            setActiveMenuMessageId(null)
-                          }}
-                        >
-                          <Trash2 size={14} />
-                          Delete
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {/* Main Message Bubble */}
-                <div className="whatsapp-message-bubble">
-                  {/* Forwarded Tag */}
-                  {msg.is_forwarded && (
-                    <div className="whatsapp-forwarded-tag">
-                      <Share2 size={12} />
-                      <span>Forwarded</span>
-                    </div>
-                  )}
-
-                  {/* Sender Name in Group */}
-                  {!isOutgoing && chat?.is_group && (
-                    <div className="whatsapp-sender-name">
-                      {msg.sender_name || 'Contact'}
-                    </div>
-                  )}
-
-                  {/* Quoted Reply Preview */}
-                  {quotedMsg && (
-                    <div className="whatsapp-quoted-preview">
-                      <span className="whatsapp-quoted-sender">
-                        {quotedMsg.is_from_me ? 'You' : quotedMsg.sender_name || 'Contact'}
-                      </span>
-                      <p className="whatsapp-quoted-text">{quotedMsg.content}</p>
-                    </div>
-                  )}
-
-                  {/* Media Presentation */}
-                  {msg.media?.type === 'audio' ? (
-                    <div className="whatsapp-audio-player">
-                      <button
-                        type="button"
-                        className="whatsapp-audio-btn"
-                        onClick={() => handleToggleAudio(msg.id)}
-                      >
-                        {playingAudioId === msg.id ? <Pause size={14} /> : <Play size={14} />}
-                      </button>
-                      <div className="whatsapp-audio-wave">
-                        {[12, 18, 8, 22, 14, 20, 10, 16, 24, 12, 18, 14, 20, 8].map((h, i) => (
-                          <div
-                            key={i}
-                            className="whatsapp-wave-bar"
-                            style={{
-                              height: `${h}px`,
-                              opacity: playingAudioId === msg.id ? (i % 2 === 0 ? 1 : 0.6) : 0.5,
-                            }}
-                          />
+            return (
+              <div
+                key={msg.id}
+                className={`whatsapp-message-wrapper ${
+                  isOutgoing ? 'outgoing' : 'incoming'
+                } ${isMsgEve ? 'is-eve' : ''}`}
+                onMouseEnter={() => setHoveredMessageId(msg.id)}
+                onMouseLeave={() => setHoveredMessageId((curr) => (curr === msg.id ? null : curr))}
+              >
+                <div className="whatsapp-message-bubble-container">
+                  {/* Floating Quick Action & Reaction Bar on Hover */}
+                  {(isHovered || isMenuOpen) && (
+                    <div className="whatsapp-message-action-bar">
+                      {/* Quick Reactions */}
+                      <div className="whatsapp-quick-reactions">
+                        {quickReactions.map((emoji) => (
+                          <button
+                            key={emoji}
+                            type="button"
+                            className="whatsapp-reaction-btn"
+                            onClick={() => onReactToMessage?.(chat.id, msg.id, emoji)}
+                            title={`React ${emoji}`}
+                          >
+                            {emoji}
+                          </button>
                         ))}
                       </div>
-                      <span style={{ fontSize: '0.75rem', opacity: 0.8 }}>0:08</span>
-                    </div>
-                  ) : msg.media?.type === 'image' ? (
-                    <div style={{ marginBottom: 6, borderRadius: 8, overflow: 'hidden', maxHeight: 240 }}>
-                      <img src={msg.media.url} alt="Attachment" style={{ width: '100%', objectFit: 'cover' }} />
-                    </div>
-                  ) : msg.media?.type === 'document' ? (
-                    <div
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 8,
-                        padding: '6px 10px',
-                        background: 'rgba(255,255,255,0.08)',
-                        borderRadius: 6,
-                        marginBottom: 6,
-                      }}
-                    >
-                      <FileText size={18} />
-                      <span style={{ fontSize: '0.8125rem', fontWeight: 500 }}>{msg.media.filename || 'Document'}</span>
-                    </div>
-                  ) : null}
 
-                  {/* Content */}
-                  {msg.content && <div className="whatsapp-message-text">{msg.content}</div>}
+                      {/* Dropdown Menu Trigger */}
+                      <button
+                        type="button"
+                        className="whatsapp-action-menu-btn"
+                        onClick={() => setActiveMenuMessageId((curr) => (curr === msg.id ? null : msg.id))}
+                        title="Message menu"
+                      >
+                        <ChevronDown size={14} />
+                      </button>
 
-                  {/* Meta: Star, Timestamp & Delivery Status */}
-                  <div className="whatsapp-message-meta">
-                    {msg.is_starred && (
-                      <Star size={11} fill="currentColor" style={{ opacity: 0.8 }} />
+                      {/* Context Dropdown Menu */}
+                      {isMenuOpen && (
+                        <div className="whatsapp-context-menu" ref={menuRef}>
+                          <button
+                            type="button"
+                            className="whatsapp-context-item"
+                            onClick={() => {
+                              setReplyingTo(msg)
+                              setActiveMenuMessageId(null)
+                            }}
+                          >
+                            <CornerUpLeft size={14} />
+                            Reply
+                          </button>
+
+                          <button
+                            type="button"
+                            className="whatsapp-context-item"
+                            onClick={() => handleCopyMessage(msg.content)}
+                          >
+                            <Copy size={14} />
+                            Copy
+                          </button>
+
+                          <button
+                            type="button"
+                            className="whatsapp-context-item"
+                            onClick={() => {
+                              onStarMessage?.(chat.id, msg.id, !msg.is_starred)
+                              setActiveMenuMessageId(null)
+                            }}
+                          >
+                            <Star size={14} fill={msg.is_starred ? 'currentColor' : 'none'} />
+                            {msg.is_starred ? 'Unstar' : 'Star'}
+                          </button>
+
+                          <button
+                            type="button"
+                            className="whatsapp-context-item eve-action"
+                            onClick={() => handleAskEveAboutMessage(msg)}
+                          >
+                            <Sparkles size={14} />
+                            Ask Eve AI
+                          </button>
+
+                          <button
+                            type="button"
+                            className="whatsapp-context-item danger"
+                            onClick={() => {
+                              onDeleteMessage?.(chat.id, msg.id)
+                              setActiveMenuMessageId(null)
+                            }}
+                          >
+                            <Trash2 size={14} />
+                            Delete
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Main Message Bubble */}
+                  <div className="whatsapp-message-bubble">
+                    {/* Forwarded Tag */}
+                    {msg.is_forwarded && (
+                      <div className="whatsapp-forwarded-tag">
+                        <Share2 size={12} />
+                        <span>Forwarded</span>
+                      </div>
                     )}
-                    <span>{formatMessageTime(msg.timestamp)}</span>
-                    {isOutgoing && (
-                      <span>
-                        {msg.status === 'read' ? (
-                          <CheckCheck size={14} />
-                        ) : msg.status === 'delivered' ? (
-                          <CheckCheck size={14} style={{ opacity: 0.6 }} />
-                        ) : (
-                          <Check size={14} />
-                        )}
-                      </span>
+
+                    {/* Sender Name in Group */}
+                    {!isOutgoing && chat?.is_group && (
+                      <div className="whatsapp-sender-name">
+                        {msg.sender_name || 'Contact'}
+                      </div>
                     )}
+
+                    {/* Quoted Reply Preview */}
+                    {quotedMsg && (
+                      <div className="whatsapp-quoted-preview">
+                        <span className="whatsapp-quoted-sender">
+                          {quotedMsg.is_from_me ? 'You' : quotedMsg.sender_name || 'Contact'}
+                        </span>
+                        <p className="whatsapp-quoted-text">{quotedMsg.content}</p>
+                      </div>
+                    )}
+
+                    {/* Media Presentation */}
+                    {msg.media?.type === 'audio' ? (
+                      <div className="whatsapp-audio-player">
+                        <button
+                          type="button"
+                          className="whatsapp-audio-btn"
+                          onClick={() => handleToggleAudio(msg.id)}
+                        >
+                          {playingAudioId === msg.id ? <Pause size={14} /> : <Play size={14} />}
+                        </button>
+                        <div className="whatsapp-audio-wave">
+                          {[12, 18, 8, 22, 14, 20, 10, 16, 24, 12, 18, 14, 20, 8].map((h, i) => (
+                            <div
+                              key={i}
+                              className="whatsapp-wave-bar"
+                              style={{
+                                height: `${h}px`,
+                                opacity: playingAudioId === msg.id ? (i % 2 === 0 ? 1 : 0.6) : 0.5,
+                              }}
+                            />
+                          ))}
+                        </div>
+                        <span style={{ fontSize: '0.75rem', opacity: 0.8 }}>0:08</span>
+                      </div>
+                    ) : msg.media?.type === 'image' ? (
+                      <div style={{ marginBottom: 6, borderRadius: 8, overflow: 'hidden', maxHeight: 240 }}>
+                        <img src={msg.media.url} alt="Attachment" style={{ width: '100%', objectFit: 'cover' }} />
+                      </div>
+                    ) : msg.media?.type === 'document' ? (
+                      <div
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 8,
+                          padding: '6px 10px',
+                          background: 'rgba(255,255,255,0.08)',
+                          borderRadius: 6,
+                          marginBottom: 6,
+                        }}
+                      >
+                        <FileText size={18} />
+                        <span style={{ fontSize: '0.8125rem', fontWeight: 500 }}>{msg.media.filename || 'Document'}</span>
+                      </div>
+                    ) : null}
+
+                    {/* Content */}
+                    {msg.content && <div className="whatsapp-message-text">{msg.content}</div>}
+
+                    {/* Meta: Star, Timestamp & Delivery Status */}
+                    <div className="whatsapp-message-meta">
+                      {msg.is_starred && (
+                        <Star size={11} fill="currentColor" style={{ opacity: 0.8 }} />
+                      )}
+                      <span>{formatMessageTime(msg.timestamp)}</span>
+                      {isOutgoing && (
+                        <span>
+                          {msg.status === 'read' ? (
+                            <CheckCheck size={14} />
+                          ) : msg.status === 'delivered' ? (
+                            <CheckCheck size={14} style={{ opacity: 0.6 }} />
+                          ) : (
+                            <Check size={14} />
+                          )}
+                        </span>
+                      )}
+                    </div>
                   </div>
+
+                  {/* Emoji Reactions List Below Bubble */}
+                  {msg.reactions && msg.reactions.length > 0 && (
+                    <div className="whatsapp-reactions-badge-list">
+                      {msg.reactions.map((r, i) => (
+                        <span key={i} className="whatsapp-reaction-pill">
+                          {r.emoji} {r.count > 1 ? r.count : ''}
+                        </span>
+                      ))}
+                    </div>
+                  )}
                 </div>
-
-                {/* Emoji Reactions List Below Bubble */}
-                {msg.reactions && msg.reactions.length > 0 && (
-                  <div className="whatsapp-reactions-badge-list">
-                    {msg.reactions.map((r, i) => (
-                      <span key={i} className="whatsapp-reaction-pill">
-                        {r.emoji} {r.count > 1 ? r.count : ''}
-                      </span>
-                    ))}
-                  </div>
-                )}
               </div>
-            </div>
-          )
-        })}
+            )
+          })
+        )}
         <div ref={messagesEndRef} />
       </div>
 

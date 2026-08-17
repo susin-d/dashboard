@@ -4,7 +4,7 @@ Living project snapshot for AI agents. `AGENTS.md` holds the permanent rules;
 this file holds the **current state** of the codebase and must be kept up to
 date whenever the implementation changes.
 
-> **Last updated:** 2026-08-17 (Implemented real WhatsApp group metadata extraction, member participant lists, filter pills, quick message reactions, quoted replies, and message actions)
+> **Last updated:** 2026-08-17 (Fixed chat message leakage on conversation switch, sorted conversations by most recent message, and filtered inactive contact book entries from main chat feed)
 
 ---
 

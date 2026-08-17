@@ -195,16 +195,29 @@ class WhatsAppService:
             if resp.ok:
                 worker_chats = resp.json().get("chats") or []
                 for wc in worker_chats:
+                    chat_id = wc.get("id")
+                    last_msg_data = None
+                    last_msg_text = wc.get("lastMessage")
+                    if last_msg_text:
+                        last_msg_data = {
+                            "id": f"last-{chat_id}",
+                            "sender_id": "contact",
+                            "sender_name": wc.get("name") or "Contact",
+                            "content": last_msg_text,
+                            "timestamp": wc.get("updatedAt"),
+                            "status": "delivered",
+                        }
                     whatsapp_repo.upsert_whatsapp_chat(
                         database,
                         user_id,
-                        chat_id=wc.get("id"),
-                        name=wc.get("name") or wc.get("id"),
+                        chat_id=chat_id,
+                        name=wc.get("name") or chat_id,
                         phone_number=wc.get("phoneNumber"),
                         is_group=bool(wc.get("isGroup", False)),
                         participants=wc.get("participants"),
                         description=wc.get("description"),
                         unread_count=int(wc.get("unreadCount", 0)),
+                        last_message=last_msg_data,
                     )
         except Exception:
             pass
@@ -213,6 +226,21 @@ class WhatsAppService:
         if not any(c.id == "eve" for c in chats):
             WhatsAppService._ensure_eve_chat(database, user_id)
             chats = whatsapp_repo.list_whatsapp_chats(database, user_id)
+
+        # Sort chats: pinned first, then by most recent message/activity timestamp descending
+        def get_chat_sort_key(c: WhatsAppChatResponse):
+            is_pinned = 1 if (c.pinned or c.id == "eve") else 0
+            ts = c.last_message.timestamp if c.last_message else c.updated_at
+            if isinstance(ts, str):
+                try:
+                    ts = datetime.fromisoformat(ts.replace("Z", "+00:00"))
+                except Exception:
+                    ts = datetime.min.replace(tzinfo=timezone.utc)
+            elif ts is None:
+                ts = datetime.min.replace(tzinfo=timezone.utc)
+            return (is_pinned, ts)
+
+        chats.sort(key=get_chat_sort_key, reverse=True)
         return chats
 
     @staticmethod

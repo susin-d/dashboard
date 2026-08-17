@@ -23,7 +23,7 @@ export function WhatsAppChatList({
   }, [chats])
 
   const filteredChats = useMemo(() => {
-    return chats.filter((chat) => {
+    const list = chats.filter((chat) => {
       // Pill filtering
       if (activeFilter === 'unread' && (!chat.unread_count || chat.unread_count <= 0)) {
         return false
@@ -45,6 +45,17 @@ export function WhatsAppChatList({
         chat.last_message?.content?.toLowerCase().includes(q) ||
         chat.participants?.some((p) => p.toLowerCase().includes(q))
       )
+    })
+
+    // Sort: Pinned first, then newest last_message / updated_at timestamp descending
+    return list.sort((a, b) => {
+      const aPinned = a.pinned || a.id === 'eve' ? 1 : 0
+      const bPinned = b.pinned || b.id === 'eve' ? 1 : 0
+      if (aPinned !== bPinned) return bPinned - aPinned
+
+      const aTime = new Date(a.last_message?.timestamp || a.updated_at || 0).getTime()
+      const bTime = new Date(b.last_message?.timestamp || b.updated_at || 0).getTime()
+      return bTime - aTime
     })
   }, [chats, searchQuery, activeFilter])
 

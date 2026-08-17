@@ -142,15 +142,30 @@ export function WhatsAppPage() {
       return
     }
 
+    // Immediately clear previous chat messages so they do not leak into newly selected chat
+    setMessages([])
+
+    let isCurrent = true
     fetchWhatsAppMessages(selectedChatId)
       .then((msgs) => {
-        setMessages(msgs)
-        markWhatsAppChatRead(selectedChatId).catch(() => {})
-        setChats((prev) =>
-          prev.map((c) => (c.id === selectedChatId ? { ...c, unread_count: 0 } : c)),
-        )
+        if (isCurrent) {
+          setMessages(msgs || [])
+          markWhatsAppChatRead(selectedChatId).catch(() => {})
+          setChats((prev) =>
+            prev.map((c) => (c.id === selectedChatId ? { ...c, unread_count: 0 } : c)),
+          )
+        }
       })
-      .catch((err) => console.error('Could not load messages:', err))
+      .catch((err) => {
+        if (isCurrent) {
+          console.error('Could not load messages:', err)
+          setMessages([])
+        }
+      })
+
+    return () => {
+      isCurrent = false
+    }
   }, [selectedChatId])
 
   const [isQrLoading, setIsQrLoading] = useState(false)
