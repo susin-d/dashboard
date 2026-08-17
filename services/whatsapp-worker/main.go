@@ -168,6 +168,29 @@ func extractMessageInfo(msg *waE2E.Message) (content string, isForwarded bool, m
 	return content, isForwarded, media, replyToID
 }
 
+func resolveContactName(s *SessionState, jid types.JID, pushName string) string {
+	if pushName != "" {
+		return pushName
+	}
+	if s != nil && s.Client != nil && s.Client.Store != nil && s.Client.Store.Contacts != nil {
+		if contact, found, err := s.Client.Store.Contacts.GetContact(context.Background(), jid); err == nil && found {
+			if contact.FullName != "" {
+				return contact.FullName
+			}
+			if contact.PushName != "" {
+				return contact.PushName
+			}
+			if contact.BusinessName != "" {
+				return contact.BusinessName
+			}
+		}
+	}
+	if jid.User != "" {
+		return "+" + jid.User
+	}
+	return "Contact"
+}
+
 func getOrCreateSession(userId string) (*SessionState, error) {
 	sessionsLock.Lock()
 	defer sessionsLock.Unlock()
@@ -278,11 +301,27 @@ func (s *SessionState) handleEvent(userId string, evt interface{}) {
 					lastTime = ts
 				}
 
+				senderName := ""
+				if fromMe {
+					senderName = "You"
+				} else if isGroup {
+					senderName = webMsg.GetPushName()
+					if senderName == "" {
+						if pJID, err := types.ParseJID(senderJID); err == nil {
+							senderName = resolveContactName(s, pJID, "")
+						} else {
+							senderName = senderJID
+						}
+					}
+				} else {
+					senderName = chatName
+				}
+
 				m := &SessionMessage{
 					ID:               msgID,
 					ChatID:           chatJID,
 					SenderID:         senderJID,
-					SenderName:       chatName,
+					SenderName:       senderName,
 					IsFromMe:         fromMe,
 					IsForwarded:      isFwd,
 					Content:          text,
@@ -435,9 +474,11 @@ func (s *SessionState) handleEvent(userId string, evt interface{}) {
 		chatJID := v.Info.Chat.String()
 		isFromMe := v.Info.IsFromMe
 		isGroup := v.Info.IsGroup || strings.HasSuffix(chatJID, "@g.us")
-		senderName := v.Info.PushName
-		if senderName == "" {
-			senderName = v.Info.Sender.User
+		senderName := ""
+		if isFromMe {
+			senderName = "You"
+		} else {
+			senderName = resolveContactName(s, v.Info.Sender, v.Info.PushName)
 		}
 
 		s.Lock()

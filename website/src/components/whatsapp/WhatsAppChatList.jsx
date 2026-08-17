@@ -1,6 +1,15 @@
 import { useMemo, useState } from 'react'
-import { Bot, Pin, User, Users, QrCode, Sparkles, Star } from 'lucide-react'
+import { Bot, Pin, User, Users, QrCode } from 'lucide-react'
 import { SearchBar } from '../ui'
+
+function formatSenderName(name) {
+  if (!name || name === '1289' || name === 'Contact') return ''
+  const clean = name.replace(/@s\.whatsapp\.net|@g\.us/g, '')
+  if (/^\d{10,15}$/.test(clean)) {
+    return `+${clean}`
+  }
+  return clean
+}
 
 export function WhatsAppChatList({
   chats = [],
@@ -213,8 +222,8 @@ export function WhatsAppChatList({
                         <>
                           {chat.last_message.is_from_me ? (
                             <span style={{ fontWeight: 600 }}>You: </span>
-                          ) : chat.is_group && chat.last_message.sender_name ? (
-                            <span style={{ fontWeight: 600 }}>{chat.last_message.sender_name}: </span>
+                          ) : chat.is_group && formatSenderName(chat.last_message.sender_name) ? (
+                            <span style={{ fontWeight: 600 }}>{formatSenderName(chat.last_message.sender_name)}: </span>
                           ) : null}
                           {chat.last_message.content || (chat.last_message.media ? `[${chat.last_message.media.type}]` : '')}
                         </>

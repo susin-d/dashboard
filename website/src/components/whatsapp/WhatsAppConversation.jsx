@@ -26,9 +26,23 @@ import {
   Share2,
   X,
   Pin,
-  Plus,
 } from 'lucide-react'
 import { Markdown } from '../ui/Markdown'
+
+function formatSenderName(name, senderId) {
+  if (!name && !senderId) return 'Contact'
+  const raw = (name && name !== 'Contact' && name !== '1289') ? name : (senderId || 'Contact')
+  const clean = raw.replace(/@s\.whatsapp\.net|@g\.us/g, '')
+  if (/^\d{10,15}$/.test(clean)) {
+    return `+${clean}`
+  }
+  return clean
+}
+
+function formatMessageContent(text) {
+  if (!text) return ''
+  return text.replace(/@(\d{7,15})/g, '**@+$1**')
+}
 
 export function WhatsAppConversation({
   chat,
@@ -578,7 +592,7 @@ export function WhatsAppConversation({
                     {/* Sender Name in Group */}
                     {!isOutgoing && chat?.is_group && (
                       <div className="whatsapp-sender-name">
-                        {msg.sender_name || 'Contact'}
+                        {formatSenderName(msg.sender_name, msg.sender_id)}
                       </div>
                     )}
 
@@ -594,7 +608,7 @@ export function WhatsAppConversation({
                     {quotedMsg && (
                       <div className="whatsapp-quoted-preview">
                         <span className="whatsapp-quoted-sender">
-                          {quotedMsg.is_from_me ? 'You' : quotedMsg.sender_name || 'Contact'}
+                          {quotedMsg.is_from_me ? 'You' : formatSenderName(quotedMsg.sender_name, quotedMsg.sender_id)}
                         </span>
                         <p className="whatsapp-quoted-text">{quotedMsg.content}</p>
                       </div>
@@ -655,7 +669,7 @@ export function WhatsAppConversation({
                     {/* Content */}
                     {msg.content && (
                       <div className="whatsapp-message-text">
-                        <Markdown content={msg.content} />
+                        <Markdown content={formatMessageContent(msg.content)} />
                       </div>
                     )}
 
