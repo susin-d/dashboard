@@ -90,7 +90,27 @@ export function WhatsAppPage() {
           // If current conversation is active
           if (incomingMsg.chat_id === currentSelected) {
             setMessages((prev) => {
-              if (prev.some((m) => m.id === incomingMsg.id)) return prev
+              // 1. If message with exact ID already exists in feed, update it
+              const idIndex = prev.findIndex((m) => m.id === incomingMsg.id)
+              if (idIndex !== -1) {
+                const updated = [...prev]
+                updated[idIndex] = incomingMsg
+                return updated
+              }
+              // 2. If it's an outgoing message from me, replace any matching pending/temp optimistic message
+              if (incomingMsg.is_from_me) {
+                const tempIndex = prev.findIndex(
+                  (m) =>
+                    (m.id.startsWith('temp-') || m.status === 'pending') &&
+                    m.content === incomingMsg.content,
+                )
+                if (tempIndex !== -1) {
+                  const updated = [...prev]
+                  updated[tempIndex] = incomingMsg
+                  return updated
+                }
+              }
+              // 3. Otherwise append as new message
               return [...prev, incomingMsg]
             })
           }
@@ -278,7 +298,14 @@ export function WhatsAppPage() {
       setMessages((prev) => [...prev, optimisticMsg])
 
       const sentMsg = await sendWhatsAppMessage({ chatId, content, media, replyToMessageId })
-      setMessages((prev) => prev.map((m) => (m.id === tempId ? sentMsg : m)))
+      setMessages((prev) => {
+        // If WebSocket already replaced or added the sent message, remove any leftover tempId
+        const hasRealMessage = prev.some((m) => m.id === sentMsg.id)
+        if (hasRealMessage) {
+          return prev.filter((m) => m.id !== tempId)
+        }
+        return prev.map((m) => (m.id === tempId ? sentMsg : m))
+      })
 
       setChats((prev) =>
         prev.map((c) =>

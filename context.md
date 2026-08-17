@@ -4,7 +4,7 @@ Living project snapshot for AI agents. `AGENTS.md` holds the permanent rules;
 this file holds the **current state** of the codebase and must be kept up to
 date whenever the implementation changes.
 
-> **Last updated:** 2026-08-17 (Added rich Markdown rendering to WhatsApp message bubbles supporting bold, italics, strikethrough, code blocks, lists, and links)
+> **Last updated:** 2026-08-17 (Fixed duplicate outgoing message rendering by reconciling optimistic messages with real-time WebSocket events)
 
 ---
 
