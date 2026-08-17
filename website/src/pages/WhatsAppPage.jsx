@@ -18,7 +18,9 @@ import { WhatsAppChatList } from '../components/whatsapp/WhatsAppChatList'
 import { WhatsAppConversation } from '../components/whatsapp/WhatsAppConversation'
 import { WhatsAppQrModal } from '../components/whatsapp/WhatsAppQrModal'
 import { WhatsAppInfoDrawer } from '../components/whatsapp/WhatsAppInfoDrawer'
-import { MessageSquare, QrCode, Bot } from 'lucide-react'
+import { Modal } from '../components/ui/Modal'
+import { Markdown } from '../components/ui/Markdown'
+import { MessageSquare, QrCode } from 'lucide-react'
 
 export function WhatsAppPage() {
   const [status, setStatus] = useState({ connected: false })
@@ -516,49 +518,26 @@ export function WhatsAppPage() {
       />
 
       {/* Summary Alert Modal */}
-      {summaryModalText && (
-        <div
-          style={{
-            position: 'fixed',
-            inset: 0,
-            background: 'var(--bg-backdrop, rgba(0,0,0,0.7))',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 9999,
-            padding: '16px',
-          }}
-        >
-          <div
-            style={{
-              background: 'var(--bg-card)',
-              border: '1px solid var(--border-color)',
-              borderRadius: 'var(--radius-xl, 12px)',
-              padding: '24px',
-              maxWidth: '500px',
-              width: '100%',
-              boxShadow: 'var(--shadow-lg)',
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
-              <Bot size={20} />
-              <h3 style={{ margin: 0, fontSize: '1.1rem' }}>Eve Chat Summary</h3>
-            </div>
-            <div style={{ fontSize: '0.875rem', lineHeight: 1.6, whiteSpace: 'pre-wrap', color: 'var(--text-secondary)' }}>
-              {summaryModalText}
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 16 }}>
-              <button
-                type="button"
-                className="primary-button"
-                onClick={() => setSummaryModalText(null)}
-              >
-                Done
-              </button>
-            </div>
-          </div>
+      <Modal
+        isOpen={Boolean(summaryModalText)}
+        onClose={() => setSummaryModalText(null)}
+        title="Eve Conversation Summary"
+        subtitle="AI-generated key points and action items"
+        className="whatsapp-summary-modal"
+      >
+        <div className="whatsapp-summary-modal-content">
+          <Markdown content={summaryModalText || ''} />
         </div>
-      )}
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 20 }}>
+          <button
+            type="button"
+            className="primary-button"
+            onClick={() => setSummaryModalText(null)}
+          >
+            Done
+          </button>
+        </div>
+      </Modal>
     </>
   )
 }

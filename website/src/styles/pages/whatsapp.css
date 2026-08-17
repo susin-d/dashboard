@@ -1499,3 +1499,39 @@
   margin: 0;
 }
 
+/* WhatsApp Summary Modal */
+.whatsapp-summary-modal {
+  max-width: 680px;
+  width: 90vw;
+}
+
+.whatsapp-summary-modal-content {
+  max-height: 65vh;
+  overflow-y: auto;
+  padding-right: 6px;
+  color: var(--text-primary, #ffffff);
+  font-size: 0.875rem;
+  line-height: 1.6;
+}
+
+.whatsapp-summary-modal-content table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 12px 0;
+  font-size: 0.8125rem;
+}
+
+.whatsapp-summary-modal-content th,
+.whatsapp-summary-modal-content td {
+  border: 1px solid var(--border-color, #27272a);
+  padding: 8px 12px;
+  text-align: left;
+}
+
+.whatsapp-summary-modal-content th {
+  background: var(--bg-secondary, #18181b);
+  font-weight: 600;
+  color: var(--text-primary, #ffffff);
+}
+
+
