@@ -59,8 +59,18 @@ export async function apiRequest(
     if (notFoundMessage && response.status === 404) {
       throw new Error(notFoundMessage)
     }
-    const failure = await response.json().catch(() => null)
+    let failure = null
+    try {
+      failure = await response.json()
+    } catch {
+      // response was not valid JSON (e.g. HTML error page)
+    }
     throw new Error(failure?.detail || errorMessage)
   }
-  return response.status === 204 ? null : response.json()
+  if (response.status === 204) return null
+  try {
+    return await response.json()
+  } catch {
+    throw new Error('Received an invalid response from the server.')
+  }
 }
