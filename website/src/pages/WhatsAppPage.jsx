@@ -155,22 +155,28 @@ export function WhatsAppPage() {
     }
   }, [])
 
+  const [hasMoreMessages, setHasMoreMessages] = useState(true)
+  const [isLoadingMore, setIsLoadingMore] = useState(false)
+
   // Load messages when selectedChatId changes
   useEffect(() => {
     if (!selectedChatId) {
       setMessages([])
+      setHasMoreMessages(false)
       return
     }
 
     // Immediately clear previous chat messages so they do not leak into newly selected chat
     setMessages([])
+    setHasMoreMessages(true)
 
     let isCurrent = true
-    fetchWhatsAppMessages(selectedChatId)
+    fetchWhatsAppMessages(selectedChatId, 50)
       .then((msgs) => {
         if (isCurrent && selectedChatIdRef.current === selectedChatId) {
           const validMsgs = (msgs || []).filter((m) => !m.chat_id || m.chat_id === selectedChatId)
           setMessages(validMsgs)
+          setHasMoreMessages(validMsgs.length >= 50)
           markWhatsAppChatRead(selectedChatId).catch(() => {})
           setChats((prev) =>
             prev.map((c) => (c.id === selectedChatId ? { ...c, unread_count: 0 } : c)),
@@ -181,6 +187,7 @@ export function WhatsAppPage() {
         if (isCurrent) {
           console.error('Could not load messages:', err)
           setMessages([])
+          setHasMoreMessages(false)
         }
       })
 
@@ -188,6 +195,33 @@ export function WhatsAppPage() {
       isCurrent = false
     }
   }, [selectedChatId])
+
+  const handleLoadMoreMessages = async () => {
+    if (isLoadingMore || !hasMoreMessages || messages.length === 0 || !selectedChatId) return
+    setIsLoadingMore(true)
+    try {
+      const earliestMsg = messages[0]
+      const beforeTimestamp = earliestMsg?.timestamp
+      const olderMsgs = await fetchWhatsAppMessages(selectedChatId, 50, beforeTimestamp)
+      const validOlder = (olderMsgs || []).filter((m) => !m.chat_id || m.chat_id === selectedChatId)
+      if (validOlder.length === 0) {
+        setHasMoreMessages(false)
+      } else {
+        setMessages((prev) => {
+          const existingIds = new Set(prev.map((m) => m.id))
+          const fresh = validOlder.filter((m) => !existingIds.has(m.id))
+          return [...fresh, ...prev]
+        })
+        if (validOlder.length < 50) {
+          setHasMoreMessages(false)
+        }
+      }
+    } catch (err) {
+      console.error('Failed to load older WhatsApp messages:', err)
+    } finally {
+      setIsLoadingMore(false)
+    }
+  }
 
   const [isQrLoading, setIsQrLoading] = useState(false)
 
@@ -399,6 +433,9 @@ export function WhatsAppPage() {
             key={selectedChat.id}
             chat={selectedChat}
             messages={messages}
+            hasMoreMessages={hasMoreMessages}
+            isLoadingMore={isLoadingMore}
+            onLoadMoreMessages={handleLoadMoreMessages}
             onSendMessage={handleSendMessage}
             onOpenInfoDrawer={() => setIsInfoDrawerOpen((prev) => !prev)}
             onGenerateEveDraft={handleGenerateEveDraft}

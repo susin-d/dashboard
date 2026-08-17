@@ -40,8 +40,12 @@ export async function fetchWhatsAppChats() {
   })
 }
 
-export async function fetchWhatsAppMessages(chatId, limit = 50) {
-  return apiRequest(`/whatsapp/chats/${encodeURIComponent(chatId)}/messages?limit=${limit}`, {
+export async function fetchWhatsAppMessages(chatId, limit = 50, before = null) {
+  let url = `/whatsapp/chats/${encodeURIComponent(chatId)}/messages?limit=${limit}`
+  if (before) {
+    url += `&before=${encodeURIComponent(before)}`
+  }
+  return apiRequest(url, {
     method: 'GET',
     errorMessage: 'Could not load WhatsApp messages.',
   })

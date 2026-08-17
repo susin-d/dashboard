@@ -188,13 +188,30 @@ def upsert_whatsapp_chat(
 
 
 def list_whatsapp_messages(
-    database: Client, user_id: str, chat_id: str, limit: int = 50
+    database: Client,
+    user_id: str,
+    chat_id: str,
+    limit: int = 50,
+    before: Optional[str] = None,
 ) -> List[WhatsAppMessageResponse]:
-    query = (
-        _messages_col(database, user_id, chat_id)
-        .order_by("timestamp", direction=firestore.Query.ASCENDING)
-        .limit(limit)
-    )
+    col = _messages_col(database, user_id, chat_id)
+    if before:
+        try:
+            before_dt = datetime.fromisoformat(before.replace("Z", "+00:00"))
+        except Exception:
+            before_dt = None
+
+        if before_dt:
+            query = (
+                col.where("timestamp", "<", before_dt)
+                .order_by("timestamp", direction=firestore.Query.DESCENDING)
+                .limit(limit)
+            )
+        else:
+            query = col.order_by("timestamp", direction=firestore.Query.DESCENDING).limit(limit)
+    else:
+        query = col.order_by("timestamp", direction=firestore.Query.DESCENDING).limit(limit)
+
     results = []
     for snap in query.stream():
         data = snap.to_dict() or {}
@@ -219,6 +236,8 @@ def list_whatsapp_messages(
                 is_pinned=bool(data.get("is_pinned", False)),
             )
         )
+    # Reverse so items are presented in chronological ascending order
+    results.reverse()
     return results
 
 

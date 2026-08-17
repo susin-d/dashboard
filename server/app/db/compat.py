@@ -1097,6 +1097,24 @@ class SqlClient:
                         elif op == "!=" and field_val == val:
                             match = False
                             break
+                        elif op in ("<", "<=", ">", ">="):
+                            if field_val is None:
+                                match = False
+                                break
+                            fv_str = field_val.isoformat() if hasattr(field_val, 'isoformat') else str(field_val)
+                            val_str = val.isoformat() if hasattr(val, 'isoformat') else str(val)
+                            if op == "<" and not (fv_str < val_str):
+                                match = False
+                                break
+                            elif op == "<=" and not (fv_str <= val_str):
+                                match = False
+                                break
+                            elif op == ">" and not (fv_str > val_str):
+                                match = False
+                                break
+                            elif op == ">=" and not (fv_str >= val_str):
+                                match = False
+                                break
                     if match:
                         matching_docs.append(SqlSnapshot(doc_id, doc_dict, exists=True))
 

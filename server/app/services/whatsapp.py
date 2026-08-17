@@ -246,10 +246,10 @@ class WhatsAppService:
 
     @staticmethod
     def get_messages(
-        database: Client, user_id: str, chat_id: str, limit: int = 50
+        database: Client, user_id: str, chat_id: str, limit: int = 50, before: Optional[str] = None
     ) -> List[WhatsAppMessageResponse]:
-        msgs = whatsapp_repo.list_whatsapp_messages(database, user_id, chat_id, limit=limit)
-        if len(msgs) == 0 and chat_id != "eve":
+        msgs = whatsapp_repo.list_whatsapp_messages(database, user_id, chat_id, limit=limit, before=before)
+        if len(msgs) == 0 and chat_id != "eve" and not before:
             try:
                 worker_url = settings.whatsapp_gateway_url
                 resp = requests.get(f"{worker_url}/session/messages/{user_id}/{chat_id}", timeout=2.0)

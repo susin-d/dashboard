@@ -4,7 +4,7 @@ Living project snapshot for AI agents. `AGENTS.md` holds the permanent rules;
 this file holds the **current state** of the codebase and must be kept up to
 date whenever the implementation changes.
 
-> **Last updated:** 2026-08-17 (Refactored WhatsApp Settings and Eve AI Automation styling with SettingsCard tokens, custom toggle switches, and monochrome layout)
+> **Last updated:** 2026-08-17 (Implemented WhatsApp infinite scroll-up pagination with timestamp filtering, scroll position anchoring, and loading indicators)
 
 ---
 

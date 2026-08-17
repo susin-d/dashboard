@@ -33,6 +33,9 @@ import { Markdown } from '../ui/Markdown'
 export function WhatsAppConversation({
   chat,
   messages = [],
+  hasMoreMessages = false,
+  isLoadingMore = false,
+  onLoadMoreMessages,
   onSendMessage,
   onOpenInfoDrawer,
   onGenerateEveDraft,
@@ -55,20 +58,49 @@ export function WhatsAppConversation({
   const [infoModalMessage, setInfoModalMessage] = useState(null)
 
   const messagesEndRef = useRef(null)
+  const messagesFeedRef = useRef(null)
+  const isFetchingMoreRef = useRef(false)
+  const previousScrollHeightRef = useRef(null)
+  const initialScrollDoneRef = useRef(false)
   const fileInputRef = useRef(null)
   const menuRef = useRef(null)
 
   const isEve = chat?.is_eve || chat?.id === 'eve'
 
-  // Scroll to bottom on new message if not searching
-  const scrollToBottom = () => {
-    if (!isSearchOpen) {
-      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  const handleFeedScroll = (e) => {
+    const { scrollTop, scrollHeight } = e.currentTarget
+    if (
+      scrollTop < 80 &&
+      hasMoreMessages &&
+      !isLoadingMore &&
+      !isFetchingMoreRef.current &&
+      messages.length > 0
+    ) {
+      isFetchingMoreRef.current = true
+      previousScrollHeightRef.current = scrollHeight
+      onLoadMoreMessages?.()
     }
   }
 
+  // Scroll to bottom on initial mount or when user sends a new message (if not loading more)
   useEffect(() => {
-    scrollToBottom()
+    if (previousScrollHeightRef.current === null && !isSearchOpen) {
+      messagesEndRef.current?.scrollIntoView({ behavior: initialScrollDoneRef.current ? 'smooth' : 'auto' })
+      initialScrollDoneRef.current = true
+    }
+  }, [messages, isSearchOpen])
+
+  // Preserve scroll position when older messages are prepended to the feed
+  useEffect(() => {
+    if (previousScrollHeightRef.current !== null && messagesFeedRef.current) {
+      const newScrollHeight = messagesFeedRef.current.scrollHeight
+      const diff = newScrollHeight - previousScrollHeightRef.current
+      if (diff > 0) {
+        messagesFeedRef.current.scrollTop += diff
+      }
+      previousScrollHeightRef.current = null
+      isFetchingMoreRef.current = false
+    }
   }, [messages])
 
   // Close context menu on outside click
@@ -344,7 +376,19 @@ export function WhatsAppConversation({
       )}
 
       {/* Messages Feed */}
-      <div className="whatsapp-messages-feed">
+      <div
+        className="whatsapp-messages-feed"
+        ref={messagesFeedRef}
+        onScroll={handleFeedScroll}
+      >
+        {/* Loading Older Messages Spinner */}
+        {isLoadingMore && (
+          <div className="whatsapp-loading-older">
+            <div className="whatsapp-loading-spinner" />
+            <span>Loading earlier messages...</span>
+          </div>
+        )}
+
         {displayedMessages.length === 0 ? (
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)', textAlign: 'center', padding: '40px 20px', minHeight: '260px' }}>
             <div style={{ width: 44, height: 44, borderRadius: '50%', background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', display: 'grid', placeItems: 'center', marginBottom: 12 }}>

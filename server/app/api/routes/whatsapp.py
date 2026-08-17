@@ -83,10 +83,11 @@ def list_whatsapp_chats(
 def get_whatsapp_messages(
     chat_id: str,
     limit: int = Query(default=50, ge=1, le=100),
+    before: Optional[str] = Query(default=None, description="ISO timestamp to fetch messages prior to"),
     current_user: dict = Depends(get_current_user),
     database: Client = Depends(get_firestore),
 ):
-    return WhatsAppService.get_messages(database, current_user["uid"], chat_id, limit=limit)
+    return WhatsAppService.get_messages(database, current_user["uid"], chat_id, limit=limit, before=before)
 
 
 @router.post("/send", response_model=WhatsAppMessageResponse, status_code=status.HTTP_201_CREATED)
