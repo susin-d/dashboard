@@ -4,7 +4,7 @@ Living project snapshot for AI agents. `AGENTS.md` holds the permanent rules;
 this file holds the **current state** of the codebase and must be kept up to
 date whenever the implementation changes.
 
-> **Last updated:** 2026-08-17 (Refined WhatsApp modal CSS with strict monochrome design system, step badges, and phone pairing code support; hooked up real WhatsApp gateway pairing, polling, and outbound message dispatch)
+> **Last updated:** 2026-08-17 (Enabled edge-to-edge full-screen layout for WhatsApp view, removing outer padding and gutters)
 
 ---
 

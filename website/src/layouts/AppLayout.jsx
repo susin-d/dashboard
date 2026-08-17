@@ -74,7 +74,7 @@ export function AppLayout({
         <main
           ref={contentRef}
           id="main-content"
-          className={`app-main content ${activePage === 'calendar' ? 'calendar-content' : ''}`}
+          className={`app-main content ${activePage === 'calendar' ? 'calendar-content' : ''} ${activePage === 'whatsapp' ? 'whatsapp-fullscreen-content' : ''}`}
           tabIndex={-1}
         >
           {children}
