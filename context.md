@@ -4,7 +4,7 @@ Living project snapshot for AI agents. `AGENTS.md` holds the permanent rules;
 this file holds the **current state** of the codebase and must be kept up to
 date whenever the implementation changes.
 
-> **Last updated:** 2026-08-16 (Fixed SQL-backed call records: nested caller/callee round-trip, participant queries, signal persistence, and `calls.messages` column migration)
+> **Last updated:** 2026-08-17 (Updated `start.bat` script to orchestrate Docker services [PostgreSQL, FastAPI backend, WhatsApp worker, Nginx] and frontend dev server, updated WhatsApp worker Go builder version)
 
 ---
 
