@@ -150,7 +150,11 @@ def query_whatsapp_chats(session: Session, user_id: str, query: SqlQuery) -> lis
 def get_whatsapp_message_doc(session: Session, user_id: str, chat_id: str, doc_id: str) -> SqlSnapshot:
     """Fetch WhatsApp message document by user ID, chat ID, and message ID."""
     m = session.get(WhatsAppMessage, doc_id)
-    if not m or m.user_id != user_id or m.chat_id != chat_id:
+    if not m or m.user_id != user_id:
+        return SqlSnapshot(doc_id, None, exists=False)
+    clean_chat = (chat_id or "").replace("@g.us", "").replace("@s.whatsapp.net", "").replace("@lid", "")
+    clean_m_chat = (m.chat_id or "").replace("@g.us", "").replace("@s.whatsapp.net", "").replace("@lid", "")
+    if clean_chat and clean_m_chat and clean_chat != clean_m_chat:
         return SqlSnapshot(doc_id, None, exists=False)
     return SqlSnapshot(doc_id, whatsapp_message_to_dict(m))
 

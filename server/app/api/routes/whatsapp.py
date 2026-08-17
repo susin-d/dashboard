@@ -206,6 +206,7 @@ async def whatsapp_incoming_webhook(
             for m in msgs_data:
                 media_data = m.get("media")
                 media_obj = WhatsAppMediaAttachment(**media_data) if media_data else None
+                reactions_data = m.get("reactions") or []
                 msg_obj = WhatsAppMessageResponse(
                     id=m.get("id") or f"msg-{uuid4().hex[:12]}",
                     chat_id=m.get("chatId"),
@@ -217,6 +218,7 @@ async def whatsapp_incoming_webhook(
                     content=m.get("content") or "",
                     media=media_obj,
                     reply_to_message_id=m.get("replyToMessageId"),
+                    reactions=reactions_data,
                     sender_avatar_url=m.get("senderAvatarUrl") or m.get("sender_avatar_url"),
                     timestamp=datetime.fromisoformat(m["timestamp"].replace("Z", "+00:00")) if isinstance(m.get("timestamp"), str) else datetime.now(timezone.utc),
                     status=m.get("status", "delivered"),
