@@ -198,7 +198,9 @@ export function WhatsAppChatList({
                   <div className="whatsapp-chat-top">
                     <span className="whatsapp-chat-name" title={chat.name}>
                       {chat.pinned && <Pin size={12} style={{ display: 'inline', marginRight: 4 }} />}
-                      {chat.name}
+                      {chat.is_group && (!chat.name || chat.name === 'Contact' || chat.name === chat.id)
+                        ? 'Group conversation'
+                        : chat.name}
                     </span>
                     <span className="whatsapp-chat-time">
                       {formatChatTime(chat.last_message?.timestamp || chat.updated_at)}

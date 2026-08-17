@@ -280,7 +280,11 @@ export function WhatsAppConversation({
             )}
           </div>
           <div className="whatsapp-contact-details">
-            <h3 title={chat?.name}>{chat?.name || 'Conversation'}</h3>
+            <h3 title={chat?.name}>
+              {chat?.is_group && (!chat?.name || chat?.name === 'Contact' || chat?.name === chat?.id)
+                ? 'Group conversation'
+                : chat?.name || 'Conversation'}
+            </h3>
             <span className="whatsapp-contact-subtitle" title={chat?.participants?.join(', ')}>
               {isEve
                 ? 'AI Workspace Assistant • Always active'

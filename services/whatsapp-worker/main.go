@@ -261,6 +261,67 @@ func (s *SessionState) handleEvent(userId string, evt interface{}) {
 		s.Unlock()
 		log.Printf("[User %s] WhatsApp Connected: %s (%s)", userId, phone, push)
 
+		// Fetch joined groups to populate accurate group subjects/names
+		go func() {
+			if s.Client == nil {
+				return
+			}
+			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+			defer cancel()
+			groups, err := s.Client.GetJoinedGroups(ctx)
+			if err == nil && len(groups) > 0 {
+				var syncedGroups []*SessionChat
+				s.Lock()
+				for _, g := range groups {
+					jidStr := g.JID.String()
+					var pList []string
+					for _, p := range g.Participants {
+						pList = append(pList, p.JID.User)
+					}
+					groupName := g.GroupName.Name
+					if groupName == "" {
+						groupName = "Group conversation"
+					}
+					if existing, ok := s.Chats[jidStr]; ok {
+						existing.Name = groupName
+						existing.IsGroup = true
+						existing.Participants = pList
+						syncedGroups = append(syncedGroups, existing)
+					} else {
+						newGroup := &SessionChat{
+							ID:           jidStr,
+							Name:         groupName,
+							IsGroup:      true,
+							Participants: pList,
+							UnreadCount:  0,
+							UpdatedAt:    time.Time{},
+						}
+						s.Chats[jidStr] = newGroup
+						syncedGroups = append(syncedGroups, newGroup)
+					}
+				}
+				s.Unlock()
+
+				// Forward history sync batch to FastAPI backend so groups are saved with correct names
+				if len(syncedGroups) > 0 {
+					payload := map[string]interface{}{
+						"type":     "history_sync",
+						"userId":   userId,
+						"chats":    syncedGroups,
+						"messages": []*SessionMessage{},
+					}
+					if jsonBytes, err := json.Marshal(payload); err == nil {
+						req, err := http.NewRequest("POST", backendWebhookURL, bytes.NewBuffer(jsonBytes))
+						if err == nil {
+							req.Header.Set("Content-Type", "application/json")
+							client := &http.Client{Timeout: 5 * time.Second}
+							_, _ = client.Do(req)
+						}
+					}
+				}
+			}
+		}()
+
 		// Also notify backend that WhatsApp is now connected
 		go func() {
 			payload := map[string]interface{}{
@@ -293,6 +354,7 @@ func (s *SessionState) handleEvent(userId string, evt interface{}) {
 		senderJID := v.Info.Sender.String()
 		chatJID := v.Info.Chat.String()
 		isFromMe := v.Info.IsFromMe
+		isGroup := v.Info.IsGroup || strings.HasSuffix(chatJID, "@g.us")
 		senderName := v.Info.PushName
 		if senderName == "" {
 			senderName = v.Info.Sender.User
@@ -310,28 +372,68 @@ func (s *SessionState) handleEvent(userId string, evt interface{}) {
 			Status:     "delivered",
 		}
 		s.Messages[chatJID] = append(s.Messages[chatJID], msg)
+
+		chatName := ""
 		if chat, ok := s.Chats[chatJID]; ok {
 			chat.LastMessage = text
 			chat.UpdatedAt = v.Info.Timestamp
+			chatName = chat.Name
 		} else {
-			s.Chats[chatJID] = &SessionChat{
+			initialName := senderName
+			if isGroup {
+				initialName = "Group conversation"
+			}
+			chatName = initialName
+			newChat := &SessionChat{
 				ID:          chatJID,
-				Name:        senderName,
-				IsGroup:     strings.HasSuffix(chatJID, "@g.us"),
+				Name:        initialName,
+				IsGroup:     isGroup,
 				UnreadCount: 1,
 				LastMessage: text,
 				UpdatedAt:   v.Info.Timestamp,
 			}
+			s.Chats[chatJID] = newChat
+
+			// If it's a group with no resolved name yet, eagerly fetch group info
+			if isGroup && s.Client != nil {
+				go func(targetJID types.JID, c *SessionChat) {
+					ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+					defer cancel()
+					info, err := s.Client.GetGroupInfo(ctx, targetJID)
+					if err == nil && info != nil && info.GroupName.Name != "" {
+						s.Lock()
+						c.Name = info.GroupName.Name
+						s.Unlock()
+						// Notify backend of updated group name
+						payload := map[string]interface{}{
+							"type":     "history_sync",
+							"userId":   userId,
+							"chats":    []*SessionChat{c},
+							"messages": []*SessionMessage{},
+						}
+						if jsonBytes, err := json.Marshal(payload); err == nil {
+							req, err := http.NewRequest("POST", backendWebhookURL, bytes.NewBuffer(jsonBytes))
+							if err == nil {
+								req.Header.Set("Content-Type", "application/json")
+								client := &http.Client{Timeout: 5 * time.Second}
+								_, _ = client.Do(req)
+							}
+						}
+					}
+				}(v.Info.Chat, newChat)
+			}
 		}
 		s.Unlock()
 
-		log.Printf("[User %s] New message from %s in %s: %s", userId, senderName, chatJID, text)
+		log.Printf("[User %s] New message from %s in %s (%s): %s", userId, senderName, chatJID, chatName, text)
 
 		go func() {
 			payload := map[string]interface{}{
 				"type":       "new_message",
 				"userId":     userId,
 				"chatId":     chatJID,
+				"chatName":   chatName,
+				"isGroup":    isGroup,
 				"senderId":   senderJID,
 				"senderName": senderName,
 				"isFromMe":   isFromMe,
@@ -661,6 +763,24 @@ func main() {
 								}
 								chat.Participants = pList
 								currentSess.Unlock()
+
+								// Notify backend about updated group info
+								go func(c *SessionChat) {
+									payload := map[string]interface{}{
+										"type":     "history_sync",
+										"userId":   userId,
+										"chats":    []*SessionChat{c},
+										"messages": []*SessionMessage{},
+									}
+									if jsonBytes, err := json.Marshal(payload); err == nil {
+										req, err := http.NewRequest("POST", backendWebhookURL, bytes.NewBuffer(jsonBytes))
+										if err == nil {
+											req.Header.Set("Content-Type", "application/json")
+											client := &http.Client{Timeout: 5 * time.Second}
+											_, _ = client.Do(req)
+										}
+									}
+								}(chat)
 							}
 						}
 						// Fetch profile picture URL

@@ -161,13 +161,22 @@ async def whatsapp_incoming_webhook(
 
         if user_id:
             for c in chats_data:
+                c_id = c.get("id")
+                if not c_id:
+                    continue
+                is_group = bool(c.get("isGroup", False)) or c_id.endswith("@g.us")
+                name = c.get("name")
+                if not name or (is_group and name == "Contact"):
+                    name = "Group conversation" if is_group else c_id
                 whatsapp_repo.upsert_whatsapp_chat(
                     database,
                     user_id,
-                    chat_id=c.get("id"),
-                    name=c.get("name") or c.get("id"),
+                    chat_id=c_id,
+                    name=name,
                     phone_number=c.get("phoneNumber"),
-                    is_group=bool(c.get("isGroup", False)),
+                    avatar_url=c.get("avatarUrl"),
+                    is_group=is_group,
+                    participants=c.get("participants"),
                     unread_count=int(c.get("unreadCount", 0)),
                 )
 
@@ -200,6 +209,8 @@ async def whatsapp_incoming_webhook(
     sender_id = payload.get("senderId", "")
     sender_name = payload.get("senderName") or "Contact"
     is_from_me = payload.get("isFromMe", False)
+    is_group = bool(payload.get("isGroup", False)) or (bool(chat_id) and chat_id.endswith("@g.us"))
+    chat_name = payload.get("chatName")
 
     if not user_id or not chat_id:
         return {"status": "ignored", "reason": "missing user or chat id"}
@@ -218,6 +229,21 @@ async def whatsapp_incoming_webhook(
         status="delivered",
     )
     whatsapp_repo.save_whatsapp_message(database, user_id, chat_id, incoming_msg)
+
+    # Upsert chat with last_message without overwriting group name with participant sender name
+    existing_chat = whatsapp_repo.get_whatsapp_chat(database, user_id, chat_id)
+    resolved_name = chat_name or ("Group conversation" if is_group else sender_name)
+    if existing_chat and existing_chat.name and existing_chat.name not in ("Contact", "Group conversation", chat_id):
+        resolved_name = existing_chat.name
+
+    whatsapp_repo.upsert_whatsapp_chat(
+        database,
+        user_id,
+        chat_id=chat_id,
+        name=resolved_name,
+        is_group=is_group,
+        last_message=incoming_msg.model_dump(mode="json"),
+    )
 
     # Broadcast incoming message via WebSocket
     await whatsapp_ws_manager.broadcast_to_user(
