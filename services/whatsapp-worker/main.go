@@ -261,6 +261,15 @@ func main() {
 			return
 		}
 
+		// If existing QR code is already cached in memory, return it directly!
+		if existingQR != "" {
+			c.JSON(http.StatusOK, gin.H{
+				"connected": false,
+				"qrCode":    existingQR,
+			})
+			return
+		}
+
 		// QR Code Channel flow
 		if sess.Client.IsConnected() {
 			sess.Client.Disconnect()
@@ -282,7 +291,12 @@ func main() {
 		}
 
 		var returnQR string
-		qrReceived := make(chan struct{})
+		qrReceived := make(chan struct{}, 1)
+
+		backendWebhookURL := os.Getenv("BACKEND_WEBHOOK_URL")
+		if backendWebhookURL == "" {
+			backendWebhookURL = "http://127.0.0.1:8000/api/v1/whatsapp/webhook"
+		}
 
 		go func() {
 			for evt := range qrChan {
@@ -293,7 +307,25 @@ func main() {
 						sess.Lock()
 						sess.QRCode = qrData
 						sess.Unlock()
-						log.Printf("[User %s] Real WhatsApp QR code generated successfully", req.UserID)
+						log.Printf("[User %s] Real WhatsApp QR code generated successfully (len: %d)", req.UserID, len(qrData))
+
+						// Dispatch webhook to Starwaves FastAPI backend
+						go func(data string) {
+							payload := map[string]interface{}{
+								"type":   "qr_update",
+								"userId": req.UserID,
+								"qrCode": data,
+							}
+							jsonBytes, err := json.Marshal(payload)
+							if err == nil {
+								req, err := http.NewRequest("POST", backendWebhookURL, bytes.NewBuffer(jsonBytes))
+								if err == nil {
+									req.Header.Set("Content-Type", "application/json")
+									client := &http.Client{Timeout: 4 * time.Second}
+									_, _ = client.Do(req)
+								}
+							}
+						}(qrData)
 					}
 					select {
 					case qrReceived <- struct{}{}:

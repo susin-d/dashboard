@@ -62,13 +62,27 @@ class WhatsAppService:
                 payload["phoneNumber"] = phone_number
 
             async with httpx.AsyncClient(timeout=12.0) as client:
-                resp = await client.post(f"{worker_url}/session/pair", json=payload)
-                if resp.is_success:
-                    data = resp.json()
-                    if data.get("qrCode"):
-                        qr_code = data["qrCode"]
-                    if data.get("pairingCode"):
-                        pairing_code = data["pairingCode"]
+                # First check if worker already has a live QR code cached for this user
+                if not phone_number:
+                    try:
+                        status_resp = await client.get(f"{worker_url}/session/status/{user_id}", timeout=2.0)
+                        if status_resp.is_success:
+                            status_data = status_resp.json()
+                            if status_data.get("qrCode"):
+                                qr_code = status_data["qrCode"]
+                            if status_data.get("pairingCode"):
+                                pairing_code = status_data["pairingCode"]
+                    except Exception:
+                        pass
+
+                if not qr_code and not pairing_code:
+                    resp = await client.post(f"{worker_url}/session/pair", json=payload)
+                    if resp.is_success:
+                        data = resp.json()
+                        if data.get("qrCode"):
+                            qr_code = data["qrCode"]
+                        if data.get("pairingCode"):
+                            pairing_code = data["pairingCode"]
         except Exception as e:
             logger.warning(f"Could not reach whatsmeow worker at {settings.whatsapp_gateway_url}: {e}")
 

@@ -125,7 +125,7 @@ export function WhatsAppPage() {
 
   const [isQrLoading, setIsQrLoading] = useState(false)
 
-  // Auto-poll status when QR modal is open to detect scan instantly
+  // Auto-poll status when QR modal is open to detect scan instantly or fetch QR if missing
   useEffect(() => {
     if (!isQrModalOpen || status.connected) return
 
@@ -138,14 +138,19 @@ export function WhatsAppPage() {
           const chatList = await fetchWhatsAppChats().catch(() => [])
           setChats(chatList)
           if (chatList.length > 0) setSelectedChatId((curr) => curr || chatList[0].id)
+        } else if (!pairingData.qr_code && !pairingData.pairing_code) {
+          const pair = await initiateWhatsAppPairing().catch(() => null)
+          if (pair?.qr_code || pair?.pairing_code) {
+            setPairingData(pair)
+          }
         }
       } catch {
         // ignore polling errors
       }
-    }, 2500)
+    }, 2000)
 
     return () => clearInterval(timer)
-  }, [isQrModalOpen, status.connected])
+  }, [isQrModalOpen, status.connected, pairingData.qr_code, pairingData.pairing_code])
 
   const handleOpenQrModal = async () => {
     setIsQrModalOpen(true)

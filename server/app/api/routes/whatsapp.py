@@ -111,10 +111,24 @@ async def whatsapp_incoming_webhook(
     database: Client = Depends(get_firestore),
 ):
     """
-    Webhook endpoint called by whatsmeow worker when an incoming message is received.
-    If the message mentions @eve, @Eve, or eve (case-insensitive) or comes from another user,
-    Eve generates an AI reply and dispatches it back to the WhatsApp chat.
+    Webhook endpoint called by whatsmeow worker when an incoming message or QR code is received.
     """
+    # Handle real-time QR update broadcast
+    if payload.get("type") == "qr_update":
+        user_id = payload.get("userId")
+        qr_code = payload.get("qrCode")
+        if user_id and qr_code:
+            await whatsapp_ws_manager.broadcast_to_user(
+                user_id,
+                {
+                    "type": "qr_update",
+                    "status": "qr_ready",
+                    "qr_code": qr_code,
+                    "pairing_code": payload.get("pairingCode"),
+                },
+            )
+        return {"status": "qr_broadcasted"}
+
     user_id = payload.get("userId")
     chat_id = payload.get("chatId")
     content = payload.get("content", "")
