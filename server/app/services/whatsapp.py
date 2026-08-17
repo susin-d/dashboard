@@ -32,14 +32,26 @@ class WhatsAppService:
         # Check whatsmeow worker status first if available
         try:
             worker_url = settings.whatsapp_gateway_url
-            resp = requests.get(f"{worker_url}/session/status/{user_id}", timeout=2.0)
+            resp = requests.get(f"{worker_url}/session/status/{user_id}", timeout=3.0)
             if resp.ok:
                 data = resp.json()
                 if data.get("connected"):
+                    phone_number = data.get("phoneNumber") or "+1 (555) 019-2834"
+                    push_name = data.get("pushName") or "Starwaves User"
+                    try:
+                        whatsapp_repo.save_whatsapp_session(
+                            database,
+                            user_id,
+                            connected=True,
+                            phone_number=phone_number,
+                            push_name=push_name,
+                        )
+                    except Exception:
+                        pass
                     return WhatsAppStatusResponse(
                         connected=True,
-                        phone_number=data.get("phoneNumber") or "+1 (555) 019-2834",
-                        push_name=data.get("pushName") or "Starwaves User",
+                        phone_number=phone_number,
+                        push_name=push_name,
                         platform="whatsmeow",
                         last_sync_at=datetime.now(timezone.utc),
                     )

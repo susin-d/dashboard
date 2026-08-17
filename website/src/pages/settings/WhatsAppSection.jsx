@@ -9,6 +9,7 @@ import {
   initiateWhatsAppPairing,
   confirmWhatsAppPairing,
 } from '../../lib/whatsappApi'
+import { whatsappSocket } from '../../lib/whatsappSocket'
 import { WhatsAppQrModal } from '../../components/whatsapp/WhatsAppQrModal'
 
 export function WhatsAppSection() {
@@ -39,6 +40,32 @@ export function WhatsAppSection() {
 
   useEffect(() => {
     loadData()
+
+    const unsubscribe = whatsappSocket.subscribe((event) => {
+      if (!event || !event.type) return
+
+      if (event.type === 'qr_update') {
+        setPairingData((prev) => ({
+          qr_code: event.qr_code || prev.qr_code,
+          pairing_code: event.pairing_code || prev.pairing_code,
+        }))
+      } else if (event.type === 'status_update' || event.type === 'connection_state') {
+        setStatus((prev) => ({
+          ...prev,
+          connected: Boolean(event.connected),
+          phone_number: event.phone_number || prev.phone_number,
+          push_name: event.push_name || prev.push_name,
+        }))
+        if (event.connected) {
+          setIsQrModalOpen(false)
+          setMessage('WhatsApp connected successfully.')
+        }
+      }
+    })
+
+    return () => {
+      unsubscribe()
+    }
   }, [])
 
   const handleOpenQr = async () => {

@@ -126,6 +126,12 @@ func getOrCreateSession(userId string) (*SessionState, error) {
 		Messages:  make(map[string][]*SessionMessage),
 	}
 
+	if deviceStore != nil && deviceStore.ID != nil {
+		sess.Connected = true
+		sess.PhoneNumber = deviceStore.ID.User
+		sess.PushName = deviceStore.PushName
+	}
+
 	client.AddEventHandler(func(evt interface{}) {
 		sess.handleEvent(userId, evt)
 	})
@@ -135,8 +141,10 @@ func getOrCreateSession(userId string) (*SessionState, error) {
 	// If device is already logged in, connect automatically
 	if client.Store.ID != nil {
 		go func() {
-			if err := client.Connect(); err != nil {
-				log.Printf("[User %s] Auto-connect error: %v", userId, err)
+			if !client.IsConnected() {
+				if err := client.Connect(); err != nil {
+					log.Printf("[User %s] Auto-connect error: %v", userId, err)
+				}
 			}
 		}()
 	}
@@ -524,11 +532,8 @@ func main() {
 
 	r.GET("/session/status/:userId", func(c *gin.Context) {
 		userId := c.Param("userId")
-		sessionsLock.RLock()
-		sess, ok := sessions[userId]
-		sessionsLock.RUnlock()
-
-		if !ok || sess == nil {
+		sess, err := getOrCreateSession(userId)
+		if err != nil || sess == nil {
 			c.JSON(http.StatusOK, gin.H{"connected": false, "qrCode": ""})
 			return
 		}
@@ -536,12 +541,20 @@ func main() {
 		sess.RLock()
 		defer sess.RUnlock()
 
+		isConnected := sess.Connected || (sess.Client != nil && (sess.Client.IsConnected() || sess.Client.IsLoggedIn()))
+		phoneNumber := sess.PhoneNumber
+		pushName := sess.PushName
+		if phoneNumber == "" && sess.Device != nil && sess.Device.ID != nil {
+			phoneNumber = sess.Device.ID.User
+			pushName = sess.Device.PushName
+		}
+
 		c.JSON(http.StatusOK, gin.H{
-			"connected":   sess.Connected,
+			"connected":   isConnected,
 			"qrCode":      sess.QRCode,
 			"pairingCode": sess.PairingCode,
-			"phoneNumber": sess.PhoneNumber,
-			"pushName":    sess.PushName,
+			"phoneNumber": phoneNumber,
+			"pushName":    pushName,
 		})
 	})
 
