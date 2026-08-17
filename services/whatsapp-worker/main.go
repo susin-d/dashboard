@@ -97,10 +97,10 @@ func extractMessageInfo(msg *waE2E.Message) (content string, isForwarded bool, m
 	if ext := msg.GetExtendedTextMessage(); ext != nil {
 		content = ext.GetText()
 		ctxInfo = ext.GetContextInfo()
-		if len(ext.GetJpegThumbnail()) > 0 {
+		if len(ext.GetJPEGThumbnail()) > 0 {
 			media = &SessionMedia{
 				Type:            "image",
-				ThumbnailBase64: "data:image/jpeg;base64," + base64.StdEncoding.EncodeToString(ext.GetJpegThumbnail()),
+				ThumbnailBase64: "data:image/jpeg;base64," + base64.StdEncoding.EncodeToString(ext.GetJPEGThumbnail()),
 			}
 		}
 	} else if conv := msg.Conversation; conv != nil && *conv != "" {
@@ -109,12 +109,12 @@ func extractMessageInfo(msg *waE2E.Message) (content string, isForwarded bool, m
 		content = img.GetCaption()
 		ctxInfo = img.GetContextInfo()
 		thumb := ""
-		if len(img.GetJpegThumbnail()) > 0 {
-			thumb = "data:image/jpeg;base64," + base64.StdEncoding.EncodeToString(img.GetJpegThumbnail())
+		if len(img.GetJPEGThumbnail()) > 0 {
+			thumb = "data:image/jpeg;base64," + base64.StdEncoding.EncodeToString(img.GetJPEGThumbnail())
 		}
 		media = &SessionMedia{
 			Type:            "image",
-			URL:             img.GetUrl(),
+			URL:             img.GetURL(),
 			MimeType:        img.GetMimetype(),
 			ThumbnailBase64: thumb,
 			FileSize:        int64(img.GetFileLength()),
@@ -123,12 +123,12 @@ func extractMessageInfo(msg *waE2E.Message) (content string, isForwarded bool, m
 		content = vid.GetCaption()
 		ctxInfo = vid.GetContextInfo()
 		thumb := ""
-		if len(vid.GetJpegThumbnail()) > 0 {
-			thumb = "data:image/jpeg;base64," + base64.StdEncoding.EncodeToString(vid.GetJpegThumbnail())
+		if len(vid.GetJPEGThumbnail()) > 0 {
+			thumb = "data:image/jpeg;base64," + base64.StdEncoding.EncodeToString(vid.GetJPEGThumbnail())
 		}
 		media = &SessionMedia{
 			Type:            "video",
-			URL:             vid.GetUrl(),
+			URL:             vid.GetURL(),
 			MimeType:        vid.GetMimetype(),
 			ThumbnailBase64: thumb,
 			FileSize:        int64(vid.GetFileLength()),
@@ -138,7 +138,7 @@ func extractMessageInfo(msg *waE2E.Message) (content string, isForwarded bool, m
 		ctxInfo = aud.GetContextInfo()
 		media = &SessionMedia{
 			Type:            "audio",
-			URL:             aud.GetUrl(),
+			URL:             aud.GetURL(),
 			MimeType:        aud.GetMimetype(),
 			FileSize:        int64(aud.GetFileLength()),
 			DurationSeconds: float64(aud.GetSeconds()),
@@ -147,13 +147,13 @@ func extractMessageInfo(msg *waE2E.Message) (content string, isForwarded bool, m
 		content = doc.GetCaption()
 		ctxInfo = doc.GetContextInfo()
 		thumb := ""
-		if len(doc.GetJpegThumbnail()) > 0 {
-			thumb = "data:image/jpeg;base64," + base64.StdEncoding.EncodeToString(doc.GetJpegThumbnail())
+		if len(doc.GetJPEGThumbnail()) > 0 {
+			thumb = "data:image/jpeg;base64," + base64.StdEncoding.EncodeToString(doc.GetJPEGThumbnail())
 		}
 		media = &SessionMedia{
 			Type:            "document",
 			Filename:        doc.GetTitle(),
-			URL:             doc.GetUrl(),
+			URL:             doc.GetURL(),
 			MimeType:        doc.GetMimetype(),
 			ThumbnailBase64: thumb,
 			FileSize:        int64(doc.GetFileLength()),
