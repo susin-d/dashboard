@@ -87,7 +87,30 @@ var (
 	dataDir      = "data"
 )
 
-func extractMessageInfo(msg *waE2E.Message) (content string, isForwarded bool, media *SessionMedia, replyToID string) {
+func unwrapMessage(msg *waE2E.Message) *waE2E.Message {
+	if msg == nil {
+		return nil
+	}
+	if msg.EphemeralMessage != nil && msg.EphemeralMessage.Message != nil {
+		return unwrapMessage(msg.EphemeralMessage.Message)
+	}
+	if msg.ViewOnceMessage != nil && msg.ViewOnceMessage.Message != nil {
+		return unwrapMessage(msg.ViewOnceMessage.Message)
+	}
+	if msg.ViewOnceMessageV2 != nil && msg.ViewOnceMessageV2.Message != nil {
+		return unwrapMessage(msg.ViewOnceMessageV2.Message)
+	}
+	if msg.DocumentWithCaptionMessage != nil && msg.DocumentWithCaptionMessage.Message != nil {
+		return unwrapMessage(msg.DocumentWithCaptionMessage.Message)
+	}
+	return msg
+}
+
+func extractMessageInfo(rawMsg *waE2E.Message) (content string, isForwarded bool, media *SessionMedia, replyToID string) {
+	if rawMsg == nil {
+		return "", false, nil, ""
+	}
+	msg := unwrapMessage(rawMsg)
 	if msg == nil {
 		return "", false, nil, ""
 	}
@@ -126,13 +149,30 @@ func extractMessageInfo(msg *waE2E.Message) (content string, isForwarded bool, m
 		if len(vid.GetJPEGThumbnail()) > 0 {
 			thumb = "data:image/jpeg;base64," + base64.StdEncoding.EncodeToString(vid.GetJPEGThumbnail())
 		}
+		mediaType := "video"
+		if vid.GetGifPlayback() {
+			mediaType = "gif"
+		}
 		media = &SessionMedia{
-			Type:            "video",
+			Type:            mediaType,
 			URL:             vid.GetURL(),
 			MimeType:        vid.GetMimetype(),
 			ThumbnailBase64: thumb,
 			FileSize:        int64(vid.GetFileLength()),
 			DurationSeconds: float64(vid.GetSeconds()),
+		}
+	} else if sticker := msg.GetStickerMessage(); sticker != nil {
+		ctxInfo = sticker.GetContextInfo()
+		thumb := ""
+		if len(sticker.GetPNGThumbnail()) > 0 {
+			thumb = "data:image/png;base64," + base64.StdEncoding.EncodeToString(sticker.GetPNGThumbnail())
+		}
+		media = &SessionMedia{
+			Type:            "sticker",
+			URL:             sticker.GetURL(),
+			MimeType:        sticker.GetMimetype(),
+			ThumbnailBase64: thumb,
+			FileSize:        int64(sticker.GetFileLength()),
 		}
 	} else if aud := msg.GetAudioMessage(); aud != nil {
 		ctxInfo = aud.GetContextInfo()

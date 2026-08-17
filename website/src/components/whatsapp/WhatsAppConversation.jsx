@@ -666,16 +666,39 @@ export function WhatsAppConversation({
                         </div>
                         <span style={{ fontSize: '0.75rem', opacity: 0.8 }}>0:08</span>
                       </div>
-                    ) : (msg.media?.thumbnail_base64 || msg.media?.type === 'image' || (msg.media?.url && (msg.media.url.startsWith('http') || msg.media.url.startsWith('data:image')))) ? (
-                      <div className="whatsapp-media-preview-container">
-                        <img
-                          src={msg.media.thumbnail_base64 || msg.media.url}
-                          alt={msg.media.filename || "Attachment"}
-                          className="whatsapp-media-preview-img"
-                          onError={(e) => {
-                            e.currentTarget.parentElement.style.display = 'none'
-                          }}
-                        />
+                    ) : (msg.media && (msg.media.thumbnail_base64 || ['image', 'gif', 'video', 'sticker'].includes(msg.media.type) || msg.media.url)) ? (
+                      <div className={`whatsapp-media-preview-container ${msg.media.type === 'sticker' ? 'is-sticker' : ''}`}>
+                        {msg.media.thumbnail_base64 || (msg.media.url && (msg.media.url.startsWith('data:') || msg.media.url.startsWith('blob:') || msg.media.url.startsWith('/') || msg.media.url.includes('giphy.com') || msg.media.url.includes('tenor.com'))) ? (
+                          <div style={{ position: 'relative', display: 'inline-block', width: '100%' }}>
+                            <img
+                              src={msg.media.thumbnail_base64 || msg.media.url}
+                              alt={msg.media.filename || "Media attachment"}
+                              className="whatsapp-media-preview-img"
+                              onError={(e) => {
+                                e.currentTarget.parentElement.style.display = 'none'
+                              }}
+                            />
+                            {msg.media.type === 'gif' && (
+                              <span className="whatsapp-gif-badge">GIF</span>
+                            )}
+                            {msg.media.type === 'video' && (
+                              <div className="whatsapp-video-overlay">
+                                <Play size={20} fill="white" />
+                              </div>
+                            )}
+                          </div>
+                        ) : (
+                          <div className="whatsapp-media-placeholder">
+                            {msg.media.type === 'gif' ? (
+                              <span className="whatsapp-gif-badge">GIF</span>
+                            ) : msg.media.type === 'video' ? (
+                              <Play size={20} />
+                            ) : (
+                              <FileText size={20} />
+                            )}
+                            <span>{msg.media.filename || `${(msg.media.type || 'Media').toUpperCase()} Attachment`}</span>
+                          </div>
+                        )}
                       </div>
                     ) : msg.media?.type === 'document' ? (
                       <div
