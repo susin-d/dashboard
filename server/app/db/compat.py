@@ -49,6 +49,34 @@ def _utc_now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
+def _is_server_timestamp(value: Any) -> bool:
+    """True for compat SERVER_TIMESTAMP, google-cloud-firestore Sentinel, or string placeholder."""
+    if value is None:
+        return False
+    if value == SERVER_TIMESTAMP:
+        return True
+    sv = str(value)
+    if sv.startswith("__SQL_SERVER_TIMESTAMP"):
+        return True
+    if type(value).__name__ == "Sentinel" or "Sentinel" in sv or "server timestamp" in sv.lower():
+        return True
+    return False
+
+
+def _coerce_model_value(key: str, val: Any) -> Any:
+    if val is None:
+        return None
+    if _is_server_timestamp(val):
+        return datetime.now(timezone.utc)
+    if key in ("created_at", "updated_at", "scheduled_time", "completed_at", "deadline", "event_date", "timestamp", "email_verified_at"):
+        if isinstance(val, str):
+            try:
+                return datetime.fromisoformat(val.replace("Z", "+00:00"))
+            except Exception:
+                return datetime.now(timezone.utc)
+    return val
+
+
 def _is_array_union(value: Any) -> bool:
     """True for the compat or firebase_admin ArrayUnion (duck-typed)."""
     return type(value).__name__ == "ArrayUnion" and hasattr(value, "values")
@@ -258,10 +286,14 @@ class SqlClient:
 
     def _clean_data(self, data: dict[str, Any]) -> dict[str, Any]:
         cleaned = {}
-        now = _utc_now_iso()
+        now_dt = datetime.now(timezone.utc)
+        now_iso = now_dt.isoformat()
         for k, v in data.items():
-            if v == SERVER_TIMESTAMP or str(v).startswith("__SQL_SERVER_TIMESTAMP"):
-                cleaned[k] = now
+            if _is_server_timestamp(v):
+                if k in ("created_at", "updated_at", "scheduled_time", "completed_at", "deadline", "event_date", "timestamp", "email_verified_at"):
+                    cleaned[k] = now_dt
+                else:
+                    cleaned[k] = now_iso
             elif isinstance(v, ArrayUnion) or _is_array_union(v):
                 cleaned[k] = v.values
             else:
@@ -553,7 +585,7 @@ class SqlClient:
                 else:
                     for k, val in data.items():
                         if hasattr(u, k):
-                            setattr(u, k, val)
+                            setattr(u, k, _coerce_model_value(k, val))
                 session.commit()
                 return
 
@@ -589,6 +621,9 @@ class SqlClient:
                         c.duration = data["duration"]
                     if "messages" in data:
                         c.messages = data["messages"] or []
+                    for k, val in data.items():
+                        if hasattr(c, k):
+                            setattr(c, k, _coerce_model_value(k, val))
                 session.commit()
                 return
 
@@ -609,7 +644,7 @@ class SqlClient:
                 else:
                     for k, val in data.items():
                         if hasattr(t, k):
-                            setattr(t, k, val)
+                            setattr(t, k, _coerce_model_value(k, val))
                 session.commit()
                 return
 
@@ -636,7 +671,7 @@ class SqlClient:
                 else:
                     for k, val in data.items():
                         if hasattr(j, k):
-                            setattr(j, k, val)
+                            setattr(j, k, _coerce_model_value(k, val))
                 session.commit()
                 return
 
@@ -660,7 +695,7 @@ class SqlClient:
                 else:
                     for k, val in data.items():
                         if hasattr(p, k):
-                            setattr(p, k, val)
+                            setattr(p, k, _coerce_model_value(k, val))
                 session.commit()
                 return
 
@@ -686,7 +721,7 @@ class SqlClient:
                 else:
                     for k, val in data.items():
                         if hasattr(h, k):
-                            setattr(h, k, val)
+                            setattr(h, k, _coerce_model_value(k, val))
                 session.commit()
                 return
 
@@ -707,7 +742,7 @@ class SqlClient:
                 else:
                     for k, val in data.items():
                         if hasattr(d, k):
-                            setattr(d, k, val)
+                            setattr(d, k, _coerce_model_value(k, val))
                 session.commit()
                 return
 
@@ -730,7 +765,7 @@ class SqlClient:
                 else:
                     for k, val in data.items():
                         if hasattr(c, k):
-                            setattr(c, k, val)
+                            setattr(c, k, _coerce_model_value(k, val))
                 session.commit()
                 return
 
@@ -752,7 +787,7 @@ class SqlClient:
                 else:
                     for k, val in data.items():
                         if hasattr(n, k):
-                            setattr(n, k, val)
+                            setattr(n, k, _coerce_model_value(k, val))
                 session.commit()
                 return
 
@@ -771,7 +806,7 @@ class SqlClient:
                 else:
                     for k, val in data.items():
                         if hasattr(s, k):
-                            setattr(s, k, val)
+                            setattr(s, k, _coerce_model_value(k, val))
                 session.commit()
                 return
 
@@ -789,7 +824,7 @@ class SqlClient:
                 else:
                     for k, val in data.items():
                         if hasattr(m, k):
-                            setattr(m, k, val)
+                            setattr(m, k, _coerce_model_value(k, val))
                 session.commit()
                 return
 

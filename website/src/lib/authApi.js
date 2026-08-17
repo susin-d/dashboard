@@ -181,9 +181,11 @@ export async function beginGoogleOAuth() {
       return
     }
 
-    const apiOrigin = new URL(API_URL).origin
+    const apiOrigin = API_URL.startsWith('http')
+      ? new URL(API_URL).origin
+      : (typeof window !== 'undefined' ? window.location.origin : '')
     const messageHandler = (event) => {
-      if (event.origin !== apiOrigin) return
+      if (apiOrigin && event.origin !== apiOrigin && event.origin !== window.location.origin) return
       if (event.data?.type === 'STARWAVES_AUTH_SUCCESS' && event.data?.data) {
         window.removeEventListener('message', messageHandler)
         clearInterval(pollTimer)
