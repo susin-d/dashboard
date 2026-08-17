@@ -1,4 +1,4 @@
-import { API_URL, apiRequest } from './request'
+import { apiRequest } from './request'
 
 const TOKEN_KEY = 'starwaves_auth_token'
 const USER_KEY = 'starwaves_auth_user'
@@ -38,13 +38,23 @@ export function clearAuthSession() {
 
 export function consumeAuthTokenFromHash() {
   const hash = window.location.hash || ''
-  if (!hash.startsWith('#token=')) return false
+  const search = window.location.search || ''
+  let token = null
 
-  const token = decodeURIComponent(hash.slice('#token='.length)).trim()
+  if (hash.startsWith('#token=')) {
+    token = decodeURIComponent(hash.slice('#token='.length)).trim()
+  } else if (hash.includes('token=')) {
+    const parts = hash.split('token=')
+    token = decodeURIComponent(parts[1]?.split('&')[0] || '').trim()
+  } else if (search.includes('token=')) {
+    const params = new URLSearchParams(search)
+    token = params.get('token')?.trim()
+  }
+
   if (!token) return false
 
   setStoredAuthToken(token, undefined)
-  window.history.replaceState({}, '', window.location.pathname + window.location.search)
+  window.history.replaceState({}, '', window.location.pathname)
   return true
 }
 
@@ -66,7 +76,6 @@ export async function signupWithEmail(email, password) {
   const result = await request('/auth/signup', {
     method: 'POST',
     body: JSON.stringify({ email, password }),
-    authRequired: false,
   })
   setStoredAuthToken(result.token, result.user)
   return result.user
@@ -76,7 +85,6 @@ export async function loginWithEmail(email, password) {
   const result = await request('/auth/login', {
     method: 'POST',
     body: JSON.stringify({ email, password }),
-    authRequired: false,
   })
   setStoredAuthToken(result.token, result.user)
   return result.user
@@ -86,7 +94,6 @@ export function requestPasswordReset(email) {
   return request('/auth/forgot-password', {
     method: 'POST',
     body: JSON.stringify({ email }),
-    authRequired: false,
   })
 }
 
@@ -94,7 +101,6 @@ export function verifyResetCode(email, code, token = '') {
   return request('/auth/verify-reset-code', {
     method: 'POST',
     body: JSON.stringify({ email, code, token }),
-    authRequired: false,
   })
 }
 
@@ -102,7 +108,6 @@ export function resetPassword(token, password) {
   return request('/auth/reset-password', {
     method: 'POST',
     body: JSON.stringify({ token, password }),
-    authRequired: false,
   })
 }
 
@@ -117,9 +122,12 @@ export async function fetchCurrentUser() {
     const user = await request('/auth/me')
     setStoredAuthToken(token, user)
     return user
-  } catch {
-    clearAuthSession()
-    return null
+  } catch (error) {
+    if (error.status === 401 || error.message?.includes('Sign in') || error.message?.includes('Invalid')) {
+      clearAuthSession()
+      return null
+    }
+    return getStoredUser()
   }
 }
 
@@ -129,156 +137,28 @@ export async function updateUserProfile(displayName) {
     body: JSON.stringify({ displayName }),
   })
   const current = getStoredUser() || {}
-  const newUser = { ...current, displayName: updatedUser.displayName }
+  const newUser = { ...current, displayName: updatedUser?.displayName || displayName }
   setStoredAuthToken(getStoredAuthToken(), newUser)
   return newUser
 }
 
+export async function updateCurrentUserProfile(profileData) {
+  const user = await request('/auth/me', {
+    method: 'PUT',
+    body: JSON.stringify(profileData),
+  })
+  const token = getStoredAuthToken()
+  if (token) setStoredAuthToken(token, user)
+  return user
+}
+
 export async function beginGoogleOAuth() {
-  const data = await request('/auth/google/login', { authRequired: false })
+  const origin = typeof window !== 'undefined' ? window.location.origin : ''
+  const data = await request(`/auth/google/login?origin=${encodeURIComponent(origin)}`, { authRequired: false })
   if (!data?.url) throw new Error('Could not initiate Google authentication.')
 
-  const isNativeCapacitor = Boolean(window.Capacitor?.isNativePlatform?.())
-  const shouldRedirectForOAuth =
-    isNativeCapacitor ||
-    window.matchMedia('(max-width: 768px), (pointer: coarse)').matches
-
-  if (shouldRedirectForOAuth) {
-    window.location.assign(data.url)
-    return new Promise(() => {})
-  }
-
-  return new Promise((resolve, reject) => {
-    const width = 500
-    const height = 600
-    const left = window.screenX + (window.innerWidth - width) / 2
-    const top = window.screenY + (window.innerHeight - height) / 2
-
-    const popup = window.open(
-      data.url,
-      'google-auth-popup',
-      `width=${width},height=${height},top=${top},left=${left}`,
-    )
-
-    if (!popup) {
-      window.location.assign(data.url)
-      return
-    }
-
-    let isDone = false
-    let broadcastChannel = null
-
-    const cleanup = () => {
-      isDone = true
-      window.removeEventListener('message', messageHandler)
-      window.removeEventListener('storage', storageHandler)
-      window.removeEventListener('focus', focusHandler)
-      if (broadcastChannel) {
-        try {
-          broadcastChannel.close()
-        } catch {}
-      }
-    }
-
-    const processAuthSuccess = (userData, token) => {
-      if (isDone) return
-      cleanup()
-      setStoredAuthToken(token, userData)
-      resolve(userData)
-    }
-
-    const isAllowedAuthOrigin = (origin) => {
-      if (!origin) return false
-      if (typeof window === 'undefined') return true
-      if (origin === window.location.origin) return true
-      if (API_URL.startsWith('http')) {
-        try {
-          if (new URL(API_URL).origin === origin) return true
-        } catch {}
-      }
-      const isLocalHost = (host) => /^(localhost|127\.0\.0\.1|\[::1\])(:\d+)?$/.test(host)
-      try {
-        const originHost = new URL(origin).host
-        const winHost = window.location.host
-        if (isLocalHost(originHost) && isLocalHost(winHost)) {
-          return true
-        }
-      } catch {}
-      if (origin.endsWith('.susindran.in') || origin.endsWith('.vercel.app')) {
-        return true
-      }
-      return false
-    }
-
-    const messageHandler = (event) => {
-      if (!isAllowedAuthOrigin(event.origin)) return
-      if (event.data?.type === 'STARWAVES_AUTH_SUCCESS' && event.data?.data) {
-        const { token, user } = event.data.data
-        processAuthSuccess(user, token)
-      }
-    }
-
-    const storageHandler = (event) => {
-      if (event.key === 'starwaves_auth_sync' && event.newValue) {
-        try {
-          const parsed = JSON.parse(event.newValue)
-          if (parsed?.type === 'STARWAVES_AUTH_SUCCESS' && parsed?.data) {
-            const { token, user } = parsed.data
-            processAuthSuccess(user, token)
-          }
-        } catch {}
-      }
-    }
-
-    if (typeof BroadcastChannel !== 'undefined') {
-      try {
-        broadcastChannel = new BroadcastChannel('starwaves_auth')
-        broadcastChannel.onmessage = (event) => {
-          if (event.data?.type === 'STARWAVES_AUTH_SUCCESS' && event.data?.data) {
-            const { token, user } = event.data.data
-            processAuthSuccess(user, token)
-          }
-        }
-      } catch {
-        broadcastChannel = null
-      }
-    }
-
-    const focusHandler = () => {
-      if (isDone) return
-      // When the main window regains focus, check if auth succeeded or if popup closed
-      setTimeout(() => {
-        if (isDone) return
-        const storedUser = getStoredUser()
-        if (storedUser && getStoredAuthToken()) {
-          cleanup()
-          resolve(storedUser)
-          return
-        }
-        try {
-          if (popup && popup.closed) {
-            setTimeout(() => {
-              if (isDone) return
-              const recheckUser = getStoredUser()
-              if (recheckUser && getStoredAuthToken()) {
-                cleanup()
-                resolve(recheckUser)
-                return
-              }
-              cleanup()
-              reject(new Error('Google sign-in was cancelled.'))
-            }, 800)
-          }
-        } catch {
-          // COOP restriction: safely ignore
-        }
-      }, 500)
-    }
-
-    window.addEventListener('message', messageHandler)
-    window.addEventListener('storage', storageHandler)
-    window.addEventListener('focus', focusHandler)
-  })
+  window.location.assign(data.url)
+  return new Promise(() => {})
 }
 
 export function requestAccountCombine(targetEmail) {

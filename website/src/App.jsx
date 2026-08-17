@@ -211,7 +211,7 @@ function App() {
       authReady &&
       activeUser &&
       !resetToken &&
-      (route === '/' || route === '/login' || route === '/signup' || route === '/forgot-password')
+      (route === '/' || route === '/login' || route === '/signup' || route === '/forgot-password' || route === '/auth')
     ) {
       window.history.replaceState({}, '', '/app/dashboard')
       setRoute('/app/dashboard')

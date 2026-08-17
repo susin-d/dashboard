@@ -1,10 +1,10 @@
 """Google OAuth authentication: login redirect and callback."""
 
 import asyncio
-from urllib.parse import urlencode
+from urllib.parse import urlencode, urlparse
 
 import httpx
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from fastapi.responses import HTMLResponse
 from google.cloud.firestore_v1 import Client
 from itsdangerous import BadSignature, SignatureExpired
@@ -19,13 +19,24 @@ router = APIRouter(prefix="/auth")
 
 
 @router.get("/google/login")
-def google_login():
+def google_login(request: Request, origin: str | None = None):
     if not settings.google_oauth_client_id:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail="Google OAuth is not configured on the server.",
         )
-    state = state_serializer().dumps({"action": "google-auth"})
+
+    client_origin = origin or request.headers.get("referer") or request.headers.get("origin") or settings.frontend_url
+    try:
+        parsed = urlparse(client_origin)
+        if parsed.scheme and parsed.netloc:
+            client_origin = f"{parsed.scheme}://{parsed.netloc}"
+        else:
+            client_origin = settings.frontend_url
+    except Exception:
+        client_origin = settings.frontend_url
+
+    state = state_serializer().dumps({"action": "google-auth", "origin": client_origin})
     query = urlencode(
         {
             "client_id": settings.google_oauth_client_id,
@@ -47,12 +58,14 @@ async def google_callback(
     database: Client = Depends(get_firestore),
 ):
     try:
-        state_serializer().loads(state, max_age=600)
+        state_data = state_serializer().loads(state, max_age=600)
     except (BadSignature, SignatureExpired):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Google OAuth state token is invalid or expired.",
         ) from None
+
+    target_origin = (state_data.get("origin") if isinstance(state_data, dict) else None) or settings.frontend_url
 
     if not settings.google_oauth_client_id or not settings.google_oauth_client_secret:
         raise HTTPException(
@@ -124,7 +137,10 @@ async def google_callback(
     html_content = f"""
     <!DOCTYPE html>
     <html>
-      <head><title>Authentication Successful</title></head>
+      <head>
+        <title>Authentication Successful</title>
+        <meta http-equiv="refresh" content="0; url={target_origin}/#token={token}" />
+      </head>
       <body>
         <script>
           const authData = {{
@@ -137,28 +153,14 @@ async def google_callback(
             }}
           }};
           try {{
-            if (typeof BroadcastChannel !== 'undefined') {{
-              const channel = new BroadcastChannel('starwaves_auth');
-              channel.postMessage({{ type: 'STARWAVES_AUTH_SUCCESS', data: authData }});
-              channel.close();
-            }}
-          }} catch (e) {{}}
-          try {{
-            localStorage.setItem('starwaves_auth_sync', JSON.stringify({{ type: 'STARWAVES_AUTH_SUCCESS', data: authData, time: Date.now() }}));
-          }} catch (e) {{}}
-          try {{
             if (window.opener) {{
               window.opener.postMessage({{ type: "STARWAVES_AUTH_SUCCESS", data: authData }}, "*");
+              setTimeout(() => {{ try {{ window.close(); }} catch(e) {{}} }}, 100);
             }}
           }} catch (e) {{}}
-          try {{
-            window.close();
-          }} catch (e) {{}}
-          setTimeout(() => {{
-            window.location.href = "{settings.frontend_url}/#token=" + encodeURIComponent(token);
-          }}, 300);
+          window.location.replace("{target_origin}/#token=" + encodeURIComponent("{token}"));
         </script>
-        <p>Authentication successful. You can close this window.</p>
+        <p>Authentication successful. Redirecting to StarWaves...</p>
       </body>
     </html>
     """
