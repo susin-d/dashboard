@@ -4,7 +4,7 @@ Living project snapshot for AI agents. `AGENTS.md` holds the permanent rules;
 this file holds the **current state** of the codebase and must be kept up to
 date whenever the implementation changes.
 
-> **Last updated:** 2026-08-17 (Fixed Eve AI WhatsApp session lookup by permitting session_id=None for direct WhatsApp message generation)
+> **Last updated:** 2026-08-17 (Added generic document and collection storage fallback to SqlClient in compat.py for whatsapp_chats, whatsapp_messages, and subcollections)
 
 ---
 

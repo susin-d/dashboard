@@ -233,6 +233,7 @@ class SqlClient:
     def __init__(self):
         from app.db.session import sync_engine
         self._sync_engine = sync_engine
+        self._in_memory_docs: dict[str, dict[str, Any]] = {}
 
     def collection(self, name: str) -> SqlCollectionRef:
         return SqlCollectionRef(self, [name])
@@ -456,6 +457,9 @@ class SqlClient:
                     return SqlSnapshot(doc_id, None, exists=False)
                 return SqlSnapshot(doc_id, setting.settings or {})
 
+        key = "/".join([*path_parts, doc_id])
+        if key in self._in_memory_docs:
+            return SqlSnapshot(doc_id, dict(self._in_memory_docs[key]), exists=True)
         return SqlSnapshot(doc_id, None, exists=False)
 
     def _set_doc(self, path_parts: list[str], doc_id: str, data: dict[str, Any], merge: bool = False) -> None:
@@ -729,15 +733,20 @@ class SqlClient:
                 if not setting:
                     setting = UserSetting(user_id=user_id, category=category_key, settings=data)
                     session.add(setting)
-                else:
-                    setting.settings = data
-                session.commit()
-                return
+            # Generic doc store fallback
+            key = "/".join([*path_parts, doc_id])
+            if merge and key in self._in_memory_docs:
+                self._in_memory_docs[key].update(data)
+            else:
+                self._in_memory_docs[key] = dict(data)
 
     def _update_doc(self, path_parts: list[str], doc_id: str, updates: dict[str, Any]) -> None:
         self._set_doc(path_parts, doc_id, updates, merge=True)
 
     def _delete_doc(self, path_parts: list[str], doc_id: str) -> None:
+        key = "/".join([*path_parts, doc_id])
+        self._in_memory_docs.pop(key, None)
+
         with Session(self._sync_engine) as session:
             if len(path_parts) == 1 and path_parts[0] == "users":
                 u = session.get(User, doc_id)
@@ -784,9 +793,8 @@ class SqlClient:
                 if m:
                     session.delete(m)
             elif len(path_parts) == 3 and path_parts[0] == "users" and path_parts[2] in ("settings", "integrations"):
-                user_id = path_parts[1]
                 category_key = doc_id if path_parts[2] == "settings" else f"integration:{doc_id}"
-                stmt = select(UserSetting).where(UserSetting.user_id == user_id, UserSetting.category == category_key)
+                stmt = select(UserSetting).where(UserSetting.user_id == path_parts[1], UserSetting.category == category_key)
                 setting = session.scalar(stmt)
                 if setting:
                     session.delete(setting)
@@ -853,6 +861,7 @@ class SqlClient:
                         "due_date": t.due_date,
                         "priority": t.priority,
                         "deleted": t.deleted,
+                        "deleted_at": t.deleted_at.isoformat() if t.deleted_at else None,
                         "created_at": t.created_at.isoformat() if t.created_at else "",
                         "updated_at": t.updated_at.isoformat() if t.updated_at else "",
                     })
@@ -865,6 +874,8 @@ class SqlClient:
                 stmt = select(Job).where(Job.user_id == user_id)
                 if query._order_by == "created_at":
                     stmt = stmt.order_by(Job.created_at.desc() if query._direction == "DESC" else Job.created_at.asc())
+                elif query._order_by == "applied_date":
+                    stmt = stmt.order_by(Job.applied_date.desc() if query._direction == "DESC" else Job.applied_date.asc())
                 if query._limit:
                     stmt = stmt.limit(query._limit)
                 jobs = session.scalars(stmt).all()
@@ -882,6 +893,7 @@ class SqlClient:
                         "job_url": j.job_url,
                         "notes": j.notes,
                         "deleted": j.deleted,
+                        "deleted_at": j.deleted_at.isoformat() if j.deleted_at else None,
                         "created_at": j.created_at.isoformat() if j.created_at else "",
                         "updated_at": j.updated_at.isoformat() if j.updated_at else "",
                     })
@@ -908,6 +920,7 @@ class SqlClient:
                         "technologies": p.technologies or [],
                         "lifecycle_phase": p.lifecycle_phase,
                         "deleted": p.deleted,
+                        "deleted_at": p.deleted_at.isoformat() if p.deleted_at else None,
                         "created_at": p.created_at.isoformat() if p.created_at else "",
                         "updated_at": p.updated_at.isoformat() if p.updated_at else "",
                     })
@@ -936,6 +949,7 @@ class SqlClient:
                         "source": h.source,
                         "notes": h.notes,
                         "deleted": h.deleted,
+                        "deleted_at": h.deleted_at.isoformat() if h.deleted_at else None,
                         "created_at": h.created_at.isoformat() if h.created_at else "",
                         "updated_at": h.updated_at.isoformat() if h.updated_at else "",
                     })
@@ -946,11 +960,11 @@ class SqlClient:
             if len(path_parts) == 3 and path_parts[0] == "users" and path_parts[2] == "documents":
                 user_id = path_parts[1]
                 stmt = select(Document).where(Document.user_id == user_id)
-                if query._order_by in ("modified_at", "updated_at"):
-                    stmt = stmt.order_by(Document.updated_at.desc() if query._direction == "DESC" else Document.updated_at.asc())
+                if query._order_by == "created_at":
+                    stmt = stmt.order_by(Document.created_at.desc() if query._direction == "DESC" else Document.created_at.asc())
                 if query._limit:
                     stmt = stmt.limit(query._limit)
-                documents = session.scalars(stmt).all()
+                docs = session.scalars(stmt).all()
                 return [
                     SqlSnapshot(d.id, {
                         "id": d.id,
@@ -959,19 +973,20 @@ class SqlClient:
                         "folder": d.folder,
                         "tags": d.tags or [],
                         "deleted": d.deleted,
+                        "deleted_at": d.deleted_at.isoformat() if d.deleted_at else None,
                         "created_at": d.created_at.isoformat() if d.created_at else "",
                         "updated_at": d.updated_at.isoformat() if d.updated_at else "",
                         "modified_at": d.updated_at.isoformat() if d.updated_at else "",
                     })
-                    for d in documents
+                    for d in docs
                 ]
 
             # users/{user_id}/contacts
             if len(path_parts) == 3 and path_parts[0] == "users" and path_parts[2] == "contacts":
                 user_id = path_parts[1]
                 stmt = select(Contact).where(Contact.user_id == user_id)
-                if query._order_by == "name":
-                    stmt = stmt.order_by(Contact.name.desc() if query._direction == "DESC" else Contact.name.asc())
+                if query._order_by == "created_at":
+                    stmt = stmt.order_by(Contact.created_at.desc() if query._direction == "DESC" else Contact.created_at.asc())
                 if query._limit:
                     stmt = stmt.limit(query._limit)
                 contacts = session.scalars(stmt).all()
@@ -985,6 +1000,7 @@ class SqlClient:
                         "role": c.role,
                         "notes": c.notes,
                         "deleted": c.deleted,
+                        "deleted_at": c.deleted_at.isoformat() if c.deleted_at else None,
                         "created_at": c.created_at.isoformat() if c.created_at else "",
                         "updated_at": c.updated_at.isoformat() if c.updated_at else "",
                     })
@@ -996,13 +1012,15 @@ class SqlClient:
                 user_id = path_parts[1]
                 stmt = select(Notification).where(Notification.user_id == user_id)
                 for field, op, val in query.filters:
-                    if field == "unread":
-                        stmt = stmt.where(Notification.read == (not bool(val)))
+                    if field == "unread" and op in ("==", "="):
+                        stmt = stmt.where(Notification.read != val)
+                    elif field == "read" and op in ("==", "="):
+                        stmt = stmt.where(Notification.read == val)
                 if query._order_by == "created_at":
                     stmt = stmt.order_by(Notification.created_at.desc() if query._direction == "DESC" else Notification.created_at.asc())
                 if query._limit:
                     stmt = stmt.limit(query._limit)
-                notifications = session.scalars(stmt).all()
+                notifs = session.scalars(stmt).all()
                 return [
                     SqlSnapshot(n.id, {
                         "id": n.id,
@@ -1017,15 +1035,17 @@ class SqlClient:
                         "created_at": n.created_at.isoformat() if n.created_at else "",
                         "updated_at": n.updated_at.isoformat() if n.updated_at else "",
                     })
-                    for n in notifications
+                    for n in notifs
                 ]
 
             # users/{user_id}/eve_sessions
             if len(path_parts) == 3 and path_parts[0] == "users" and path_parts[2] == "eve_sessions":
                 user_id = path_parts[1]
                 stmt = select(EveSession).where(EveSession.user_id == user_id)
-                if query._order_by in ("updated_at", "created_at"):
+                if query._order_by == "updated_at":
                     stmt = stmt.order_by(EveSession.updated_at.desc() if query._direction == "DESC" else EveSession.updated_at.asc())
+                elif query._order_by == "created_at":
+                    stmt = stmt.order_by(EveSession.created_at.desc() if query._direction == "DESC" else EveSession.created_at.asc())
                 if query._limit:
                     stmt = stmt.limit(query._limit)
                 sessions = session.scalars(stmt).all()
@@ -1059,7 +1079,38 @@ class SqlClient:
                     for m in memories
                 ]
 
-        return []
+        # Generic in-memory fallback for other collections
+        prefix = "/".join(path_parts) + "/"
+        matching_docs = []
+        for k, doc_data in self._in_memory_docs.items():
+            if k.startswith(prefix):
+                remainder = k[len(prefix):]
+                if "/" not in remainder:
+                    doc_id = remainder
+                    doc_dict = dict(doc_data)
+                    match = True
+                    for field, op, val in query.filters:
+                        field_val = doc_dict.get(field)
+                        if op in ("==", "=") and field_val != val:
+                            match = False
+                            break
+                        elif op == "!=" and field_val == val:
+                            match = False
+                            break
+                    if match:
+                        matching_docs.append(SqlSnapshot(doc_id, doc_dict, exists=True))
+
+        if query._order_by:
+            reverse = query._direction == "DESC"
+            matching_docs.sort(
+                key=lambda s: str(s._data.get(query._order_by) or ""),
+                reverse=reverse,
+            )
+
+        if query._limit:
+            matching_docs = matching_docs[:query._limit]
+
+        return matching_docs
 
 
 _sql_client_instance: SqlClient | None = None
