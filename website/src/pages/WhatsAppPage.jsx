@@ -265,7 +265,7 @@ export function WhatsAppPage() {
   const selectedChat = chats.find((c) => c.id === selectedChatId)
 
   return (
-    <div className="whatsapp-page-wrapper">
+    <>
       <div className="whatsapp-page">
         {/* Chat List Sidebar */}
         <WhatsAppChatList
@@ -419,7 +419,6 @@ export function WhatsAppPage() {
           </div>
         </div>
       )}
-      </div>
-    </div>
+    </>
   )
 }

@@ -4,7 +4,7 @@ Living project snapshot for AI agents. `AGENTS.md` holds the permanent rules;
 this file holds the **current state** of the codebase and must be kept up to
 date whenever the implementation changes.
 
-> **Last updated:** 2026-08-17 (Enabled edge-to-edge full-screen layout for WhatsApp view, removing outer padding and gutters)
+> **Last updated:** 2026-08-17 (Refined WhatsApp layout: fixed full-height workspace container fill, integrated clean monochrome SearchBar wrapper, and resolved modal overlay sibling structure)
 
 ---
 

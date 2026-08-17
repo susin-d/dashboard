@@ -61,13 +61,14 @@ export function WhatsAppChatList({
         </div>
       </div>
 
-      <SearchBar
-        className="whatsapp-search-box"
-        placeholder="Search chats or messages..."
-        ariaLabel="Search WhatsApp chats"
-        value={searchQuery}
-        onChange={onSearchChange}
-      />
+      <div className="whatsapp-search-wrapper">
+        <SearchBar
+          placeholder="Search chats or messages..."
+          ariaLabel="Search WhatsApp chats"
+          value={searchQuery}
+          onChange={onSearchChange}
+        />
+      </div>
 
       <div className="whatsapp-chat-list">
         {filteredChats.length === 0 ? (
