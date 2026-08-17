@@ -162,7 +162,7 @@ func extractMessageInfo(msg *waE2E.Message) (content string, isForwarded bool, m
 
 	if ctxInfo != nil {
 		isForwarded = ctxInfo.GetIsForwarded() || ctxInfo.GetForwardingScore() > 0
-		replyToID = ctxInfo.GetStanzaId()
+		replyToID = ctxInfo.GetStanzaID()
 	}
 
 	return content, isForwarded, media, replyToID
