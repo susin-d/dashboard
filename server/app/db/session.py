@@ -83,6 +83,7 @@ async def init_db() -> None:
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
     _ensure_call_messages_column()
+    _ensure_whatsapp_columns()
 
 
 def _ensure_call_messages_column() -> None:
@@ -98,4 +99,55 @@ def _ensure_call_messages_column() -> None:
                 conn.execute(text("ALTER TABLE calls ADD COLUMN messages JSON NOT NULL DEFAULT '[]'"))
         else:
             conn.execute(text("ALTER TABLE calls ADD COLUMN IF NOT EXISTS messages JSON NOT NULL DEFAULT '[]'"))
+        conn.commit()
+
+
+def _ensure_whatsapp_columns() -> None:
+    """Idempotently backfill WhatsApp tables columns on existing databases."""
+    with sync_engine.connect() as conn:
+        if is_sqlite:
+            msg_cols = {row[1] for row in conn.execute(text("PRAGMA table_info(whatsapp_messages)"))}
+            if "sender_avatar_url" not in msg_cols:
+                conn.execute(text("ALTER TABLE whatsapp_messages ADD COLUMN sender_avatar_url TEXT"))
+            if "reactions" not in msg_cols:
+                conn.execute(text("ALTER TABLE whatsapp_messages ADD COLUMN reactions JSON DEFAULT '[]'"))
+            if "is_forwarded" not in msg_cols:
+                conn.execute(text("ALTER TABLE whatsapp_messages ADD COLUMN is_forwarded BOOLEAN DEFAULT FALSE"))
+            if "is_starred" not in msg_cols:
+                conn.execute(text("ALTER TABLE whatsapp_messages ADD COLUMN is_starred BOOLEAN DEFAULT FALSE"))
+            if "is_pinned" not in msg_cols:
+                conn.execute(text("ALTER TABLE whatsapp_messages ADD COLUMN is_pinned BOOLEAN DEFAULT FALSE"))
+
+            chat_cols = {row[1] for row in conn.execute(text("PRAGMA table_info(whatsapp_chats)"))}
+            if "avatar_url" not in chat_cols:
+                conn.execute(text("ALTER TABLE whatsapp_chats ADD COLUMN avatar_url TEXT"))
+            if "participants" not in chat_cols:
+                conn.execute(text("ALTER TABLE whatsapp_chats ADD COLUMN participants JSON DEFAULT '[]'"))
+            if "unread_count" not in chat_cols:
+                conn.execute(text("ALTER TABLE whatsapp_chats ADD COLUMN unread_count INTEGER DEFAULT 0"))
+            if "last_message" not in chat_cols:
+                conn.execute(text("ALTER TABLE whatsapp_chats ADD COLUMN last_message JSON"))
+            if "is_pinned" not in chat_cols:
+                conn.execute(text("ALTER TABLE whatsapp_chats ADD COLUMN is_pinned BOOLEAN DEFAULT FALSE"))
+            if "is_muted" not in chat_cols:
+                conn.execute(text("ALTER TABLE whatsapp_chats ADD COLUMN is_muted BOOLEAN DEFAULT FALSE"))
+            if "is_archived" not in chat_cols:
+                conn.execute(text("ALTER TABLE whatsapp_chats ADD COLUMN is_archived BOOLEAN DEFAULT FALSE"))
+            if "eve_auto_reply" not in chat_cols:
+                conn.execute(text("ALTER TABLE whatsapp_chats ADD COLUMN eve_auto_reply BOOLEAN DEFAULT FALSE"))
+        else:
+            conn.execute(text("ALTER TABLE whatsapp_messages ADD COLUMN IF NOT EXISTS sender_avatar_url TEXT"))
+            conn.execute(text("ALTER TABLE whatsapp_messages ADD COLUMN IF NOT EXISTS reactions JSON DEFAULT '[]'"))
+            conn.execute(text("ALTER TABLE whatsapp_messages ADD COLUMN IF NOT EXISTS is_forwarded BOOLEAN DEFAULT FALSE"))
+            conn.execute(text("ALTER TABLE whatsapp_messages ADD COLUMN IF NOT EXISTS is_starred BOOLEAN DEFAULT FALSE"))
+            conn.execute(text("ALTER TABLE whatsapp_messages ADD COLUMN IF NOT EXISTS is_pinned BOOLEAN DEFAULT FALSE"))
+
+            conn.execute(text("ALTER TABLE whatsapp_chats ADD COLUMN IF NOT EXISTS avatar_url TEXT"))
+            conn.execute(text("ALTER TABLE whatsapp_chats ADD COLUMN IF NOT EXISTS participants JSON DEFAULT '[]'"))
+            conn.execute(text("ALTER TABLE whatsapp_chats ADD COLUMN IF NOT EXISTS unread_count INTEGER DEFAULT 0"))
+            conn.execute(text("ALTER TABLE whatsapp_chats ADD COLUMN IF NOT EXISTS last_message JSON"))
+            conn.execute(text("ALTER TABLE whatsapp_chats ADD COLUMN IF NOT EXISTS is_pinned BOOLEAN DEFAULT FALSE"))
+            conn.execute(text("ALTER TABLE whatsapp_chats ADD COLUMN IF NOT EXISTS is_muted BOOLEAN DEFAULT FALSE"))
+            conn.execute(text("ALTER TABLE whatsapp_chats ADD COLUMN IF NOT EXISTS is_archived BOOLEAN DEFAULT FALSE"))
+            conn.execute(text("ALTER TABLE whatsapp_chats ADD COLUMN IF NOT EXISTS eve_auto_reply BOOLEAN DEFAULT FALSE"))
         conn.commit()
