@@ -4,7 +4,7 @@ Living project snapshot for AI agents. `AGENTS.md` holds the permanent rules;
 this file holds the **current state** of the codebase and must be kept up to
 date whenever the implementation changes.
 
-> **Last updated:** 2026-08-17 (Added real WhatsApp profile photos and group icons fetching and display in sidebar and chat header with fallback)
+> **Last updated:** 2026-08-17 (Enforced strict chat-id message isolation and key-based conversation unmounting to prevent cross-chat message leakage)
 
 ---
 

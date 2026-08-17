@@ -189,16 +189,17 @@ export function WhatsAppConversation({
   const quickReactions = ['👍', '❤️', '😂', '😮', '😢', '🙏']
   const commonEmojis = ['👍', '❤️', '🙌', '🔥', '🎉', '😊', '🚀', '✅', '🙏', '💯']
 
-  // Search filtered messages
+  // Search & chat-isolated filtered messages
   const displayedMessages = useMemo(() => {
-    if (!inChatSearchQuery.trim()) return messages
+    const chatMsgs = (messages || []).filter((m) => !m.chat_id || m.chat_id === chat?.id)
+    if (!inChatSearchQuery.trim()) return chatMsgs
     const q = inChatSearchQuery.toLowerCase()
-    return messages.filter(
+    return chatMsgs.filter(
       (m) =>
         m.content?.toLowerCase().includes(q) ||
         m.sender_name?.toLowerCase().includes(q)
     )
-  }, [messages, inChatSearchQuery])
+  }, [messages, inChatSearchQuery, chat?.id])
 
   // Helper to find replying-to message object
   const getQuotedMessage = (replyId) => {

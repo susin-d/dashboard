@@ -168,8 +168,9 @@ export function WhatsAppPage() {
     let isCurrent = true
     fetchWhatsAppMessages(selectedChatId)
       .then((msgs) => {
-        if (isCurrent) {
-          setMessages(msgs || [])
+        if (isCurrent && selectedChatIdRef.current === selectedChatId) {
+          const validMsgs = (msgs || []).filter((m) => !m.chat_id || m.chat_id === selectedChatId)
+          setMessages(validMsgs)
           markWhatsAppChatRead(selectedChatId).catch(() => {})
           setChats((prev) =>
             prev.map((c) => (c.id === selectedChatId ? { ...c, unread_count: 0 } : c)),
@@ -395,6 +396,7 @@ export function WhatsAppPage() {
         {/* Conversation View */}
         {selectedChat ? (
           <WhatsAppConversation
+            key={selectedChat.id}
             chat={selectedChat}
             messages={messages}
             onSendMessage={handleSendMessage}
