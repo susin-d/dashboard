@@ -181,6 +181,8 @@ async def whatsapp_incoming_webhook(
                 )
 
             for m in msgs_data:
+                media_data = m.get("media")
+                media_obj = WhatsAppMediaAttachment(**media_data) if media_data else None
                 msg_obj = WhatsAppMessageResponse(
                     id=m.get("id") or f"msg-{uuid4().hex[:12]}",
                     chat_id=m.get("chatId"),
@@ -188,7 +190,10 @@ async def whatsapp_incoming_webhook(
                     sender_name=m.get("senderName"),
                     is_from_me=bool(m.get("isFromMe", False)),
                     is_eve=False,
+                    is_forwarded=bool(m.get("isForwarded", False)),
                     content=m.get("content") or "",
+                    media=media_obj,
+                    reply_to_message_id=m.get("replyToMessageId"),
                     timestamp=datetime.fromisoformat(m["timestamp"].replace("Z", "+00:00")) if isinstance(m.get("timestamp"), str) else datetime.now(timezone.utc),
                     status=m.get("status", "delivered"),
                 )
@@ -209,6 +214,10 @@ async def whatsapp_incoming_webhook(
     sender_id = payload.get("senderId", "")
     sender_name = payload.get("senderName") or "Contact"
     is_from_me = payload.get("isFromMe", False)
+    is_forwarded = bool(payload.get("isForwarded", False))
+    media_data = payload.get("media")
+    media_obj = WhatsAppMediaAttachment(**media_data) if media_data else None
+    reply_to_id = payload.get("replyToMessageId")
     is_group = bool(payload.get("isGroup", False)) or (bool(chat_id) and chat_id.endswith("@g.us"))
     chat_name = payload.get("chatName")
 
@@ -224,7 +233,10 @@ async def whatsapp_incoming_webhook(
         sender_name=sender_name,
         is_from_me=is_from_me,
         is_eve=False,
+        is_forwarded=is_forwarded,
         content=content,
+        media=media_obj,
+        reply_to_message_id=reply_to_id,
         timestamp=now,
         status="delivered",
     )

@@ -43,15 +43,28 @@ type SessionChat struct {
 	UpdatedAt    time.Time `json:"updatedAt"`
 }
 
+type SessionMedia struct {
+	Type            string  `json:"type"`
+	URL             string  `json:"url,omitempty"`
+	MimeType        string  `json:"mime_type,omitempty"`
+	Filename        string  `json:"filename,omitempty"`
+	ThumbnailBase64 string  `json:"thumbnail_base64,omitempty"`
+	FileSize        int64   `json:"file_size,omitempty"`
+	DurationSeconds float64 `json:"duration_seconds,omitempty"`
+}
+
 type SessionMessage struct {
-	ID         string    `json:"id"`
-	ChatID     string    `json:"chatId"`
-	SenderID   string    `json:"senderId"`
-	SenderName string    `json:"senderName"`
-	IsFromMe   bool      `json:"isFromMe"`
-	Content    string    `json:"content"`
-	Timestamp  time.Time `json:"timestamp"`
-	Status     string    `json:"status"`
+	ID               string        `json:"id"`
+	ChatID           string        `json:"chatId"`
+	SenderID         string        `json:"senderId"`
+	SenderName       string        `json:"senderName"`
+	IsFromMe         bool          `json:"isFromMe"`
+	IsForwarded      bool          `json:"isForwarded"`
+	Content          string        `json:"content"`
+	Media            *SessionMedia `json:"media,omitempty"`
+	ReplyToMessageID string        `json:"replyToMessageId,omitempty"`
+	Timestamp        time.Time     `json:"timestamp"`
+	Status           string        `json:"status"`
 }
 
 type SessionState struct {
@@ -74,26 +87,85 @@ var (
 	dataDir      = "data"
 )
 
-func extractMessageContent(msg *waE2E.Message) string {
+func extractMessageInfo(msg *waE2E.Message) (content string, isForwarded bool, media *SessionMedia, replyToID string) {
 	if msg == nil {
-		return ""
+		return "", false, nil, ""
 	}
-	if msg.Conversation != nil && *msg.Conversation != "" {
-		return *msg.Conversation
+
+	var ctxInfo *waE2E.ContextInfo
+
+	if ext := msg.GetExtendedTextMessage(); ext != nil {
+		content = ext.GetText()
+		ctxInfo = ext.GetContextInfo()
+		if len(ext.GetJpegThumbnail()) > 0 {
+			media = &SessionMedia{
+				Type:            "image",
+				ThumbnailBase64: "data:image/jpeg;base64," + base64.StdEncoding.EncodeToString(ext.GetJpegThumbnail()),
+			}
+		}
+	} else if conv := msg.Conversation; conv != nil && *conv != "" {
+		content = *conv
+	} else if img := msg.GetImageMessage(); img != nil {
+		content = img.GetCaption()
+		ctxInfo = img.GetContextInfo()
+		thumb := ""
+		if len(img.GetJpegThumbnail()) > 0 {
+			thumb = "data:image/jpeg;base64," + base64.StdEncoding.EncodeToString(img.GetJpegThumbnail())
+		}
+		media = &SessionMedia{
+			Type:            "image",
+			URL:             img.GetUrl(),
+			MimeType:        img.GetMimetype(),
+			ThumbnailBase64: thumb,
+			FileSize:        int64(img.GetFileLength()),
+		}
+	} else if vid := msg.GetVideoMessage(); vid != nil {
+		content = vid.GetCaption()
+		ctxInfo = vid.GetContextInfo()
+		thumb := ""
+		if len(vid.GetJpegThumbnail()) > 0 {
+			thumb = "data:image/jpeg;base64," + base64.StdEncoding.EncodeToString(vid.GetJpegThumbnail())
+		}
+		media = &SessionMedia{
+			Type:            "video",
+			URL:             vid.GetUrl(),
+			MimeType:        vid.GetMimetype(),
+			ThumbnailBase64: thumb,
+			FileSize:        int64(vid.GetFileLength()),
+			DurationSeconds: float64(vid.GetSeconds()),
+		}
+	} else if aud := msg.GetAudioMessage(); aud != nil {
+		ctxInfo = aud.GetContextInfo()
+		media = &SessionMedia{
+			Type:            "audio",
+			URL:             aud.GetUrl(),
+			MimeType:        aud.GetMimetype(),
+			FileSize:        int64(aud.GetFileLength()),
+			DurationSeconds: float64(aud.GetSeconds()),
+		}
+	} else if doc := msg.GetDocumentMessage(); doc != nil {
+		content = doc.GetCaption()
+		ctxInfo = doc.GetContextInfo()
+		thumb := ""
+		if len(doc.GetJpegThumbnail()) > 0 {
+			thumb = "data:image/jpeg;base64," + base64.StdEncoding.EncodeToString(doc.GetJpegThumbnail())
+		}
+		media = &SessionMedia{
+			Type:            "document",
+			Filename:        doc.GetTitle(),
+			URL:             doc.GetUrl(),
+			MimeType:        doc.GetMimetype(),
+			ThumbnailBase64: thumb,
+			FileSize:        int64(doc.GetFileLength()),
+		}
 	}
-	if msg.ExtendedTextMessage != nil && msg.ExtendedTextMessage.Text != nil {
-		return *msg.ExtendedTextMessage.Text
+
+	if ctxInfo != nil {
+		isForwarded = ctxInfo.GetIsForwarded() || ctxInfo.GetForwardingScore() > 0
+		replyToID = ctxInfo.GetStanzaId()
 	}
-	if msg.ImageMessage != nil && msg.ImageMessage.Caption != nil {
-		return *msg.ImageMessage.Caption
-	}
-	if msg.VideoMessage != nil && msg.VideoMessage.Caption != nil {
-		return *msg.VideoMessage.Caption
-	}
-	if msg.DocumentMessage != nil && msg.DocumentMessage.Title != nil {
-		return *msg.DocumentMessage.Title
-	}
-	return ""
+
+	return content, isForwarded, media, replyToID
 }
 
 func getOrCreateSession(userId string) (*SessionState, error) {
@@ -189,7 +261,7 @@ func (s *SessionState) handleEvent(userId string, evt interface{}) {
 				if webMsg == nil {
 					continue
 				}
-				text := extractMessageContent(webMsg.GetMessage())
+				text, isFwd, media, replyToID := extractMessageInfo(webMsg.GetMessage())
 				msgID := ""
 				fromMe := false
 				senderJID := chatJID
@@ -207,14 +279,17 @@ func (s *SessionState) handleEvent(userId string, evt interface{}) {
 				}
 
 				m := &SessionMessage{
-					ID:         msgID,
-					ChatID:     chatJID,
-					SenderID:   senderJID,
-					SenderName: chatName,
-					IsFromMe:   fromMe,
-					Content:    text,
-					Timestamp:  ts,
-					Status:     "delivered",
+					ID:               msgID,
+					ChatID:           chatJID,
+					SenderID:         senderJID,
+					SenderName:       chatName,
+					IsFromMe:         fromMe,
+					IsForwarded:      isFwd,
+					Content:          text,
+					Media:            media,
+					ReplyToMessageID: replyToID,
+					Timestamp:        ts,
+					Status:           "delivered",
 				}
 				s.Messages[chatJID] = append(s.Messages[chatJID], m)
 				syncedMessages = append(syncedMessages, m)
@@ -355,7 +430,7 @@ func (s *SessionState) handleEvent(userId string, evt interface{}) {
 		log.Printf("[User %s] WhatsApp Logged Out", userId)
 
 	case *events.Message:
-		text := extractMessageContent(v.Message)
+		text, isFwd, media, replyToID := extractMessageInfo(v.Message)
 		senderJID := v.Info.Sender.String()
 		chatJID := v.Info.Chat.String()
 		isFromMe := v.Info.IsFromMe
@@ -367,14 +442,17 @@ func (s *SessionState) handleEvent(userId string, evt interface{}) {
 
 		s.Lock()
 		msg := &SessionMessage{
-			ID:         v.Info.ID,
-			ChatID:     chatJID,
-			SenderID:   senderJID,
-			SenderName: senderName,
-			IsFromMe:   isFromMe,
-			Content:    text,
-			Timestamp:  v.Info.Timestamp,
-			Status:     "delivered",
+			ID:               v.Info.ID,
+			ChatID:           chatJID,
+			SenderID:         senderJID,
+			SenderName:       senderName,
+			IsFromMe:         isFromMe,
+			IsForwarded:      isFwd,
+			Content:          text,
+			Media:            media,
+			ReplyToMessageID: replyToID,
+			Timestamp:        v.Info.Timestamp,
+			Status:           "delivered",
 		}
 		s.Messages[chatJID] = append(s.Messages[chatJID], msg)
 
@@ -434,17 +512,20 @@ func (s *SessionState) handleEvent(userId string, evt interface{}) {
 
 		go func() {
 			payload := map[string]interface{}{
-				"type":       "new_message",
-				"userId":     userId,
-				"chatId":     chatJID,
-				"chatName":   chatName,
-				"isGroup":    isGroup,
-				"senderId":   senderJID,
-				"senderName": senderName,
-				"isFromMe":   isFromMe,
-				"content":    text,
-				"messageId":  v.Info.ID,
-				"timestamp":  v.Info.Timestamp.Format(time.RFC3339),
+				"type":             "new_message",
+				"userId":           userId,
+				"chatId":           chatJID,
+				"chatName":         chatName,
+				"isGroup":          isGroup,
+				"senderId":         senderJID,
+				"senderName":       senderName,
+				"isFromMe":         isFromMe,
+				"isForwarded":      isFwd,
+				"content":          text,
+				"media":            media,
+				"replyToMessageId": replyToID,
+				"messageId":        v.Info.ID,
+				"timestamp":        v.Info.Timestamp.Format(time.RFC3339),
 			}
 			jsonBytes, err := json.Marshal(payload)
 			if err != nil {

@@ -26,8 +26,9 @@ class WhatsAppStatusResponse(BaseModel):
 
 
 class WhatsAppMediaAttachment(BaseModel):
-    type: str = Field(description="Media type: 'image', 'audio', 'document', 'video'")
-    url: str
+    type: str = Field(default="image", description="Media type: 'image', 'audio', 'document', 'video'")
+    url: Optional[str] = ""
+    thumbnail_base64: Optional[str] = None
     mimetype: Optional[str] = None
     filename: Optional[str] = None
     file_size_bytes: Optional[int] = None

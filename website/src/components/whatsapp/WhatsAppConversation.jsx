@@ -575,18 +575,18 @@ export function WhatsAppConversation({
                       setActiveMenuMessageId(msg.id)
                     }}
                   >
-                    {/* Forwarded Tag */}
-                    {msg.is_forwarded && (
-                      <div className="whatsapp-forwarded-tag">
-                        <Share2 size={12} />
-                        <span>Forwarded</span>
-                      </div>
-                    )}
-
                     {/* Sender Name in Group */}
                     {!isOutgoing && chat?.is_group && (
                       <div className="whatsapp-sender-name">
                         {msg.sender_name || 'Contact'}
+                      </div>
+                    )}
+
+                    {/* Forwarded Tag */}
+                    {(msg.is_forwarded || msg.isForwarded) && (
+                      <div className="whatsapp-forwarded-tag">
+                        <CornerUpLeft size={13} style={{ transform: 'scaleX(-1)' }} />
+                        <span>Forwarded</span>
                       </div>
                     )}
 
@@ -624,9 +624,16 @@ export function WhatsAppConversation({
                         </div>
                         <span style={{ fontSize: '0.75rem', opacity: 0.8 }}>0:08</span>
                       </div>
-                    ) : msg.media?.type === 'image' ? (
-                      <div style={{ marginBottom: 6, borderRadius: 8, overflow: 'hidden', maxHeight: 240 }}>
-                        <img src={msg.media.url} alt="Attachment" style={{ width: '100%', objectFit: 'cover' }} />
+                    ) : (msg.media?.thumbnail_base64 || msg.media?.type === 'image' || (msg.media?.url && (msg.media.url.startsWith('http') || msg.media.url.startsWith('data:image')))) ? (
+                      <div className="whatsapp-media-preview-container">
+                        <img
+                          src={msg.media.thumbnail_base64 || msg.media.url}
+                          alt={msg.media.filename || "Attachment"}
+                          className="whatsapp-media-preview-img"
+                          onError={(e) => {
+                            e.currentTarget.parentElement.style.display = 'none'
+                          }}
+                        />
                       </div>
                     ) : msg.media?.type === 'document' ? (
                       <div
