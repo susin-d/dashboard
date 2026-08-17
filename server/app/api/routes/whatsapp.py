@@ -176,6 +176,28 @@ async def whatsapp_incoming_webhook(
             )
         return {"status": "reaction_updated"}
 
+    # Handle message delivery / read receipts
+    if payload.get("type") == "receipt_update":
+        user_id = payload.get("userId")
+        chat_id = payload.get("chatId")
+        message_ids = payload.get("messageIds") or []
+        status = payload.get("status", "delivered")
+        timestamp = payload.get("timestamp")
+        if user_id and chat_id and message_ids:
+            for mid in message_ids:
+                whatsapp_repo.update_message_status(database, user_id, chat_id, mid, status)
+            await whatsapp_ws_manager.broadcast_to_user(
+                user_id,
+                {
+                    "type": "receipt_update",
+                    "chatId": chat_id,
+                    "messageIds": message_ids,
+                    "status": status,
+                    "timestamp": timestamp,
+                },
+            )
+        return {"status": "receipt_updated"}
+
     # Handle bulk history sync from whatsmeow pairing
     if payload.get("type") == "history_sync":
         user_id = payload.get("userId")

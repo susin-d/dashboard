@@ -326,5 +326,16 @@ def delete_whatsapp_message(
     msg_ref.delete()
 
 
+def update_message_status(
+    database: Client,
+    user_id: str,
+    chat_id: str,
+    message_id: str,
+    status: str,
+):
+    msg_ref = _messages_col(database, user_id, chat_id).document(message_id)
+    msg_ref.set({"status": status}, merge=True)
+
+
 def mark_chat_as_read(database: Client, user_id: str, chat_id: str):
     _chats_col(database, user_id).document(chat_id).set({"unread_count": 0}, merge=True)

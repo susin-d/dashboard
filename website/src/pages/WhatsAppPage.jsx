@@ -151,6 +151,23 @@ export function WhatsAppPage() {
             }),
           )
         }
+      } else if (event.type === 'receipt_update') {
+        const targetIds = event.messageIds || event.message_ids || []
+        const newStatus = event.status || 'delivered'
+        const ts = event.timestamp || new Date().toISOString()
+        setMessages((prev) =>
+          prev.map((m) => {
+            if (targetIds.includes(m.id)) {
+              return {
+                ...m,
+                status: newStatus,
+                read_at: newStatus === 'read' ? (m.read_at || ts) : m.read_at,
+                delivered_at: (newStatus === 'delivered' || newStatus === 'read') ? (m.delivered_at || ts) : m.delivered_at,
+              }
+            }
+            return m
+          }),
+        )
       } else if (event.type === 'message_deleted') {
         const targetMsg = event.message_id || event.messageId
         setMessages((prev) => prev.filter((m) => m.id !== targetMsg))

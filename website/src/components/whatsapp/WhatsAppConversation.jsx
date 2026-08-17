@@ -979,17 +979,47 @@ export function WhatsAppConversation({
                 <span className="info-value">{infoModalMessage.is_from_me ? 'You' : infoModalMessage.sender_name || 'Contact'}</span>
               </div>
               <div className="whatsapp-info-row">
-                <span className="info-label">Sent</span>
-                <span className="info-value">{new Date(infoModalMessage.timestamp).toLocaleString()}</span>
-              </div>
-              <div className="whatsapp-info-row">
-                <span className="info-label">Status</span>
-                <span className="info-value" style={{ textTransform: 'capitalize' }}>{infoModalMessage.status || 'Delivered'}</span>
-              </div>
-              <div className="whatsapp-info-row">
                 <span className="info-label">Length</span>
                 <span className="info-value">{infoModalMessage.content?.length || 0} characters</span>
               </div>
+
+              {/* Delivery & Read Status (like WhatsApp Message Info) */}
+              <div className="whatsapp-info-status-section">
+                <div className="whatsapp-info-status-item">
+                  <div className="whatsapp-info-status-title">
+                    <CheckCheck size={16} className="status-icon read" />
+                    <span>Read</span>
+                  </div>
+                  <span className="whatsapp-info-status-time">
+                    {infoModalMessage.status === 'read'
+                      ? (infoModalMessage.read_at ? new Date(infoModalMessage.read_at).toLocaleString() : 'Read')
+                      : 'Not read yet'}
+                  </span>
+                </div>
+
+                <div className="whatsapp-info-status-item">
+                  <div className="whatsapp-info-status-title">
+                    <CheckCheck size={16} className="status-icon delivered" />
+                    <span>Delivered</span>
+                  </div>
+                  <span className="whatsapp-info-status-time">
+                    {(infoModalMessage.status === 'delivered' || infoModalMessage.status === 'read')
+                      ? (infoModalMessage.delivered_at ? new Date(infoModalMessage.delivered_at).toLocaleString() : 'Delivered')
+                      : 'Pending'}
+                  </span>
+                </div>
+
+                <div className="whatsapp-info-status-item">
+                  <div className="whatsapp-info-status-title">
+                    <Check size={16} className="status-icon sent" />
+                    <span>Sent</span>
+                  </div>
+                  <span className="whatsapp-info-status-time">
+                    {new Date(infoModalMessage.timestamp).toLocaleString()}
+                  </span>
+                </div>
+              </div>
+
               <div className="whatsapp-info-preview-box">
                 <p>{infoModalMessage.content}</p>
               </div>

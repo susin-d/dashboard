@@ -1503,6 +1503,49 @@
   font-weight: 600;
 }
 
+.whatsapp-info-status-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: var(--bg-primary, #09090b);
+  border: 1px solid var(--border-color, #27272a);
+  border-radius: 8px;
+  padding: 12px 14px;
+  margin-top: 4px;
+}
+
+.whatsapp-info-status-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.84rem;
+}
+
+.whatsapp-info-status-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 500;
+  color: var(--text-primary, #ffffff);
+}
+
+.whatsapp-info-status-title .status-icon.read {
+  color: var(--text-primary, #ffffff);
+}
+
+.whatsapp-info-status-title .status-icon.delivered {
+  color: var(--text-secondary, #a1a1aa);
+}
+
+.whatsapp-info-status-title .status-icon.sent {
+  color: var(--text-secondary, #a1a1aa);
+}
+
+.whatsapp-info-status-time {
+  color: var(--text-secondary, #a1a1aa);
+  font-size: 0.8125rem;
+}
+
 .whatsapp-info-preview-box {
   margin-top: 8px;
   padding: 12px;
