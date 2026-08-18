@@ -1228,13 +1228,24 @@ export function WhatsAppConversation({
               </div>
             </div>
             <div className="whatsapp-lightbox-body">
-              {activeLightboxMedia.type === 'video' ? (
+              {activeLightboxMedia.type === 'video' && activeLightboxMedia.url && activeLightboxMedia.url.startsWith('data:video') ? (
                 <video
-                  src={activeLightboxMedia.url || activeLightboxMedia.thumbnail_base64}
+                  src={activeLightboxMedia.url}
                   controls
                   autoPlay
                   className="whatsapp-lightbox-media"
                 />
+              ) : activeLightboxMedia.type === 'video' && activeLightboxMedia.thumbnail_base64 ? (
+                <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
+                  <img
+                    src={activeLightboxMedia.thumbnail_base64}
+                    alt={activeLightboxMedia.filename || 'Video preview'}
+                    className="whatsapp-lightbox-media"
+                  />
+                  <span style={{ color: 'var(--text-secondary)', fontSize: '0.8125rem' }}>
+                    Video preview (encrypted media streaming via WhatsApp)
+                  </span>
+                </div>
               ) : (
                 <img
                   src={activeLightboxMedia.url || activeLightboxMedia.thumbnail_base64}
