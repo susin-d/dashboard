@@ -86,6 +86,7 @@ class WhatsAppSettings(BaseModel):
     eve_tag: Optional[str] = "@eve"
     owner_name: Optional[str] = "Susindran"
     owner_aliases: List[str] = Field(default_factory=lambda: ["@susindran", "@susin", "@susindran_d"])
+    keywords: List[str] = Field(default_factory=lambda: ["@eve", "eve", "@susindran", "@susin", "urgent", "help", "summary", "schedule"])
     my_number: Optional[str] = None
     my_jid: Optional[str] = None
 
@@ -99,6 +100,7 @@ class WhatsAppSettingsUpdate(BaseModel):
     eve_tag: Optional[str] = None
     owner_name: Optional[str] = None
     owner_aliases: Optional[List[str]] = None
+    keywords: Optional[List[str]] = None
     my_number: Optional[str] = None
     my_jid: Optional[str] = None
 

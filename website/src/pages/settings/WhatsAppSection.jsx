@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { MessageSquare, QrCode, Trash2, Bot, Bell } from 'lucide-react'
+import { MessageSquare, QrCode, Trash2, Bot, Bell, Key, Plus, X, RotateCcw, Sparkles, Check } from 'lucide-react'
 import { ConfirmDialog, SectionHeading, SettingsCard } from '../../components/ui'
 import {
   fetchWhatsAppStatus,
@@ -12,13 +12,21 @@ import {
 import { whatsappSocket } from '../../lib/whatsappSocket'
 import { WhatsAppQrModal } from '../../components/whatsapp/WhatsAppQrModal'
 
+const DEFAULT_KEYWORDS = ['@eve', 'eve', '@susindran', '@susin', 'urgent', 'help', 'summary', 'schedule']
+const KEYWORD_PRESETS = ['@eve', 'urgent', 'help', 'summary', 'schedule', 'action items', 'meeting', 'status']
+
 export function WhatsAppSection() {
   const [status, setStatus] = useState({ connected: false })
   const [settings, setSettings] = useState({
     auto_reply_enabled: false,
     auto_reply_prompt: '',
     notifications_enabled: true,
+    keywords: DEFAULT_KEYWORDS,
+    eve_tag: '@eve',
+    owner_name: 'Susindran',
   })
+  const [keywordInput, setKeywordInput] = useState('')
+  const [promptInput, setPromptInput] = useState('')
   const [busy, setBusy] = useState(false)
   const [message, setMessage] = useState('')
   const [disconnectRequested, setDisconnectRequested] = useState(false)
@@ -32,10 +40,41 @@ export function WhatsAppSection() {
         fetchWhatsAppSettings().catch(() => ({})),
       ])
       if (stat) setStatus(stat)
-      if (sett) setSettings(sett)
+      if (sett) {
+        setSettings(sett)
+        if (sett.auto_reply_prompt) {
+          setPromptInput(sett.auto_reply_prompt)
+        }
+      }
     } catch {
       // ignore
     }
+  }
+
+  const currentKeywords = settings.keywords || DEFAULT_KEYWORDS
+
+  const handleAddKeyword = (kwToAdd) => {
+    const raw = (typeof kwToAdd === 'string' ? kwToAdd : keywordInput).trim()
+    if (!raw) return
+    const clean = raw.toLowerCase()
+    if (!currentKeywords.some((k) => k.toLowerCase() === clean)) {
+      const updated = [...currentKeywords, raw]
+      handleSaveSettings({ keywords: updated })
+    }
+    setKeywordInput('')
+  }
+
+  const handleRemoveKeyword = (kwToRemove) => {
+    const updated = currentKeywords.filter((k) => k.toLowerCase() !== kwToRemove.toLowerCase())
+    handleSaveSettings({ keywords: updated })
+  }
+
+  const handleResetKeywords = () => {
+    handleSaveSettings({ keywords: DEFAULT_KEYWORDS })
+  }
+
+  const handleSavePrompt = () => {
+    handleSaveSettings({ auto_reply_prompt: promptInput })
   }
 
   useEffect(() => {
@@ -226,6 +265,125 @@ export function WhatsAppSection() {
                 <span className="whatsapp-toggle-slider" />
               </div>
             </label>
+          </div>
+
+          {/* Eve Trigger Keywords & Tags Section */}
+          <div className="whatsapp-keywords-section">
+            <div className="whatsapp-keywords-header">
+              <div className="whatsapp-keywords-title">
+                <Key size={16} />
+                <span>Eve Trigger Keywords & Tags</span>
+              </div>
+              <button
+                type="button"
+                className="whatsapp-keywords-reset-btn"
+                onClick={handleResetKeywords}
+                title="Reset to default trigger keywords"
+              >
+                <RotateCcw size={12} />
+                <span>Reset Defaults</span>
+              </button>
+            </div>
+            <p className="whatsapp-keywords-desc">
+              When any of these keywords or tags appear in a WhatsApp message, Eve automatically activates to analyze the context, summarize, draft answers, or assist.
+            </p>
+
+            {/* Active Keywords Tags List */}
+            <div className="whatsapp-keyword-tags-list">
+              {currentKeywords.map((kw) => (
+                <span key={kw} className="whatsapp-keyword-tag">
+                  <span className="whatsapp-keyword-tag-text">{kw}</span>
+                  <button
+                    type="button"
+                    className="whatsapp-keyword-remove-btn"
+                    onClick={() => handleRemoveKeyword(kw)}
+                    title={`Remove keyword "${kw}"`}
+                    aria-label={`Remove keyword ${kw}`}
+                  >
+                    <X size={12} />
+                  </button>
+                </span>
+              ))}
+            </div>
+
+            {/* Add Keyword Input Row */}
+            <div className="whatsapp-keyword-input-row">
+              <input
+                type="text"
+                className="whatsapp-keyword-text-input"
+                placeholder="Add keyword or trigger tag (e.g. urgent, @eve, help)..."
+                value={keywordInput}
+                onChange={(e) => setKeywordInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault()
+                    handleAddKeyword()
+                  }
+                }}
+              />
+              <button
+                type="button"
+                className="whatsapp-keyword-add-btn"
+                onClick={() => handleAddKeyword()}
+                disabled={!keywordInput.trim()}
+              >
+                <Plus size={14} />
+                <span>Add</span>
+              </button>
+            </div>
+
+            {/* Quick Keyword Presets */}
+            <div className="whatsapp-keyword-presets">
+              <span className="whatsapp-keyword-presets-title">Quick Presets:</span>
+              <div className="whatsapp-keyword-presets-list">
+                {KEYWORD_PRESETS.map((preset) => {
+                  const isAdded = currentKeywords.some((k) => k.toLowerCase() === preset.toLowerCase())
+                  return (
+                    <button
+                      key={preset}
+                      type="button"
+                      className={`whatsapp-keyword-preset-chip ${isAdded ? 'is-added' : ''}`}
+                      onClick={() => !isAdded && handleAddKeyword(preset)}
+                      disabled={isAdded}
+                      title={isAdded ? 'Already added' : `Add "${preset}" to trigger keywords`}
+                    >
+                      {isAdded ? <Check size={11} /> : <Plus size={11} />}
+                      <span>{preset}</span>
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+          </div>
+
+          {/* Custom Eve Auto-Reply Prompt */}
+          <div className="whatsapp-prompt-section">
+            <div className="whatsapp-prompt-header">
+              <div className="whatsapp-prompt-title">
+                <Sparkles size={16} />
+                <span>Eve Auto-Reply Instructions & Personality</span>
+              </div>
+            </div>
+            <p className="whatsapp-prompt-desc">
+              Custom instructions guiding how Eve formulates replies when answering questions or replying to trigger keywords.
+            </p>
+            <textarea
+              className="whatsapp-prompt-textarea"
+              rows={3}
+              placeholder="You are Eve, answering incoming WhatsApp messages concisely on behalf of the user..."
+              value={promptInput}
+              onChange={(e) => setPromptInput(e.target.value)}
+            />
+            <div className="whatsapp-prompt-actions">
+              <button
+                type="button"
+                className="whatsapp-prompt-save-btn"
+                onClick={handleSavePrompt}
+                disabled={promptInput === settings.auto_reply_prompt}
+              >
+                Save Instructions
+              </button>
+            </div>
           </div>
         </div>
       </SettingsCard>

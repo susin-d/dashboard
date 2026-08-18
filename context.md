@@ -4,7 +4,7 @@ Living project snapshot for AI agents. `AGENTS.md` holds the permanent rules;
 this file holds the **current state** of the codebase and must be kept up to
 date whenever the implementation changes.
 
-> **Last updated:** 2026-08-18 (Implemented interactive conversation summary chat with Eve in WhatsApp, enabling grounded follow-up Q&A, prompt chips, and multi-view summary navigation)
+> **Last updated:** 2026-08-18 (Added Eve Trigger Keywords & Mentions configuration to Eve AI WhatsApp Automation settings with active tag management, quick presets, and custom personality prompt)
 
 ---
 

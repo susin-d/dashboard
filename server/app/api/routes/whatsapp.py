@@ -357,12 +357,14 @@ async def whatsapp_incoming_webhook(
 
     user_settings = whatsapp_repo.get_whatsapp_settings(database, user_id)
     eve_tag = (user_settings.eve_tag or "@eve").lower()
-    owner_aliases = [a.lower() for a in (user_settings.owner_aliases or ["@susindran", "@susin"])]
+    owner_aliases = [a.lower().strip() for a in (user_settings.owner_aliases or ["@susindran", "@susin"]) if a.strip()]
+    keywords = [k.lower().strip() for k in (user_settings.keywords or ["@eve", "eve"]) if k.strip()]
 
     has_mention = (
         eve_tag in text_lower
         or "@eve" in text_lower
         or any(alias in text_lower for alias in owner_aliases)
+        or any(kw in text_lower for kw in keywords)
         or text_lower.startswith("eve ")
         or text_lower == "eve"
     )
