@@ -311,29 +311,19 @@ func handleMessage(s *models.SessionState, userID string, v *waEvents.Message) {
 	if media != nil && s.Client != nil {
 		if downloadable, mime := parser.ExtractDownloadableMessage(v.Message); downloadable != nil {
 			if dlMsg, ok := downloadable.(whatsmeow.DownloadableMessage); ok {
-				go func(m *models.SessionMedia, d whatsmeow.DownloadableMessage, mimetype string, uID string, cJID string, msgID string) {
-					data, err := s.Client.Download(d)
-					if err == nil && len(data) > 0 {
-						if mimetype == "" {
-							mimetype = "image/jpeg"
-						}
-						dataURI := fmt.Sprintf("data:%s;base64,%s", mimetype, base64.StdEncoding.EncodeToString(data))
-						m.URL = dataURI
-						log.Printf("[User %s] Successfully decrypted full-res media for message %s (%d bytes)", uID, msgID, len(data))
-					} else if err != nil {
-						log.Printf("[User %s] Could not download media for message %s: %v", uID, msgID, err)
-					}
-				}(media, dlMsg, mime, userID, chatJID, v.Info.ID)
-
-				// For small/instant media (like photos), attempt quick sync download with 3s timeout
-				ctxDl, cancelDl := context.WithTimeout(context.Background(), 3*time.Second)
-				data, err := s.Client.DownloadCtx(ctxDl, dlMsg)
+				// Quick download with timeout
+				ctxDl, cancelDl := context.WithTimeout(context.Background(), 5*time.Second)
+				data, err := s.Client.Download(ctxDl, dlMsg)
 				cancelDl()
 				if err == nil && len(data) > 0 {
 					if mime == "" {
 						mime = "image/jpeg"
 					}
-					media.URL = fmt.Sprintf("data:%s;base64,%s", mime, base64.StdEncoding.EncodeToString(data))
+					dataURI := fmt.Sprintf("data:%s;base64,%s", mime, base64.StdEncoding.EncodeToString(data))
+					media.URL = dataURI
+					log.Printf("[User %s] Successfully decrypted full-res media for message %s (%d bytes)", userID, v.Info.ID, len(data))
+				} else if err != nil {
+					log.Printf("[User %s] Could not download media for message %s: %v", userID, v.Info.ID, err)
 				}
 			}
 		}
