@@ -1874,6 +1874,23 @@
   background: var(--bg-hover, #27272a);
 }
 
+.whatsapp-quick-tag-btn {
+  background: var(--bg-primary, #09090b);
+  border: 1px solid var(--border-color, #27272a);
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-primary, #ffffff);
+  padding: 4px 10px;
+  cursor: pointer;
+  transition: background 0.1s ease, border-color 0.1s ease;
+}
+
+.whatsapp-quick-tag-btn:hover {
+  background: var(--bg-hover, #27272a);
+  border-color: var(--text-primary, #ffffff);
+}
+
 /* WhatsApp Sync Full-Screen Loading Bar & Error States */
 .whatsapp-sync-loading-container {
   display: flex;

@@ -353,8 +353,20 @@ class WhatsAppService:
             },
         )
 
-        # Handle Eve interaction if messaging Eve or @Eve
-        if chat_id == "eve" or "@Eve" in content or "@eve" in content:
+        # Handle Eve interaction if messaging Eve or mentioning Eve / owner aliases
+        user_settings = whatsapp_repo.get_whatsapp_settings(database, user_id)
+        eve_tag = (user_settings.eve_tag or "@eve").lower()
+        owner_aliases = [a.lower() for a in (user_settings.owner_aliases or ["@susindran", "@susin"])]
+        text_lower = content.lower()
+
+        has_mention = (
+            chat_id == "eve"
+            or eve_tag in text_lower
+            or "@eve" in text_lower
+            or any(alias in text_lower for alias in owner_aliases)
+        )
+
+        if has_mention:
             await WhatsAppService._handle_eve_response(database, user_id, chat_id, content)
 
         return msg

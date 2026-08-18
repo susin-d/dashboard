@@ -1016,6 +1016,24 @@ export function WhatsAppConversation({
             ))}
           </div>
           <div className="whatsapp-media-tray-stickers">
+            <span style={{ fontSize: '0.6875rem', color: 'var(--text-secondary)', marginBottom: 4, display: 'block' }}>Quick Mentions / Tags</span>
+            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+              {['@eve', '@susindran', '@susin', '@mynumber', '@myjid'].map((tag) => (
+                <button
+                  key={tag}
+                  type="button"
+                  className="whatsapp-quick-tag-btn"
+                  onClick={() => {
+                    setInputText((prev) => (prev ? `${prev.trim()} ${tag} ` : `${tag} `))
+                  }}
+                  title={`Insert ${tag}`}
+                >
+                  {tag}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="whatsapp-media-tray-stickers">
             <span style={{ fontSize: '0.6875rem', color: 'var(--text-secondary)', marginBottom: 4, display: 'block' }}>Quick Stickers / Expressions</span>
             <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
               {['🤖', '🌟', '🎯', '💫', '🪄', '💎', '🚀', '🛡️'].map((stk) => (

@@ -348,13 +348,24 @@ async def whatsapp_incoming_webhook(
         },
     )
 
-    # Check if Eve should reply (mentions @eve, eve, or if in eve chat)
+    # Check if Eve should reply (mentions @eve, @susindran, @susin, eve, or if in eve chat)
     text_lower = content.lower()
     is_eve_chat = chat_id == "eve"
-    has_eve_mention = "@eve" in text_lower or text_lower.startswith("eve ") or text_lower == "eve"
+
+    user_settings = whatsapp_repo.get_whatsapp_settings(database, user_id)
+    eve_tag = (user_settings.eve_tag or "@eve").lower()
+    owner_aliases = [a.lower() for a in (user_settings.owner_aliases or ["@susindran", "@susin"])]
+
+    has_mention = (
+        eve_tag in text_lower
+        or "@eve" in text_lower
+        or any(alias in text_lower for alias in owner_aliases)
+        or text_lower.startswith("eve ")
+        or text_lower == "eve"
+    )
     not_from_eve = sender_id != "eve" and not sender_name.lower().startswith("eve")
 
-    should_reply = not_from_eve and (has_eve_mention or (is_eve_chat and not is_from_me))
+    should_reply = not_from_eve and (has_mention or (is_eve_chat and not is_from_me))
 
     if should_reply:
         logger.info(f"Eve triggered for WhatsApp message from {sender_name} (from_me={is_from_me}) in {chat_id}")

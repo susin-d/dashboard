@@ -83,9 +83,17 @@ def clear_whatsapp_session(database: Client, user_id: str):
 
 
 def get_whatsapp_settings(database: Client, user_id: str) -> WhatsAppSettings:
+    from app.core.config import settings as app_settings
+
     snap = _settings_doc(database, user_id).get()
     if not snap.exists:
-        return WhatsAppSettings()
+        return WhatsAppSettings(
+            eve_tag=app_settings.whatsapp_eve_tag,
+            owner_name=app_settings.whatsapp_owner_name,
+            owner_aliases=app_settings.whatsapp_owner_aliases,
+            my_number=app_settings.whatsapp_my_number,
+            my_jid=app_settings.whatsapp_my_jid,
+        )
     data = snap.to_dict() or {}
     return WhatsAppSettings(
         auto_reply_enabled=bool(data.get("auto_reply_enabled", False)),
@@ -93,6 +101,11 @@ def get_whatsapp_settings(database: Client, user_id: str) -> WhatsAppSettings:
         auto_reply_contacts=data.get("auto_reply_contacts", []),
         notifications_enabled=bool(data.get("notifications_enabled", True)),
         desktop_alerts_enabled=bool(data.get("desktop_alerts_enabled", True)),
+        eve_tag=data.get("eve_tag") or app_settings.whatsapp_eve_tag,
+        owner_name=data.get("owner_name") or app_settings.whatsapp_owner_name,
+        owner_aliases=data.get("owner_aliases") or app_settings.whatsapp_owner_aliases,
+        my_number=data.get("my_number") or app_settings.whatsapp_my_number,
+        my_jid=data.get("my_jid") or app_settings.whatsapp_my_jid,
     )
 
 

@@ -83,6 +83,11 @@ class WhatsAppSettings(BaseModel):
     auto_reply_contacts: List[str] = Field(default_factory=list, description="List of JIDs with auto-reply enabled")
     notifications_enabled: bool = True
     desktop_alerts_enabled: bool = True
+    eve_tag: Optional[str] = "@eve"
+    owner_name: Optional[str] = "Susindran"
+    owner_aliases: List[str] = Field(default_factory=lambda: ["@susindran", "@susin", "@susindran_d"])
+    my_number: Optional[str] = None
+    my_jid: Optional[str] = None
 
 
 class WhatsAppSettingsUpdate(BaseModel):
@@ -91,6 +96,11 @@ class WhatsAppSettingsUpdate(BaseModel):
     auto_reply_contacts: Optional[List[str]] = None
     notifications_enabled: Optional[bool] = None
     desktop_alerts_enabled: Optional[bool] = None
+    eve_tag: Optional[str] = None
+    owner_name: Optional[str] = None
+    owner_aliases: Optional[List[str]] = None
+    my_number: Optional[str] = None
+    my_jid: Optional[str] = None
 
 
 class WhatsAppEveDraftRequest(BaseModel):

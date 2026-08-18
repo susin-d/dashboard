@@ -121,6 +121,16 @@ class Settings:
         "WHATSAPP_GATEWAY_URL",
         "http://whatsapp-worker:3001" if os.path.exists("/.dockerenv") else "http://127.0.0.1:3001",
     )
+    whatsapp_eve_tag: str = os.getenv("WHATSAPP_EVE_TAG", "@eve")
+    whatsapp_owner_name: str = os.getenv("WHATSAPP_OWNER_NAME", "Susindran")
+    whatsapp_owner_aliases_raw: str = os.getenv("WHATSAPP_OWNER_ALIASES", "@susindran,@susin,@susindran_d")
+    whatsapp_my_number: str = os.getenv("WHATSAPP_MY_NUMBER", "")
+    whatsapp_my_jid: str = os.getenv("WHATSAPP_MY_JID", "")
+
+    @property
+    def whatsapp_owner_aliases(self) -> list[str]:
+        raw = self.whatsapp_owner_aliases_raw or ""
+        return [a.strip() for a in raw.split(",") if a.strip()]
 
     @property
     def cors_origins(self) -> list[str]:

@@ -4,7 +4,7 @@ Living project snapshot for AI agents. `AGENTS.md` holds the permanent rules;
 this file holds the **current state** of the codebase and must be kept up to
 date whenever the implementation changes.
 
-> **Last updated:** 2026-08-18 (Blocked and animated Summarize button during active AI summarization; removed 'Linked' badge and centered 'Chats' title)
+> **Last updated:** 2026-08-18 (Added configurable @eve, @susindran, @susin, @mynumber, and @myjid alias keys to backend settings, env configuration, and frontend quick-mention buttons)
 
 ---
 
