@@ -28,6 +28,7 @@ import {
   Pin,
   Download,
   ExternalLink,
+  Loader2,
 } from 'lucide-react'
 import { Markdown } from '../ui/Markdown'
 
@@ -101,6 +102,7 @@ export function WhatsAppConversation({
   onStarMessage,
   onDeleteMessage,
   isDrafting = false,
+  isSummarizing = false,
   isTyping = false,
   typingText = '',
 }) {
@@ -445,12 +447,31 @@ export function WhatsAppConversation({
           <button
             type="button"
             className="secondary-button"
-            style={{ minHeight: '34px', padding: '6px 12px', fontSize: '0.8125rem', display: 'flex', alignItems: 'center', gap: '6px' }}
+            style={{
+              minHeight: '34px',
+              padding: '6px 12px',
+              fontSize: '0.8125rem',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              opacity: isSummarizing ? 0.7 : 1,
+              cursor: isSummarizing ? 'not-allowed' : 'pointer',
+            }}
+            disabled={isSummarizing}
             onClick={() => onSummarizeChat?.(chat?.id)}
-            title="Summarize conversation with Eve"
+            title={isSummarizing ? 'Summarizing conversation...' : 'Summarize conversation with Eve'}
           >
-            <Sparkles size={14} />
-            Summarize
+            {isSummarizing ? (
+              <>
+                <Loader2 size={14} className="spin" />
+                <span>Summarizing...</span>
+              </>
+            ) : (
+              <>
+                <Sparkles size={14} />
+                <span>Summarize</span>
+              </>
+            )}
           </button>
 
           {/* Chat Info */}

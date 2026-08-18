@@ -35,6 +35,7 @@ export function WhatsAppPage() {
   const [pairingData, setPairingData] = useState({ qr_code: null, pairing_code: null })
   const [isInfoDrawerOpen, setIsInfoDrawerOpen] = useState(false)
   const [isDrafting, setIsDrafting] = useState(false)
+  const [isSummarizing, setIsSummarizing] = useState(false)
   const [summaryModalText, setSummaryModalText] = useState(null)
   const [isTyping, setIsTyping] = useState(false)
   const [typingText, setTypingText] = useState('')
@@ -469,11 +470,14 @@ export function WhatsAppPage() {
   }
 
   const handleSummarizeChat = async (chatId) => {
+    setIsSummarizing(true)
     try {
       const res = await summarizeWhatsAppChat(chatId)
       setSummaryModalText(res.summary)
     } catch {
       alert('Could not summarize conversation at this time.')
+    } finally {
+      setIsSummarizing(false)
     }
   }
 
@@ -643,6 +647,7 @@ export function WhatsAppPage() {
             onStarMessage={handleStarMessage}
             onDeleteMessage={handleDeleteMessage}
             isDrafting={isDrafting}
+            isSummarizing={isSummarizing}
             isTyping={isTyping}
             typingText={typingText}
           />
