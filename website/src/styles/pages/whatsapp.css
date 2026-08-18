@@ -525,7 +525,7 @@
   overflow: hidden;
   flex-shrink: 0;
   margin-top: 2px;
-  background: var(--bg-secondary, #18181b);
+  background: var(--bg-tertiary, #27272a);
   border: 1px solid var(--border-color, #3f3f46);
   display: flex;
   align-items: center;
@@ -545,10 +545,10 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.75rem;
+  font-size: 0.8125rem;
   font-weight: 700;
   color: var(--text-primary, #ffffff);
-  background: #27272a;
+  background: var(--bg-tertiary, #27272a);
 }
 
 .whatsapp-avatar-initial {
