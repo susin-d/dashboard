@@ -20,7 +20,7 @@ import { WhatsAppQrModal } from '../components/whatsapp/WhatsAppQrModal'
 import { WhatsAppInfoDrawer } from '../components/whatsapp/WhatsAppInfoDrawer'
 import { Modal } from '../components/ui/Modal'
 import { Markdown } from '../components/ui/Markdown'
-import { MessageSquare, QrCode } from 'lucide-react'
+import { MessageSquare, QrCode, RefreshCw, WifiOff, Loader2 } from 'lucide-react'
 
 export function WhatsAppPage() {
   const [status, setStatus] = useState({ connected: false })
@@ -39,6 +39,12 @@ export function WhatsAppPage() {
   const [isTyping, setIsTyping] = useState(false)
   const [typingText, setTypingText] = useState('')
 
+  // Sync / Health states: 'syncing' | 'ready' | 'error'
+  const [syncStatus, setSyncStatus] = useState('syncing')
+  const [syncProgress, setSyncProgress] = useState(15)
+  const [syncStepText, setSyncStepText] = useState('Checking WhatsApp server gateway...')
+  const [syncError, setSyncError] = useState(null)
+
   // Request browser notifications permission on mount
   useEffect(() => {
     if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'default') {
@@ -46,25 +52,47 @@ export function WhatsAppPage() {
     }
   }, [])
 
-  // Load initial status and chats
-  useEffect(() => {
-    let mounted = true
-    async function loadInitial() {
-      try {
-        const stat = await fetchWhatsAppStatus().catch(() => ({ connected: false }))
-        if (mounted) setStatus(stat)
+  // Sync and load initial status and chats with progressive loading bar
+  const runFullSync = async () => {
+    setSyncStatus('syncing')
+    setSyncProgress(20)
+    setSyncStepText('Connecting to WhatsApp Gateway...')
+    setSyncError(null)
 
-        const chatList = await fetchWhatsAppChats().catch(() => [])
-        if (mounted) {
-          setChats(chatList)
-          setSelectedChatId((current) => current || (chatList.length > 0 ? chatList[0].id : null))
-        }
-      } catch (err) {
-        console.error('Failed to load WhatsApp data:', err)
-      }
+    try {
+      // Step 1: Health & Connection check
+      setSyncProgress(40)
+      setSyncStepText('Verifying gateway connection and session status...')
+      const stat = await fetchWhatsAppStatus().catch((err) => {
+        throw new Error(`Unable to reach WhatsApp gateway: ${err.message || 'Server offline'}`)
+      })
+      setStatus(stat)
+
+      // Step 2: Sync chats and contacts
+      setSyncProgress(70)
+      setSyncStepText('Syncing conversations, messages, and media...')
+      const chatList = await fetchWhatsAppChats().catch((err) => {
+        throw new Error(`Failed to sync chat history: ${err.message || 'Database error'}`)
+      })
+
+      setChats(chatList)
+      setSelectedChatId((current) => current || (chatList.length > 0 ? chatList[0].id : null))
+
+      // Step 3: Complete
+      setSyncProgress(100)
+      setSyncStepText('WhatsApp is synced and ready.')
+      setTimeout(() => {
+        setSyncStatus('ready')
+      }, 400)
+    } catch (err) {
+      console.error('WhatsApp sync error:', err)
+      setSyncStatus('error')
+      setSyncError(err.message || 'Server connection failed')
     }
+  }
 
-    loadInitial()
+  useEffect(() => {
+    runFullSync()
 
     // Subscribe to WebSocket
     const unsubscribe = whatsappSocket.subscribe((event) => {
@@ -518,6 +546,62 @@ export function WhatsAppPage() {
     markWhatsAppChatRead(chatId).catch(() => {})
     setChats((prev) =>
       prev.map((c) => (c.id === chatId ? { ...c, unread_count: 0 } : c)),
+    )
+  }
+
+  if (syncStatus === 'syncing') {
+    return (
+      <div className="whatsapp-sync-loading-container">
+        <div className="whatsapp-sync-loading-card">
+          <div className="whatsapp-sync-logo-wrapper">
+            <MessageSquare size={36} className="whatsapp-sync-logo-icon" />
+          </div>
+          <h2 className="whatsapp-sync-title">Starwaves WhatsApp</h2>
+          <p className="whatsapp-sync-step">{syncStepText}</p>
+
+          <div className="whatsapp-sync-progress-bar-bg">
+            <div
+              className="whatsapp-sync-progress-bar-fill"
+              style={{ width: `${syncProgress}%` }}
+            />
+          </div>
+
+          <div className="whatsapp-sync-footer">
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <Loader2 size={13} className="spin" />
+              <span>Syncing encrypted session & conversations</span>
+            </div>
+            <span style={{ fontWeight: 600 }}>{syncProgress}%</span>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (syncStatus === 'error') {
+    return (
+      <div className="whatsapp-sync-loading-container">
+        <div className="whatsapp-sync-loading-card is-error">
+          <div className="whatsapp-sync-logo-wrapper is-error">
+            <WifiOff size={36} />
+          </div>
+          <h2 className="whatsapp-sync-title">WhatsApp Gateway Unavailable</h2>
+          <p className="whatsapp-sync-error-desc">
+            {syncError || 'The WhatsApp backend server or worker is currently unreachable.'}
+          </p>
+
+          <div className="whatsapp-sync-actions">
+            <button
+              type="button"
+              className="primary-button"
+              onClick={runFullSync}
+              style={{ minHeight: '40px', padding: '8px 20px', gap: '8px' }}
+            >
+              <RefreshCw size={16} /> Retry Synchronization
+            </button>
+          </div>
+        </div>
+      </div>
     )
   }
 
