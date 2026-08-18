@@ -202,6 +202,7 @@ export function WhatsAppPage() {
         const targetChat = event.chat_id || event.chatId
         const targetMsg = event.message_id || event.messageId
         const targetSender = event.sender || event.senderId || 'other'
+        const targetSenderName = event.senderName || event.sender_name || null
         const currentSelected = selectedChatIdRef.current
         const cleanSelected = currentSelected?.replace(/@s\.whatsapp\.net|@g\.us|@lid/g, '')
         const cleanTargetChat = targetChat?.replace(/@s\.whatsapp\.net|@g\.us|@lid/g, '')
@@ -210,9 +211,17 @@ export function WhatsAppPage() {
           setMessages((prev) =>
             prev.map((m) => {
               if (m.id !== targetMsg) return m
-              const existingReactions = (m.reactions || []).filter((r) => r.sender !== targetSender)
+              const existingReactions = (m.reactions || []).filter(
+                (r) => r.sender !== targetSender && r.sender_id !== targetSender && r.senderId !== targetSender,
+              )
               if (event.emoji) {
-                existingReactions.push({ emoji: event.emoji, sender: targetSender, count: 1 })
+                existingReactions.push({
+                  emoji: event.emoji,
+                  sender: targetSender,
+                  sender_id: targetSender,
+                  sender_name: targetSenderName,
+                  count: 1,
+                })
               }
               return { ...m, reactions: existingReactions }
             }),

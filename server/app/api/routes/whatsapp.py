@@ -160,10 +160,11 @@ async def whatsapp_incoming_webhook(
         chat_id = payload.get("chatId")
         message_id = payload.get("messageId")
         sender_id = payload.get("senderId") or "other"
+        sender_name = payload.get("senderName") or payload.get("sender_name")
         emoji = payload.get("emoji")
         if user_id and chat_id and message_id:
             whatsapp_repo.add_message_reaction(
-                database, user_id, chat_id, message_id, emoji=emoji or "", sender=sender_id
+                database, user_id, chat_id, message_id, emoji=emoji or "", sender=sender_id, sender_name=sender_name
             )
             await whatsapp_ws_manager.broadcast_to_user(
                 user_id,
@@ -172,6 +173,7 @@ async def whatsapp_incoming_webhook(
                     "chatId": chat_id,
                     "messageId": message_id,
                     "senderId": sender_id,
+                    "senderName": sender_name,
                     "emoji": emoji,
                 },
             )

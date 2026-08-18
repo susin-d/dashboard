@@ -74,13 +74,18 @@ func handleHistorySync(s *models.SessionState, userID string, v *waEvents.Histor
 
 			// Check if this history message is a reaction
 			if rxTarget, rxEmoji := parser.ExtractReactionInfo(rawM); rxTarget != "" {
+				rxSenderName := ""
+				if pJID, err := types.ParseJID(senderJID); err == nil {
+					rxSenderName = contacts.ResolveContactName(s, pJID, "")
+				}
 				for _, existing := range syncedMessages {
 					if existing.ID == rxTarget {
 						if rxEmoji != "" {
 							existing.Reactions = append(existing.Reactions, &models.SessionReaction{
-								Emoji:  rxEmoji,
-								Sender: senderJID,
-								Count:  1,
+								Emoji:      rxEmoji,
+								Sender:     senderJID,
+								SenderName: rxSenderName,
+								Count:      1,
 							})
 						}
 						break
@@ -279,9 +284,10 @@ func handleMessage(s *models.SessionState, userID string, v *waEvents.Message) {
 					}
 					if rxEmoji != "" {
 						filtered = append(filtered, &models.SessionReaction{
-							Emoji:  rxEmoji,
-							Sender: senderName,
-							Count:  1,
+							Emoji:      rxEmoji,
+							Sender:     senderJID,
+							SenderName: senderName,
+							Count:      1,
 						})
 					}
 					m.Reactions = filtered
@@ -292,12 +298,13 @@ func handleMessage(s *models.SessionState, userID string, v *waEvents.Message) {
 		s.Unlock()
 
 		webhook.SendWebhook(map[string]interface{}{
-			"type":      "message_reaction",
-			"userId":    userID,
-			"chatId":    chatJID,
-			"messageId": rxTarget,
-			"senderId":  senderJID,
-			"emoji":     rxEmoji,
+			"type":       "message_reaction",
+			"userId":     userID,
+			"chatId":     chatJID,
+			"messageId":  rxTarget,
+			"senderId":   senderJID,
+			"senderName": senderName,
+			"emoji":      rxEmoji,
 		})
 		return
 	}

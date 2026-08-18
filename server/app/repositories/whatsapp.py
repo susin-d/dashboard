@@ -305,6 +305,7 @@ def add_message_reaction(
     message_id: str,
     emoji: str,
     sender: str = "me",
+    sender_name: Optional[str] = None,
 ):
     msg_ref = _messages_col(database, user_id, chat_id).document(message_id)
     snap = msg_ref.get()
@@ -312,9 +313,15 @@ def add_message_reaction(
         data = snap.to_dict() or {}
         reactions = data.get("reactions") or []
         # Filter existing reaction from same sender
-        reactions = [r for r in reactions if r.get("sender") != sender]
+        reactions = [
+            r for r in reactions
+            if r.get("sender") != sender and r.get("sender_id") != sender
+        ]
         if emoji:
-            reactions.append({"emoji": emoji, "sender": sender})
+            entry = {"emoji": emoji, "sender": sender}
+            if sender_name:
+                entry["sender_name"] = sender_name
+            reactions.append(entry)
         msg_ref.set({"reactions": reactions}, merge=True)
 
 

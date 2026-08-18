@@ -35,9 +35,10 @@ type SessionMedia struct {
 
 // SessionReaction represents an emoji reaction on a message.
 type SessionReaction struct {
-	Emoji  string `json:"emoji"`
-	Sender string `json:"sender"`
-	Count  int    `json:"count"`
+	Emoji      string `json:"emoji"`
+	Sender     string `json:"sender"`
+	SenderName string `json:"senderName,omitempty"`
+	Count      int    `json:"count"`
 }
 
 // SessionMessage represents a single message in a WhatsApp chat.
