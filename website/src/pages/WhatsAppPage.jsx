@@ -93,11 +93,12 @@ export function WhatsAppPage() {
   }
 
   useEffect(() => {
+    let mounted = true
     runFullSync()
 
     // Subscribe to WebSocket
     const unsubscribe = whatsappSocket.subscribe((event) => {
-      if (!event || !event.type) return
+      if (!mounted || !event || !event.type) return
 
       if (event.type === 'connection_state' || event.type === 'status_update') {
         setStatus((prev) => ({
