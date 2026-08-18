@@ -4,7 +4,7 @@ Living project snapshot for AI agents. `AGENTS.md` holds the permanent rules;
 this file holds the **current state** of the codebase and must be kept up to
 date whenever the implementation changes.
 
-> **Last updated:** 2026-08-18 (Implemented Advanced Global Search & Command Palette with multi-category filtering, deep section navigation, live workspace record search, and quick actions)
+> **Last updated:** 2026-08-18 (Implemented interactive conversation summary chat with Eve in WhatsApp, enabling grounded follow-up Q&A, prompt chips, and multi-view summary navigation)
 
 ---
 
