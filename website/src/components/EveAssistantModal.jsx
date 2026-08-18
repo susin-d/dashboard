@@ -285,15 +285,21 @@ export function EveAssistantModal({ isOpen, onClose, onNavigate, onWorkspaceChan
     })
   }
 
-  const toolQuery = draft.startsWith('@') ? draft.slice(1).split(/\s/)[0].toLowerCase() : ''
-  const matchingTools = EVE_TOOLS_LIST.filter((tool) =>
-    `${tool.command} ${tool.label} ${tool.name}`.toLowerCase().includes(toolQuery),
-  )
+  const isTypingTool = draft.startsWith('@') && !draft.includes(' ')
+  const toolQuery = isTypingTool ? draft.slice(1).toLowerCase() : ''
+  const matchingTools = isTypingTool
+    ? EVE_TOOLS_LIST.filter((tool) =>
+        `${tool.command} ${tool.label} ${tool.name}`.toLowerCase().includes(toolQuery),
+      )
+    : []
 
-  const promptQuery = draft.startsWith('/') ? draft.slice(1).split(/\s/)[0].toLowerCase() : ''
-  const matchingPrompts = EVE_PRESET_PROMPTS.filter((item) =>
-    `${item.command} ${item.label}`.toLowerCase().includes(promptQuery),
-  )
+  const isTypingPrompt = draft.startsWith('/') && !draft.includes(' ')
+  const promptQuery = isTypingPrompt ? draft.slice(1).toLowerCase() : ''
+  const matchingPrompts = isTypingPrompt
+    ? EVE_PRESET_PROMPTS.filter((item) =>
+        `${item.command} ${item.label}`.toLowerCase().includes(promptQuery),
+      )
+    : []
 
   const selectTool = (tool) => {
     setDraft(`@${tool.command} `)
@@ -467,7 +473,10 @@ export function EveAssistantModal({ isOpen, onClose, onNavigate, onWorkspaceChan
                   value={draft}
                   onChange={(event) => setDraft(event.target.value)}
                   onKeyDown={(event) => {
-                    if (event.key === 'Enter' && !event.shiftKey) {
+                    if (event.key === 'Escape' && (draft.startsWith('@') || draft.startsWith('/'))) {
+                      event.preventDefault()
+                      setDraft('')
+                    } else if (event.key === 'Enter' && !event.shiftKey) {
                       event.preventDefault()
                       event.currentTarget.form?.requestSubmit()
                     }

@@ -411,7 +411,10 @@ export function EveChatSection({
                     type="button"
                     key={tool.command}
                     className="eve-skill-item"
-                    onClick={() => selectTool(tool)}
+                    onClick={() => {
+                      selectTool(tool)
+                      composerRef.current?.focus()
+                    }}
                   >
                     <span className="eve-skill-cmd">@{tool.command}</span>
                     <div className="eve-skill-desc">
@@ -433,7 +436,10 @@ export function EveChatSection({
                     type="button"
                     key={item.command}
                     className="eve-skill-item"
-                    onClick={() => selectPrompt(item)}
+                    onClick={() => {
+                      selectPrompt(item)
+                      composerRef.current?.focus()
+                    }}
                   >
                     <span className="eve-skill-cmd">/{item.command}</span>
                     <div className="eve-skill-desc">
@@ -480,7 +486,10 @@ export function EveChatSection({
               value={draft}
               onChange={(e) => setDraft(e.target.value)}
               onKeyDown={(e) => {
-                if (e.key === 'Enter' && !e.shiftKey) {
+                if (e.key === 'Escape' && (draft.startsWith('@') || draft.startsWith('/'))) {
+                  e.preventDefault()
+                  setDraft('')
+                } else if (e.key === 'Enter' && !e.shiftKey) {
                   e.preventDefault()
                   onFormSubmit(e)
                 }

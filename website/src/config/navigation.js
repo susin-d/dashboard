@@ -30,7 +30,7 @@ export const navigationItems = [
   { id: 'projects', label: 'Projects', icon: FolderKanban, group: 'Work' },
   { id: 'documents', label: 'Documents', icon: Files, group: 'Work' },
   { id: 'workspace', label: 'Workspace', icon: SquareTerminal, group: 'Work' },
-  { id: 'eve', label: 'Chat & Assistant', icon: Bot, group: 'Eve AI' },
+  { id: 'eve', label: 'Chat', icon: Bot, group: 'Eve AI' },
   { id: 'eve-sessions', label: 'Chat Sessions', icon: History, group: 'Eve AI' },
   { id: 'eve-memory', label: 'Eve Memory', icon: Brain, group: 'Eve AI' },
   { id: 'eve-call', label: 'Voice & AI Call', icon: PhoneCall, group: 'Eve AI' },

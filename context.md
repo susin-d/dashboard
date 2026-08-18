@@ -4,7 +4,7 @@ Living project snapshot for AI agents. `AGENTS.md` holds the permanent rules;
 this file holds the **current state** of the codebase and must be kept up to
 date whenever the implementation changes.
 
-> **Last updated:** 2026-08-18 (Moved Eve AI subpages into main sidebar under dedicated EVE AI group; verified full Docker multi-container builds for server, website, and whatsapp-worker)
+> **Last updated:** 2026-08-18 (Updated Eve AI sidebar item label to Chat; fixed autocomplete popup dismissal when selecting or typing tool commands)
 
 ---
 
