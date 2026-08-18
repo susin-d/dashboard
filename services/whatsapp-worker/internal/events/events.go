@@ -129,6 +129,23 @@ func handleHistorySync(s *models.SessionState, userID string, v *waEvents.Histor
 				}
 			}
 
+			// Decrypt and download full-res media if available
+			if media != nil && s.Client != nil {
+				if downloadable, mime := parser.ExtractDownloadableMessage(rawM); downloadable != nil {
+					if dlMsg, ok := downloadable.(whatsmeow.DownloadableMessage); ok {
+						ctxDl, cancelDl := context.WithTimeout(context.Background(), 3*time.Second)
+						data, err := s.Client.Download(ctxDl, dlMsg)
+						cancelDl()
+						if err == nil && len(data) > 0 {
+							if mime == "" {
+								mime = "image/jpeg"
+							}
+							media.URL = fmt.Sprintf("data:%s;base64,%s", mime, base64.StdEncoding.EncodeToString(data))
+						}
+					}
+				}
+			}
+
 			m := &models.SessionMessage{
 				ID:               msgID,
 				ChatID:           chatJIDStr,

@@ -4,7 +4,7 @@ Living project snapshot for AI agents. `AGENTS.md` holds the permanent rules;
 this file holds the **current state** of the codebase and must be kept up to
 date whenever the implementation changes.
 
-> **Last updated:** 2026-08-18 (Resolved WhatsApp reaction sender names, contact avatars, initials, and interactive emoji filter tabs in reactions breakdown modal)
+> **Last updated:** 2026-08-18 (Enhanced WhatsApp quoted reply media thumbnails, media type labels, and history-sync media decryption)
 
 ---
 

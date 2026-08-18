@@ -1025,10 +1025,53 @@ export function WhatsAppConversation({
                         style={{ cursor: 'pointer' }}
                         title="Click to jump to quoted message"
                       >
-                        <span className="whatsapp-quoted-sender">
-                          {quotedMsg.is_from_me ? 'You' : formatSenderName(quotedMsg.sender_name, quotedMsg.sender_id)}
-                        </span>
-                        <p className="whatsapp-quoted-text">{quotedMsg.content}</p>
+                        <div className="whatsapp-quoted-body">
+                          <span className="whatsapp-quoted-sender">
+                            {quotedMsg.is_from_me ? 'You' : formatSenderName(quotedMsg.sender_name, quotedMsg.sender_id)}
+                          </span>
+                          <p className="whatsapp-quoted-text">
+                            {quotedMsg.media && !quotedMsg.content ? (
+                              <span className="whatsapp-quoted-media-tag">
+                                {quotedMsg.media.type === 'video'
+                                  ? '🎥 Video'
+                                  : quotedMsg.media.type === 'audio'
+                                  ? '🎵 Audio'
+                                  : quotedMsg.media.type === 'document'
+                                  ? `📄 ${quotedMsg.media.filename || 'Document'}`
+                                  : '📷 Photo'}
+                              </span>
+                            ) : quotedMsg.media && quotedMsg.content ? (
+                              <span>
+                                <span className="whatsapp-quoted-media-tag">
+                                  {quotedMsg.media.type === 'video'
+                                    ? '🎥 '
+                                    : quotedMsg.media.type === 'audio'
+                                    ? '🎵 '
+                                    : quotedMsg.media.type === 'document'
+                                    ? '📄 '
+                                    : '📷 '}
+                                </span>
+                                {quotedMsg.content}
+                              </span>
+                            ) : (
+                              quotedMsg.content || 'Message'
+                            )}
+                          </p>
+                        </div>
+                        {quotedMsg.media && (quotedMsg.media.thumbnail_base64 || quotedMsg.media.url) && (
+                          <div className="whatsapp-quoted-thumb-wrapper">
+                            <img
+                              src={quotedMsg.media.thumbnail_base64 || quotedMsg.media.url}
+                              alt="Quoted media preview"
+                              className="whatsapp-quoted-thumb"
+                            />
+                            {quotedMsg.media.type === 'video' && (
+                              <div className="whatsapp-quoted-video-icon">
+                                <Play size={10} fill="white" />
+                              </div>
+                            )}
+                          </div>
+                        )}
                       </div>
                     )}
 
@@ -1252,8 +1295,44 @@ export function WhatsAppConversation({
             <span className="whatsapp-replying-title">
               Replying to {replyingTo.is_from_me ? 'yourself' : replyingTo.sender_name || 'Contact'}
             </span>
-            <p className="whatsapp-replying-text">{replyingTo.content}</p>
+            <p className="whatsapp-replying-text">
+              {replyingTo.media && !replyingTo.content ? (
+                <span className="whatsapp-quoted-media-tag">
+                  {replyingTo.media.type === 'video'
+                    ? '🎥 Video'
+                    : replyingTo.media.type === 'audio'
+                    ? '🎵 Audio'
+                    : replyingTo.media.type === 'document'
+                    ? `📄 ${replyingTo.media.filename || 'Document'}`
+                    : '📷 Photo'}
+                </span>
+              ) : replyingTo.media && replyingTo.content ? (
+                <span>
+                  <span className="whatsapp-quoted-media-tag">
+                    {replyingTo.media.type === 'video'
+                      ? '🎥 '
+                      : replyingTo.media.type === 'audio'
+                      ? '🎵 '
+                      : replyingTo.media.type === 'document'
+                      ? '📄 '
+                      : '📷 '}
+                  </span>
+                  {replyingTo.content}
+                </span>
+              ) : (
+                replyingTo.content || 'Message'
+              )}
+            </p>
           </div>
+          {replyingTo.media && (replyingTo.media.thumbnail_base64 || replyingTo.media.url) && (
+            <div className="whatsapp-quoted-thumb-wrapper" style={{ marginRight: 8 }}>
+              <img
+                src={replyingTo.media.thumbnail_base64 || replyingTo.media.url}
+                alt="Attachment preview"
+                className="whatsapp-quoted-thumb"
+              />
+            </div>
+          )}
           <button
             type="button"
             className="whatsapp-icon-btn small"
