@@ -268,6 +268,37 @@ export function WhatsAppConversation({
     }
   }
 
+  const handleDownloadMedia = (media, defaultName = 'download') => {
+    if (!media) return
+    const rawUrl = media.url || media.thumbnail_base64
+    if (!rawUrl) return
+
+    let rawFilename = media.filename || defaultName
+    // Strip .enc extension if present in WhatsApp metadata
+    rawFilename = rawFilename.replace(/\.enc$/i, '')
+
+    // Add appropriate extension if missing based on media type or mimetype
+    if (!rawFilename.includes('.')) {
+      if (media.type === 'image') rawFilename += '.jpg'
+      else if (media.type === 'video') rawFilename += '.mp4'
+      else if (media.type === 'audio') rawFilename += '.ogg'
+      else if (media.mimetype?.includes('pdf')) rawFilename += '.pdf'
+      else if (media.mimetype?.includes('png')) rawFilename += '.png'
+      else if (media.mimetype?.includes('jpeg') || media.mimetype?.includes('jpg')) rawFilename += '.jpg'
+    }
+
+    if (rawUrl.startsWith('data:')) {
+      const link = document.createElement('a')
+      link.href = rawUrl
+      link.download = rawFilename
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+    } else {
+      window.open(rawUrl, '_blank', 'noopener,noreferrer')
+    }
+  }
+
   const handleCopyMessage = (content) => {
     navigator.clipboard.writeText(content)
     setCopiedToast(true)
@@ -861,14 +892,20 @@ export function WhatsAppConversation({
                           display: 'flex',
                           alignItems: 'center',
                           gap: 8,
-                          padding: '6px 10px',
+                          padding: '8px 12px',
                           background: 'rgba(255,255,255,0.08)',
-                          borderRadius: 6,
+                          borderRadius: 8,
                           marginBottom: 6,
+                          cursor: 'pointer',
                         }}
+                        onClick={() => handleDownloadMedia(msg.media, 'document')}
+                        title="Click to download document"
                       >
                         <FileText size={18} />
-                        <span style={{ fontSize: '0.8125rem', fontWeight: 500 }}>{msg.media.filename || 'Document'}</span>
+                        <span style={{ fontSize: '0.8125rem', fontWeight: 500, flex: 1 }}>
+                          {(msg.media.filename || 'Document').replace(/\.enc$/i, '')}
+                        </span>
+                        <Download size={14} style={{ opacity: 0.7 }} />
                       </div>
                     ) : null}
 
@@ -1217,16 +1254,14 @@ export function WhatsAppConversation({
                 )}
               </div>
               <div className="whatsapp-lightbox-actions">
-                <a
-                  href={activeLightboxMedia.url}
-                  download={activeLightboxMedia.filename || 'whatsapp-media'}
-                  target="_blank"
-                  rel="noreferrer"
+                <button
+                  type="button"
+                  onClick={() => handleDownloadMedia(activeLightboxMedia, 'whatsapp-media')}
                   className="whatsapp-icon-btn small"
-                  title="Download / Open original"
+                  title="Download media"
                 >
                   <Download size={16} />
-                </a>
+                </button>
                 <button
                   type="button"
                   className="whatsapp-icon-btn small"
