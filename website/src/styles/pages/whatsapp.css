@@ -1135,9 +1135,7 @@
 /* Context Menu */
 .whatsapp-context-menu {
   position: absolute;
-  top: 100%;
   right: 0;
-  margin-top: 4px;
   background: var(--bg-secondary, #18181b);
   border: 1px solid var(--border-color, #3f3f46);
   border-radius: 8px;
@@ -1150,6 +1148,17 @@
   display: flex;
   flex-direction: column;
   gap: 2px;
+}
+
+.whatsapp-context-menu.placement-bottom {
+  top: 100%;
+  margin-top: 4px;
+}
+
+.whatsapp-context-menu.placement-top {
+  bottom: 100%;
+  margin-bottom: 4px;
+  box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.7);
 }
 
 .whatsapp-context-react-row {

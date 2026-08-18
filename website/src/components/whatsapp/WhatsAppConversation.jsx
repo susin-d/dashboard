@@ -113,6 +113,7 @@ export function WhatsAppConversation({
   const [replyingTo, setReplyingTo] = useState(null)
   const [hoveredMessageId, setHoveredMessageId] = useState(null)
   const [activeMenuMessageId, setActiveMenuMessageId] = useState(null)
+  const [menuPlacement, setMenuPlacement] = useState('bottom') // 'bottom' | 'top'
   const [isSearchOpen, setIsSearchOpen] = useState(false)
   const [inChatSearchQuery, setInChatSearchQuery] = useState('')
   const [copiedToast, setCopiedToast] = useState(false)
@@ -643,7 +644,15 @@ export function WhatsAppConversation({
                           className="whatsapp-bubble-menu-btn"
                           onClick={(e) => {
                             e.stopPropagation()
-                            setActiveMenuMessageId((curr) => (curr === msg.id ? null : msg.id))
+                            if (activeMenuMessageId === msg.id) {
+                              setActiveMenuMessageId(null)
+                            } else {
+                              const rect = e.currentTarget.getBoundingClientRect()
+                              const spaceBelow = window.innerHeight - rect.bottom
+                              // Context menu height is ~240px; if space below is less than 260px, open upwards
+                              setMenuPlacement(spaceBelow < 260 ? 'top' : 'bottom')
+                              setActiveMenuMessageId(msg.id)
+                            }
                           }}
                           title="Message menu"
                         >
@@ -652,7 +661,7 @@ export function WhatsAppConversation({
 
                         {/* Context Dropdown Menu */}
                         {isMenuOpen && (
-                          <div className="whatsapp-context-menu" ref={menuRef}>
+                          <div className={`whatsapp-context-menu placement-${menuPlacement}`} ref={menuRef}>
                           <button
                             type="button"
                             className="whatsapp-context-item"
@@ -773,6 +782,8 @@ export function WhatsAppConversation({
                     onContextMenu={(e) => {
                       e.preventDefault()
                       e.stopPropagation()
+                      const spaceBelow = window.innerHeight - e.clientY
+                      setMenuPlacement(spaceBelow < 260 ? 'top' : 'bottom')
                       setActiveMenuMessageId(msg.id)
                     }}
                   >
