@@ -4,7 +4,7 @@ Living project snapshot for AI agents. `AGENTS.md` holds the permanent rules;
 this file holds the **current state** of the codebase and must be kept up to
 date whenever the implementation changes.
 
-> **Last updated:** 2026-08-17 (Implemented Fullscreen Media Lightbox viewer, Shared Media & Docs gallery tabs in Info Drawer, and multi-emoji reaction selection)
+> **Last updated:** 2026-08-18 (Completed full WhatsApp Web feature suite: Fullscreen Lightbox, Rich Link Previews, Live Typing & Presence Indicators, Quoted Reply Jump-to-Message, Chat Sidebar Context Menu, Archive/Mute filters, Emojis & Stickers Tray, and Desktop Push Notifications)
 
 ---
 

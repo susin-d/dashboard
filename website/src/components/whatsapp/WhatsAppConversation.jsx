@@ -27,8 +27,25 @@ import {
   X,
   Pin,
   Download,
+  ExternalLink,
 } from 'lucide-react'
 import { Markdown } from '../ui/Markdown'
+
+function extractFirstUrl(text) {
+  if (!text) return null
+  const urlRegex = /(https?:\/\/[^\s]+)/g
+  const match = text.match(urlRegex)
+  if (!match) return null
+  try {
+    const parsed = new URL(match[0])
+    return {
+      url: match[0],
+      hostname: parsed.hostname.replace(/^www\./, ''),
+    }
+  } catch {
+    return null
+  }
+}
 
 function formatSenderName(name, senderId) {
   if (!name && !senderId) return 'Contact'
@@ -84,6 +101,8 @@ export function WhatsAppConversation({
   onStarMessage,
   onDeleteMessage,
   isDrafting = false,
+  isTyping = false,
+  typingText = '',
 }) {
   const [inputText, setInputText] = useState('')
   const [isRecording, setIsRecording] = useState(false)
@@ -294,8 +313,6 @@ export function WhatsAppConversation({
     return formatted.slice(0, 4).join(', ') + (formatted.length > 4 ? ` and ${formatted.length - 4} more...` : '')
   }
 
-  const commonEmojis = ['👍', '❤️', '🙌', '🔥', '🎉', '😊', '🚀', '✅', '🙏', '💯']
-
   // Search & chat-isolated filtered messages sorted chronologically (oldest to newest)
   const displayedMessages = useMemo(() => {
     const cleanCurrentChat = chat?.id?.replace(/@s\.whatsapp\.net|@g\.us|@lid/g, '')
@@ -371,12 +388,21 @@ export function WhatsAppConversation({
                 ? 'Group conversation'
                 : chat?.name || 'Conversation'}
             </h3>
-            <span className="whatsapp-contact-subtitle" title={chat?.participants?.join(', ')}>
-              {isEve
-                ? 'AI Workspace Assistant • Always active'
-                : chat?.is_group
-                ? formatParticipantsSubtitle(chat.participants)
-                : chat?.phone_number || 'Online'}
+            <span className={`whatsapp-contact-subtitle ${isTyping ? 'is-typing' : ''}`} title={chat?.participants?.join(', ')}>
+              {isTyping ? (
+                <span className="whatsapp-typing-text">
+                  <span className="whatsapp-typing-dots">● ● ●</span> {typingText || 'typing...'}
+                </span>
+              ) : isEve ? (
+                'AI Workspace Assistant • Always active'
+              ) : chat?.is_group ? (
+                formatParticipantsSubtitle(chat.participants)
+              ) : (
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+                  <span className="whatsapp-online-dot" />
+                  {chat?.phone_number ? `${chat.phone_number} • Online` : 'Online'}
+                </span>
+              )}
             </span>
           </div>
         </div>
@@ -546,6 +572,7 @@ export function WhatsAppConversation({
                   </div>
                 )}
                 <div
+                  id={`whatsapp-msg-${msg.id}`}
                   className={`whatsapp-message-wrapper ${
                     isOutgoing ? 'outgoing' : 'incoming'
                   } ${isMsgEve ? 'is-eve' : ''}`}
@@ -709,9 +736,22 @@ export function WhatsAppConversation({
                       </div>
                     )}
 
-                    {/* Quoted Reply Preview */}
+                    {/* Quoted Reply Preview (Click to Scroll) */}
                     {quotedMsg && (
-                      <div className="whatsapp-quoted-preview">
+                      <div
+                        className="whatsapp-quoted-preview"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          const el = document.getElementById(`whatsapp-msg-${quotedMsg.id}`)
+                          if (el) {
+                            el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+                            el.classList.add('whatsapp-message-highlight')
+                            setTimeout(() => el.classList.remove('whatsapp-message-highlight'), 1600)
+                          }
+                        }}
+                        style={{ cursor: 'pointer' }}
+                        title="Click to jump to quoted message"
+                      >
                         <span className="whatsapp-quoted-sender">
                           {quotedMsg.is_from_me ? 'You' : formatSenderName(quotedMsg.sender_name, quotedMsg.sender_id)}
                         </span>
@@ -808,6 +848,29 @@ export function WhatsAppConversation({
                       </div>
                     ) : null}
 
+                    {/* Rich Link Preview Card */}
+                    {(() => {
+                      const linkInfo = extractFirstUrl(msg.content)
+                      if (!linkInfo) return null
+                      return (
+                        <a
+                          href={linkInfo.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="whatsapp-link-preview-card"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <div className="whatsapp-link-preview-icon">
+                            <ExternalLink size={16} />
+                          </div>
+                          <div className="whatsapp-link-preview-body">
+                            <span className="whatsapp-link-preview-host">{linkInfo.hostname}</span>
+                            <span className="whatsapp-link-preview-url">{linkInfo.url}</span>
+                          </div>
+                        </a>
+                      )
+                    })()}
+
                     {/* Content */}
                     {msg.content && (
                       <div className="whatsapp-message-text">
@@ -859,6 +922,18 @@ export function WhatsAppConversation({
           )
         })
         )}
+        {/* In-feed Typing Indicator Bubble */}
+        {isTyping && (
+          <div className="whatsapp-message-row incoming is-typing-row">
+            <div className="whatsapp-message-wrapper incoming">
+              <div className="whatsapp-message-bubble whatsapp-typing-bubble">
+                <span className="whatsapp-typing-dot-anim" />
+                <span className="whatsapp-typing-dot-anim" />
+                <span className="whatsapp-typing-dot-anim" />
+              </div>
+            </div>
+          </div>
+        )}
         <div ref={messagesEndRef} />
       </div>
 
@@ -901,19 +976,51 @@ export function WhatsAppConversation({
         </div>
       )}
 
-      {/* Emoji Bar */}
+      {/* Emoji / GIF / Stickers Tray */}
       {showEmojiPicker && (
-        <div className="whatsapp-emoji-tray">
-          {commonEmojis.map((emoji) => (
-            <button
-              key={emoji}
-              type="button"
-              className="whatsapp-emoji-btn"
-              onClick={() => setInputText((prev) => prev + emoji)}
-            >
-              {emoji}
-            </button>
-          ))}
+        <div className="whatsapp-media-tray">
+          <div className="whatsapp-media-tray-tabs">
+            <span className="whatsapp-media-tray-title">Quick Select</span>
+          </div>
+          <div className="whatsapp-media-tray-emojis">
+            {['👍', '❤️', '😂', '😮', '😢', '🙏', '🔥', '🎉', '😊', '🚀', '✅', '💯', '✨', '👏', '🤝', '💡', '📌', '⚡'].map((emoji) => (
+              <button
+                key={emoji}
+                type="button"
+                className="whatsapp-emoji-btn"
+                onClick={() => setInputText((prev) => prev + emoji)}
+              >
+                {emoji}
+              </button>
+            ))}
+          </div>
+          <div className="whatsapp-media-tray-stickers">
+            <span style={{ fontSize: '0.6875rem', color: 'var(--text-secondary)', marginBottom: 4, display: 'block' }}>Quick Stickers / Expressions</span>
+            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+              {['🤖', '🌟', '🎯', '💫', '🪄', '💎', '🚀', '🛡️'].map((stk) => (
+                <button
+                  key={stk}
+                  type="button"
+                  className="whatsapp-sticker-btn"
+                  onClick={() => {
+                    onSendMessage({
+                      chatId: chat.id,
+                      content: stk,
+                      replyToMessageId: replyingTo?.id || null,
+                      media: {
+                        type: 'sticker',
+                        filename: `sticker_${stk}.png`,
+                      },
+                    })
+                    setShowEmojiPicker(false)
+                  }}
+                  title="Send as sticker"
+                >
+                  {stk}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
       )}
 

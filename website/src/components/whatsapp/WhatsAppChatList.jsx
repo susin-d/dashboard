@@ -1,5 +1,5 @@
-import { useMemo, useState } from 'react'
-import { Bot, Pin, User, Users, QrCode } from 'lucide-react'
+import { useMemo, useState, useRef, useEffect } from 'react'
+import { Bot, Pin, User, Users, QrCode, Archive, BellOff, CheckCheck, Trash2 } from 'lucide-react'
 import { SearchBar } from '../ui'
 
 function formatSenderName(name) {
@@ -22,23 +22,52 @@ export function WhatsAppChatList({
   selectedChatId = null,
   onSelectChat,
   onOpenQrModal,
+  onTogglePinChat,
+  onToggleMuteChat,
+  onToggleArchiveChat,
+  onDeleteChat,
+  onMarkChatRead,
   isConnected = false,
   searchQuery = '',
   onSearchChange,
 }) {
-  const [activeFilter, setActiveFilter] = useState('all') // 'all', 'unread', 'favourites', 'groups'
+  const [activeFilter, setActiveFilter] = useState('all') // 'all', 'unread', 'favourites', 'groups', 'archived'
+  const [contextMenuChat, setContextMenuChat] = useState(null)
+  const [contextMenuPos, setContextMenuPos] = useState({ x: 0, y: 0 })
+  const menuRef = useRef(null)
+
+  useEffect(() => {
+    const handleOutsideClick = (e) => {
+      if (menuRef.current && !menuRef.current.contains(e.target)) {
+        setContextMenuChat(null)
+      }
+    }
+    window.addEventListener('click', handleOutsideClick)
+    return () => window.removeEventListener('click', handleOutsideClick)
+  }, [])
 
   // Counts for pills
   const unreadTotal = useMemo(() => {
-    return chats.reduce((acc, c) => acc + (c.unread_count || 0), 0)
+    return chats.filter((c) => !c.is_archived).reduce((acc, c) => acc + (c.unread_count || 0), 0)
   }, [chats])
 
   const groupsCount = useMemo(() => {
-    return chats.filter((c) => c.is_group).length
+    return chats.filter((c) => c.is_group && !c.is_archived).length
+  }, [chats])
+
+  const archivedCount = useMemo(() => {
+    return chats.filter((c) => c.is_archived).length
   }, [chats])
 
   const filteredChats = useMemo(() => {
     const list = chats.filter((chat) => {
+      // Archive handling
+      if (activeFilter === 'archived') {
+        if (!chat.is_archived) return false
+      } else {
+        if (chat.is_archived) return false
+      }
+
       // Pill filtering
       if (activeFilter === 'unread' && (!chat.unread_count || chat.unread_count <= 0)) {
         return false
@@ -89,25 +118,31 @@ export function WhatsAppChatList({
       if (isToday) {
         return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       }
-      return date.toLocaleDateString([], { month: 'short', day: 'numeric' })
+      return date.toLocaleDateString([], { month: 'numeric', day: 'numeric' })
     } catch {
       return ''
     }
   }
 
+  const handleContextMenu = (e, chat) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setContextMenuPos({ x: e.clientX, y: Math.min(e.clientY, window.innerHeight - 200) })
+    setContextMenuChat(chat)
+  }
+
   return (
     <div className="whatsapp-sidebar">
-      {/* Top Header */}
+      {/* Sidebar Header */}
       <div className="whatsapp-sidebar-header">
-        <div className="whatsapp-header-title">
-          <h2>WhatsApp</h2>
-          <span className={`whatsapp-connection-badge ${isConnected ? 'connected' : ''}`}>
-            <span className="dot" />
+        <div className="whatsapp-sidebar-title-row">
+          <h2>Chats</h2>
+          <span className={`whatsapp-status-badge ${isConnected ? 'online' : 'offline'}`}>
             {isConnected ? 'Linked' : 'Offline'}
           </span>
         </div>
 
-        <div className="whatsapp-header-actions">
+        <div className="whatsapp-sidebar-actions">
           <button
             type="button"
             className="whatsapp-icon-btn"
@@ -129,7 +164,7 @@ export function WhatsAppChatList({
         />
       </div>
 
-      {/* Filter Tabs / Pills (All, Unread, Favourites, Groups) */}
+      {/* Filter Tabs / Pills (All, Unread, Favourites, Groups, Archived) */}
       <div className="whatsapp-filter-pills">
         <button
           type="button"
@@ -159,6 +194,16 @@ export function WhatsAppChatList({
         >
           Groups {groupsCount > 0 && <span className="whatsapp-pill-count">{groupsCount}</span>}
         </button>
+        {archivedCount > 0 && (
+          <button
+            type="button"
+            className={`whatsapp-filter-pill ${activeFilter === 'archived' ? 'active' : ''}`}
+            onClick={() => setActiveFilter('archived')}
+          >
+            <Archive size={12} style={{ display: 'inline', marginRight: 3 }} />
+            Archived ({archivedCount})
+          </button>
+        )}
       </div>
 
       {/* Chat List */}
@@ -182,6 +227,7 @@ export function WhatsAppChatList({
                 type="button"
                 className={`whatsapp-chat-item ${isActive ? 'active' : ''}`}
                 onClick={() => onSelectChat(chat.id)}
+                onContextMenu={(e) => handleContextMenu(e, chat)}
               >
                 <div className={`whatsapp-avatar ${isEve ? 'is-eve' : chat.is_group ? 'is-group' : ''}`}>
                   {isEve ? (
@@ -219,6 +265,7 @@ export function WhatsAppChatList({
                   <div className="whatsapp-chat-top">
                     <span className="whatsapp-chat-name" title={chat.name}>
                       {chat.pinned && <Pin size={12} style={{ display: 'inline', marginRight: 4 }} />}
+                      {chat.is_muted && <BellOff size={12} style={{ display: 'inline', marginRight: 4, opacity: 0.6 }} />}
                       {chat.is_group && (!chat.name || chat.name === 'Contact' || chat.name === chat.id)
                         ? 'Group conversation'
                         : chat.name}
@@ -254,6 +301,84 @@ export function WhatsAppChatList({
           })
         )}
       </div>
+
+      {/* Right Click Context Menu on Chat Item */}
+      {contextMenuChat && (
+        <div
+          ref={menuRef}
+          className="whatsapp-context-menu"
+          style={{
+            position: 'fixed',
+            top: contextMenuPos.y,
+            left: contextMenuPos.x,
+            zIndex: 1000,
+          }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <button
+            type="button"
+            className="whatsapp-context-item"
+            onClick={() => {
+              onTogglePinChat?.(contextMenuChat.id, !contextMenuChat.pinned)
+              setContextMenuChat(null)
+            }}
+          >
+            <Pin size={15} />
+            <span>{contextMenuChat.pinned ? 'Unpin chat' : 'Pin chat'}</span>
+          </button>
+
+          <button
+            type="button"
+            className="whatsapp-context-item"
+            onClick={() => {
+              onToggleMuteChat?.(contextMenuChat.id, !contextMenuChat.is_muted)
+              setContextMenuChat(null)
+            }}
+          >
+            <BellOff size={15} />
+            <span>{contextMenuChat.is_muted ? 'Unmute notifications' : 'Mute notifications'}</span>
+          </button>
+
+          <button
+            type="button"
+            className="whatsapp-context-item"
+            onClick={() => {
+              onToggleArchiveChat?.(contextMenuChat.id, !contextMenuChat.is_archived)
+              setContextMenuChat(null)
+            }}
+          >
+            <Archive size={15} />
+            <span>{contextMenuChat.is_archived ? 'Unarchive chat' : 'Archive chat'}</span>
+          </button>
+
+          <button
+            type="button"
+            className="whatsapp-context-item"
+            onClick={() => {
+              onMarkChatRead?.(contextMenuChat.id)
+              setContextMenuChat(null)
+            }}
+          >
+            <CheckCheck size={15} />
+            <span>Mark as read</span>
+          </button>
+
+          <button
+            type="button"
+            className="whatsapp-context-item"
+            onClick={() => {
+              if (window.confirm(`Delete conversation with ${contextMenuChat.name}?`)) {
+                onDeleteChat?.(contextMenuChat.id)
+              }
+              setContextMenuChat(null)
+            }}
+            style={{ color: '#ef4444' }}
+          >
+            <Trash2 size={15} />
+            <span>Delete chat</span>
+          </button>
+        </div>
+      )}
     </div>
   )
 }

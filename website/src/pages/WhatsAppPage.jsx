@@ -36,6 +36,15 @@ export function WhatsAppPage() {
   const [isInfoDrawerOpen, setIsInfoDrawerOpen] = useState(false)
   const [isDrafting, setIsDrafting] = useState(false)
   const [summaryModalText, setSummaryModalText] = useState(null)
+  const [isTyping, setIsTyping] = useState(false)
+  const [typingText, setTypingText] = useState('')
+
+  // Request browser notifications permission on mount
+  useEffect(() => {
+    if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission().catch(() => {})
+    }
+  }, [])
 
   // Load initial status and chats
   useEffect(() => {
@@ -89,22 +98,37 @@ export function WhatsAppPage() {
         const incomingMsg = event.message
         if (incomingMsg) {
           const currentSelected = selectedChatIdRef.current
-          // If current conversation is active
-          if (incomingMsg.chat_id === currentSelected) {
+          const cleanSelected = currentSelected?.replace(/@s\.whatsapp\.net|@g\.us|@lid/g, '')
+          const cleanMsgChat = incomingMsg.chat_id?.replace(/@s\.whatsapp\.net|@g\.us|@lid/g, '')
+          
+          // Browser Push Notification if page hidden or unfocused
+          if (!incomingMsg.is_from_me && typeof window !== 'undefined' && 'Notification' in window) {
+            if (Notification.permission === 'granted' && document.hidden) {
+              const sender = incomingMsg.sender_name || 'WhatsApp Contact'
+              const body = incomingMsg.content || (incomingMsg.media ? `[${incomingMsg.media.type}]` : 'New message')
+              new Notification(`WhatsApp: ${sender}`, {
+                body,
+                icon: '/favicon.ico',
+              })
+            }
+          }
+
+          // Update messages if this chat is active
+          if (
+            !incomingMsg.chat_id ||
+            cleanMsgChat === cleanSelected ||
+            incomingMsg.chat_id === currentSelected
+          ) {
             setMessages((prev) => {
-              // 1. If message with exact ID already exists in feed, update it
-              const idIndex = prev.findIndex((m) => m.id === incomingMsg.id)
-              if (idIndex !== -1) {
-                const updated = [...prev]
-                updated[idIndex] = incomingMsg
-                return updated
+              // 1. If message with same real ID already exists, update it
+              const exists = prev.some((m) => m.id === incomingMsg.id)
+              if (exists) {
+                return prev.map((m) => (m.id === incomingMsg.id ? incomingMsg : m))
               }
-              // 2. If it's an outgoing message from me, replace any matching pending/temp optimistic message
+              // 2. If it is from me, replace optimistic pending temp message
               if (incomingMsg.is_from_me) {
                 const tempIndex = prev.findIndex(
-                  (m) =>
-                    (m.id.startsWith('temp-') || m.status === 'pending') &&
-                    m.content === incomingMsg.content,
+                  (m) => m.is_optimistic && m.content === incomingMsg.content,
                 )
                 if (tempIndex !== -1) {
                   const updated = [...prev]
@@ -130,6 +154,19 @@ export function WhatsAppPage() {
                 : c,
             ),
           )
+        }
+      } else if (event.type === 'typing_indicator' || event.type === 'presence') {
+        const targetChat = event.chatId || event.chat_id
+        const currentSelected = selectedChatIdRef.current
+        const cleanSelected = currentSelected?.replace(/@s\.whatsapp\.net|@g\.us|@lid/g, '')
+        const cleanTargetChat = targetChat?.replace(/@s\.whatsapp\.net|@g\.us|@lid/g, '')
+
+        if (targetChat && (cleanTargetChat === cleanSelected || targetChat === currentSelected)) {
+          setIsTyping(Boolean(event.isTyping || event.state === 'composing'))
+          setTypingText(event.senderName ? `${event.senderName} is typing...` : 'typing...')
+          if (event.isTyping || event.state === 'composing') {
+            setTimeout(() => setIsTyping(false), 5000)
+          }
         }
       } else if (event.type === 'message_reaction') {
         const targetChat = event.chat_id || event.chatId
@@ -449,6 +486,41 @@ export function WhatsAppPage() {
     }
   }
 
+  const handleTogglePinChat = (chatId, pinned) => {
+    setChats((prev) =>
+      prev.map((c) => (c.id === chatId ? { ...c, pinned } : c)),
+    )
+  }
+
+  const handleToggleMuteChat = (chatId, isMuted) => {
+    setChats((prev) =>
+      prev.map((c) => (c.id === chatId ? { ...c, is_muted: isMuted } : c)),
+    )
+  }
+
+  const handleToggleArchiveChat = (chatId, isArchived) => {
+    setChats((prev) =>
+      prev.map((c) => (c.id === chatId ? { ...c, is_archived: isArchived } : c)),
+    )
+    if (isArchived && selectedChatId === chatId) {
+      setSelectedChatId(null)
+    }
+  }
+
+  const handleDeleteChat = (chatId) => {
+    setChats((prev) => prev.filter((c) => c.id !== chatId))
+    if (selectedChatId === chatId) {
+      setSelectedChatId(null)
+    }
+  }
+
+  const handleMarkChatRead = (chatId) => {
+    markWhatsAppChatRead(chatId).catch(() => {})
+    setChats((prev) =>
+      prev.map((c) => (c.id === chatId ? { ...c, unread_count: 0 } : c)),
+    )
+  }
+
   const selectedChat = chats.find((c) => c.id === selectedChatId)
 
   return (
@@ -460,6 +532,11 @@ export function WhatsAppPage() {
           selectedChatId={selectedChatId}
           onSelectChat={setSelectedChatId}
           onOpenQrModal={handleOpenQrModal}
+          onTogglePinChat={handleTogglePinChat}
+          onToggleMuteChat={handleToggleMuteChat}
+          onToggleArchiveChat={handleToggleArchiveChat}
+          onDeleteChat={handleDeleteChat}
+          onMarkChatRead={handleMarkChatRead}
           isConnected={status.connected}
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
@@ -482,6 +559,8 @@ export function WhatsAppPage() {
             onStarMessage={handleStarMessage}
             onDeleteMessage={handleDeleteMessage}
             isDrafting={isDrafting}
+            isTyping={isTyping}
+            typingText={typingText}
           />
         ) : (
           <div className="whatsapp-main-empty">
