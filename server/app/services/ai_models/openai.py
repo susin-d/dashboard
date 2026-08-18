@@ -1,4 +1,5 @@
 import json
+import logging
 from typing import Any
 
 from openai import OpenAI, OpenAIError
@@ -9,6 +10,8 @@ from app.services.ai_models._shared import (
     ProviderResponse,
     ToolCall,
 )
+
+logger = logging.getLogger(__name__)
 
 
 def _parse_arguments(raw: Any) -> dict[str, Any]:
@@ -24,7 +27,11 @@ class OpenAiProviderClient(ProviderClient):
     """OpenAI provider adapter using the Responses API."""
 
     def build_client(self, client_options: dict[str, Any]) -> OpenAI:
-        return OpenAI(**client_options)
+        try:
+            return OpenAI(**client_options)
+        except Exception as error:
+            logger.error(f"[OpenAI Provider] Failed to initialize client: {type(error).__name__}: {error}", exc_info=True)
+            raise AIServiceError(f"OpenAI client initialization failed: {type(error).__name__}: {error}") from error
 
     def normalize_messages(self, messages: list[dict[str, str]]) -> list[dict[str, str]]:
         return [
@@ -48,7 +55,11 @@ class OpenAiProviderClient(ProviderClient):
                 store=False,
             )
         except OpenAIError as error:
-            raise AIServiceError(str(error)) from error
+            logger.error(f"[OpenAI Provider] API call failed for model '{model}': {type(error).__name__}: {error}", exc_info=True)
+            raise AIServiceError(f"OpenAI API error ({type(error).__name__}): {error}") from error
+        except Exception as error:
+            logger.error(f"[OpenAI Provider] Unexpected failure calling model '{model}': {type(error).__name__}: {error}", exc_info=True)
+            raise AIServiceError(f"OpenAI client error ({type(error).__name__}): {error}") from error
         tool_calls = [
             ToolCall(
                 call_id=item.call_id,

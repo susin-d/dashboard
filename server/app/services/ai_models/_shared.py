@@ -1,4 +1,5 @@
 import json
+import logging
 from dataclasses import dataclass
 from typing import Any, Callable
 
@@ -6,6 +7,8 @@ from google.cloud.firestore_v1 import Client
 from pydantic import ValidationError
 
 from app.core.config import settings
+
+logger = logging.getLogger(__name__)
 
 MAX_TOOL_ROUNDS = 6
 DEFAULT_PROVIDER = "openai"
@@ -263,7 +266,7 @@ def run_tool_loop(
     conversation = client.normalize_messages(conversation)
     changed_resources: list[str] = []
     actions: list[dict[str, Any]] = []
-    for _ in range(MAX_TOOL_ROUNDS):
+    for round_idx in range(MAX_TOOL_ROUNDS):
         response = client.call(config.model, instructions, conversation, tools)
         if not response.tool_calls:
             return (
@@ -280,8 +283,13 @@ def run_tool_loop(
                 if action:
                     actions.append(action)
             except (KeyError, TypeError, ValueError, ValidationError) as error:
+                logger.warning(f"[AI Tool Loop] Tool '{call.name}' returned error: {error}")
                 result = {"error": str(error)}
+            except Exception as error:
+                logger.error(f"[AI Tool Loop] Unexpected failure in tool '{call.name}': {type(error).__name__}: {error}", exc_info=True)
+                result = {"error": f"Tool execution failed: {type(error).__name__}: {error}"}
             conversation.extend(
                 client.tool_result_blocks(call, json.dumps(result, default=str))
             )
-    raise AIServiceError("The AI request exceeded the maximum number of tool rounds.")
+    logger.error(f"[AI Tool Loop] Exceeded maximum tool rounds ({MAX_TOOL_ROUNDS}) for {config.provider}/{config.model}")
+    raise AIServiceError(f"The AI request exceeded the maximum number of tool rounds ({MAX_TOOL_ROUNDS}).")

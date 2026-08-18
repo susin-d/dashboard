@@ -1,6 +1,10 @@
+import logging
+
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
 from fastapi.responses import Response
 from google.cloud.firestore_v1 import Client
+
+logger = logging.getLogger(__name__)
 
 from app.core.auth import get_current_user
 from app.db import get_firestore
@@ -58,9 +62,10 @@ async def transcribe(
             model,
         )
     except SpeechServiceError as error:
+        logger.error(f"[Eve Transcribe] Transcription failed for user {user.get('uid')}: {error}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_502_BAD_GATEWAY,
-            detail=str(error),
+            detail=f"Speech transcription failed: {error}",
         ) from error
     return {"text": text}
 
@@ -86,9 +91,10 @@ def synthesize(
             payload.pitch,
         )
     except SpeechServiceError as error:
+        logger.error(f"[Eve Synthesize] Speech synthesis failed for user {user.get('uid')}: {error}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_502_BAD_GATEWAY,
-            detail=str(error),
+            detail=f"Speech synthesis failed: {error}",
         ) from error
     return Response(content=audio_bytes, media_type=media_type)
 

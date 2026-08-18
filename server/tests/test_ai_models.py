@@ -125,6 +125,20 @@ class TestAiModelsSettings(unittest.TestCase):
         response = client.put("/api/v1/settings/ai-models", json=payload)
         self.assertEqual(response.status_code, 422)
 
+    def test_eve_chat_returns_detailed_502_error_on_ai_failure(self):
+        self._mock_settings_snapshot()
+        from unittest.mock import patch
+        from app.services.ai_models import AIServiceError
+
+        with patch("app.services.eve.run_tool_loop", side_effect=AIServiceError("API key expired or quota reached")):
+            with patch("app.services.eve.any_provider_available", return_value=True):
+                payload = {"messages": [{"role": "user", "content": "Hello Eve"}]}
+                response = client.post("/api/v1/eve/chat", json=payload)
+                self.assertEqual(response.status_code, 502)
+                data = response.json()
+                self.assertIn("Eve AI service error", data["detail"])
+                self.assertIn("API key expired or quota reached", data["detail"])
+
 
 if __name__ == "__main__":
     unittest.main()

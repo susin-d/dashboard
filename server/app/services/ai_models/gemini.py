@@ -1,4 +1,5 @@
 import json
+import logging
 from typing import Any
 
 from google import genai
@@ -11,6 +12,8 @@ from app.services.ai_models._shared import (
     ProviderResponse,
     ToolCall,
 )
+
+logger = logging.getLogger(__name__)
 
 
 def _convert_tool(tool: dict[str, Any]) -> types.Tool:
@@ -27,15 +30,19 @@ class GeminiProviderClient(ProviderClient):
     """Google Gemini provider adapter using the google-genai SDK."""
 
     def build_client(self, client_options: dict[str, Any]) -> genai.Client:
-        options = dict(client_options)
-        api_key = options.pop("api_key")
-        base_url = options.pop("base_url", None)
-        if base_url:
-            return genai.Client(
-                api_key=api_key,
-                http_options=types.HttpOptions(base_url=base_url),
-            )
-        return genai.Client(api_key=api_key)
+        try:
+            options = dict(client_options)
+            api_key = options.pop("api_key")
+            base_url = options.pop("base_url", None)
+            if base_url:
+                return genai.Client(
+                    api_key=api_key,
+                    http_options=types.HttpOptions(base_url=base_url),
+                )
+            return genai.Client(api_key=api_key)
+        except Exception as error:
+            logger.error(f"[Gemini Provider] Failed to initialize client: {type(error).__name__}: {error}", exc_info=True)
+            raise AIServiceError(f"Gemini client initialization failed: {type(error).__name__}: {error}") from error
 
     def normalize_messages(self, messages: list[dict[str, str]]) -> list[types.Content]:
         contents = []
@@ -67,7 +74,11 @@ class GeminiProviderClient(ProviderClient):
                 config=config,
             )
         except APIError as error:
-            raise AIServiceError(str(error)) from error
+            logger.error(f"[Gemini Provider] API call failed for model '{model}': {type(error).__name__}: {error}", exc_info=True)
+            raise AIServiceError(f"Gemini API error ({type(error).__name__}): {error}") from error
+        except Exception as error:
+            logger.error(f"[Gemini Provider] Unexpected failure calling model '{model}': {type(error).__name__}: {error}", exc_info=True)
+            raise AIServiceError(f"Gemini client error ({type(error).__name__}): {error}") from error
 
         text_parts: list[str] = []
         tool_calls: list[ToolCall] = []

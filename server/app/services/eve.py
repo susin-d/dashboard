@@ -1,4 +1,5 @@
 import json
+import logging
 from datetime import date, datetime, timedelta, timezone
 from typing import Any
 from uuid import uuid4
@@ -7,6 +8,8 @@ from fastapi import HTTPException, status
 from google.cloud import firestore
 from google.cloud.firestore_v1 import Client
 from pydantic import ValidationError
+
+logger = logging.getLogger(__name__)
 
 from app.repositories import documents, eve_sessions, todos
 from app.repositories.eve import add_memory, delete_memory, list_memories
@@ -1059,26 +1062,29 @@ def chat_with_eve(
     messages: list[dict[str, str]],
     session_id: str | None = None,
 ) -> tuple[str, list[str], list[dict[str, Any]]]:
+    user_id = user.get("uid")
     if not any_provider_available():
+        logger.error(f"[Eve Chat] Chat request rejected: No AI provider configured on server or in user settings for user {user_id}")
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="Eve is not configured. Add an AI provider API key (OPENAI_API_KEY, ANTHROPIC_API_KEY, or GEMINI_API_KEY) on the server.",
+            detail="Eve is not configured. Add an AI provider API key (OPENAI_API_KEY, ANTHROPIC_API_KEY, or GEMINI_API_KEY) on the server, or configure a provider key in Settings > AI Models.",
         )
 
     if session_id:
         try:
-            eve_sessions.get_session(database, user["uid"], session_id)
+            eve_sessions.get_session(database, user_id, session_id)
         except ValueError as error:
+            logger.warning(f"[Eve Chat] Session '{session_id}' not found for user {user_id}: {error}")
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(error)) from error
 
-    instructions = _build_instructions(database, user["uid"])
-    config = resolve_ai_config(database, user["uid"])
+    instructions = _build_instructions(database, user_id)
+    config = resolve_ai_config(database, user_id)
     client_class = PROVIDER_CLIENTS[config.provider]
     client = client_class(config.client_options)
     conversation: list[Any] = [{"role": message["role"], "content": message["content"]} for message in messages]
 
     def run_tool(name: str, arguments: dict[str, Any]):
-        return _run_tool(database, user["uid"], name, arguments)
+        return _run_tool(database, user_id, name, arguments)
 
     try:
         message, changed_resources, actions = run_tool_loop(
@@ -1090,9 +1096,22 @@ def chat_with_eve(
             run_tool,
         )
     except AIServiceError as error:
+        logger.error(
+            f"[Eve Chat] AI service error with provider='{config.provider}', model='{config.model}' for user {user_id}: {error}",
+            exc_info=True,
+        )
         raise HTTPException(
             status_code=status.HTTP_502_BAD_GATEWAY,
-            detail="Eve could not reach the AI service. Please try again.",
+            detail=f"Eve AI service error ({config.provider}/{config.model}): {error}",
+        ) from error
+    except Exception as error:
+        logger.error(
+            f"[Eve Chat] Unexpected execution error with provider='{config.provider}', model='{config.model}' for user {user_id}: {type(error).__name__}: {error}",
+            exc_info=True,
+        )
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail=f"Eve chat error ({config.provider}/{config.model}): {type(error).__name__}: {error}",
         ) from error
 
     if session_id:

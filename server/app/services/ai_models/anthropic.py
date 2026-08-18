@@ -1,3 +1,4 @@
+import logging
 from typing import Any
 
 from anthropic import Anthropic, APIError
@@ -8,6 +9,8 @@ from app.services.ai_models._shared import (
     ProviderResponse,
     ToolCall,
 )
+
+logger = logging.getLogger(__name__)
 
 MAX_TOKENS = 4096
 
@@ -25,7 +28,11 @@ class AnthropicProviderClient(ProviderClient):
     """Anthropic (Claude) provider adapter using the Messages API."""
 
     def build_client(self, client_options: dict[str, Any]) -> Anthropic:
-        return Anthropic(**client_options)
+        try:
+            return Anthropic(**client_options)
+        except Exception as error:
+            logger.error(f"[Anthropic Provider] Failed to initialize client: {type(error).__name__}: {error}", exc_info=True)
+            raise AIServiceError(f"Anthropic client initialization failed: {type(error).__name__}: {error}") from error
 
     def normalize_messages(self, messages: list[dict[str, str]]) -> list[dict[str, Any]]:
         return [
@@ -52,7 +59,11 @@ class AnthropicProviderClient(ProviderClient):
                 tools=[_convert_tool(tool) for tool in tools],
             )
         except APIError as error:
-            raise AIServiceError(str(error)) from error
+            logger.error(f"[Anthropic Provider] API call failed for model '{model}': {type(error).__name__}: {error}", exc_info=True)
+            raise AIServiceError(f"Anthropic API error ({type(error).__name__}): {error}") from error
+        except Exception as error:
+            logger.error(f"[Anthropic Provider] Unexpected failure calling model '{model}': {type(error).__name__}: {error}", exc_info=True)
+            raise AIServiceError(f"Anthropic client error ({type(error).__name__}): {error}") from error
 
         text = "".join(block.text for block in response.content if block.type == "text") or None
         tool_calls = [
