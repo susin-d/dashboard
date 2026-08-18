@@ -118,6 +118,7 @@ export function WhatsAppConversation({
   const [copiedToast, setCopiedToast] = useState(false)
   const [infoModalMessage, setInfoModalMessage] = useState(null)
   const [activeLightboxMedia, setActiveLightboxMedia] = useState(null)
+  const [reactionModalData, setReactionModalData] = useState(null)
 
   const messagesEndRef = useRef(null)
   const messagesFeedRef = useRef(null)
@@ -927,6 +928,13 @@ export function WhatsAppConversation({
                       <div className="whatsapp-reactions-badge-list">
                         <div
                           className="whatsapp-reaction-pill"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            setReactionModalData({
+                              reactions: msg.reactions || [],
+                              messageId: msg.id,
+                            })
+                          }}
                           title={(msg.reactions || []).map((r) => `${r.sender || 'Someone'}: ${r.emoji}`).join('\n')}
                         >
                           <span className="whatsapp-reaction-emojis">{rxSummary.emojis.join(' ')}</span>
@@ -1258,6 +1266,53 @@ export function WhatsAppConversation({
                   }}
                 />
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Detailed Reactions Breakdown Modal */}
+      {reactionModalData && (
+        <div className="whatsapp-info-modal-backdrop" onClick={() => setReactionModalData(null)}>
+          <div className="whatsapp-reaction-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="whatsapp-reaction-modal-header">
+              <div className="whatsapp-reaction-modal-tabs">
+                <span className="whatsapp-reaction-tab active">
+                  All ({reactionModalData.reactions.length})
+                </span>
+                {Array.from(new Set(reactionModalData.reactions.map((r) => r.emoji))).map((emoji) => {
+                  const count = reactionModalData.reactions.filter((r) => r.emoji === emoji).length
+                  return (
+                    <span key={emoji} className="whatsapp-reaction-tab">
+                      {emoji} {count}
+                    </span>
+                  )
+                })}
+              </div>
+              <button
+                type="button"
+                className="whatsapp-icon-btn small"
+                onClick={() => setReactionModalData(null)}
+              >
+                <X size={16} />
+              </button>
+            </div>
+            <div className="whatsapp-reaction-modal-list">
+              {reactionModalData.reactions.map((rx, idx) => {
+                const isMe = rx.sender === 'You' || rx.sender === 'me'
+                const displayName = isMe ? 'You' : formatSenderName(rx.sender)
+                return (
+                  <div key={idx} className="whatsapp-reaction-user-row">
+                    <div className="whatsapp-avatar small">
+                      <User size={14} />
+                    </div>
+                    <div className="whatsapp-reaction-user-name">
+                      <span>{displayName}</span>
+                    </div>
+                    <span className="whatsapp-reaction-emoji-badge">{rx.emoji}</span>
+                  </div>
+                )
+              })}
             </div>
           </div>
         </div>
