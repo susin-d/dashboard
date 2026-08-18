@@ -26,9 +26,9 @@ services:
       context: ./server
       dockerfile: Dockerfile
     container_name: starwaves-server
-    restart: unless-stopped
     env_file:
-      - ./server/.env
+      - path: ./server/.env
+        required: false
     environment:
       - APP_ENV=production
       - PORT=8000
