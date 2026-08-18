@@ -12,6 +12,7 @@ from app.repositories import whatsapp as whatsapp_repo
 from app.schemas.whatsapp import (
     WhatsAppChatResponse,
     WhatsAppEveDraftRequest,
+    WhatsAppMediaAttachment,
     WhatsAppMessageCreate,
     WhatsAppMessageResponse,
     WhatsAppPairRequest,
