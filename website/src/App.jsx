@@ -336,6 +336,52 @@ function App() {
     ),
     eve: (
       <EvePage
+        activeSubpage="chat"
+        callCenter={callCenter}
+        onNavigate={navigateWorkspace}
+        onWorkspaceChanged={() => setWorkspaceRefreshKey((current) => current + 1)}
+        chatResetKey={eveChatKey}
+      />
+    ),
+    'eve-chat': (
+      <EvePage
+        activeSubpage="chat"
+        callCenter={callCenter}
+        onNavigate={navigateWorkspace}
+        onWorkspaceChanged={() => setWorkspaceRefreshKey((current) => current + 1)}
+        chatResetKey={eveChatKey}
+      />
+    ),
+    'eve-sessions': (
+      <EvePage
+        activeSubpage="sessions"
+        callCenter={callCenter}
+        onNavigate={navigateWorkspace}
+        onWorkspaceChanged={() => setWorkspaceRefreshKey((current) => current + 1)}
+        chatResetKey={eveChatKey}
+      />
+    ),
+    'eve-memory': (
+      <EvePage
+        activeSubpage="memory"
+        callCenter={callCenter}
+        onNavigate={navigateWorkspace}
+        onWorkspaceChanged={() => setWorkspaceRefreshKey((current) => current + 1)}
+        chatResetKey={eveChatKey}
+      />
+    ),
+    'eve-call': (
+      <EvePage
+        activeSubpage="call"
+        callCenter={callCenter}
+        onNavigate={navigateWorkspace}
+        onWorkspaceChanged={() => setWorkspaceRefreshKey((current) => current + 1)}
+        chatResetKey={eveChatKey}
+      />
+    ),
+    'eve-schedules': (
+      <EvePage
+        activeSubpage="schedules"
         callCenter={callCenter}
         onNavigate={navigateWorkspace}
         onWorkspaceChanged={() => setWorkspaceRefreshKey((current) => current + 1)}

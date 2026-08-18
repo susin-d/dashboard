@@ -4,7 +4,7 @@ Living project snapshot for AI agents. `AGENTS.md` holds the permanent rules;
 this file holds the **current state** of the codebase and must be kept up to
 date whenever the implementation changes.
 
-> **Last updated:** 2026-08-18 (Added @web open web browsing, search, and URL reading tools to Eve AI Assistant and frontend chat/assistant interfaces)
+> **Last updated:** 2026-08-18 (Moved Eve AI subpages into main sidebar under dedicated EVE AI group: Chat & Assistant, Chat Sessions, Eve Memory, Voice & AI Call, and Schedules & Reminders with full-width section rendering)
 
 ---
 
@@ -205,8 +205,7 @@ SMTP, Firestore database id, CORS origins. Loads `.env.prod` before `.env`.
 - Integrations: GitHub, Google Calendar, Google Drive, Gmail, Google Chat.
 - Competitive programming: contests + profile stats.
 - Hackathon discovery with configurable sources + manual entry.
-- Notifications: calendar-derived reminders, call notifications (incoming, missed, declined workspace records & desktop alerts), push notifications, read/delete. Proactive notification permission handling (`browserNotifications.js` + `useWorkspaceData.js`) auto-attaches permission prompt triggers to initial user interaction on workspace entry, provides an interactive prompt banner in `Header.jsx`'s notification panel, requests permission on Bell icon clicks & WebRTC call actions, and displays live permission state badges in Settings.
-- EVE AI assistant (multi-provider: OpenAI / Anthropic / Google Gemini) with sessions, persistent memories, bidirectional voice calling, automated schedule/reminder execution, code workspace operations, and open web browsing / search (`@web`, `browse_web`, `search_web`, `fetch_web_page`).
+- EVE AI assistant (multi-provider: OpenAI / Anthropic / Google Gemini) with navigation integrated directly in the main sidebar under an "EVE AI" group (`Chat & Assistant`, `Chat Sessions`, `Eve Memory`, `Voice & AI Call`, `Schedules & Reminders`), featuring persistent sessions, long-term memory, bidirectional voice calls, automated background cron/one-time schedules, code workspace tools, and open web browsing/search (`@web`, `browse_web`, `search_web`, `fetch_web_page`).
 - AI Models settings: the Settings page exposes an "AI models" section (`AiModelsSection.jsx` + `aiModelsApi.js`) where users pick a provider and a model for EVE from a curated catalog (OpenAI `gpt-5-mini`/`gpt-5`/`gpt-4o`/`gpt-4o-mini`/`o3-mini`, Anthropic `claude-sonnet-4-5`/`claude-opus-4-1`/`claude-haiku-4-5`, Gemini `gemini-2.5-flash`/`gemini-2.5-pro`/`gemini-2.0-flash`). Providers and default models configured via environment variables on the server are surfaced with `(Default)` indicators and require no user key; selecting any other provider prompts for a user API key stored securely in `users/{uid}/settings/ai-models` (`app/api/routes/ai_models.py`). `resolve_ai_config` uses the environment key when available or the user's stored key, falling back to server default (`DEFAULT_PROVIDER`) if neither exists. Dropdown UI and card footer styling ensure clear monochrome contrast, proper elevation/z-index, and crisp borders.
 - Eve speech backend: server-side STT/TTS providers for EVE voice calls in
   addition to the browser Web Speech API path. `GET/PUT /settings/eve-speech`

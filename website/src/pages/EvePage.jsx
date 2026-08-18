@@ -1,12 +1,5 @@
 import { useEffect, useState } from 'react'
 import {
-  Brain,
-  CalendarClock,
-  MessageSquare,
-  History,
-  PhoneCall,
-} from 'lucide-react'
-import {
   createEveMemory,
   createEveSession,
   deleteEveMemory,
@@ -55,8 +48,20 @@ const EVE_TOOLS_LIST = [
   { command: 'insight', name: 'insight', label: 'Workspace Insights Tool', description: 'Compute deadlines, overdue tasks, or dashboard summary' },
 ]
 
-export function EvePage({ callCenter, onNavigate, onWorkspaceChanged, chatResetKey }) {
-  const [activeTab, setActiveTab] = useState('chat')
+export function EvePage({
+  activeSubpage = 'chat',
+  callCenter,
+  onNavigate,
+  onWorkspaceChanged,
+  chatResetKey,
+}) {
+  const [activeTab, setActiveTab] = useState(activeSubpage)
+
+  useEffect(() => {
+    if (activeSubpage) {
+      setActiveTab(activeSubpage)
+    }
+  }, [activeSubpage])
   const [messages, setMessages] = useState(STARTER_MESSAGES)
   const [draft, setDraft] = useState('')
   const [isSending, setIsSending] = useState(false)
@@ -213,6 +218,7 @@ export function EvePage({ callCenter, onNavigate, onWorkspaceChanged, chatResetK
     setPromptQueue([])
     setActiveSessionId(null)
     setActiveTab('chat')
+    onNavigate?.('eve')
   }
 
   const resumeSession = async (session) => {
@@ -222,6 +228,7 @@ export function EvePage({ callCenter, onNavigate, onWorkspaceChanged, chatResetK
       setActiveSessionId(session.id)
       setError('')
       setActiveTab('chat')
+      onNavigate?.('eve')
     } catch (sessionError) {
       setError(sessionError.message || 'Could not load that Eve session.')
     }
@@ -328,150 +335,63 @@ export function EvePage({ callCenter, onNavigate, onWorkspaceChanged, chatResetK
 
   return (
     <div className="eve-page-container">
-      {/* ── Eve App Layout with Mini-Sidebar ── */}
-      <div className="eve-app-layout">
-        <aside className="eve-mini-sidebar" aria-label="Eve Sub-navigation">
-          <nav className="eve-nav-list" role="tablist">
-            <button
-              type="button"
-              role="tab"
-              aria-selected={activeTab === 'chat'}
-              className={`eve-nav-btn ${activeTab === 'chat' ? 'active' : ''}`}
-              onClick={() => setActiveTab('chat')}
-            >
-              <MessageSquare size={16} />
-              <div className="eve-nav-text">
-                <span className="eve-nav-title">Chat &amp; Assistant</span>
-                <span className="eve-nav-subtitle">Live workspace assistant</span>
-              </div>
-            </button>
+      <div className="eve-active-view-container full-width">
+        {activeTab === 'chat' && (
+          <EveChatSection
+            messages={messages}
+            draft={draft}
+            setDraft={setDraft}
+            isSending={isSending}
+            error={error}
+            promptQueue={promptQueue}
+            addToQueue={addToQueue}
+            removeFromQueue={removeFromQueue}
+            clearQueue={clearQueue}
+            runQueue={runQueue}
+            handleSubmit={handleSubmit}
+            matchingTools={matchingTools}
+            matchingPrompts={matchingPrompts}
+            selectTool={selectTool}
+            selectPrompt={selectPrompt}
+            EVE_PRESET_PROMPTS={EVE_PRESET_PROMPTS}
+            aiProviders={aiProviders}
+            activeModel={activeModel}
+            onSelectAiModel={handleSelectAiModel}
+          />
+        )}
 
-            <button
-              type="button"
-              role="tab"
-              aria-selected={activeTab === 'sessions'}
-              className={`eve-nav-btn ${activeTab === 'sessions' ? 'active' : ''}`}
-              onClick={() => setActiveTab('sessions')}
-            >
-              <History size={16} />
-              <div className="eve-nav-text">
-                <span className="eve-nav-title">Chat Sessions</span>
-                <span className="eve-nav-subtitle">Past conversation history</span>
-              </div>
-              {sessions.length > 0 && (
-                <span className="eve-nav-badge">{sessions.length}</span>
-              )}
-            </button>
+        {activeTab === 'call' && (
+          <EveCallSection callCenter={callCenter} />
+        )}
 
-            <button
-              type="button"
-              role="tab"
-              aria-selected={activeTab === 'memory'}
-              className={`eve-nav-btn ${activeTab === 'memory' ? 'active' : ''}`}
-              onClick={() => setActiveTab('memory')}
-            >
-              <Brain size={16} />
-              <div className="eve-nav-text">
-                <span className="eve-nav-title">Eve Memory</span>
-                <span className="eve-nav-subtitle">Remembered facts &amp; rules</span>
-              </div>
-              {memories.length > 0 && (
-                <span className="eve-nav-badge">{memories.length}</span>
-              )}
-            </button>
+        {activeTab === 'sessions' && (
+          <EveSessionsSection
+            sessions={sessions}
+            activeSessionId={activeSessionId}
+            isLoading={isLoadingSidebar}
+            onResumeSession={resumeSession}
+            onRemoveSession={removeSession}
+            onStartNewChat={startNewChat}
+            isSending={isSending}
+          />
+        )}
 
-            <button
-              type="button"
-              role="tab"
-              aria-selected={activeTab === 'call'}
-              className={`eve-nav-btn ${activeTab === 'call' ? 'active' : ''}`}
-              onClick={() => setActiveTab('call')}
-            >
-              <PhoneCall size={16} />
-              <div className="eve-nav-text">
-                <span className="eve-nav-title">Voice &amp; AI Call</span>
-                <span className="eve-nav-subtitle">Live voice session</span>
-              </div>
-              {callCenter?.isEveCall && ['dialing', 'connecting', 'active'].includes(callCenter?.phase) && (
-                <span className="eve-nav-live-dot" title="Call in progress" />
-              )}
-            </button>
+        {activeTab === 'memory' && (
+          <EveMemorySection
+            memories={memories}
+            isLoading={isLoadingSidebar}
+            onAddMemory={addMemory}
+            onRemoveMemory={removeMemory}
+            memoryDraft={memoryDraft}
+            setMemoryDraft={setMemoryDraft}
+            isAddingMemory={isAddingMemory}
+            isSending={isSending}
+          />
+        )}
 
-            <button
-              type="button"
-              role="tab"
-              aria-selected={activeTab === 'schedules'}
-              className={`eve-nav-btn ${activeTab === 'schedules' ? 'active' : ''}`}
-              onClick={() => setActiveTab('schedules')}
-            >
-              <CalendarClock size={16} />
-              <div className="eve-nav-text">
-                <span className="eve-nav-title">Schedules &amp; Reminders</span>
-                <span className="eve-nav-subtitle">Automated prompts &amp; calls</span>
-              </div>
-            </button>
-          </nav>
-        </aside>
-
-        {/* ── Active Section View ── */}
-        <div className="eve-active-view-container">
-          {activeTab === 'chat' && (
-            <EveChatSection
-              messages={messages}
-              draft={draft}
-              setDraft={setDraft}
-              isSending={isSending}
-              error={error}
-              promptQueue={promptQueue}
-              addToQueue={addToQueue}
-              removeFromQueue={removeFromQueue}
-              clearQueue={clearQueue}
-              runQueue={runQueue}
-              handleSubmit={handleSubmit}
-              matchingTools={matchingTools}
-              matchingPrompts={matchingPrompts}
-              selectTool={selectTool}
-              selectPrompt={selectPrompt}
-              EVE_PRESET_PROMPTS={EVE_PRESET_PROMPTS}
-              aiProviders={aiProviders}
-              activeModel={activeModel}
-              onSelectAiModel={handleSelectAiModel}
-            />
-          )}
-
-          {activeTab === 'call' && (
-            <EveCallSection callCenter={callCenter} />
-          )}
-
-          {activeTab === 'sessions' && (
-            <EveSessionsSection
-              sessions={sessions}
-              activeSessionId={activeSessionId}
-              isLoading={isLoadingSidebar}
-              onResumeSession={resumeSession}
-              onRemoveSession={removeSession}
-              onStartNewChat={startNewChat}
-              isSending={isSending}
-            />
-          )}
-
-          {activeTab === 'memory' && (
-            <EveMemorySection
-              memories={memories}
-              isLoading={isLoadingSidebar}
-              onAddMemory={addMemory}
-              onRemoveMemory={removeMemory}
-              memoryDraft={memoryDraft}
-              setMemoryDraft={setMemoryDraft}
-              isAddingMemory={isAddingMemory}
-              isSending={isSending}
-            />
-          )}
-
-          {activeTab === 'schedules' && (
-            <EveSchedulesSection onScheduleTriggered={refreshSidebar} />
-          )}
-        </div>
+        {activeTab === 'schedules' && (
+          <EveSchedulesSection onScheduleTriggered={refreshSidebar} />
+        )}
       </div>
     </div>
   )

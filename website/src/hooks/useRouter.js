@@ -3,6 +3,11 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 const workspacePages = new Set([
   'dashboard',
   'eve',
+  'eve-chat',
+  'eve-sessions',
+  'eve-memory',
+  'eve-call',
+  'eve-schedules',
   'stats',
   'todo',
   'calendar',
@@ -36,6 +41,16 @@ export function workspaceStateFromPath(pathname) {
   }
   if (page === 'hackathons' && detailId) {
     return { page: 'hackathon-detail', projectId: null, documentId: null, hackathonId: detailId }
+  }
+  if (page === 'eve' && detailId) {
+    const validEveSubpages = {
+      chat: 'eve',
+      sessions: 'eve-sessions',
+      memory: 'eve-memory',
+      call: 'eve-call',
+      schedules: 'eve-schedules',
+    }
+    return { page: validEveSubpages[detailId] || 'eve', projectId: null, documentId: null, hackathonId: null }
   }
   return {
     page: workspacePages.has(page) ? page : 'dashboard',
@@ -95,6 +110,16 @@ export function useRouter() {
       path = `/app/hackathons/${options.hackathonId}`
     } else if (page === 'competitive-coding') {
       path = '/app/competitive'
+    } else if (page === 'eve-sessions') {
+      path = '/app/eve/sessions'
+    } else if (page === 'eve-memory') {
+      path = '/app/eve/memory'
+    } else if (page === 'eve-call') {
+      path = '/app/eve/call'
+    } else if (page === 'eve-schedules') {
+      path = '/app/eve/schedules'
+    } else if (page === 'eve-chat') {
+      path = '/app/eve'
     } else if (workspacePages.has(page)) {
       path = `/app/${page}`
     }
