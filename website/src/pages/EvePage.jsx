@@ -27,11 +27,12 @@ const STARTER_MESSAGES = [
   {
     role: 'assistant',
     content:
-      'Hello! I’m Eve, your StarWaves AI workspace assistant. I can read, create, update, soft-delete, and restore records across your workspace including tasks, projects, jobs, hackathons, and documents.',
+      'Hello! I’m Eve, your StarWaves AI workspace assistant. I can read, create, update, soft-delete, and restore records across your workspace, help you with code, and browse the open web for up-to-date information and research.',
   },
 ]
 
 const EVE_PRESET_PROMPTS = [
+  { command: 'web', label: 'Search the web', prompt: 'Search the open web for the latest updates and information on: ', description: 'Browse and search external websites' },
   { command: 'call', label: 'Call me now', prompt: 'Call me right now on voice to review my workspace status.', description: 'Trigger an immediate incoming voice call from Eve' },
   { command: 'today', label: 'Plan my day', prompt: 'Plan my day by reviewing tasks, upcoming deadlines, and calendar events.', description: 'Review tasks, deadlines, and calendar events' },
   { command: 'tasks', label: 'Manage tasks & overdue', prompt: 'Find all overdue tasks and suggest next priority actions.', description: 'Audit overdue tasks and list priority items' },
@@ -43,6 +44,7 @@ const EVE_PRESET_PROMPTS = [
 ]
 
 const EVE_TOOLS_LIST = [
+  { command: 'web', name: 'web', label: 'Web Browsing & Search Tool', description: 'Search the open web, browse external websites, and read URLs' },
   { command: 'todos', name: 'todos', label: 'Tasks & Todos Tool', description: 'Read, create, update, or soft-delete task items' },
   { command: 'projects', name: 'projects', label: 'Projects Tool', description: 'Access project repositories, milestones, and status' },
   { command: 'jobs', name: 'jobs', label: 'Job Tracker Tool', description: 'Access job applications, interview dates, and contacts' },

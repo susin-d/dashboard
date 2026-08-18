@@ -13,10 +13,11 @@ import { Markdown } from './ui/Markdown'
 
 const STARTER_MESSAGES = [{
   role: 'assistant',
-  content: 'Hi, I\u2019m Eve. I can read, create, update, delete, and restore your workspace records.',
+  content: 'Hi, I\u2019m Eve. I can read, create, update, delete, and restore your workspace records, help with code, and browse or search the open web with @web.',
 }]
 
 const EVE_PRESET_PROMPTS = [
+  { command: 'web', label: 'Search the web', prompt: 'Search the open web for the latest updates and information on: ', description: 'Browse and search external websites' },
   { command: 'today', label: 'Plan my day', prompt: 'Plan my day by reviewing tasks, upcoming deadlines, and calendar events.', description: 'Review tasks, deadlines, and calendar events' },
   { command: 'tasks', label: 'Manage tasks & overdue', prompt: 'Find all overdue tasks and suggest next priority actions.', description: 'Audit overdue tasks and list priority items' },
   { command: 'projects', label: 'Work with projects', prompt: 'Review project progress, stale projects, and next steps.', description: 'Review project progress and stale projects' },
@@ -27,6 +28,7 @@ const EVE_PRESET_PROMPTS = [
 ]
 
 const EVE_TOOLS_LIST = [
+  { command: 'web', name: 'web', label: 'Web Browsing & Search Tool', description: 'Search the open web, browse external websites, and read URLs' },
   { command: 'todos', name: 'todos', label: 'Tasks & Todos Tool', description: 'Read, create, update, or soft-delete task items' },
   { command: 'projects', name: 'projects', label: 'Projects Tool', description: 'Access project repositories, milestones, and status' },
   { command: 'jobs', name: 'jobs', label: 'Job Tracker Tool', description: 'Access job applications, interview dates, and contacts' },

@@ -4,7 +4,7 @@ Living project snapshot for AI agents. `AGENTS.md` holds the permanent rules;
 this file holds the **current state** of the codebase and must be kept up to
 date whenever the implementation changes.
 
-> **Last updated:** 2026-08-18 (Added configurable @eve, @susindran, @susin, @mynumber, and @myjid alias keys to backend settings, env configuration, and frontend quick-mention buttons)
+> **Last updated:** 2026-08-18 (Added @web open web browsing, search, and URL reading tools to Eve AI Assistant and frontend chat/assistant interfaces)
 
 ---
 
@@ -96,7 +96,7 @@ Starwaves/
 
 ### Services (`server/app/services/`)
 
-`coding_stats`, `contests`, `email`, `eve` (includes coding agent tools `read_workspace_file`, `write_workspace_file`, `list_workspace_files`, `search_workspace_files`, `run_workspace_command` and WhatsApp tools `list_whatsapp_chats`, `read_whatsapp_messages`, `send_whatsapp_message`, `summarize_whatsapp_chat`), `whatsapp` (session pairing, message dispatch, Eve AI hooks), `github`, `google_calendar`, `google_contacts`,
+`coding_stats`, `contests`, `email`, `eve` (includes coding agent tools `read_workspace_file`, `write_workspace_file`, `list_workspace_files`, `search_workspace_files`, `run_workspace_command`, web browsing tools `browse_web`, `search_web`, `fetch_web_page`, and WhatsApp tools `list_whatsapp_chats`, `read_whatsapp_messages`, `send_whatsapp_message`, `summarize_whatsapp_chat`), `web_browsing` (open web search via DuckDuckGo HTML/API/Lite, web page text/markdown extraction, and unified browser), `whatsapp` (session pairing, message dispatch, Eve AI hooks), `github`, `google_calendar`, `google_contacts`,
 `hackathon_sources`, `notifications`, plus `oauth/` package (`_shared.py`,
 `google.py`, `github.py`) that centralizes provider-agnostic OAuth helpers
 (`format_oauth_error`, state-serializer factory, `integration_account_id`,
@@ -206,7 +206,7 @@ SMTP, Firestore database id, CORS origins. Loads `.env.prod` before `.env`.
 - Competitive programming: contests + profile stats.
 - Hackathon discovery with configurable sources + manual entry.
 - Notifications: calendar-derived reminders, call notifications (incoming, missed, declined workspace records & desktop alerts), push notifications, read/delete. Proactive notification permission handling (`browserNotifications.js` + `useWorkspaceData.js`) auto-attaches permission prompt triggers to initial user interaction on workspace entry, provides an interactive prompt banner in `Header.jsx`'s notification panel, requests permission on Bell icon clicks & WebRTC call actions, and displays live permission state badges in Settings.
-- EVE AI assistant (multi-provider: OpenAI / Anthropic / Google Gemini) with sessions, persistent memories, bidirectional voice calling, and automated schedule/reminder execution.
+- EVE AI assistant (multi-provider: OpenAI / Anthropic / Google Gemini) with sessions, persistent memories, bidirectional voice calling, automated schedule/reminder execution, code workspace operations, and open web browsing / search (`@web`, `browse_web`, `search_web`, `fetch_web_page`).
 - AI Models settings: the Settings page exposes an "AI models" section (`AiModelsSection.jsx` + `aiModelsApi.js`) where users pick a provider and a model for EVE from a curated catalog (OpenAI `gpt-5-mini`/`gpt-5`/`gpt-4o`/`gpt-4o-mini`/`o3-mini`, Anthropic `claude-sonnet-4-5`/`claude-opus-4-1`/`claude-haiku-4-5`, Gemini `gemini-2.5-flash`/`gemini-2.5-pro`/`gemini-2.0-flash`). Providers and default models configured via environment variables on the server are surfaced with `(Default)` indicators and require no user key; selecting any other provider prompts for a user API key stored securely in `users/{uid}/settings/ai-models` (`app/api/routes/ai_models.py`). `resolve_ai_config` uses the environment key when available or the user's stored key, falling back to server default (`DEFAULT_PROVIDER`) if neither exists. Dropdown UI and card footer styling ensure clear monochrome contrast, proper elevation/z-index, and crisp borders.
 - Eve speech backend: server-side STT/TTS providers for EVE voice calls in
   addition to the browser Web Speech API path. `GET/PUT /settings/eve-speech`
