@@ -48,6 +48,30 @@ func ExtractReactionInfo(rawMsg *waE2E.Message) (targetID string, emoji string) 
 	return "", ""
 }
 
+// ExtractDownloadableMessage extracts the whatsmeow DownloadableMessage interface if available.
+func ExtractDownloadableMessage(rawMsg *waE2E.Message) (interface{}, string) {
+	if rawMsg == nil {
+		return nil, ""
+	}
+	msg := UnwrapMessage(rawMsg)
+	if msg == nil {
+		return nil, ""
+	}
+
+	if img := msg.GetImageMessage(); img != nil {
+		return img, img.GetMimetype()
+	} else if vid := msg.GetVideoMessage(); vid != nil {
+		return vid, vid.GetMimetype()
+	} else if sticker := msg.GetStickerMessage(); sticker != nil {
+		return sticker, sticker.GetMimetype()
+	} else if aud := msg.GetAudioMessage(); aud != nil {
+		return aud, aud.GetMimetype()
+	} else if doc := msg.GetDocumentMessage(); doc != nil {
+		return doc, doc.GetMimetype()
+	}
+	return nil, ""
+}
+
 // ExtractMessageInfo extracts content text, forward status, media metadata, and reply ID from a raw message.
 func ExtractMessageInfo(rawMsg *waE2E.Message) (content string, isForwarded bool, media *models.SessionMedia, replyToID string) {
 	if rawMsg == nil {

@@ -2,6 +2,8 @@ package events
 
 import (
 	"context"
+	"encoding/base64"
+	"fmt"
 	"log"
 	"strings"
 	"time"
@@ -11,6 +13,7 @@ import (
 	"starwaves-whatsapp-worker/internal/parser"
 	"starwaves-whatsapp-worker/internal/webhook"
 
+	"go.mau.fi/whatsmeow"
 	"go.mau.fi/whatsmeow/types"
 	waEvents "go.mau.fi/whatsmeow/types/events"
 )
@@ -302,6 +305,38 @@ func handleMessage(s *models.SessionState, userID string, v *waEvents.Message) {
 	text, isFwd, media, replyToID := parser.ExtractMessageInfo(v.Message)
 	if text == "" && media == nil {
 		return
+	}
+
+	// If message has media and client is available, decrypt and download the full-resolution content
+	if media != nil && s.Client != nil {
+		if downloadable, mime := parser.ExtractDownloadableMessage(v.Message); downloadable != nil {
+			if dlMsg, ok := downloadable.(whatsmeow.DownloadableMessage); ok {
+				go func(m *models.SessionMedia, d whatsmeow.DownloadableMessage, mimetype string, uID string, cJID string, msgID string) {
+					data, err := s.Client.Download(d)
+					if err == nil && len(data) > 0 {
+						if mimetype == "" {
+							mimetype = "image/jpeg"
+						}
+						dataURI := fmt.Sprintf("data:%s;base64,%s", mimetype, base64.StdEncoding.EncodeToString(data))
+						m.URL = dataURI
+						log.Printf("[User %s] Successfully decrypted full-res media for message %s (%d bytes)", uID, msgID, len(data))
+					} else if err != nil {
+						log.Printf("[User %s] Could not download media for message %s: %v", uID, msgID, err)
+					}
+				}(media, dlMsg, mime, userID, chatJID, v.Info.ID)
+
+				// For small/instant media (like photos), attempt quick sync download with 3s timeout
+				ctxDl, cancelDl := context.WithTimeout(context.Background(), 3*time.Second)
+				data, err := s.Client.DownloadCtx(ctxDl, dlMsg)
+				cancelDl()
+				if err == nil && len(data) > 0 {
+					if mime == "" {
+						mime = "image/jpeg"
+					}
+					media.URL = fmt.Sprintf("data:%s;base64,%s", mime, base64.StdEncoding.EncodeToString(data))
+				}
+			}
+		}
 	}
 
 	s.Lock()

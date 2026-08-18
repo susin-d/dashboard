@@ -1191,16 +1191,21 @@ export function WhatsAppConversation({
             <div className="whatsapp-lightbox-body">
               {activeLightboxMedia.type === 'video' ? (
                 <video
-                  src={activeLightboxMedia.url}
+                  src={activeLightboxMedia.url || activeLightboxMedia.thumbnail_base64}
                   controls
                   autoPlay
                   className="whatsapp-lightbox-media"
                 />
               ) : (
                 <img
-                  src={activeLightboxMedia.url}
+                  src={activeLightboxMedia.url || activeLightboxMedia.thumbnail_base64}
                   alt={activeLightboxMedia.filename || 'Fullscreen media'}
                   className="whatsapp-lightbox-media"
+                  onError={(e) => {
+                    if (activeLightboxMedia.thumbnail_base64 && e.currentTarget.src !== activeLightboxMedia.thumbnail_base64) {
+                      e.currentTarget.src = activeLightboxMedia.thumbnail_base64
+                    }
+                  }}
                 />
               )}
             </div>

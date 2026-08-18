@@ -4,7 +4,7 @@ Living project snapshot for AI agents. `AGENTS.md` holds the permanent rules;
 this file holds the **current state** of the codebase and must be kept up to
 date whenever the implementation changes.
 
-> **Last updated:** 2026-08-18 (Fixed message hover chevron circular aspect ratio and fixed Delete button contrast and visibility in context menu)
+> **Last updated:** 2026-08-18 (Implemented full-resolution media decryption in WhatsApp Go worker and added thumbnail fallback for lightbox viewer)
 
 ---
 
