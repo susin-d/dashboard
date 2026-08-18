@@ -444,36 +444,38 @@ export function WhatsAppConversation({
             <Search size={16} />
           </button>
 
-          {/* Eve Summarize */}
-          <button
-            type="button"
-            className="secondary-button"
-            style={{
-              minHeight: '34px',
-              padding: '6px 12px',
-              fontSize: '0.8125rem',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              opacity: isSummarizing ? 0.7 : 1,
-              cursor: isSummarizing ? 'not-allowed' : 'pointer',
-            }}
-            disabled={isSummarizing}
-            onClick={() => onSummarizeChat?.(chat?.id)}
-            title={isSummarizing ? 'Summarizing conversation...' : 'Summarize conversation with Eve'}
-          >
-            {isSummarizing ? (
-              <>
-                <Loader2 size={14} className="spin" />
-                <span>Summarizing...</span>
-              </>
-            ) : (
-              <>
-                <Sparkles size={14} />
-                <span>Summarize</span>
-              </>
-            )}
-          </button>
+          {/* Eve Summarize (only for external/group conversations, not inside Eve's own chat) */}
+          {!isEve && (
+            <button
+              type="button"
+              className="secondary-button"
+              style={{
+                minHeight: '34px',
+                padding: '6px 12px',
+                fontSize: '0.8125rem',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                opacity: isSummarizing ? 0.7 : 1,
+                cursor: isSummarizing ? 'not-allowed' : 'pointer',
+              }}
+              disabled={isSummarizing}
+              onClick={() => onSummarizeChat?.(chat?.id)}
+              title={isSummarizing ? 'Summarizing conversation...' : 'Summarize conversation with Eve'}
+            >
+              {isSummarizing ? (
+                <>
+                  <Loader2 size={14} className="spin" />
+                  <span>Summarizing...</span>
+                </>
+              ) : (
+                <>
+                  <Sparkles size={14} />
+                  <span>Summarize</span>
+                </>
+              )}
+            </button>
+          )}
 
           {/* Chat Info */}
           <button

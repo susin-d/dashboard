@@ -51,10 +51,6 @@ export function WhatsAppChatList({
     return chats.filter((c) => !c.is_archived).reduce((acc, c) => acc + (c.unread_count || 0), 0)
   }, [chats])
 
-  const groupsCount = useMemo(() => {
-    return chats.filter((c) => c.is_group && !c.is_archived).length
-  }, [chats])
-
   const archivedCount = useMemo(() => {
     return chats.filter((c) => c.is_archived).length
   }, [chats])
@@ -189,7 +185,7 @@ export function WhatsAppChatList({
           className={`whatsapp-filter-pill ${activeFilter === 'groups' ? 'active' : ''}`}
           onClick={() => setActiveFilter('groups')}
         >
-          Groups {groupsCount > 0 && <span className="whatsapp-pill-count">{groupsCount}</span>}
+          Groups
         </button>
         {archivedCount > 0 && (
           <button
@@ -198,7 +194,7 @@ export function WhatsAppChatList({
             onClick={() => setActiveFilter('archived')}
           >
             <Archive size={12} style={{ display: 'inline', marginRight: 3 }} />
-            Archived ({archivedCount})
+            Archived
           </button>
         )}
       </div>
