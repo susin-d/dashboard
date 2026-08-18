@@ -104,6 +104,19 @@ export async function summarizeWhatsAppChat(chatId) {
   })
 }
 
+export async function chatAboutWhatsAppSummary({ chatId, summary, messages }) {
+  return apiRequest(`/whatsapp/chats/${encodeURIComponent(chatId)}/summary-chat`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      chat_id: chatId,
+      summary,
+      messages,
+    }),
+    errorMessage: 'Could not send follow-up to Eve.',
+  })
+}
+
 export async function reactToWhatsAppMessage(chatId, messageId, emoji) {
   return apiRequest(`/whatsapp/chats/${encodeURIComponent(chatId)}/messages/${encodeURIComponent(messageId)}/react`, {
     method: 'POST',

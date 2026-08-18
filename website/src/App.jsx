@@ -592,6 +592,8 @@ function App() {
                 : activePage
         }
         onNavigate={navigateWorkspace}
+        onCreate={requestCreation}
+        callCenter={callCenter}
         notifications={notifications}
         setNotifications={updateNotifications}
         notificationsOpen={notificationsOpen}
@@ -603,6 +605,14 @@ function App() {
         onWorkspaceChanged={() => setWorkspaceRefreshKey((current) => current + 1)}
         onEveNewChat={() => setEveChatKey((current) => current + 1)}
         onSignOut={handleSignOut}
+        workspaceData={{
+          projects,
+          jobs,
+          documents,
+          hackathons,
+          tasks,
+          contestSites,
+        }}
       >
         {pages[activePage] ?? pages.dashboard}
       </AppLayout>

@@ -18,8 +18,7 @@ import { WhatsAppChatList } from '../components/whatsapp/WhatsAppChatList'
 import { WhatsAppConversation } from '../components/whatsapp/WhatsAppConversation'
 import { WhatsAppQrModal } from '../components/whatsapp/WhatsAppQrModal'
 import { WhatsAppInfoDrawer } from '../components/whatsapp/WhatsAppInfoDrawer'
-import { Modal } from '../components/ui/Modal'
-import { Markdown } from '../components/ui/Markdown'
+import { WhatsAppSummaryModal } from '../components/whatsapp/WhatsAppSummaryModal'
 import { MessageSquare, QrCode, RefreshCw, WifiOff, Loader2 } from 'lucide-react'
 
 export function WhatsAppPage() {
@@ -720,27 +719,14 @@ export function WhatsAppPage() {
         loading={isQrLoading}
       />
 
-      {/* Summary Alert Modal */}
-      <Modal
+      {/* Interactive Summary & Eve Chat Modal */}
+      <WhatsAppSummaryModal
         isOpen={Boolean(summaryModalText)}
         onClose={() => setSummaryModalText(null)}
-        title="Eve Conversation Summary"
-        subtitle="AI-generated key points and action items"
-        className="whatsapp-summary-modal"
-      >
-        <div className="whatsapp-summary-modal-content">
-          <Markdown content={summaryModalText || ''} />
-        </div>
-        <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 20 }}>
-          <button
-            type="button"
-            className="primary-button"
-            onClick={() => setSummaryModalText(null)}
-          >
-            Done
-          </button>
-        </div>
-      </Modal>
+        summary={summaryModalText}
+        chatId={selectedChatId}
+        chatName={selectedChat?.name || 'this conversation'}
+      />
     </>
   )
 }

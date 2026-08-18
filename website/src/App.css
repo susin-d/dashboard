@@ -22,6 +22,7 @@
 @import './styles/components/metric-card.css';
 @import './styles/components/metric-grid.css';
 @import './styles/components/search-bar.css';
+@import './styles/components/search-palette.css';
 @import './styles/components/pagination.css';
 @import './styles/components/filter-bar.css';
 @import './styles/components/alerts.css';

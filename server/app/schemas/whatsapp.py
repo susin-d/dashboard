@@ -106,3 +106,15 @@ class WhatsAppSettingsUpdate(BaseModel):
 class WhatsAppEveDraftRequest(BaseModel):
     chat_id: str
     instruction: Optional[str] = "Draft a friendly and concise reply to the recent conversation."
+
+
+class WhatsAppSummaryChatMessage(BaseModel):
+    role: str = Field(default="user", description="'user' or 'assistant'")
+    content: str = Field(description="Message content")
+
+
+class WhatsAppSummaryChatRequest(BaseModel):
+    chat_id: str = Field(description="WhatsApp chat ID")
+    summary: Optional[str] = Field(default=None, description="Initial conversation summary text")
+    messages: List[WhatsAppSummaryChatMessage] = Field(default_factory=list, description="Follow-up conversation history with Eve")
+

@@ -4,7 +4,7 @@ Living project snapshot for AI agents. `AGENTS.md` holds the permanent rules;
 this file holds the **current state** of the codebase and must be kept up to
 date whenever the implementation changes.
 
-> **Last updated:** 2026-08-18 (Enhanced WhatsApp quoted reply media thumbnails, media type labels, and history-sync media decryption)
+> **Last updated:** 2026-08-18 (Implemented Advanced Global Search & Command Palette with multi-category filtering, deep section navigation, live workspace record search, and quick actions)
 
 ---
 
@@ -254,10 +254,10 @@ SMTP, Firestore database id, CORS origins. Loads `.env.prod` before `.env`.
 - Android shell via Capacitor (`website/android/`).
 - Vercel cron hookup: `vercel.json` configures serverless cron job `/api/v1/cron/execute-schedules` scheduled every 15 minutes (`*/15 * * * *`).
 - Cinematic Landing Page: `LandingPage.jsx` redesigned as an immersive, scroll-driven storytelling experience with an animated star-field canvas (WebGL-style particles), IntersectionObserver-based scroll-reveal animations, animated number counters, staggered feature card entrances, a vertical timeline workflow, and a cinematic dark final CTA with radial spotlight gradient. All monochrome. Hero uses `margin-top: -72px` to bleed behind the semi-transparent nav. Mounted on root route `/` in `App.jsx`.
+- Advanced Global Search & Command Palette (`⌘ K` / `Ctrl+K`): topbar search bar triggers a centered command palette modal (`AdvancedSearchModal.jsx` + `searchIndex.js` + `search-palette.css`) supporting instant search across 22+ top-level pages, 9 deep-anchored settings sections (Profile, Themes, Connected Apps, WhatsApp, AI Models, Coding Profiles, Hackathons, Eve Voice, Account & Security), Eve AI subpages and tools, live workspace records (Projects, Jobs, Documents, Hackathons, Tasks), and quick actions (Create Task/Project/Job/Document, Call Eve, New Eve Chat, Toggle Dark/Light Theme, Sign Out). Features category filter pills (`All`, `Pages`, `Settings`, `Eve AI`, `Records`, `Actions`), full keyboard navigation (`↑` / `↓` arrow selection, `↵` execution, `Esc` close), recent searches persistence, smooth section scrolling with target highlight, and strict monochrome styling.
 
 ## 7. Known limitations
 
-- Global search navigates between pages but does not search workspace records.
 - Calendar event creation/editing not implemented.
 - Mail attachments, forwarding, rich-text composition, persistent drafts not
   implemented.

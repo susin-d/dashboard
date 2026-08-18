@@ -70,6 +70,21 @@ export function SettingPage({
     }
   }, [])
 
+  useEffect(() => {
+    const handleHash = () => {
+      const hash = (window.location.hash || '').replace('#', '')
+      if (hash && SETTINGS_SECTIONS.some((s) => s.id === hash)) {
+        setTimeout(() => {
+          handleNavClick(hash)
+        }, 60)
+      }
+    }
+
+    handleHash()
+    window.addEventListener('hashchange', handleHash)
+    return () => window.removeEventListener('hashchange', handleHash)
+  }, [])
+
   const handleNavClick = (sectionId) => {
     isClickScrollingRef.current = true
     setActiveSection(sectionId)

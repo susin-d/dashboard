@@ -490,7 +490,7 @@ class WhatsAppService:
     async def summarize_chat(database: Client, user_id: str, chat_id: str) -> str:
         from app.services.eve import chat_with_eve
 
-        recent = whatsapp_repo.list_whatsapp_messages(database, user_id, chat_id, limit=20)
+        recent = whatsapp_repo.list_whatsapp_messages(database, user_id, chat_id, limit=30)
         history_text = "\n".join(
             f"[{'Me' if m.is_from_me else (m.sender_name or 'Them')}]: {m.content}" for m in recent
         )
@@ -511,3 +511,57 @@ class WhatsAppService:
         except Exception as err:
             logger.exception(f"[Eve Summary Error] Failed summarizing chat {chat_id}: {err}")
             return ""
+
+    @staticmethod
+    async def chat_about_summary(
+        database: Client,
+        user_id: str,
+        chat_id: str,
+        summary: Optional[str],
+        messages: List[dict],
+    ) -> str:
+        from app.services.eve import chat_with_eve
+
+        recent = whatsapp_repo.list_whatsapp_messages(database, user_id, chat_id, limit=35)
+        history_text = "\n".join(
+            f"[{'Me' if m.is_from_me else (m.sender_name or 'Them')}]: {m.content}" for m in recent
+        )
+
+        chat_obj = whatsapp_repo.get_whatsapp_chat(database, user_id, chat_id)
+        chat_name = chat_obj.name if chat_obj else chat_id
+
+        system_context = (
+            f"You are Eve, an intelligent personal AI assistant helping the user review and interact with a WhatsApp conversation.\n"
+            f"Target Chat: '{chat_name}' (ID: {chat_id})\n\n"
+            f"=== Recent WhatsApp Messages History ===\n{history_text or 'No prior messages.'}\n\n"
+        )
+        if summary:
+            system_context += f"=== AI Generated Conversation Summary ===\n{summary}\n\n"
+
+        system_context += (
+            "The user is asking questions, requesting deeper explanations, asking to draft replies, "
+            "inquiring about specific participants, checking action items, or seeking scheduling guidance. "
+            "Answer directly, helpfully, accurately, and concisely based on the conversation context."
+        )
+
+        eve_messages = [{"role": "system", "content": system_context}]
+        for m in messages:
+            role = m.get("role", "user")
+            content = m.get("content", "")
+            if role in ("user", "assistant") and content:
+                eve_messages.append({"role": role, "content": content})
+
+        if len(eve_messages) <= 1:
+            return "How can I help you with this conversation?"
+
+        try:
+            reply, _, _ = chat_with_eve(
+                database=database,
+                user={"uid": user_id},
+                messages=eve_messages,
+            )
+            return (reply or "").strip()
+        except Exception as err:
+            logger.exception(f"[Eve Summary Chat Error] Failed for user {user_id} on chat {chat_id}: {err}")
+            return f"I ran into an issue answering your question: {err}"
+

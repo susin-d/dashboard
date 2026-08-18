@@ -10,6 +10,8 @@ export function AppLayout({
   activePage,
   children,
   onNavigate,
+  onCreate,
+  callCenter,
   notifications,
   setNotifications,
   notificationsOpen,
@@ -19,7 +21,9 @@ export function AppLayout({
   notificationsLoading,
   onLoadMoreNotifications,
   onWorkspaceChanged,
+  onEveNewChat,
   onSignOut,
+  workspaceData,
 }) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [sidebarExpanded, setSidebarExpanded] = useState(
@@ -52,6 +56,8 @@ export function AppLayout({
         onMenuOpen={toggleNavigation}
         navigationExpanded={isSidebarExpanded}
         onNavigate={onNavigate}
+        onCreate={onCreate}
+        callCenter={callCenter}
         notifications={notifications}
         setNotifications={setNotifications}
         notificationsOpen={notificationsOpen}
@@ -61,7 +67,9 @@ export function AppLayout({
         notificationsLoading={notificationsLoading}
         onLoadMoreNotifications={onLoadMoreNotifications}
         onWorkspaceChanged={onWorkspaceChanged}
+        onEveNewChat={onEveNewChat}
         onSignOut={onSignOut}
+        workspaceData={workspaceData}
       />
       <div className="app-body">
         <Sidebar

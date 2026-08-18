@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import {
   Bell,
@@ -23,18 +23,20 @@ import {
   UserRound,
   X,
 } from 'lucide-react'
-import { navigationItems } from '../config/navigation'
 import { clearAuthSession } from '../lib/authApi'
 import { deleteNotification, markAllNotificationsRead } from '../lib/workspaceApi'
 import { CALENDAR_REMINDER_PREFIX } from '../utils/calendarReminders'
 import { getNotificationPermission, requestNotificationPermission } from '../utils/browserNotifications'
 import { StarWavesLogo } from './StarWavesLogo'
 import { EveAssistantModal } from './EveAssistantModal'
+import { AdvancedSearchModal } from './search/AdvancedSearchModal'
 
 export function Header({
   onMenuOpen,
   navigationExpanded,
   onNavigate,
+  onCreate,
+  callCenter,
   notifications,
   setNotifications,
   notificationsOpen,
@@ -44,11 +46,12 @@ export function Header({
   notificationsLoading,
   onLoadMoreNotifications,
   onWorkspaceChanged,
+  onEveNewChat,
   onSignOut,
+  workspaceData,
 }) {
   const [profileMenuOpen, setProfileMenuOpen] = useState(false)
   const [searchOpen, setSearchOpen] = useState(false)
-  const [searchQuery, setSearchQuery] = useState('')
 
   const handleSignOut = () => {
     setProfileMenuOpen(false)
@@ -83,16 +86,6 @@ export function Header({
       setPermissionStatus(getNotificationPermission())
     }
   }
-  const searchRef = useRef(null)
-  const searchInputRef = useRef(null)
-  const searchTargets = useMemo(
-    () => navigationItems,
-    [],
-  )
-  const searchResults = searchTargets.filter(({ id, label }) => {
-    const query = searchQuery.trim().toLowerCase()
-    return !query || label.toLowerCase().includes(query) || id.includes(query)
-  })
   const unreadCount = notifications.filter(
     (notification) => notification.unread,
   ).length
@@ -128,34 +121,20 @@ export function Header({
     const handleShortcut = (event) => {
       if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
         event.preventDefault()
-        setSearchOpen(true)
-        searchInputRef.current?.focus()
+        setSearchOpen((open) => !open)
       }
       if (event.key === 'Escape') setNotificationsOpen(false)
     }
 
-    const handleOutsideClick = (event) => {
-      if (!searchRef.current?.contains(event.target)) setSearchOpen(false)
-    }
-
     document.addEventListener('keydown', handleShortcut)
-    document.addEventListener('mousedown', handleOutsideClick)
     return () => {
       document.removeEventListener('keydown', handleShortcut)
-      document.removeEventListener('mousedown', handleOutsideClick)
     }
   }, [setNotificationsOpen])
 
   const navigateFromMenu = (page) => {
     onNavigate(page)
     setProfileMenuOpen(false)
-  }
-
-  const navigateFromSearch = (page) => {
-    onNavigate(page)
-    setSearchOpen(false)
-    setSearchQuery('')
-    searchInputRef.current?.blur()
   }
 
   const openNotification = (notification) => {
@@ -228,57 +207,17 @@ export function Header({
       </div>
 
       <div className="header-actions">
-        <div className="search-container" ref={searchRef}>
-          <label className={`search ${searchOpen ? 'open' : ''}`}>
-            <Search size={17} />
-            <input
-              ref={searchInputRef}
-              aria-label="Go to page"
-              placeholder="Go to page"
-              value={searchQuery}
-              onFocus={() => setSearchOpen(true)}
-              onChange={(event) => {
-                setSearchQuery(event.target.value)
-                setSearchOpen(true)
-              }}
-              onKeyDown={(event) => {
-                if (event.key === 'Escape') {
-                  setSearchOpen(false)
-                  event.currentTarget.blur()
-                }
-                if (event.key === 'Enter' && searchResults[0]) {
-                  navigateFromSearch(searchResults[0].id)
-                }
-              }}
-            />
+        <div className="search-container">
+          <button
+            type="button"
+            className="search header-search-trigger"
+            onClick={() => setSearchOpen(true)}
+            aria-label="Search any section, page, or record (⌘K)"
+          >
+            <Search size={16} />
+            <span className="search-placeholder">Search any section…</span>
             <kbd>⌘ K</kbd>
-          </label>
-
-          {searchOpen && (
-            <div className="search-results">
-              <div className="search-results-heading">Go to page</div>
-              {searchResults.length ? (
-                searchResults.map(({ id, label, icon: Icon }, index) => (
-                  <button
-                    key={id}
-                    onMouseDown={(event) => event.preventDefault()}
-                    onClick={() => navigateFromSearch(id)}
-                  >
-                    <span className="search-result-icon">
-                      <Icon size={16} />
-                    </span>
-                    <span>{label}</span>
-                    {index === 0 && searchQuery && <kbd>Enter</kbd>}
-                  </button>
-                ))
-              ) : (
-                <div className="search-empty">
-                  <Search size={18} />
-                  <span>No matching page</span>
-                </div>
-              )}
-            </div>
-          )}
+          </button>
         </div>
         <button
           className="eve-button"
@@ -458,6 +397,20 @@ export function Header({
         onClose={() => setEveOpen(false)}
         onNavigate={onNavigate}
         onWorkspaceChanged={onWorkspaceChanged}
+      />
+      <AdvancedSearchModal
+        isOpen={searchOpen}
+        onClose={() => setSearchOpen(false)}
+        onNavigate={onNavigate}
+        onCreate={onCreate}
+        callCenter={callCenter}
+        darkTheme={darkTheme}
+        setDarkTheme={setDarkTheme}
+        setEveOpen={setEveOpen}
+        setNotificationsOpen={setNotificationsOpen}
+        onEveNewChat={onEveNewChat}
+        onSignOut={handleSignOut}
+        workspaceData={workspaceData}
       />
     </>
   )

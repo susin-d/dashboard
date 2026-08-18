@@ -20,6 +20,7 @@ from app.schemas.whatsapp import (
     WhatsAppSettings,
     WhatsAppSettingsUpdate,
     WhatsAppStatusResponse,
+    WhatsAppSummaryChatRequest,
 )
 from app.services.whatsapp import WhatsAppService
 
@@ -430,6 +431,24 @@ async def summarize_whatsapp_chat(
 ):
     summary = await WhatsAppService.summarize_chat(database, current_user["uid"], chat_id)
     return {"summary": summary}
+
+
+@router.post("/chats/{chat_id}/summary-chat")
+async def chat_about_whatsapp_summary_endpoint(
+    chat_id: str,
+    payload: WhatsAppSummaryChatRequest,
+    current_user: dict = Depends(get_current_user),
+    database: Client = Depends(get_firestore),
+):
+    reply = await WhatsAppService.chat_about_summary(
+        database=database,
+        user_id=current_user["uid"],
+        chat_id=chat_id,
+        summary=payload.summary,
+        messages=[m.model_dump() for m in payload.messages],
+    )
+    return {"reply": reply}
+
 
 
 @router.post("/chats/{chat_id}/messages/{message_id}/react")
