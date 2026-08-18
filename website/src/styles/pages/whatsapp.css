@@ -41,6 +41,16 @@
   box-sizing: border-box;
 }
 
+.whatsapp-sidebar-centered-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  margin: 0;
+  color: var(--text-primary, #ffffff);
+  text-align: center;
+  flex: 1;
+}
+
 .whatsapp-header-title {
   display: flex;
   align-items: center;

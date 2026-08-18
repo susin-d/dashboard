@@ -135,12 +135,9 @@ export function WhatsAppChatList({
     <div className="whatsapp-sidebar">
       {/* Sidebar Header */}
       <div className="whatsapp-sidebar-header">
-        <div className="whatsapp-sidebar-title-row">
-          <h2>Chats</h2>
-          <span className={`whatsapp-status-badge ${isConnected ? 'online' : 'offline'}`}>
-            {isConnected ? 'Linked' : 'Offline'}
-          </span>
-        </div>
+        <div style={{ width: 36 }} />
+
+        <h2 className="whatsapp-sidebar-centered-title">Chats</h2>
 
         <div className="whatsapp-sidebar-actions">
           <button
