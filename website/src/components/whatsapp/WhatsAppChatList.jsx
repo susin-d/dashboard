@@ -3,10 +3,13 @@ import { Bot, Pin, User, Users, QrCode, Archive, BellOff, CheckCheck, Trash2 } f
 import { SearchBar } from '../ui'
 
 function formatSenderName(name) {
-  if (!name || name === '1289' || name === 'Contact') return ''
-  const clean = name.replace(/@s\.whatsapp\.net|@g\.us/g, '')
+  if (!name || name === '1289' || name === 'Contact' || name.includes('@s.whatsapp.net') || name.includes('@g.us') || name.includes('@lid')) return ''
+  const clean = name.replace(/@s\.whatsapp\.net|@g\.us|@lid/g, '').trim()
   if (/^\d{10,15}$/.test(clean)) {
     return `+${clean}`
+  }
+  if (/^\d{16,}$/.test(clean)) {
+    return ''
   }
   return clean
 }

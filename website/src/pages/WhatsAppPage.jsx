@@ -635,6 +635,7 @@ export function WhatsAppPage() {
           <WhatsAppConversation
             key={selectedChat.id}
             chat={selectedChat}
+            allChats={chats}
             messages={messages}
             hasMoreMessages={hasMoreMessages}
             isLoadingMore={isLoadingMore}

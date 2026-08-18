@@ -50,10 +50,16 @@ function extractFirstUrl(text) {
 
 function formatSenderName(name, senderId) {
   if (!name && !senderId) return 'Contact'
-  const raw = (name && name !== 'Contact' && name !== '1289') ? name : (senderId || 'Contact')
-  const clean = raw.replace(/@s\.whatsapp\.net|@g\.us/g, '')
+  let raw = (name && name !== 'Contact' && name !== '1289' && !name.includes('@s.whatsapp.net') && !name.includes('@g.us') && !name.includes('@lid'))
+    ? name
+    : (senderId || 'Contact')
+
+  const clean = raw.replace(/@s\.whatsapp\.net|@g\.us|@lid/g, '').trim()
   if (/^\d{10,15}$/.test(clean)) {
     return `+${clean}`
+  }
+  if (/^\d{16,}$/.test(clean)) {
+    return 'Contact'
   }
   return clean
 }
@@ -90,6 +96,7 @@ function formatReactions(reactions) {
 
 export function WhatsAppConversation({
   chat,
+  allChats = [],
   messages = [],
   hasMoreMessages = false,
   isLoadingMore = false,
@@ -323,15 +330,28 @@ export function WhatsAppConversation({
 
   const participantNameMap = useMemo(() => {
     const map = new Map()
-    for (const m of messages) {
-      if (m.sender_id && m.sender_name && m.sender_name !== 'Contact' && m.sender_name !== '1289') {
+    // 1. Seed from all loaded chats and contacts
+    for (const c of (allChats || [])) {
+      if (c && c.name && c.name !== 'Contact' && c.name !== 'Group conversation' && !c.name.includes('@s.whatsapp.net') && !c.name.includes('@g.us') && !c.name.includes('@lid')) {
+        const idClean = c.id?.replace(/@s\.whatsapp\.net|@g\.us|@lid/g, '')
+        if (idClean) map.set(idClean, c.name)
+        if (c.id) map.set(c.id, c.name)
+        if (c.phone_number) {
+          map.set(c.phone_number, c.name)
+          map.set(c.phone_number.replace(/^\+/, ''), c.name)
+        }
+      }
+    }
+    // 2. Add senders from message history
+    for (const m of (messages || [])) {
+      if (m.sender_id && m.sender_name && m.sender_name !== 'Contact' && m.sender_name !== '1289' && !m.sender_name.includes('@s.whatsapp.net') && !m.sender_name.includes('@g.us') && !m.sender_name.includes('@lid')) {
         const userPart = m.sender_id.replace(/@s\.whatsapp\.net|@g\.us|@lid/g, '')
         map.set(userPart, m.sender_name)
         map.set(m.sender_id, m.sender_name)
       }
     }
     return map
-  }, [messages])
+  }, [allChats, messages])
 
   const formatParticipantsSubtitle = (participants) => {
     if (!participants || participants.length === 0) return 'Group conversation'
@@ -339,11 +359,19 @@ export function WhatsAppConversation({
       if (participantNameMap.has(p)) {
         return participantNameMap.get(p)
       }
-      const clean = p.replace(/@s\.whatsapp\.net|@g\.us|@lid/g, '')
+      const clean = p.replace(/@s\.whatsapp\.net|@g\.us|@lid/g, '').trim()
       if (participantNameMap.has(clean)) {
         return participantNameMap.get(clean)
       }
-      return formatSenderName(p, p)
+      // Check phone number format
+      if (/^\d{10,15}$/.test(clean)) {
+        return `+${clean}`
+      }
+      // If it's an internal LID hash (>15 digits or contains hex/non-standard chars)
+      if (/^\d{16,}$/.test(clean) || clean.length > 15) {
+        return 'Contact'
+      }
+      return clean || 'Contact'
     })
     return formatted.slice(0, 4).join(', ') + (formatted.length > 4 ? ` and ${formatted.length - 4} more...` : '')
   }
