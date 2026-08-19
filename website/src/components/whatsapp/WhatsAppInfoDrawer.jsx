@@ -238,7 +238,7 @@ export function WhatsAppInfoDrawer({
           ) : (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '6px', maxHeight: '320px', overflowY: 'auto' }}>
               {photosAndVideos.map((m) => {
-                const src = m.media.thumbnail_base64 || m.media.url
+                const src = m.media.url || m.media.thumbnail_base64
                 return (
                   <div
                     key={m.id}
@@ -366,7 +366,7 @@ export function WhatsAppInfoDrawer({
             </div>
             <div className="whatsapp-lightbox-body">
               <img
-                src={selectedLightbox.thumbnail_base64 || selectedLightbox.url}
+                src={selectedLightbox.url || selectedLightbox.thumbnail_base64}
                 alt="Shared media preview"
                 className="whatsapp-lightbox-media"
               />

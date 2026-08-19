@@ -1058,10 +1058,10 @@ export function WhatsAppConversation({
                             )}
                           </p>
                         </div>
-                        {quotedMsg.media && (quotedMsg.media.thumbnail_base64 || quotedMsg.media.url) && (
+                        {quotedMsg.media && (quotedMsg.media.url || quotedMsg.media.thumbnail_base64) && (
                           <div className="whatsapp-quoted-thumb-wrapper">
                             <img
-                              src={quotedMsg.media.thumbnail_base64 || quotedMsg.media.url}
+                              src={quotedMsg.media.url || quotedMsg.media.thumbnail_base64}
                               alt="Quoted media preview"
                               className="whatsapp-quoted-thumb"
                             />
@@ -1115,10 +1115,10 @@ export function WhatsAppConversation({
                         }}
                         title={msg.media.type !== 'sticker' ? 'Click to open fullscreen' : undefined}
                       >
-                        {msg.media.thumbnail_base64 || (msg.media.url && (msg.media.url.startsWith('data:') || msg.media.url.startsWith('blob:') || msg.media.url.startsWith('/') || msg.media.url.includes('giphy.com') || msg.media.url.includes('tenor.com'))) ? (
+                        {Boolean(msg.media.url || msg.media.thumbnail_base64) ? (
                           <div style={{ position: 'relative', display: 'inline-block', width: '100%' }}>
                             <img
-                              src={msg.media.thumbnail_base64 || msg.media.url}
+                              src={msg.media.url || msg.media.thumbnail_base64}
                               alt={msg.media.filename || "Media attachment"}
                               className="whatsapp-media-preview-img"
                               onError={(e) => {
@@ -1324,10 +1324,10 @@ export function WhatsAppConversation({
               )}
             </p>
           </div>
-          {replyingTo.media && (replyingTo.media.thumbnail_base64 || replyingTo.media.url) && (
+          {replyingTo.media && (replyingTo.media.url || replyingTo.media.thumbnail_base64) && (
             <div className="whatsapp-quoted-thumb-wrapper" style={{ marginRight: 8 }}>
               <img
-                src={replyingTo.media.thumbnail_base64 || replyingTo.media.url}
+                src={replyingTo.media.url || replyingTo.media.thumbnail_base64}
                 alt="Attachment preview"
                 className="whatsapp-quoted-thumb"
               />

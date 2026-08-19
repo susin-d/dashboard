@@ -1361,20 +1361,23 @@
   margin-bottom: 6px;
   border-radius: 8px;
   overflow: hidden;
-  width: 300px;
-  max-width: 100%;
-  min-width: 240px;
-  background: rgba(0, 0, 0, 0.2);
+  max-width: 340px;
+  width: fit-content;
+  background: rgba(0, 0, 0, 0.08);
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .whatsapp-media-preview-img {
   width: 100%;
+  max-width: 340px;
   height: auto;
-  min-height: 160px;
   max-height: 380px;
-  object-fit: cover;
+  object-fit: contain;
   display: block;
   border-radius: 8px;
+  image-rendering: auto;
 }
 
 .whatsapp-gif-badge {
