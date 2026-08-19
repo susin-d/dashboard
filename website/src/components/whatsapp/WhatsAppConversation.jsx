@@ -50,18 +50,15 @@ function extractFirstUrl(text) {
 
 function formatSenderName(name, senderId) {
   if (!name && !senderId) return 'Contact'
-  let raw = (name && name !== 'Contact' && name !== '1289' && !name.includes('@s.whatsapp.net') && !name.includes('@g.us') && !name.includes('@lid'))
+  const raw = (name && name !== 'Contact' && name !== '1289' && !name.includes('@s.whatsapp.net') && !name.includes('@g.us') && !name.includes('@lid'))
     ? name
     : (senderId || 'Contact')
 
   const clean = raw.replace(/@s\.whatsapp\.net|@g\.us|@lid/g, '').trim()
-  if (/^\d{10,15}$/.test(clean)) {
-    return `+${clean}`
+  if (/^\+?\d{6,}$/.test(clean)) {
+    return clean.startsWith('+') ? clean : `+${clean}`
   }
-  if (/^\d{16,}$/.test(clean)) {
-    return 'Contact'
-  }
-  return clean
+  return clean || 'Contact'
 }
 
 function formatMessageContent(text) {
@@ -363,11 +360,16 @@ export function WhatsAppConversation({
       }
     }
 
-    // 1. Seed from active chat
+    // 1. Seed from active chat & participants
     if (chat) {
       register(chat.id, chat.name, chat.avatar_url)
       if (chat.phone_number) {
         register(chat.phone_number, chat.name, chat.avatar_url)
+      }
+      if (Array.isArray(chat.participants)) {
+        for (const p of chat.participants) {
+          if (p) register(p, p, null)
+        }
       }
     }
 
@@ -378,12 +380,24 @@ export function WhatsAppConversation({
       if (c.phone_number) {
         register(c.phone_number, c.name, c.avatar_url)
       }
+      if (Array.isArray(c.participants)) {
+        for (const p of c.participants) {
+          if (p) register(p, p, null)
+        }
+      }
     }
 
-    // 3. Seed from message history
+    // 3. Seed from message history & reactions
     for (const m of (messages || [])) {
       if (!m) continue
       register(m.sender_id, m.sender_name, m.sender_avatar_url)
+      if (Array.isArray(m.reactions)) {
+        for (const r of m.reactions) {
+          if (r?.sender_name && r.sender_name !== 'Contact') {
+            register(r.sender || r.sender_id, r.sender_name, r.sender_avatar_url)
+          }
+        }
+      }
     }
 
     return { nameMap, avatarMap }
@@ -481,22 +495,31 @@ export function WhatsAppConversation({
       }
     }
 
-    // 5. If sender identifier is a phone number (10-15 digits)
-    if (/^\d{10,15}$/.test(userPart)) {
-      return {
-        name: `+${userPart}`,
-        isMe: false,
-        avatar: participantInfoMap.avatarMap.get(userPart) || null,
-        initial: '+',
+    // 5. Match against chat participants list
+    if (Array.isArray(chat?.participants)) {
+      for (const p of chat.participants) {
+        if (!p) continue
+        const cleanP = String(p).replace(/@s\.whatsapp\.net|@lid/g, '').trim()
+        if (cleanP === cleanSender || cleanP === userPart || (userPart && cleanP.includes(userPart))) {
+          const isNum = /^\+?\d+$/.test(cleanP)
+          return {
+            name: isNum ? (cleanP.startsWith('+') ? cleanP : `+${cleanP}`) : cleanP,
+            isMe: false,
+            avatar: participantInfoMap.avatarMap.get(cleanP) || null,
+            initial: isNum ? '+' : getSenderInitial(cleanP),
+          }
+        }
       }
     }
 
-    // 6. Match prefix against conversation messages history
-    if (userPart) {
+    // 6. Match prefix/equality against conversation messages history
+    if (userPart || rawSender) {
       const matchedMsg = (messages || []).find(
         (m) =>
           m.sender_id &&
-          (m.sender_id.startsWith(userPart) ||
+          (m.sender_id === rawSender ||
+            m.sender_id === cleanSender ||
+            m.sender_id.startsWith(userPart) ||
             userPart.startsWith(m.sender_id.replace(/@s\.whatsapp\.net|@lid/g, ''))),
       )
       if (matchedMsg && matchedMsg.sender_name && matchedMsg.sender_name !== 'Contact') {
@@ -509,10 +532,39 @@ export function WhatsAppConversation({
       }
     }
 
-    // 7. Clean sender string if human, else fallback to Contact
+    // 7. Match against all known contacts/chats
+    if (userPart) {
+      const cleanUserPart = userPart.replace(/\D/g, '')
+      const matchedContact = (allChats || []).find((c) => {
+        if (!c || !c.name || c.name === 'Contact') return false
+        if (c.id === rawSender || c.id === cleanSender || c.id?.includes(userPart)) return true
+        if (cleanUserPart && c.phone_number && c.phone_number.replace(/\D/g, '') === cleanUserPart) return true
+        return false
+      })
+      if (matchedContact) {
+        return {
+          name: matchedContact.name,
+          isMe: false,
+          avatar: matchedContact.avatar_url || null,
+          initial: getSenderInitial(matchedContact.name),
+        }
+      }
+    }
+
+    // 8. If sender identifier is numeric (phone number/user ID)
+    if (/^\+?\d{6,}$/.test(cleanSender || userPart)) {
+      const phone = (cleanSender || userPart).startsWith('+') ? (cleanSender || userPart) : `+${cleanSender || userPart}`
+      return {
+        name: phone,
+        isMe: false,
+        avatar: participantInfoMap.avatarMap.get(userPart) || null,
+        initial: '+',
+      }
+    }
+
+    // 9. Clean human sender string fallback
     if (
       cleanSender &&
-      !/^\d{16,}$/.test(cleanSender) &&
       cleanSender !== 'Contact' &&
       cleanSender !== '1289'
     ) {
