@@ -4,7 +4,7 @@ Living project snapshot for AI agents. `AGENTS.md` holds the permanent rules;
 this file holds the **current state** of the codebase and must be kept up to
 date whenever the implementation changes.
 
-> **Last updated:** 2026-08-19 (Improved WhatsApp media rendering: prioritize full-res media URL over low-res preview thumbnails and fixed image container aspect ratio and scaling styles)
+> **Last updated:** 2026-08-19 (Fixed WhatsApp chat list right-click context menu horizontal stretching by correcting positioning styles and aligning with monochrome design system)
 
 ---
 

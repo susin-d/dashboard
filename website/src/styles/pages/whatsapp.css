@@ -1132,15 +1132,15 @@
   background: rgba(0, 0, 0, 0.85);
 }
 
-/* Context Menu */
 .whatsapp-context-menu {
   position: absolute;
-  right: 0;
   background: var(--bg-secondary, #18181b);
   border: 1px solid var(--border-color, #3f3f46);
   border-radius: 8px;
   padding: 4px;
   min-width: 175px;
+  width: max-content;
+  max-width: 240px;
   max-height: 380px;
   overflow-y: auto;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7);
@@ -1148,6 +1148,10 @@
   display: flex;
   flex-direction: column;
   gap: 2px;
+}
+
+.whatsapp-bubble-menu-wrapper .whatsapp-context-menu {
+  right: 0;
 }
 
 .whatsapp-context-menu.placement-bottom {

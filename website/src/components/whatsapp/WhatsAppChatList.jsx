@@ -307,6 +307,7 @@ export function WhatsAppChatList({
             position: 'fixed',
             top: contextMenuPos.y,
             left: contextMenuPos.x,
+            right: 'auto',
             zIndex: 1000,
           }}
           onClick={(e) => e.stopPropagation()}
@@ -361,14 +362,13 @@ export function WhatsAppChatList({
 
           <button
             type="button"
-            className="whatsapp-context-item"
+            className="whatsapp-context-item danger"
             onClick={() => {
               if (window.confirm(`Delete conversation with ${contextMenuChat.name}?`)) {
                 onDeleteChat?.(contextMenuChat.id)
               }
               setContextMenuChat(null)
             }}
-            style={{ color: '#ef4444' }}
           >
             <Trash2 size={15} />
             <span>Delete chat</span>
