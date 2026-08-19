@@ -4,7 +4,7 @@ Living project snapshot for AI agents. `AGENTS.md` holds the permanent rules;
 this file holds the **current state** of the codebase and must be kept up to
 date whenever the implementation changes.
 
-> **Last updated:** 2026-08-18 (Added Eve Trigger Keywords & Mentions configuration to Eve AI WhatsApp Automation settings with active tag management, quick presets, and custom personality prompt)
+> **Last updated:** 2026-08-19 (Fixed search icon and placeholder overlap in Eve sessions and memory search bar by cleaning up obsolete CSS overrides)
 
 ---
 
