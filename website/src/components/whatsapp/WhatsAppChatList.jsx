@@ -3,20 +3,19 @@ import { Bot, Pin, User, Users, QrCode, Archive, BellOff, CheckCheck, Trash2 } f
 import { SearchBar } from '../ui'
 
 function formatSenderName(name) {
-  if (!name || name === '1289' || name === 'Contact' || name.includes('@s.whatsapp.net') || name.includes('@g.us') || name.includes('@lid')) return ''
-  const clean = name.replace(/@s\.whatsapp\.net|@g\.us|@lid/g, '').trim()
-  if (/^\d{10,15}$/.test(clean)) {
-    return `+${clean}`
-  }
-  if (/^\d{16,}$/.test(clean)) {
-    return ''
+  if (!name) return ''
+  const str = String(name).trim()
+  if (str === '1289' || str === 'Contact' || str.includes('@s.whatsapp.net') || str.includes('@g.us') || str.includes('@lid')) return ''
+  const clean = str.replace(/@s\.whatsapp\.net|@g\.us|@lid/g, '').trim()
+  if (/^\+?\d{6,}$/.test(clean)) {
+    return clean.startsWith('+') ? clean : `+${clean}`
   }
   return clean
 }
 
 function getSenderInitial(name) {
   if (!name) return '?'
-  const clean = name.trim().replace(/^[@+~]/, '')
+  const clean = String(name).trim().replace(/^[@+~]/, '')
   return (clean[0] || '?').toUpperCase()
 }
 
@@ -51,15 +50,16 @@ export function WhatsAppChatList({
 
   // Counts for pills
   const unreadTotal = useMemo(() => {
-    return chats.filter((c) => !c.is_archived).reduce((acc, c) => acc + (c.unread_count || 0), 0)
+    return (chats || []).filter((c) => c && !c.is_archived).reduce((acc, c) => acc + (c.unread_count || 0), 0)
   }, [chats])
 
   const archivedCount = useMemo(() => {
-    return chats.filter((c) => c.is_archived).length
+    return (chats || []).filter((c) => c && c.is_archived).length
   }, [chats])
 
   const filteredChats = useMemo(() => {
-    const list = chats.filter((chat) => {
+    const list = (chats || []).filter((chat) => {
+      if (!chat) return false
       // Archive handling
       if (activeFilter === 'archived') {
         if (!chat.is_archived) return false
@@ -80,31 +80,30 @@ export function WhatsAppChatList({
 
       // Search query filtering
       if (!searchQuery.trim()) return true
-      const q = searchQuery.toLowerCase()
-      return (
-        chat.name?.toLowerCase().includes(q) ||
-        chat.phone_number?.toLowerCase().includes(q) ||
-        chat.description?.toLowerCase().includes(q) ||
-        chat.last_message?.content?.toLowerCase().includes(q) ||
-        chat.participants?.some((p) => p.toLowerCase().includes(q))
-      )
+      const q = searchQuery.toLowerCase().trim()
+      const name = String(chat.name || '').toLowerCase()
+      const phone = String(chat.phone_number || '').toLowerCase()
+      const desc = String(chat.description || '').toLowerCase()
+      const lastMsg = String(chat.last_message?.content || '').toLowerCase()
+      const hasPart = Array.isArray(chat.participants) && chat.participants.some((p) => String(p || '').toLowerCase().includes(q))
+      return name.includes(q) || phone.includes(q) || desc.includes(q) || lastMsg.includes(q) || hasPart
     })
 
     // Sort: Pinned first, then chats with real messages by last_message.timestamp descending, then other contacts
     return list.sort((a, b) => {
-      const aPinned = a.pinned || a.id === 'eve' ? 1 : 0
-      const bPinned = b.pinned || b.id === 'eve' ? 1 : 0
+      const aPinned = a?.pinned || a?.id === 'eve' ? 1 : 0
+      const bPinned = b?.pinned || b?.id === 'eve' ? 1 : 0
       if (aPinned !== bPinned) return bPinned - aPinned
 
-      const aHasMsg = Boolean(a.last_message?.content)
-      const bHasMsg = Boolean(b.last_message?.content)
+      const aHasMsg = Boolean(a?.last_message?.content)
+      const bHasMsg = Boolean(b?.last_message?.content)
       if (aHasMsg !== bHasMsg) return bHasMsg ? 1 : -1
 
-      const aTime = a.last_message?.timestamp ? new Date(a.last_message.timestamp).getTime() : 0
-      const bTime = b.last_message?.timestamp ? new Date(b.last_message.timestamp).getTime() : 0
+      const aTime = a?.last_message?.timestamp ? new Date(a.last_message.timestamp).getTime() : 0
+      const bTime = b?.last_message?.timestamp ? new Date(b.last_message.timestamp).getTime() : 0
       if (aTime !== bTime) return bTime - aTime
 
-      return (a.name || '').localeCompare(b.name || '')
+      return String(a?.name || '').localeCompare(String(b?.name || ''))
     })
   }, [chats, searchQuery, activeFilter])
 

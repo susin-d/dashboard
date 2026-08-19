@@ -20,6 +20,7 @@
   width: 380px;
   min-width: 340px;
   max-width: 440px;
+  flex-shrink: 0;
   display: flex;
   flex-direction: column;
   border-right: 1px solid var(--border-color, #27272a);
@@ -280,6 +281,7 @@
 /* Conversation Pane */
 .whatsapp-main {
   flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   background: var(--bg-primary, #09090b);

@@ -587,20 +587,17 @@ export function WhatsAppConversation({
   const formatParticipantsSubtitle = (participants) => {
     if (!participants || participants.length === 0) return 'Group conversation'
     const formatted = participants.map((p) => {
-      if (participantNameMap.has(p)) {
-        return participantNameMap.get(p)
+      if (!p) return 'Contact'
+      const raw = String(p).trim()
+      if (participantNameMap.has(raw)) {
+        return participantNameMap.get(raw)
       }
-      const clean = p.replace(/@s\.whatsapp\.net|@g\.us|@lid/g, '').trim()
+      const clean = raw.replace(/@s\.whatsapp\.net|@g\.us|@lid/g, '').trim()
       if (participantNameMap.has(clean)) {
         return participantNameMap.get(clean)
       }
-      // Check phone number format
-      if (/^\d{10,15}$/.test(clean)) {
-        return `+${clean}`
-      }
-      // If it's an internal LID hash (>15 digits or contains hex/non-standard chars)
-      if (/^\d{16,}$/.test(clean) || clean.length > 15) {
-        return 'Contact'
+      if (/^\+?\d{6,}$/.test(clean)) {
+        return clean.startsWith('+') ? clean : `+${clean}`
       }
       return clean || 'Contact'
     })

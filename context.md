@@ -4,7 +4,7 @@ Living project snapshot for AI agents. `AGENTS.md` holds the permanent rules;
 this file holds the **current state** of the codebase and must be kept up to
 date whenever the implementation changes.
 
-> **Last updated:** 2026-08-19 (Enhanced WhatsApp reaction modal sender resolution: correctly resolve and display participant names, contacts, and formatted phone numbers instead of generic Contact labels)
+> **Last updated:** 2026-08-19 (Fixed WhatsApp chat list sidebar disappearing/squishing by adding flex-shrink: 0 and min-width: 0 guards, and hardened chat list against non-string participant data)
 
 ---
 
