@@ -406,6 +406,21 @@
   gap: 12px;
   min-width: 0;
   flex: 1;
+  cursor: pointer;
+  padding: 4px 8px;
+  margin-left: -8px;
+  border-radius: var(--radius-md, 8px);
+  transition: background var(--transition-fast, 0.15s ease);
+  user-select: none;
+}
+
+.whatsapp-contact-header:hover {
+  background: var(--bg-hover, rgba(255, 255, 255, 0.06));
+}
+
+.whatsapp-contact-header:focus-visible {
+  outline: 2px solid var(--border-focus, var(--text-primary));
+  outline-offset: 2px;
 }
 
 .whatsapp-contact-details {

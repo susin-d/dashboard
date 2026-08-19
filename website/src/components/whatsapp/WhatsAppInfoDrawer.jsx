@@ -167,13 +167,16 @@ export function WhatsAppInfoDrawer({
           )}
 
           {/* Group Participants List */}
-          {chat.is_group && chat.participants && chat.participants.length > 0 && (
+          {chat.is_group && Array.isArray(chat.participants) && chat.participants.length > 0 && (
             <div className="whatsapp-drawer-section">
               <h4>{chat.participants.length} Participants</h4>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', maxHeight: '180px', overflowY: 'auto' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', maxHeight: '240px', overflowY: 'auto' }}>
                 {chat.participants.map((p, idx) => {
-                  const cleanP = p.replace(/@s\.whatsapp\.net|@g\.us/g, '')
-                  const isPhone = /^\d+$/.test(cleanP)
+                  if (!p) return null
+                  const raw = String(p).trim()
+                  const cleanP = raw.replace(/@s\.whatsapp\.net|@g\.us|@lid/g, '').trim()
+                  const isPhone = /^\+?\d{6,}$/.test(cleanP)
+                  const displayName = isPhone ? (cleanP.startsWith('+') ? cleanP : `+${cleanP}`) : cleanP
                   return (
                     <div
                       key={p || idx}
@@ -193,7 +196,7 @@ export function WhatsAppInfoDrawer({
                       </div>
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                          {isPhone ? `+${cleanP}` : cleanP}
+                          {displayName}
                         </div>
                       </div>
                     </div>

@@ -641,7 +641,19 @@ export function WhatsAppConversation({
 
       {/* Header */}
       <div className="whatsapp-main-header">
-        <div className="whatsapp-contact-header">
+        <div
+          className="whatsapp-contact-header"
+          onClick={onOpenInfoDrawer}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault()
+              onOpenInfoDrawer?.()
+            }
+          }}
+          title={chat?.is_group ? 'Click to view group details and participants' : 'Click to view contact info'}
+        >
           <div className={`whatsapp-avatar ${isEve ? 'is-eve' : chat?.is_group ? 'is-group' : ''}`}>
             {isEve ? (
               <Bot size={22} />

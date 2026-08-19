@@ -4,7 +4,7 @@ Living project snapshot for AI agents. `AGENTS.md` holds the permanent rules;
 this file holds the **current state** of the codebase and must be kept up to
 date whenever the implementation changes.
 
-> **Last updated:** 2026-08-19 (Fixed markdown line break rendering: preserve single newlines within message paragraphs and blockquotes with line breaks instead of joining into a single flat line)
+> **Last updated:** 2026-08-19 (Allowed clicking WhatsApp conversation header to open group/contact details and participant list info drawer)
 
 ---
 
