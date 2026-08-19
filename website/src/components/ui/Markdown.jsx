@@ -113,7 +113,12 @@ function renderBlocks(content) {
       }
       blocks.push(
         <blockquote key={blocks.length} className="md-quote">
-          {renderInline(quoteLines.join(' '), `q${blocks.length}`)}
+          {quoteLines.map((qLine, qIdx) => (
+            <span key={qIdx}>
+              {qIdx > 0 && <br />}
+              {renderInline(qLine, `q${blocks.length}-${qIdx}`)}
+            </span>
+          ))}
         </blockquote>,
       )
       continue
@@ -216,7 +221,12 @@ function renderBlocks(content) {
     }
     blocks.push(
       <p key={blocks.length} className="md-paragraph">
-        {renderInline(paragraphLines.join(' '), `p${blocks.length}`)}
+        {paragraphLines.map((lineText, lineIdx) => (
+          <span key={lineIdx}>
+            {lineIdx > 0 && <br />}
+            {renderInline(lineText, `p${blocks.length}-${lineIdx}`)}
+          </span>
+        ))}
       </p>,
     )
   }
