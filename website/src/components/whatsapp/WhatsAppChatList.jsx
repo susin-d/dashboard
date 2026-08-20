@@ -58,7 +58,7 @@ export function WhatsAppChatList({
   }, [chats])
 
   const filteredChats = useMemo(() => {
-    const list = (chats || []).filter((chat) => {
+    const list = [...(chats || [])].filter((chat) => {
       if (!chat) return false
       // Archive handling
       if (activeFilter === 'archived') {

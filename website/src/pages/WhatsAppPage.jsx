@@ -258,6 +258,20 @@ export function WhatsAppPage() {
   const [hasMoreMessages, setHasMoreMessages] = useState(true)
   const [isLoadingMore, setIsLoadingMore] = useState(false)
 
+  useEffect(() => {
+    if (!chats.length) {
+      if (selectedChatId !== null) {
+        setSelectedChatId(null)
+      }
+      return
+    }
+
+    const hasSelectedChat = chats.some((chat) => chat.id === selectedChatId)
+    if (!selectedChatId || !hasSelectedChat) {
+      setSelectedChatId(chats[0].id)
+    }
+  }, [chats, selectedChatId])
+
   // Load messages when selectedChatId changes
   useEffect(() => {
     if (!selectedChatId) {
@@ -650,7 +664,8 @@ export function WhatsAppPage() {
             isLoadingMore={isLoadingMore}
             onLoadMoreMessages={handleLoadMoreMessages}
             onSendMessage={handleSendMessage}
-            onOpenInfoDrawer={() => setIsInfoDrawerOpen((prev) => !prev)}
+            onOpenInfoDrawer={() => setIsInfoDrawerOpen(true)}
+            onToggleInfoDrawer={() => setIsInfoDrawerOpen((prev) => !prev)}
             onGenerateEveDraft={handleGenerateEveDraft}
             onSummarizeChat={handleSummarizeChat}
             onReactToMessage={handleReactToMessage}

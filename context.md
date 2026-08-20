@@ -4,7 +4,7 @@ Living project snapshot for AI agents. `AGENTS.md` holds the permanent rules;
 this file holds the **current state** of the codebase and must be kept up to
 date whenever the implementation changes.
 
-> **Last updated:** 2026-08-19 (Allowed clicking WhatsApp conversation header to open group/contact details and participant list info drawer)
+> **Last updated:** 2026-08-20 (WhatsApp chat selection fix: preserve active conversation when chats list changes and stop mutating the state array during sorting)
 
 ---
 
@@ -207,6 +207,7 @@ SMTP, Firestore database id, CORS origins. Loads `.env.prod` before `.env`.
 - Hackathon discovery with configurable sources + manual entry.
 - EVE AI assistant (multi-provider: OpenAI / Anthropic / Google Gemini) with navigation integrated directly in the main sidebar under an "EVE AI" group (`Chat & Assistant`, `Chat Sessions`, `Eve Memory`, `Voice & AI Call`, `Schedules & Reminders`), featuring persistent sessions, long-term memory, bidirectional voice calls, automated background cron/one-time schedules, code workspace tools, and open web browsing/search (`@web`, `browse_web`, `search_web`, `fetch_web_page`).
 - AI Models settings: the Settings page exposes an "AI models" section (`AiModelsSection.jsx` + `aiModelsApi.js`) where users pick a provider and a model for EVE from a curated catalog (OpenAI `gpt-5-mini`/`gpt-5`/`gpt-4o`/`gpt-4o-mini`/`o3-mini`, Anthropic `claude-sonnet-4-5`/`claude-opus-4-1`/`claude-haiku-4-5`, Gemini `gemini-2.5-flash`/`gemini-2.5-pro`/`gemini-2.0-flash`). Providers and default models configured via environment variables on the server are surfaced with `(Default)` indicators and require no user key; selecting any other provider prompts for a user API key stored securely in `users/{uid}/settings/ai-models` (`app/api/routes/ai_models.py`). `resolve_ai_config` uses the environment key when available or the user's stored key, falling back to server default (`DEFAULT_PROVIDER`) if neither exists. Dropdown UI and card footer styling ensure clear monochrome contrast, proper elevation/z-index, and crisp borders.
+- WhatsApp settings (`WhatsAppSection.jsx`): Settings → WhatsApp exposes account pairing, global Eve auto-responder toggle, desktop/push notifications toggle, configurable **Eve trigger keywords** (tag-style add/remove UI with quick presets and reset-to-defaults; persisted to `users/{uid}/whatsapp_settings/default` via `PUT /whatsapp/settings`), custom Eve auto-reply prompt/instructions, and per-chat Eve auto-reply in the conversation info drawer. Incoming messages matching `@eve`, owner aliases, or any configured keyword activate Eve analysis/drafting (`app/services/whatsapp.py`, `app/schemas/whatsapp.py` `keywords` field).
 - Eve speech backend: server-side STT/TTS providers for EVE voice calls in
   addition to the browser Web Speech API path. `GET/PUT /settings/eve-speech`
   (`app/api/routes/eve_speech.py`) returns a provider catalog (browser + Groq
