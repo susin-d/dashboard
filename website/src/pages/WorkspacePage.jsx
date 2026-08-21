@@ -13,6 +13,8 @@ export function WorkspacePage() {
   const [terminalVisible, setTerminalVisible] = useState(false)
   const [newFilePrompt, setNewFilePrompt] = useState(false)
   const [newFileName, setNewFileName] = useState('')
+  const [newFolderPrompt, setNewFolderPrompt] = useState(false)
+  const [newFolderName, setNewFolderName] = useState('')
 
   // Workspace management modal states
   const [createWorkspaceOpen, setCreateWorkspaceOpen] = useState(false)
@@ -34,6 +36,11 @@ export function WorkspacePage() {
     setNewFileName('')
   }, [])
 
+  const handleCreateFolder = useCallback(() => {
+    setNewFolderPrompt(true)
+    setNewFolderName('')
+  }, [])
+
   const handleConfirmCreate = useCallback(async () => {
     const name = newFileName.trim()
     if (!name) return
@@ -41,6 +48,16 @@ export function WorkspacePage() {
     setNewFilePrompt(false)
     setNewFileName('')
   }, [newFileName, workspace])
+
+  const handleConfirmCreateFolder = useCallback(async () => {
+    const name = newFolderName.trim().replace(/^\/+|\/+$/g, '')
+    if (!name) return
+    // Create folder via placeholder .keep file
+    const placeholder = name.endsWith('/') ? `${name}.keep` : `${name}/.keep`
+    await workspace.createFile(placeholder, '')
+    setNewFolderPrompt(false)
+    setNewFolderName('')
+  }, [newFolderName, workspace])
 
   const handleConfirmCreateWorkspace = useCallback(async () => {
     const name = newWorkspaceName.trim()
@@ -114,6 +131,8 @@ export function WorkspacePage() {
         onRefresh={workspace.refreshTree}
         terminalVisible={terminalVisible}
         onToggleTerminal={() => setTerminalVisible(!terminalVisible)}
+        onCreateFile={handleCreateFile}
+        onCreateFolder={handleCreateFolder}
       />
 
       {workspace.error && (
@@ -130,6 +149,7 @@ export function WorkspacePage() {
           onFileSelect={workspace.openFile}
           onDelete={workspace.deleteFile}
           onCreateFile={handleCreateFile}
+          onCreateFolder={handleCreateFolder}
         />
 
         <div className="workspace-center">
@@ -141,6 +161,7 @@ export function WorkspacePage() {
             onContentChange={workspace.updateTabContent}
             onSave={workspace.saveFile}
             isFileDirty={workspace.isFileDirty}
+            onCreateFile={handleCreateFile}
           />
           {terminalVisible && (
             <WorkspaceTerminal isTauri={workspace.isTauri} />
@@ -160,6 +181,7 @@ export function WorkspacePage() {
             onClick={(e) => e.stopPropagation()}
           >
             <h3>New File</h3>
+            <p className="dialog-subtitle">Creates inside the current workspace folder. Use <code>folder/file.ext</code> to nest.</p>
             <input
               type="text"
               value={newFileName}
@@ -168,7 +190,7 @@ export function WorkspacePage() {
                 if (e.key === 'Enter') handleConfirmCreate()
                 if (e.key === 'Escape') setNewFilePrompt(false)
               }}
-              placeholder="path/to/filename.ext"
+              placeholder="path/to/filename.ext  e.g. src/app.js"
               autoFocus
             />
             <div className="workspace-new-file-actions">
@@ -185,12 +207,45 @@ export function WorkspacePage() {
         </div>
       )}
 
+      {newFolderPrompt && (
+        <div className="workspace-new-file-overlay" onClick={() => setNewFolderPrompt(false)}>
+          <div
+            className="workspace-new-file-dialog"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3>New Folder</h3>
+            <p className="dialog-subtitle">Creates a folder inside the workspace. You can then add files inside it.</p>
+            <input
+              type="text"
+              value={newFolderName}
+              onChange={(e) => setNewFolderName(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') handleConfirmCreateFolder()
+                if (e.key === 'Escape') setNewFolderPrompt(false)
+              }}
+              placeholder="folder name  e.g. src/components"
+              autoFocus
+            />
+            <div className="workspace-new-file-actions">
+              <button onClick={() => setNewFolderPrompt(false)}>Cancel</button>
+              <button
+                className="primary"
+                onClick={handleConfirmCreateFolder}
+                disabled={!newFolderName.trim()}
+              >
+                Create Folder
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Create Workspace Modal */}
       <Modal
         isOpen={createWorkspaceOpen}
         onClose={() => setCreateWorkspaceOpen(false)}
         title="Create New Workspace"
-        subtitle="Create an isolated workspace for your project files"
+        subtitle="Each workspace is an isolated folder — like a project root"
       >
         <form
           onSubmit={(e) => {
@@ -210,6 +265,7 @@ export function WorkspacePage() {
               data-modal-initial-focus
             />
           </FormField>
+          <p className="workspace-modal-hint">This will create a folder on disk/cloud. Switch workspaces to open its files in the editor.</p>
           <div className="modal-actions">
             <button
               type="button"
@@ -286,4 +342,3 @@ export function WorkspacePage() {
     </div>
   )
 }
-

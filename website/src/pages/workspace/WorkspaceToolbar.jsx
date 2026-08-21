@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import {
   FolderOpen,
+  Folder,
   RefreshCw,
   Cloud,
   Monitor,
@@ -10,6 +11,9 @@ import {
   Trash2,
   Check,
   Edit2,
+  FilePlus,
+  FolderPlus,
+  Layers,
 } from 'lucide-react'
 
 export function WorkspaceToolbar({
@@ -24,6 +28,8 @@ export function WorkspaceToolbar({
   onRefresh,
   terminalVisible,
   onToggleTerminal,
+  onCreateFile,
+  onCreateFolder,
 }) {
   const [dropdownOpen, setDropdownOpen] = useState(false)
   const dropdownRef = useRef(null)
@@ -47,27 +53,36 @@ export function WorkspaceToolbar({
     }
   }, [])
 
+  const fileCountLabel = `${activeWorkspace?.file_count ?? 0} ${activeWorkspace?.file_count === 1 ? 'file' : 'files'}`
+
   return (
-    <div className="workspace-toolbar">
+    <div className="workspace-toolbar-v2">
       <div className="workspace-toolbar-left">
         <div className="workspace-selector-container" ref={dropdownRef}>
           <button
             type="button"
-            className="workspace-selector-trigger"
+            className="workspace-selector-trigger-v2"
             onClick={() => setDropdownOpen((prev) => !prev)}
             aria-expanded={dropdownOpen}
             aria-haspopup="menu"
             title="Switch workspace"
           >
-            <FolderOpen size={17} />
-            <span className="workspace-name">{activeWorkspace?.name || 'Default Workspace'}</span>
+            <span className="workspace-avatar">
+              {activeWorkspace?.name?.trim()?.[0]?.toUpperCase() || <Folder size={14} />}
+            </span>
+            <span className="workspace-trigger-text">
+              <span className="workspace-trigger-name">{activeWorkspace?.name || 'Default Workspace'}</span>
+              <span className="workspace-trigger-meta">
+                <Folder size={11} /> Folder · {fileCountLabel}
+              </span>
+            </span>
             <ChevronDown size={14} className={`chevron-icon ${dropdownOpen ? 'open' : ''}`} />
           </button>
 
           {dropdownOpen && (
             <div className="workspace-selector-menu" role="menu">
               <div className="workspace-menu-header">
-                <span>Workspaces</span>
+                <span><Layers size={11} /> Workspaces</span>
                 <button
                   type="button"
                   className="workspace-menu-add-btn"
@@ -99,9 +114,11 @@ export function WorkspaceToolbar({
                         }}
                       >
                         <div className="workspace-menu-item-info">
-                          <span className="workspace-item-title">{ws.name}</span>
+                          <span className="workspace-item-title">
+                            <FolderOpen size={12} /> {ws.name}
+                          </span>
                           <span className="workspace-item-count">
-                            {ws.file_count ?? 0} {ws.file_count === 1 ? 'file' : 'files'}
+                            {ws.file_count ?? 0} {ws.file_count === 1 ? 'file' : 'files'} · {ws.id}
                           </span>
                         </div>
                         {isActive && <Check size={14} className="workspace-active-check" />}
@@ -139,33 +156,49 @@ export function WorkspaceToolbar({
                   )
                 })}
               </div>
+              <div className="workspace-menu-footer">
+                Each workspace is an isolated folder. Switch to open its files in the editor.
+              </div>
             </div>
           )}
+        </div>
+
+        <div className="workspace-toolbar-divider" />
+
+        <div className="workspace-quick-actions">
+          <button className="workspace-quick-btn" onClick={onCreateFile} title="New file">
+            <FilePlus size={14} /> New File
+          </button>
+          <button className="workspace-quick-btn secondary" onClick={onCreateFolder} title="New folder">
+            <FolderPlus size={14} /> Folder
+          </button>
         </div>
       </div>
 
       <div className="workspace-toolbar-right">
         <span className="workspace-toolbar-badge">
-          {isTauri ? <Monitor size={14} /> : <Cloud size={14} />}
-          <span>{isTauri ? 'Local' : 'Cloud'}</span>
+          {isTauri ? <Monitor size={13} /> : <Cloud size={13} />}
+          <span>{isTauri ? 'Local disk' : 'Cloud folder'}</span>
+          <span className="badge-dot" />
         </span>
         <button
           className={`workspace-toolbar-btn${terminalVisible ? ' active' : ''}`}
           onClick={onToggleTerminal}
           title="Toggle Terminal"
+          aria-label="Toggle terminal"
         >
-          <Terminal size={16} />
+          <Terminal size={15} />
         </button>
         <button
           className="workspace-toolbar-btn"
           onClick={() => onRefresh()}
           disabled={loading}
           title="Refresh file tree"
+          aria-label="Refresh"
         >
-          <RefreshCw size={16} className={loading ? 'spin' : ''} />
+          <RefreshCw size={15} className={loading ? 'spin' : ''} />
         </button>
       </div>
     </div>
   )
 }
-

@@ -4,7 +4,7 @@ Living project snapshot for AI agents. `AGENTS.md` holds the permanent rules;
 this file holds the **current state** of the codebase and must be kept up to
 date whenever the implementation changes.
 
-> **Last updated:** 2026-08-21 (Landing redesign: cinematic hero with preview card + integrations bar + 8-feature grid + Eve spotlight + refreshed palette to strict monochrome; LandingPage split into landing/ package (constants, StarFieldCanvas, useScrollReveal, 10 sections) facade at 1 line, new dedicated landing.css 433 lines; verified build/lint/test)
+> **Last updated:** 2026-08-21 (Workspace redesign: folder-first IDE, new toolbar v2, explorer with file-type icons, empty states, breadcrumbs + editor footer, folder creation via .keep, duotone themes retained)
 
 ---
 
@@ -98,7 +98,7 @@ Starwaves/
 
 ### Services (`server/app/services/`)
 
-`coding_stats`, `contests`, `email`, `eve/` package (single-responsibility split: `constants.py`, `instructions.py`, `tools/` per-domain catalog `workspace|navigation|search|memory|schedule|files|whatsapp|web`, `workspace_records.py`, `workspace_insights.py`, `memories.py`, `dispatcher.py` routing via `handlers/` `memory|schedule|call|workspace_files|whatsapp|web|navigation|workspace`, `chat.py` + `__init__.py` facade; includes coding agent tools `read_workspace_file`, `write_workspace_file`, `list_workspace_files`, `search_workspace_files`, `run_workspace_command`, web browsing tools `browse_web`, `search_web`, `fetch_web_page`, and WhatsApp tools `list_whatsapp_chats`, `read_whatsapp_messages`, `send_whatsapp_message`, `summarize_whatsapp_chat`), `web_browsing` (open web search via DuckDuckGo HTML/API/Lite, web page text/markdown extraction, and unified browser), `whatsapp` (session pairing, message dispatch, Eve AI hooks), `github`, `google_calendar`, `google_contacts`,
+`embeddings` (OpenAI `text-embedding-3-small` 1536-dim, `generate_embedding` with ollama skip + truncate 8000, availability via `is_embedding_available`), `coding_stats`, `contests`, `email`, `eve/` package (single-responsibility split: `constants.py`, `instructions.py`, `tools/` per-domain catalog `workspace|navigation|search|memory|schedule|files|whatsapp|web`, `workspace_records.py`, `workspace_insights.py`, `memories.py` (RAG: `_build_instructions(query)` pgvector top-5 else 40 recent, 60s cache), `dispatcher.py` routing via `handlers/` `memory|schedule|call|workspace_files|whatsapp|web|navigation|workspace`, `chat.py` (last user message → RAG query, `run_tool_loop` 6 rounds) + `__init__.py` facade; includes coding agent tools `read_workspace_file`, `write_workspace_file`, `list_workspace_files`, `search_workspace_files`, `run_workspace_command`, web browsing tools `browse_web`, `search_web`, `fetch_web_page`, and WhatsApp tools `list_whatsapp_chats`, `read_whatsapp_messages`, `send_whatsapp_message`, `summarize_whatsapp_chat`), `web_browsing` (open web search via DuckDuckGo HTML/API/Lite, web page text/markdown extraction, and unified browser), `whatsapp` (session pairing, message dispatch, Eve AI hooks), `github`, `google_calendar`, `google_contacts`,
 `hackathon_sources`, `notifications`, plus `oauth/` package (`_shared.py`,
 `google.py`, `github.py`) that centralizes provider-agnostic OAuth helpers
 (`format_oauth_error`, state-serializer factory, `integration_account_id`,
@@ -191,6 +191,9 @@ SMTP, Firestore database id, CORS origins. Loads `.env.prod` before `.env`.
 - Icons: `lucide-react` only.
 
 ## 6. Current implementation state
+
+- **Workspace IDE Redesign (2026-08-21)**: Folder-first code workspace — each StarWaves workspace is an isolated folder (disk/cloud). Toolbar v2 with avatar + meta (Folder · N files), quick New File/New Folder actions, improved dropdown with file-count + id; Explorer with per-extension icons (FileCode/FileJson/FileText), New File/New Folder header + empty state (FolderOpen illustration + New File/New Folder CTA + src/app.js hint); Monaco editor with tabs (dirty dot), breadcrumb (FolderOpen + path segments), line/col tracking, footer (language, UTF-8, lines, saved/unsaved); center card (g-card + order + shadow-sm + adius 12); creation via placeholder .keep filtered from tree. Verified 
+pm run lint/uild.
 
 - Full persistent CRUD: Projects, Jobs, Hackathons, Documents, Todos.
 - Jobs timeline: the `Jobs` page renders an "Application frequency" bar chart
@@ -287,4 +290,5 @@ docker compose config              # Verify Compose file validity
 docker compose up --build -d       # Build & launch containerized stack
 curl -i http://localhost/health    # Verify Nginx reverse proxy & backend health
 ```
+
 
