@@ -4,7 +4,7 @@ Living project snapshot for AI agents. `AGENTS.md` holds the permanent rules;
 this file holds the **current state** of the codebase and must be kept up to
 date whenever the implementation changes.
 
-> **Last updated:** 2026-08-21 (Perf+Scalability for e2-micro 1-10 users: lean PG 128M/50 conns, pools 5/5, redis 96M, vite split 917KB→415KB main + lazy, worker bounds 200/500, sync caps 50/10M, CORS origin validate, indexes + keyset tie-breaker, todos/docs/contacts paginated; Vercel frontend + VM api.starwaves, no backup)
+> **Last updated:** 2026-08-21 (Themes: removed 30 Tri/Tetra/Duo colored presets, regenerated 12 fresh Two-Color duotone themes — 6 dark + 6 light, each strict 2-color pairing; palette consolidated to Monochrome + Two Color; 10 mono retained + 12 duo = 22 total)
 
 ---
 
@@ -31,7 +31,7 @@ Starwaves/
 │   ├── src/config/          Search index split into search/ (categories, pages, evePages, settingsSections, actions, staticItems, buildSearchIndex, filterSearchItems)
 │   ├── src/pages/           Workspace pages (+ settings/ feature sections, workspace/ components + projects/ + contacts/ subcomponents)
 │   ├── src/styles/          Tokens, components, and page styles
-│   ├── src/themes/          Theme presets + customizer options/engine
+│   ├── src/themes/          Theme presets (22: 10 mono + 12 fresh Two-Color duotone) + customizer options/engine
 │   ├── src/utils/           Pure parsers/transformers
 │   ├── src-tauri/           Tauri v2 desktop shell scaffold
 │   ├── Dockerfile           Multi-stage Node.js build + Nginx runtime
@@ -157,7 +157,7 @@ SMTP, Firestore database id, CORS origins. Loads `.env.prod` before `.env`.
   `documentsApi`, `contactsApi`, `callsApi`, `callsSocket`, `aiModelsApi`, `eveSpeechApi`), plus shared `request.js`
   (`API_URL` + `apiRequest` with dedup Map + 30s GET cache (100 bound) + 429/502 retry + `clearRequestCache`), `firebase.js`, `authApi.js`,
   `index.js`.
-- **Themes** (`src/themes/`): `presets.js` holds `THEME_PRESETS` (parsed from
+- **Themes** (`src/themes/`): `presets.js` holds `THEME_PRESETS` (22 presets — 10 mono + 12 fresh Two-Color duotone, parsed from
   CSS files in `src/styles/themes/`), option metadata (`PALETTE_GROUPS`,
   `FONT_OPTIONS`, `RADIUS_OPTIONS`, `DENSITY_OPTIONS`, `ELEVATION_OPTIONS`,
   `MOTION_OPTIONS`, `COLOR_VARIABLE_GROUPS`), and the DOM engine
@@ -183,7 +183,7 @@ SMTP, Firestore database id, CORS origins. Loads `.env.prod` before `.env`.
 
 ## 5. Design system
 
-- Monochrome only. Tokens in `src/styles/tokens.css`, per-theme CSS overrides in
+- Duotone + Monochrome. Tokens in `src/styles/tokens.css`, per-theme CSS overrides in
   `src/styles/themes/` (light `index.css` + dark `dark.css` + preset files),
   import order via `src/App.css` (tokens → base → utilities → responsive →
   components → pages).
@@ -287,3 +287,4 @@ docker compose config              # Verify Compose file validity
 docker compose up --build -d       # Build & launch containerized stack
 curl -i http://localhost/health    # Verify Nginx reverse proxy & backend health
 ```
+

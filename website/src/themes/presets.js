@@ -1,43 +1,25 @@
 import lightTheme from '../styles/themes/index.css?raw'
 import darkTheme from '../styles/themes/dark.css?raw'
 import oledTheme from '../styles/themes/oled.css?raw'
-import midnightTheme from '../styles/themes/midnight.css?raw'
-import emeraldTheme from '../styles/themes/emerald.css?raw'
-import amberTheme from '../styles/themes/amber.css?raw'
-import violetTheme from '../styles/themes/violet.css?raw'
-import nordicTheme from '../styles/themes/nordic.css?raw'
-import roseTheme from '../styles/themes/rose.css?raw'
-import solarTheme from '../styles/themes/solar.css?raw'
-import matrixTheme from '../styles/themes/matrix.css?raw'
-import synthwaveTheme from '../styles/themes/synthwave.css?raw'
-import candyTheme from '../styles/themes/candy.css?raw'
-import oceanTheme from '../styles/themes/ocean.css?raw'
-import duneTheme from '../styles/themes/dune.css?raw'
 import graphiteTheme from '../styles/themes/graphite.css?raw'
-import wineTheme from '../styles/themes/wine.css?raw'
-import coffeeTheme from '../styles/themes/coffee.css?raw'
-import arcticTheme from '../styles/themes/arctic.css?raw'
-import forestTheme from '../styles/themes/forest.css?raw'
-import tangerineTheme from '../styles/themes/tangerine.css?raw'
 import charcoalTheme from '../styles/themes/charcoal.css?raw'
 import fogTheme from '../styles/themes/fog.css?raw'
 import silverTheme from '../styles/themes/silver.css?raw'
 import stoneTheme from '../styles/themes/stone.css?raw'
 import smokeTheme from '../styles/themes/smoke.css?raw'
 import boneTheme from '../styles/themes/bone.css?raw'
-import mintTheme from '../styles/themes/mint.css?raw'
-import crimsonTheme from '../styles/themes/crimson.css?raw'
-import indigoTheme from '../styles/themes/indigo.css?raw'
-import petrolTheme from '../styles/themes/petrol.css?raw'
-import plumTheme from '../styles/themes/plum.css?raw'
-import sunsetTheme from '../styles/themes/sunset.css?raw'
-import auroraTheme from '../styles/themes/aurora.css?raw'
-import neonTheme from '../styles/themes/neon.css?raw'
-import galaxyTheme from '../styles/themes/galaxy.css?raw'
-import paradiseTheme from '../styles/themes/paradise.css?raw'
-import festivalTheme from '../styles/themes/festival.css?raw'
-import prismTheme from '../styles/themes/prism.css?raw'
-import cosmicTheme from '../styles/themes/cosmic.css?raw'
+import abyssTheme from '../styles/themes/abyss.css?raw'
+import emberTheme from '../styles/themes/ember.css?raw'
+import verdantTheme from '../styles/themes/verdant.css?raw'
+import nocturneTheme from '../styles/themes/nocturne.css?raw'
+import scarletTheme from '../styles/themes/scarlet.css?raw'
+import aurumTheme from '../styles/themes/aurum.css?raw'
+import coralTheme from '../styles/themes/coral.css?raw'
+import honeyTheme from '../styles/themes/honey.css?raw'
+import azureTheme from '../styles/themes/azure.css?raw'
+import meadowTheme from '../styles/themes/meadow.css?raw'
+import lilacTheme from '../styles/themes/lilac.css?raw'
+import citrusTheme from '../styles/themes/citrus.css?raw'
 
 function parseThemeColors(cssText) {
   const colors = {}
@@ -74,102 +56,6 @@ export const THEME_PRESETS = {
     description: "Ultra dark #000000 background for max contrast",
     colors: parseThemeColors(oledTheme),
   },
-  midnight: {
-    id: 'midnight',
-    mode: 'dark',
-    palette: 'tri',
-    name: "Midnight Cobalt",
-    description: "Deep navy background with blue highlights",
-    colors: parseThemeColors(midnightTheme),
-  },
-  emerald: {
-    id: 'emerald',
-    mode: 'dark',
-    palette: 'tri',
-    name: "Emerald Cyber",
-    description: "Dark forest background with emerald mint accents",
-    colors: parseThemeColors(emeraldTheme),
-  },
-  amber: {
-    id: 'amber',
-    mode: 'dark',
-    palette: 'tetra',
-    name: "Cyberpunk Amber",
-    description: "Warm obsidian background with amber gold glow",
-    colors: parseThemeColors(amberTheme),
-  },
-  violet: {
-    id: 'violet',
-    mode: 'dark',
-    palette: 'tri',
-    name: "Violet Glow",
-    description: "Deep violet dark theme with electric purple highlights",
-    colors: parseThemeColors(violetTheme),
-  },
-  nordic: {
-    id: 'nordic',
-    mode: 'dark',
-    palette: 'tri',
-    name: "Nordic Frost",
-    description: "Cool slate grey theme with icy arctic blue highlights",
-    colors: parseThemeColors(nordicTheme),
-  },
-  rose: {
-    id: 'rose',
-    mode: 'dark',
-    palette: 'duo',
-    name: "Rose Obsidian",
-    description: "Velvet dark theme with rose gold and crimson highlights",
-    colors: parseThemeColors(roseTheme),
-  },
-  solar: {
-    id: 'solar',
-    mode: 'light',
-    palette: 'duo',
-    name: "Solar Parchment",
-    description: "Warm sepia parchment theme with deep amber typography",
-    colors: parseThemeColors(solarTheme),
-  },
-  matrix: {
-    id: 'matrix',
-    mode: 'dark',
-    palette: 'duo',
-    name: "Matrix Lime",
-    description: "Deep terminal obsidian theme with electric matrix neon lime",
-    colors: parseThemeColors(matrixTheme),
-  },
-  synthwave: {
-    id: 'synthwave',
-    mode: 'dark',
-    palette: 'tetra',
-    name: "Synthwave Sunset",
-    description: "80s retro dark theme with glowing magenta and cyan accents",
-    colors: parseThemeColors(synthwaveTheme),
-  },
-  candy: {
-    id: 'candy',
-    mode: 'light',
-    palette: 'duo',
-    name: "Candy Frost",
-    description: "Soft pastel pink theme with rosy plum typography",
-    colors: parseThemeColors(candyTheme),
-  },
-  ocean: {
-    id: 'ocean',
-    mode: 'dark',
-    palette: 'tri',
-    name: "Tidal Cyan",
-    description: "Deep ocean dark theme with electric cyan highlights",
-    colors: parseThemeColors(oceanTheme),
-  },
-  dune: {
-    id: 'dune',
-    mode: 'light',
-    palette: 'duo',
-    name: "Dune Gold",
-    description: "Bright golden desert sand theme with rich honey accents",
-    colors: parseThemeColors(duneTheme),
-  },
   graphite: {
     id: 'graphite',
     mode: 'light',
@@ -177,46 +63,6 @@ export const THEME_PRESETS = {
     name: "Graphite Steel",
     description: "Cool industrial grey theme with gunmetal surfaces",
     colors: parseThemeColors(graphiteTheme),
-  },
-  wine: {
-    id: 'wine',
-    mode: 'dark',
-    palette: 'duo',
-    name: "Burgundy Noir",
-    description: "Velvet dark wine theme with crimson berry highlights",
-    colors: parseThemeColors(wineTheme),
-  },
-  coffee: {
-    id: 'coffee',
-    mode: 'dark',
-    palette: 'duo',
-    name: "Espresso Roast",
-    description: "Warm roasted coffee theme with caramel highlights",
-    colors: parseThemeColors(coffeeTheme),
-  },
-  arctic: {
-    id: 'arctic',
-    mode: 'light',
-    palette: 'duo',
-    name: "Arctic Ice",
-    description: "Pale glacial ice theme with cool arctic blue highlights",
-    colors: parseThemeColors(arcticTheme),
-  },
-  forest: {
-    id: 'forest',
-    mode: 'dark',
-    palette: 'tri',
-    name: "Forest Canopy",
-    description: "Muted olive forest theme with mossy green highlights",
-    colors: parseThemeColors(forestTheme),
-  },
-  tangerine: {
-    id: 'tangerine',
-    mode: 'light',
-    palette: 'duo',
-    name: "Tangerine Pop",
-    description: "Zesty citrus theme with juicy tangerine highlights",
-    colors: parseThemeColors(tangerineTheme),
   },
   charcoal: {
     id: 'charcoal',
@@ -266,109 +112,101 @@ export const THEME_PRESETS = {
     description: "Warm off-white theme with gentle ivory surfaces",
     colors: parseThemeColors(boneTheme),
   },
-  mint: {
-    id: 'mint',
+  abyss: {
+    id: 'abyss',
+    mode: 'dark',
+    palette: 'duo',
+    name: "Abyss Teal",
+    description: "Deep abyss black with luminous cyan teal accent — true two-color duotone",
+    colors: parseThemeColors(abyssTheme),
+  },
+  ember: {
+    id: 'ember',
+    mode: 'dark',
+    palette: 'duo',
+    name: "Ember Blaze",
+    description: "Charred umber canvas with blazing tangerine accent — two-color warmth",
+    colors: parseThemeColors(emberTheme),
+  },
+  verdant: {
+    id: 'verdant',
+    mode: 'dark',
+    palette: 'duo',
+    name: "Verdant Depth",
+    description: "Forest obsidian base with emerald glow — polished two-color duo",
+    colors: parseThemeColors(verdantTheme),
+  },
+  nocturne: {
+    id: 'nocturne',
+    mode: 'dark',
+    palette: 'duo',
+    name: "Nocturne Violet",
+    description: "Ink plum darkness with electric violet lift — moody two-color",
+    colors: parseThemeColors(nocturneTheme),
+  },
+  scarlet: {
+    id: 'scarlet',
+    mode: 'dark',
+    palette: 'duo',
+    name: "Scarlet Noir",
+    description: "Noir burgundy gloom lit by crimson fire — bold two-color contrast",
+    colors: parseThemeColors(scarletTheme),
+  },
+  aurum: {
+    id: 'aurum',
+    mode: 'dark',
+    palette: 'duo',
+    name: "Aurum Obsidian",
+    description: "Graphite night veil brushed with gilded amber — luxurious two-color",
+    colors: parseThemeColors(aurumTheme),
+  },
+  coral: {
+    id: 'coral',
     mode: 'light',
     palette: 'duo',
-    name: "Mint Cream",
-    description: "Light pastel green theme with a fresh mint accent",
-    colors: parseThemeColors(mintTheme),
+    name: "Coral Dawn",
+    description: "Warm seashell white blushed with coral rose — airy two-color light",
+    colors: parseThemeColors(coralTheme),
   },
-  crimson: {
-    id: 'crimson',
-    mode: 'dark',
-    palette: 'tri',
-    name: "Crimson Tide",
-    description: "Deep crimson theme with bold scarlet highlights",
-    colors: parseThemeColors(crimsonTheme),
+  honey: {
+    id: 'honey',
+    mode: 'light',
+    palette: 'duo',
+    name: "Honey Parchment",
+    description: "Soft parchment glow kissed by honey amber — cozy two-color duo",
+    colors: parseThemeColors(honeyTheme),
   },
-  indigo: {
-    id: 'indigo',
-    mode: 'dark',
-    palette: 'tri',
-    name: "Indigo Night",
-    description: "Deep indigo theme with electric violet-blue highlights",
-    colors: parseThemeColors(indigoTheme),
+  azure: {
+    id: 'azure',
+    mode: 'light',
+    palette: 'duo',
+    name: "Azure Ice",
+    description: "Crisp ice-blue canvas pulsing with sky-blue accent — fresh two-color",
+    colors: parseThemeColors(azureTheme),
   },
-  petrol: {
-    id: 'petrol',
-    mode: 'dark',
-    palette: 'tri',
-    name: "Petrol Depth",
-    description: "Dark petrol theme with cool teal highlights",
-    colors: parseThemeColors(petrolTheme),
+  meadow: {
+    id: 'meadow',
+    mode: 'light',
+    palette: 'duo',
+    name: "Meadow Fresh",
+    description: "Airy mint-white meadow lifted by leaf green — natural two-color",
+    colors: parseThemeColors(meadowTheme),
   },
-  plum: {
-    id: 'plum',
-    mode: 'dark',
-    palette: 'tri',
-    name: "Plum Noir",
-    description: "Deep plum theme with rosy mauve highlights",
-    colors: parseThemeColors(plumTheme),
+  lilac: {
+    id: 'lilac',
+    mode: 'light',
+    palette: 'duo',
+    name: "Lilac Dream",
+    description: "Lavender mist haze blooming with orchid purple — dreamy two-color",
+    colors: parseThemeColors(lilacTheme),
   },
-  sunset: {
-    id: 'sunset',
-    mode: 'dark',
-    palette: 'tetra',
-    name: "Sunset Vibes",
-    description: "Warm sunset theme with coral, orange, and peach tones",
-    colors: parseThemeColors(sunsetTheme),
-  },
-  aurora: {
-    id: 'aurora',
-    mode: 'dark',
-    palette: 'tetra',
-    name: "Aurora Sky",
-    description: "Northern lights theme with teal, green, and violet tones",
-    colors: parseThemeColors(auroraTheme),
-  },
-  neon: {
-    id: 'neon',
-    mode: 'dark',
-    palette: 'tetra',
-    name: "Neon District",
-    description: "Electric theme with cyan, magenta, and lime glow tones",
-    colors: parseThemeColors(neonTheme),
-  },
-  galaxy: {
-    id: 'galaxy',
-    mode: 'dark',
-    palette: 'tetra',
-    name: "Galaxy Deep",
-    description: "Deep space theme with indigo, violet, and magenta tones",
-    colors: parseThemeColors(galaxyTheme),
-  },
-  paradise: {
-    id: 'paradise',
-    mode: 'dark',
-    palette: 'tetra',
-    name: "Tropical Paradise",
-    description: "Lush theme with teal, coral, and sunshine yellow tones",
-    colors: parseThemeColors(paradiseTheme),
-  },
-  festival: {
-    id: 'festival',
-    mode: 'dark',
-    palette: 'tetra',
-    name: "Festival Pop",
-    description: "Celebratory theme with hot pink, gold, and violet tones",
-    colors: parseThemeColors(festivalTheme),
-  },
-  prism: {
-    id: 'prism',
-    mode: 'dark',
-    palette: 'tetra',
-    name: "Prismatic",
-    description: "Balanced theme with red, blue, and amber primary tones",
-    colors: parseThemeColors(prismTheme),
-  },
-  cosmic: {
-    id: 'cosmic',
-    mode: 'dark',
-    palette: 'tetra',
-    name: "Cosmic Dust",
-    description: "Nebula theme with violet, blue, and rose tones",
-    colors: parseThemeColors(cosmicTheme),
+  citrus: {
+    id: 'citrus',
+    mode: 'light',
+    palette: 'duo',
+    name: "Citrus Zest",
+    description: "Lemon cream sorbet sparked by zesty lime — citrus two-color pop",
+    colors: parseThemeColors(citrusTheme),
   },
 }
 
@@ -381,17 +219,7 @@ export const PALETTE_GROUPS = [
   {
     id: 'duo',
     label: 'Two Color',
-    description: 'A neutral or warm canvas with one signature accent hue.',
-  },
-  {
-    id: 'tri',
-    label: 'Tri Color',
-    description: 'Deep colored bases layered with a contrasting accent tone.',
-  },
-  {
-    id: 'tetra',
-    label: 'Tetra Color',
-    description: 'Vibrant multi-hue palettes combining three or more distinct colors.',
+    description: 'Curated duotone themes — each pairs a neutral canvas with one signature accent hue for a strict two-color identity.',
   },
 ]
 
