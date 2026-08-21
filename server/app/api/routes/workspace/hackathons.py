@@ -32,11 +32,11 @@ router = APIRouter()
 
 
 @router.get("/hackathon-sources")
-def list_hackathon_sources(
+async def list_hackathon_sources(
     database: Client = Depends(get_firestore),
     user: dict = Depends(get_current_user),
 ):
-    snapshot = hackathon_settings_reference(database, user["uid"]).get()
+    snapshot = await asyncio.to_thread(hackathon_settings_reference(database, user["uid"]).get)
     enabled = (snapshot.to_dict() or {}).get("enabled", [])
     return {
         "sources": [
@@ -47,7 +47,7 @@ def list_hackathon_sources(
 
 
 @router.put("/hackathon-sources/{source_id}")
-def update_hackathon_source(
+async def update_hackathon_source(
     source_id: str,
     enabled: bool,
     database: Client = Depends(get_firestore),
@@ -56,17 +56,20 @@ def update_hackathon_source(
     if source_id not in SOURCE_IDS:
         raise HTTPException(status_code=404, detail="Unknown hackathon source.")
     reference = hackathon_settings_reference(database, user["uid"])
-    current = set((reference.get().to_dict() or {}).get("enabled", []))
+    snap = await asyncio.to_thread(reference.get)
+    current = set((snap.to_dict() or {}).get("enabled", []))
     if enabled:
         current.add(source_id)
     else:
         current.discard(source_id)
-    reference.set(
-        {
-            "enabled": sorted(current),
-            "updated_at": firestore.SERVER_TIMESTAMP,
-        },
-        merge=True,
+    await asyncio.to_thread(
+        lambda: reference.set(
+            {
+                "enabled": sorted(current),
+                "updated_at": firestore.SERVER_TIMESTAMP,
+            },
+            merge=True,
+        )
     )
     return {"source_id": source_id, "enabled": enabled}
 
@@ -113,31 +116,34 @@ async def list_hackathons(
 
 
 @router.post("/hackathons", response_model=HackathonResponse, status_code=201)
-def create_hackathon(
+async def create_hackathon(
     hackathon: HackathonCreate,
     database: Client = Depends(get_firestore),
     user: dict = Depends(get_current_user),
 ):
     reference = user_collection(database, user["uid"], "hackathons").document()
-    reference.set(
-        {
-            **hackathon.model_dump(mode="python"),
-            "deleted": False,
-            "created_at": firestore.SERVER_TIMESTAMP,
-            "updated_at": firestore.SERVER_TIMESTAMP,
-        },
+    await asyncio.to_thread(
+        lambda: reference.set(
+            {
+                **hackathon.model_dump(mode="python"),
+                "deleted": False,
+                "created_at": firestore.SERVER_TIMESTAMP,
+                "updated_at": firestore.SERVER_TIMESTAMP,
+            },
+        )
     )
-    return {"id": reference.id, **(reference.get().to_dict() or {})}
+    snap = await asyncio.to_thread(reference.get)
+    return {"id": reference.id, **(snap.to_dict() or {})}
 
 
 @router.get("/hackathons/{hackathon_id}", response_model=HackathonResponse)
-def get_hackathon(
+async def get_hackathon(
     hackathon_id: str,
     database: Client = Depends(get_firestore),
     user: dict = Depends(get_current_user),
 ):
     reference = user_collection(database, user["uid"], "hackathons").document(hackathon_id)
-    snapshot = reference.get()
+    snapshot = await asyncio.to_thread(reference.get)
     if not snapshot.exists:
         raise HTTPException(status_code=404, detail="Hackathon not found.")
     data = snapshot.to_dict() or {}
@@ -147,59 +153,70 @@ def get_hackathon(
 
 
 @router.patch("/hackathons/{hackathon_id}", response_model=HackathonResponse)
-def update_hackathon(
+async def update_hackathon(
     hackathon_id: str,
     changes: HackathonUpdate,
     database: Client = Depends(get_firestore),
     user: dict = Depends(get_current_user),
 ):
     reference = user_collection(database, user["uid"], "hackathons").document(hackathon_id)
-    if not reference.get().exists:
+    exists = await asyncio.to_thread(lambda: reference.get().exists)
+    if not exists:
         raise HTTPException(status_code=404, detail="Hackathon not found.")
     updates = changes.model_dump(exclude_unset=True, mode="python")
-    reference.update(
-        {
-            **updates,
-            "updated_at": firestore.SERVER_TIMESTAMP,
-        },
+    await asyncio.to_thread(
+        lambda: reference.update(
+            {
+                **updates,
+                "updated_at": firestore.SERVER_TIMESTAMP,
+            },
+        )
     )
-    return {"id": reference.id, **(reference.get().to_dict() or {})}
+    snap = await asyncio.to_thread(reference.get)
+    return {"id": reference.id, **(snap.to_dict() or {})}
 
 
 @router.delete("/hackathons/{hackathon_id}", status_code=204)
-def delete_hackathon(
+async def delete_hackathon(
     hackathon_id: str,
     database: Client = Depends(get_firestore),
     user: dict = Depends(get_current_user),
 ):
     reference = user_collection(database, user["uid"], "hackathons").document(hackathon_id)
-    if not reference.get().exists:
+    exists = await asyncio.to_thread(lambda: reference.get().exists)
+    if not exists:
         raise HTTPException(status_code=404, detail="Hackathon not found.")
     now = datetime.now(timezone.utc)
-    reference.update(
-        {
-            "deleted": True,
-            "deleted_at": now.isoformat(),
-            "updated_at": firestore.SERVER_TIMESTAMP,
-        },
+    await asyncio.to_thread(
+        lambda: reference.update(
+            {
+                "deleted": True,
+                "deleted_at": now.isoformat(),
+                "updated_at": firestore.SERVER_TIMESTAMP,
+            },
+        )
     )
     return Response(status_code=204)
 
 
 @router.post("/hackathons/{hackathon_id}/restore", response_model=HackathonResponse)
-def restore_hackathon(
+async def restore_hackathon(
     hackathon_id: str,
     database: Client = Depends(get_firestore),
     user: dict = Depends(get_current_user),
 ):
     reference = user_collection(database, user["uid"], "hackathons").document(hackathon_id)
-    if not reference.get().exists:
+    exists = await asyncio.to_thread(lambda: reference.get().exists)
+    if not exists:
         raise HTTPException(status_code=404, detail="Hackathon not found.")
-    reference.update(
-        {
-            "deleted": False,
-            "deleted_at": None,
-            "updated_at": firestore.SERVER_TIMESTAMP,
-        },
+    await asyncio.to_thread(
+        lambda: reference.update(
+            {
+                "deleted": False,
+                "deleted_at": None,
+                "updated_at": firestore.SERVER_TIMESTAMP,
+            },
+        )
     )
-    return {"id": reference.id, **(reference.get().to_dict() or {})}
+    snap = await asyncio.to_thread(reference.get)
+    return {"id": reference.id, **(snap.to_dict() or {})}

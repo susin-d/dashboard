@@ -87,8 +87,24 @@ def delete_job_doc(session: Session, doc_id: str) -> None:
 def query_jobs(session: Session, user_id: str, query: SqlQuery) -> list[SqlSnapshot]:
     """Execute query on the user's jobs collection."""
     stmt = select(Job).where(Job.user_id == user_id)
+    has_deleted_filter = any(f[0] == "deleted" for f in query.filters)
+    if not has_deleted_filter:
+        stmt = stmt.where(Job.deleted == False)  # noqa: E712
+    for field, op, val in query.filters:
+        if field == "deleted" and op in ("==", "="):
+            stmt = stmt.where(Job.deleted == val) if val else stmt.where(Job.deleted == False)  # noqa: E712
+        elif field == "status" and op in ("==", "="):
+            stmt = stmt.where(Job.status == val)
+    if query._start_after_doc_id:
+        cursor = session.get(Job, query._start_after_doc_id)
+        if cursor and cursor.created_at:
+            if query._order_by in ("created_at", None) and query._direction == "DESC":
+                stmt = stmt.where(Job.created_at < cursor.created_at)
+            elif query._order_by == "created_at":
+                stmt = stmt.where(Job.created_at > cursor.created_at)
     if query._order_by == "created_at":
         stmt = stmt.order_by(Job.created_at.desc() if query._direction == "DESC" else Job.created_at.asc())
+        stmt = stmt.order_by(Job.id.desc() if query._direction == "DESC" else Job.id.asc())
     elif query._order_by == "applied_date":
         stmt = stmt.order_by(Job.applied_date.desc() if query._direction == "DESC" else Job.applied_date.asc())
     if query._limit:

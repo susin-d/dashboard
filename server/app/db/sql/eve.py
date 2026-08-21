@@ -79,10 +79,23 @@ def delete_eve_session_doc(session: Session, doc_id: str) -> None:
 def query_eve_sessions(session: Session, user_id: str, query: SqlQuery) -> list[SqlSnapshot]:
     """Execute query on the user's eve_sessions collection."""
     stmt = select(EveSession).where(EveSession.user_id == user_id)
+    if query._start_after_doc_id:
+        cursor = session.get(EveSession, query._start_after_doc_id)
+        if cursor:
+            ts = cursor.updated_at or cursor.created_at
+            if ts:
+                if query._order_by == "updated_at" and query._direction == "DESC":
+                    stmt = stmt.where(EveSession.updated_at < ts)
+                elif query._order_by == "updated_at":
+                    stmt = stmt.where(EveSession.updated_at > ts)
     if query._order_by == "updated_at":
         stmt = stmt.order_by(EveSession.updated_at.desc() if query._direction == "DESC" else EveSession.updated_at.asc())
+        stmt = stmt.order_by(EveSession.id.desc() if query._direction == "DESC" else EveSession.id.asc())
     elif query._order_by == "created_at":
         stmt = stmt.order_by(EveSession.created_at.desc() if query._direction == "DESC" else EveSession.created_at.asc())
+        stmt = stmt.order_by(EveSession.id.desc() if query._direction == "DESC" else EveSession.id.asc())
+    else:
+        stmt = stmt.order_by(EveSession.updated_at.desc())
     if query._limit:
         stmt = stmt.limit(query._limit)
     sessions = session.scalars(stmt).all()

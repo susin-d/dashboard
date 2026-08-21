@@ -81,8 +81,24 @@ def delete_project_doc(session: Session, doc_id: str) -> None:
 def query_projects(session: Session, user_id: str, query: SqlQuery) -> list[SqlSnapshot]:
     """Execute query on the user's projects collection."""
     stmt = select(Project).where(Project.user_id == user_id)
+    has_deleted_filter = any(f[0] == "deleted" for f in query.filters)
+    if not has_deleted_filter:
+        stmt = stmt.where(Project.deleted == False)  # noqa: E712
+    for field, op, val in query.filters:
+        if field == "deleted" and op in ("==", "="):
+            stmt = stmt.where(Project.deleted == val) if val else stmt.where(Project.deleted == False)  # noqa: E712
+        elif field == "status" and op in ("==", "="):
+            stmt = stmt.where(Project.status == val)
+    if query._start_after_doc_id:
+        cursor = session.get(Project, query._start_after_doc_id)
+        if cursor and cursor.created_at:
+            if query._order_by in ("created_at", None) and query._direction == "DESC":
+                stmt = stmt.where(Project.created_at < cursor.created_at)
+            elif query._order_by == "created_at":
+                stmt = stmt.where(Project.created_at > cursor.created_at)
     if query._order_by == "created_at":
         stmt = stmt.order_by(Project.created_at.desc() if query._direction == "DESC" else Project.created_at.asc())
+        stmt = stmt.order_by(Project.id.desc() if query._direction == "DESC" else Project.id.asc())
     if query._limit:
         stmt = stmt.limit(query._limit)
     projects = session.scalars(stmt).all()

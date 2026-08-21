@@ -1,3 +1,4 @@
+import asyncio
 from fastapi import APIRouter, Depends, HTTPException, Response, status
 from google.cloud.firestore_v1 import Client
 
@@ -10,27 +11,27 @@ router = APIRouter(prefix="/documents")
 
 
 @router.get("", response_model=list[DocumentResponse])
-def list_documents(
+async def list_documents(
     database: Client = Depends(get_firestore),
     user: dict = Depends(get_current_user),
 ):
-    return documents.list_documents(database, user["uid"])
+    return await asyncio.to_thread(documents.list_documents, database, user["uid"])
 
 
 @router.get("/{document_id}", response_model=DocumentResponse)
-def get_document(
+async def get_document(
     document_id: str,
     database: Client = Depends(get_firestore),
     user: dict = Depends(get_current_user),
 ):
-    document = documents.get_document(database, user["uid"], document_id)
+    document = await asyncio.to_thread(documents.get_document, database, user["uid"], document_id)
     if document is None:
         raise HTTPException(status_code=404, detail="Document not found.")
     return document
 
 
 @router.put("/{document_id}", response_model=DocumentResponse)
-def save_document(
+async def save_document(
     document_id: str,
     document: DocumentUpsert,
     database: Client = Depends(get_firestore),
@@ -38,29 +39,31 @@ def save_document(
 ):
     if "/" in document_id or not document_id.strip():
         raise HTTPException(status_code=400, detail="Invalid document ID.")
-    return documents.upsert_document(database, user["uid"], document_id, document)
+    return await asyncio.to_thread(documents.upsert_document, database, user["uid"], document_id, document)
 
 
 @router.delete("/{document_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_document(
+async def delete_document(
     document_id: str,
     database: Client = Depends(get_firestore),
     user: dict = Depends(get_current_user),
 ):
-    if not documents.delete_document(database, user["uid"], document_id):
+    ok = await asyncio.to_thread(documents.delete_document, database, user["uid"], document_id)
+    if not ok:
         raise HTTPException(status_code=404, detail="Document not found.")
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @router.post("/{document_id}/restore", response_model=DocumentResponse)
-def restore_document(
+async def restore_document(
     document_id: str,
     database: Client = Depends(get_firestore),
     user: dict = Depends(get_current_user),
 ):
-    if not documents.restore_document(database, user["uid"], document_id):
+    ok = await asyncio.to_thread(documents.restore_document, database, user["uid"], document_id)
+    if not ok:
         raise HTTPException(status_code=404, detail="Document not found.")
-    document = documents.get_document(database, user["uid"], document_id)
+    document = await asyncio.to_thread(documents.get_document, database, user["uid"], document_id)
     if document is None:
         raise HTTPException(status_code=404, detail="Document not found.")
     return document

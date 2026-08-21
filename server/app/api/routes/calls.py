@@ -73,7 +73,7 @@ def list_incoming_calls(
     user: dict = Depends(get_current_user),
 ):
     repository = CallRepository(database)
-    repository.expire_stale_ringing(user["uid"])
+    # expire stale calls is handled by background worker; avoid per-request scan to keep latency low
     return [_serialize(call) for call in repository.list_incoming(user["uid"])]
 
 
@@ -84,7 +84,6 @@ def list_recent_calls(
     user: dict = Depends(get_current_user),
 ):
     repository = CallRepository(database)
-    repository.expire_stale_ringing(user["uid"])
     return [_serialize(call) for call in repository.list_recent(user["uid"], limit)]
 
 

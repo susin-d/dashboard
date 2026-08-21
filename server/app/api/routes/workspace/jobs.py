@@ -1,5 +1,6 @@
 """Job routes: list, create, update, and delete workspace jobs."""
 
+import asyncio
 from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
 from google.cloud.firestore_v1 import Client
 
@@ -13,42 +14,42 @@ router = APIRouter()
 
 
 @router.get("/jobs", response_model=PageResponse)
-def list_jobs(
+async def list_jobs(
     cursor: str | None = None,
     limit: int = Query(DEFAULT_PAGE_SIZE, ge=1, le=MAX_PAGE_SIZE),
     database: Client = Depends(get_firestore),
     user: dict = Depends(get_current_user),
 ):
     repository = JobRepository(database, user["uid"])
-    items, next_cursor, has_more = repository.list_page(cursor, limit)
+    items, next_cursor, has_more = await asyncio.to_thread(repository.list_page, cursor, limit)
     return {"items": items, "next_cursor": next_cursor, "has_more": has_more}
 
 
 @router.get("/jobs/{job_id}", response_model=JobResponse)
-def get_job(
+async def get_job(
     job_id: str,
     database: Client = Depends(get_firestore),
     user: dict = Depends(get_current_user),
 ):
     repository = JobRepository(database, user["uid"])
-    result = repository.get(job_id)
+    result = await asyncio.to_thread(repository.get, job_id)
     if not result:
         raise HTTPException(status_code=404, detail="Job not found.")
     return result
 
 
 @router.post("/jobs", response_model=JobResponse, status_code=201)
-def create_job(
+async def create_job(
     job: JobCreate,
     database: Client = Depends(get_firestore),
     user: dict = Depends(get_current_user),
 ):
     repository = JobRepository(database, user["uid"])
-    return repository.create(job)
+    return await asyncio.to_thread(repository.create, job)
 
 
 @router.patch("/jobs/{job_id}", response_model=JobResponse)
-def update_job(
+async def update_job(
     job_id: str,
     changes: JobUpdate,
     database: Client = Depends(get_firestore),
@@ -56,34 +57,36 @@ def update_job(
 ):
     repository = JobRepository(database, user["uid"])
     updates = changes.model_dump(exclude_unset=True)
-    result = repository.update(job_id, updates)
+    result = await asyncio.to_thread(repository.update, job_id, updates)
     if not result:
         raise HTTPException(status_code=404, detail="Job not found.")
     return result
 
 
 @router.delete("/jobs/{job_id}", status_code=204)
-def delete_job(
+async def delete_job(
     job_id: str,
     database: Client = Depends(get_firestore),
     user: dict = Depends(get_current_user),
 ):
     repository = JobRepository(database, user["uid"])
-    if not repository.delete(job_id):
+    ok = await asyncio.to_thread(repository.delete, job_id)
+    if not ok:
         raise HTTPException(status_code=404, detail="Job not found.")
     return Response(status_code=204)
 
 
 @router.post("/jobs/{job_id}/restore", response_model=JobResponse)
-def restore_job(
+async def restore_job(
     job_id: str,
     database: Client = Depends(get_firestore),
     user: dict = Depends(get_current_user),
 ):
     repository = JobRepository(database, user["uid"])
-    if not repository.restore(job_id):
+    ok = await asyncio.to_thread(repository.restore, job_id)
+    if not ok:
         raise HTTPException(status_code=404, detail="Job not found.")
-    result = repository.get(job_id)
+    result = await asyncio.to_thread(repository.get, job_id)
     if not result:
         raise HTTPException(status_code=404, detail="Job not found.")
     return result

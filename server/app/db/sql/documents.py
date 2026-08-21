@@ -82,10 +82,31 @@ def delete_document_doc(session: Session, doc_id: str) -> None:
 def query_documents(session: Session, user_id: str, query: SqlQuery) -> list[SqlSnapshot]:
     """Execute query on the user's documents collection."""
     stmt = select(Document).where(Document.user_id == user_id)
+    has_deleted_filter = any(f[0] == "deleted" for f in query.filters)
+    if not has_deleted_filter:
+        stmt = stmt.where(Document.deleted == False)  # noqa: E712
+    for field, op, val in query.filters:
+        if field == "deleted" and op in ("==", "="):
+            stmt = stmt.where(Document.deleted == val) if val else stmt.where(Document.deleted == False)  # noqa: E712
+    if query._start_after_doc_id:
+        cursor = session.get(Document, query._start_after_doc_id)
+        if cursor:
+            ts = cursor.updated_at or cursor.created_at
+            if ts:
+                if query._order_by == "modified_at" and query._direction == "DESC":
+                    stmt = stmt.where(Document.updated_at < ts)
+                elif query._order_by == "modified_at":
+                    stmt = stmt.where(Document.updated_at > ts)
+                elif query._direction == "DESC":
+                    stmt = stmt.where(Document.created_at < cursor.created_at)
+                else:
+                    stmt = stmt.where(Document.created_at > cursor.created_at)
     if query._order_by == "created_at":
         stmt = stmt.order_by(Document.created_at.desc() if query._direction == "DESC" else Document.created_at.asc())
+        stmt = stmt.order_by(Document.id.desc() if query._direction == "DESC" else Document.id.asc())
     elif query._order_by == "modified_at":
         stmt = stmt.order_by(Document.updated_at.desc() if query._direction == "DESC" else Document.updated_at.asc())
+        stmt = stmt.order_by(Document.id.desc() if query._direction == "DESC" else Document.id.asc())
     if query._limit:
         stmt = stmt.limit(query._limit)
     docs = session.scalars(stmt).all()

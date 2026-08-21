@@ -1,5 +1,6 @@
 """Project routes: list, create, patch, and delete workspace projects."""
 
+import asyncio
 from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
 from google.cloud.firestore_v1 import Client
 
@@ -13,42 +14,42 @@ router = APIRouter()
 
 
 @router.get("/projects", response_model=PageResponse)
-def list_projects(
+async def list_projects(
     cursor: str | None = None,
     limit: int = Query(DEFAULT_PAGE_SIZE, ge=1, le=MAX_PAGE_SIZE),
     database: Client = Depends(get_firestore),
     user: dict = Depends(get_current_user),
 ):
     repository = ProjectRepository(database, user["uid"])
-    items, next_cursor, has_more = repository.list_page(cursor, limit)
+    items, next_cursor, has_more = await asyncio.to_thread(repository.list_page, cursor, limit)
     return {"items": items, "next_cursor": next_cursor, "has_more": has_more}
 
 
 @router.get("/projects/{project_id}", response_model=ProjectResponse)
-def get_project(
+async def get_project(
     project_id: str,
     database: Client = Depends(get_firestore),
     user: dict = Depends(get_current_user),
 ):
     repository = ProjectRepository(database, user["uid"])
-    result = repository.get(project_id)
+    result = await asyncio.to_thread(repository.get, project_id)
     if not result:
         raise HTTPException(status_code=404, detail="Project not found.")
     return result
 
 
 @router.post("/projects", response_model=ProjectResponse, status_code=201)
-def create_project(
+async def create_project(
     project: ProjectCreate,
     database: Client = Depends(get_firestore),
     user: dict = Depends(get_current_user),
 ):
     repository = ProjectRepository(database, user["uid"])
-    return repository.create(project)
+    return await asyncio.to_thread(repository.create, project)
 
 
 @router.patch("/projects/{project_id}", response_model=ProjectResponse)
-def patch_project(
+async def patch_project(
     project_id: str,
     changes: ProjectUpdate,
     database: Client = Depends(get_firestore),
@@ -56,34 +57,36 @@ def patch_project(
 ):
     repository = ProjectRepository(database, user["uid"])
     updates = changes.model_dump(exclude_unset=True)
-    result = repository.patch(project_id, updates)
+    result = await asyncio.to_thread(repository.patch, project_id, updates)
     if not result:
         raise HTTPException(status_code=404, detail="Project not found.")
     return result
 
 
 @router.delete("/projects/{project_id}", status_code=204)
-def delete_project(
+async def delete_project(
     project_id: str,
     database: Client = Depends(get_firestore),
     user: dict = Depends(get_current_user),
 ):
     repository = ProjectRepository(database, user["uid"])
-    if not repository.delete(project_id):
+    ok = await asyncio.to_thread(repository.delete, project_id)
+    if not ok:
         raise HTTPException(status_code=404, detail="Project not found.")
     return Response(status_code=204)
 
 
 @router.post("/projects/{project_id}/restore", response_model=ProjectResponse)
-def restore_project(
+async def restore_project(
     project_id: str,
     database: Client = Depends(get_firestore),
     user: dict = Depends(get_current_user),
 ):
     repository = ProjectRepository(database, user["uid"])
-    if not repository.restore(project_id):
+    ok = await asyncio.to_thread(repository.restore, project_id)
+    if not ok:
         raise HTTPException(status_code=404, detail="Project not found.")
-    result = repository.get(project_id)
+    result = await asyncio.to_thread(repository.get, project_id)
     if not result:
         raise HTTPException(status_code=404, detail="Project not found.")
     return result

@@ -38,6 +38,24 @@ GOOGLE_CALENDAR_SCOPES = (
 )
 
 
+_calendar_cache: dict[str, tuple[float, dict]] = {}
+_CALENDAR_TTL = 300  # 5 minutes
+
+def _get_calendar_cached(user_id: str):
+    import time
+    e = _calendar_cache.get(user_id)
+    if e and e[0] > time.monotonic():
+        return e[1]
+    return None
+
+def _set_calendar_cached(user_id: str, data: dict):
+    import time
+    _calendar_cache[user_id] = (time.monotonic() + _CALENDAR_TTL, data)
+
+def _invalidate_calendar_cache(user_id: str):
+    _calendar_cache.pop(user_id, None)
+
+
 def accounts_collection(database: Client, user_id: str):
     return integration_accounts_reference(database, user_id, "google_calendar")
 
@@ -97,6 +115,7 @@ async def google_calendar_callback(
                 merge=True,
             ),
         )
+        _invalidate_calendar_cache(user_id)
     except Exception as error:
         logger.error("Google Calendar OAuth callback error: %s", error, exc_info=True)
         reason = quote(format_oauth_error(error))
@@ -108,10 +127,19 @@ async def google_calendar_callback(
 async def get_google_calendar_data(
     database: Client = Depends(get_firestore),
     user: dict = Depends(get_current_user),
+    force_refresh: bool = Query(default=False),
 ):
+    if not force_refresh:
+        cached = _get_calendar_cached(user["uid"])
+        if cached is not None:
+            return cached
     snapshots = await asyncio.to_thread(
         lambda: list(accounts_collection(database, user["uid"]).stream()),
     )
+    if not snapshots:
+        result = {"connections": [], "events": [], "errors": []}
+        _set_calendar_cached(user["uid"], result)
+        return result
 
     async def process_account(snapshot):
         account = snapshot.to_dict()
@@ -122,13 +150,17 @@ async def get_google_calendar_data(
             decrypt_google_token(encrypted_refresh),
         )
         data = await google_calendar_data(access_token)
-        await asyncio.to_thread(
-            snapshot.reference.update,
-            {
-                "calendars": data["calendars"],
-                "updated_at": firestore.SERVER_TIMESTAMP,
-            },
-        )
+        # Update cache in background — don't block response on DB write
+        try:
+            await asyncio.to_thread(
+                snapshot.reference.update,
+                {
+                    "calendars": data["calendars"],
+                    "updated_at": firestore.SERVER_TIMESTAMP,
+                },
+            )
+        except Exception:
+            pass
         connection = {
             "id": snapshot.id,
             "email": account["email"],
@@ -167,7 +199,9 @@ async def get_google_calendar_data(
         connections.append(result[0])
         events.extend(result[1])
 
-    return {"connections": connections, "events": events, "errors": errors}
+    result = {"connections": connections, "events": events, "errors": errors}
+    _set_calendar_cached(user["uid"], result)
+    return result
 
 
 @router.delete("/accounts/{account_id}", status_code=204)
@@ -177,3 +211,4 @@ def disconnect_google_calendar(
     user: dict = Depends(get_current_user),
 ):
     accounts_collection(database, user["uid"]).document(account_id).delete()
+    _invalidate_calendar_cache(user["uid"])

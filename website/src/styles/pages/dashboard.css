@@ -1,12 +1,16 @@
 /* Dashboard Page & Widget Shell Styles */
 
 .dashboard-page {
+  display: grid;
+  align-content: start;
+  gap: var(--layout-section-gap);
   min-width: 0;
 }
 
 .dashboard-heading {
   align-items: center;
-  border-bottom: 0;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--border-color);
 }
 
 .dashboard-heading-actions,

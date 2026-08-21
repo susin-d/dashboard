@@ -135,12 +135,22 @@ def delete_whatsapp_chat_doc(session: Session, doc_id: str) -> None:
 def query_whatsapp_chats(session: Session, user_id: str, query: SqlQuery) -> list[SqlSnapshot]:
     """Execute query on the user's whatsapp_chats collection."""
     stmt = select(WhatsAppChat).where(WhatsAppChat.user_id == user_id)
+    if query._start_after_doc_id:
+        cursor = session.get(WhatsAppChat, query._start_after_doc_id)
+        if cursor and cursor.updated_at:
+            if query._direction == "DESC":
+                stmt = stmt.where(WhatsAppChat.updated_at < cursor.updated_at)
+            else:
+                stmt = stmt.where(WhatsAppChat.updated_at > cursor.updated_at)
     if query._order_by == "updated_at":
         stmt = stmt.order_by(WhatsAppChat.updated_at.desc() if query._direction == "DESC" else WhatsAppChat.updated_at.asc())
+        stmt = stmt.order_by(WhatsAppChat.id.desc() if query._direction == "DESC" else WhatsAppChat.id.asc())
     elif query._order_by == "created_at":
         stmt = stmt.order_by(WhatsAppChat.created_at.desc() if query._direction == "DESC" else WhatsAppChat.created_at.asc())
+        stmt = stmt.order_by(WhatsAppChat.id.desc() if query._direction == "DESC" else WhatsAppChat.id.asc())
     else:
         stmt = stmt.order_by(WhatsAppChat.updated_at.desc())
+        stmt = stmt.order_by(WhatsAppChat.id.desc())
     if query._limit:
         stmt = stmt.limit(query._limit)
     chats = session.scalars(stmt).all()
@@ -249,10 +259,20 @@ def query_whatsapp_messages(session: Session, user_id: str, chat_id: str, query:
                     stmt = stmt.where(WhatsAppMessage.timestamp > val_dt)
                 elif op == ">=":
                     stmt = stmt.where(WhatsAppMessage.timestamp >= val_dt)
+    if query._start_after_doc_id:
+        cursor = session.get(WhatsAppMessage, query._start_after_doc_id)
+        if cursor and cursor.timestamp:
+            if query._direction == "DESC" or query._order_by == "timestamp":
+                # DESC default
+                stmt = stmt.where(WhatsAppMessage.timestamp < cursor.timestamp)
+            else:
+                stmt = stmt.where(WhatsAppMessage.timestamp > cursor.timestamp)
     if query._order_by == "timestamp":
         stmt = stmt.order_by(WhatsAppMessage.timestamp.desc() if query._direction == "DESC" else WhatsAppMessage.timestamp.asc())
+        stmt = stmt.order_by(WhatsAppMessage.id.desc() if query._direction == "DESC" else WhatsAppMessage.id.asc())
     else:
         stmt = stmt.order_by(WhatsAppMessage.timestamp.desc())
+        stmt = stmt.order_by(WhatsAppMessage.id.desc())
     if query._limit:
         stmt = stmt.limit(query._limit)
     messages = session.scalars(stmt).all()

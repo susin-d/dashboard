@@ -18,6 +18,13 @@ DEFAULT_SEARCH_RESULTS = 5
 MAX_PAGE_CHARS = 30000
 DEFAULT_PAGE_CHARS = 12000
 
+# Simple in-memory TTL caches to avoid repeated external scrapes
+import time as _time
+_search_cache: dict[str, tuple[float, dict]] = {}
+_page_cache: dict[str, tuple[float, dict]] = {}
+_SEARCH_TTL = 600  # 10 minutes
+_PAGE_TTL = 600
+
 UNWANTED_HTML_TAGS = [
     "script",
     "style",
@@ -185,6 +192,10 @@ def search_web(query: str, num_results: int = DEFAULT_SEARCH_RESULTS) -> dict[st
         raise ValueError("Search query cannot be empty.")
 
     num_results = max(1, min(int(num_results), MAX_SEARCH_RESULTS))
+    cache_key = f"{query}:{num_results}"
+    cached = _search_cache.get(cache_key)
+    if cached and cached[0] > _time.monotonic():
+        return cached[1]
 
     with httpx.Client(timeout=SEARCH_TIMEOUT, follow_redirects=True) as client:
         # Try primary HTML endpoint
@@ -198,12 +209,17 @@ def search_web(query: str, num_results: int = DEFAULT_SEARCH_RESULTS) -> dict[st
         if not results:
             results = _search_duckduckgo_lite(client, query, num_results)
 
-    return {
+    result = {
         "query": query,
         "results": results,
         "total": len(results),
         "message": f"Found {len(results)} results for '{query}'." if results else f"No web search results found for '{query}'.",
     }
+    _search_cache[cache_key] = (_time.monotonic() + _SEARCH_TTL, result)
+    # cap cache
+    if len(_search_cache) > 200:
+        _search_cache.pop(next(iter(_search_cache)))
+    return result
 
 
 def fetch_web_page(url: str, max_chars: int = DEFAULT_PAGE_CHARS) -> dict[str, Any]:
@@ -220,6 +236,10 @@ def fetch_web_page(url: str, max_chars: int = DEFAULT_PAGE_CHARS) -> dict[str, A
         raise ValueError(f"Invalid web URL: {url}")
 
     max_chars = max(500, min(int(max_chars), MAX_PAGE_CHARS))
+    cache_key = f"{url}:{max_chars}"
+    cached = _page_cache.get(cache_key)
+    if cached and cached[0] > _time.monotonic():
+        return cached[1]
 
     headers = {
         "User-Agent": DEFAULT_USER_AGENT,
@@ -244,7 +264,7 @@ def fetch_web_page(url: str, max_chars: int = DEFAULT_PAGE_CHARS) -> dict[str, A
     if "application/json" in content_type:
         text = response.text[:max_chars]
         is_truncated = len(response.text) > max_chars
-        return {
+        result = {
             "url": final_url,
             "title": "JSON Document",
             "description": "",
@@ -252,11 +272,13 @@ def fetch_web_page(url: str, max_chars: int = DEFAULT_PAGE_CHARS) -> dict[str, A
             "truncated": is_truncated,
             "content_type": content_type,
         }
+        _page_cache[cache_key] = (_time.monotonic() + _PAGE_TTL, result)
+        return result
 
     if "text/plain" in content_type or "text/markdown" in content_type:
         text = response.text[:max_chars]
         is_truncated = len(response.text) > max_chars
-        return {
+        result = {
             "url": final_url,
             "title": "Plain Text Document",
             "description": "",
@@ -264,6 +286,8 @@ def fetch_web_page(url: str, max_chars: int = DEFAULT_PAGE_CHARS) -> dict[str, A
             "truncated": is_truncated,
             "content_type": content_type,
         }
+        _page_cache[cache_key] = (_time.monotonic() + _PAGE_TTL, result)
+        return result
 
     # HTML parsing
     soup = BeautifulSoup(response.text, "html.parser")
@@ -305,7 +329,7 @@ def fetch_web_page(url: str, max_chars: int = DEFAULT_PAGE_CHARS) -> dict[str, A
     if not content and description:
         content = description
 
-    return {
+    result = {
         "url": final_url,
         "title": title or "Web Page",
         "description": description,
@@ -313,6 +337,10 @@ def fetch_web_page(url: str, max_chars: int = DEFAULT_PAGE_CHARS) -> dict[str, A
         "truncated": is_truncated,
         "content_type": content_type,
     }
+    _page_cache[cache_key] = (_time.monotonic() + _PAGE_TTL, result)
+    if len(_page_cache) > 200:
+        _page_cache.pop(next(iter(_page_cache)))
+    return result
 
 
 def browse_web(

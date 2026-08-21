@@ -4,6 +4,17 @@ services:
     image: postgres:16-alpine
     container_name: starwaves-postgres
     restart: unless-stopped
+    command: >
+      postgres
+      -c shared_buffers=256MB
+      -c effective_cache_size=1GB
+      -c work_mem=16MB
+      -c maintenance_work_mem=128MB
+      -c max_connections=100
+      -c synchronous_commit=off
+      -c checkpoint_completion_target=0.9
+      -c wal_buffers=16MB
+      -c random_page_cost=1.1
     environment:
       POSTGRES_USER: starwaves
       POSTGRES_PASSWORD: starwaves_password

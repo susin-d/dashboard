@@ -7,7 +7,6 @@ from typing import Any, List, Optional
 from uuid import uuid4
 
 import httpx
-import requests
 from google.cloud.firestore_v1 import Client
 
 from app.core.config import settings
@@ -28,36 +27,42 @@ logger = logging.getLogger(__name__)
 
 class WhatsAppService:
     @staticmethod
-    def get_status(database: Client, user_id: str) -> WhatsAppStatusResponse:
-        # Check whatsmeow worker status first if available
+    async def get_status(database: Client, user_id: str) -> WhatsAppStatusResponse:
+        # Check whatsmeow worker status first if available — non-blocking; fast-fail 1.5s
         try:
             worker_url = settings.whatsapp_gateway_url
-            resp = requests.get(f"{worker_url}/session/status/{user_id}", timeout=3.0)
-            if resp.ok:
-                data = resp.json()
-                if data.get("connected"):
-                    phone_number = data.get("phoneNumber") or "+1 (555) 019-2834"
-                    push_name = data.get("pushName") or "Starwaves User"
-                    try:
-                        whatsapp_repo.save_whatsapp_session(
-                            database,
-                            user_id,
+            async with httpx.AsyncClient(timeout=httpx.Timeout(1.5, connect=0.8)) as client:
+                resp = await client.get(f"{worker_url}/session/status/{user_id}")
+                if resp.is_success:
+                    data = resp.json()
+                    if data.get("connected"):
+                        phone_number = data.get("phoneNumber") or "+1 (555) 019-2834"
+                        push_name = data.get("pushName") or "Starwaves User"
+                        try:
+                            # Save in background thread to not block response
+                            import asyncio
+                            await asyncio.to_thread(
+                                whatsapp_repo.save_whatsapp_session,
+                                database,
+                                user_id,
+                                True,
+                                phone_number,
+                                push_name,
+                            )
+                        except Exception:
+                            pass
+                        return WhatsAppStatusResponse(
                             connected=True,
                             phone_number=phone_number,
                             push_name=push_name,
+                            platform="whatsmeow",
+                            last_sync_at=datetime.now(timezone.utc),
                         )
-                    except Exception:
-                        pass
-                    return WhatsAppStatusResponse(
-                        connected=True,
-                        phone_number=phone_number,
-                        push_name=push_name,
-                        platform="whatsmeow",
-                        last_sync_at=datetime.now(timezone.utc),
-                    )
         except Exception:
             pass
-        return whatsapp_repo.get_whatsapp_status(database, user_id)
+        # Fallback to DB — run in thread to avoid blocking event loop
+        import asyncio
+        return await asyncio.to_thread(whatsapp_repo.get_whatsapp_status, database, user_id)
 
     @staticmethod
     async def initiate_pairing(
@@ -199,50 +204,54 @@ class WhatsAppService:
         return {"status": "disconnected"}
 
     @staticmethod
-    def list_chats(database: Client, user_id: str) -> List[WhatsAppChatResponse]:
-        # Fast query from database first
-        chats = whatsapp_repo.list_whatsapp_chats(database, user_id)
+    async def list_chats(database: Client, user_id: str) -> List[WhatsAppChatResponse]:
+        import asyncio
+        # Fast query from database first — offload to thread
+        chats = await asyncio.to_thread(whatsapp_repo.list_whatsapp_chats, database, user_id)
 
-        # Seed from worker only if database has no real chats yet
+        # Seed from worker only if database has no real chats yet — async non-blocking, short timeout
         if len(chats) <= 1:
             try:
                 worker_url = settings.whatsapp_gateway_url
-                resp = requests.get(f"{worker_url}/session/chats/{user_id}", timeout=1.2)
-                if resp.ok:
-                    worker_chats = resp.json().get("chats") or []
-                    for wc in worker_chats:
-                        chat_id = wc.get("id")
-                        last_msg_data = None
-                        last_msg_text = wc.get("lastMessage")
-                        if last_msg_text:
-                            last_msg_data = {
-                                "id": f"last-{chat_id}",
-                                "sender_id": "contact",
-                                "sender_name": wc.get("name") or "Contact",
-                                "content": last_msg_text,
-                                "timestamp": wc.get("updatedAt"),
-                                "status": "delivered",
-                            }
-                        whatsapp_repo.upsert_whatsapp_chat(
-                            database,
-                            user_id,
-                            chat_id=chat_id,
-                            name=wc.get("name") or chat_id,
-                            phone_number=wc.get("phoneNumber"),
-                            avatar_url=wc.get("avatarUrl"),
-                            is_group=bool(wc.get("isGroup", False)),
-                            participants=wc.get("participants"),
-                            description=wc.get("description"),
-                            unread_count=int(wc.get("unreadCount", 0)),
-                            last_message=last_msg_data,
-                        )
-                    chats = whatsapp_repo.list_whatsapp_chats(database, user_id)
+                async with httpx.AsyncClient(timeout=httpx.Timeout(1.2, connect=0.8)) as client:
+                    resp = await client.get(f"{worker_url}/session/chats/{user_id}")
+                    if resp.is_success:
+                        worker_chats = resp.json().get("chats") or []
+                        for wc in worker_chats:
+                            chat_id = wc.get("id")
+                            last_msg_data = None
+                            last_msg_text = wc.get("lastMessage")
+                            if last_msg_text:
+                                last_msg_data = {
+                                    "id": f"last-{chat_id}",
+                                    "sender_id": "contact",
+                                    "sender_name": wc.get("name") or "Contact",
+                                    "content": last_msg_text,
+                                    "timestamp": wc.get("updatedAt"),
+                                    "status": "delivered",
+                                }
+                            await asyncio.to_thread(
+                                lambda: whatsapp_repo.upsert_whatsapp_chat(
+                                    database,
+                                    user_id,
+                                    chat_id=chat_id,
+                                    name=wc.get("name") or chat_id,
+                                    phone_number=wc.get("phoneNumber"),
+                                    avatar_url=wc.get("avatarUrl"),
+                                    is_group=bool(wc.get("isGroup", False)),
+                                    participants=wc.get("participants"),
+                                    description=wc.get("description"),
+                                    unread_count=int(wc.get("unreadCount", 0)),
+                                    last_message=last_msg_data,
+                                )
+                            )
+                        chats = await asyncio.to_thread(whatsapp_repo.list_whatsapp_chats, database, user_id)
             except Exception:
                 pass
 
         if not any(c.id == "eve" for c in chats):
-            WhatsAppService._ensure_eve_chat(database, user_id)
-            chats = whatsapp_repo.list_whatsapp_chats(database, user_id)
+            await asyncio.to_thread(WhatsAppService._ensure_eve_chat, database, user_id)
+            chats = await asyncio.to_thread(whatsapp_repo.list_whatsapp_chats, database, user_id)
 
         # Sort chats:
         # 1. Pinned or Eve first
@@ -265,37 +274,39 @@ class WhatsAppService:
         return chats
 
     @staticmethod
-    def get_messages(
+    async def get_messages(
         database: Client, user_id: str, chat_id: str, limit: int = 50, before: Optional[str] = None
     ) -> List[WhatsAppMessageResponse]:
-        msgs = whatsapp_repo.list_whatsapp_messages(database, user_id, chat_id, limit=limit, before=before)
+        import asyncio
+        msgs = await asyncio.to_thread(whatsapp_repo.list_whatsapp_messages, database, user_id, chat_id, limit, before)
         if len(msgs) < limit and chat_id != "eve":
             try:
                 worker_url = settings.whatsapp_gateway_url
-                resp = requests.get(f"{worker_url}/session/messages/{user_id}/{chat_id}", timeout=0.6)
-                if resp.ok:
-                    worker_msgs = resp.json().get("messages") or []
-                    if worker_msgs:
-                        for wm in worker_msgs:
-                            media_data = wm.get("media")
-                            media_obj = WhatsAppMediaAttachment(**media_data) if media_data else None
-                            msg_obj = WhatsAppMessageResponse(
-                                id=wm.get("id") or f"msg-{uuid4().hex[:12]}",
-                                chat_id=chat_id,
-                                sender_id=wm.get("senderId") or "me",
-                                sender_name=wm.get("senderName"),
-                                is_from_me=bool(wm.get("isFromMe", False)),
-                                is_eve=False,
-                                is_forwarded=bool(wm.get("isForwarded", False)),
-                                content=wm.get("content") or "",
-                                media=media_obj,
-                                reply_to_message_id=wm.get("replyToMessageId"),
-                                sender_avatar_url=wm.get("senderAvatarUrl") or wm.get("sender_avatar_url"),
-                                timestamp=datetime.fromisoformat(wm["timestamp"].replace("Z", "+00:00")) if isinstance(wm.get("timestamp"), str) else datetime.now(timezone.utc),
-                                status=wm.get("status", "delivered"),
-                            )
-                            whatsapp_repo.save_whatsapp_message(database, user_id, chat_id, msg_obj)
-                        msgs = whatsapp_repo.list_whatsapp_messages(database, user_id, chat_id, limit=limit, before=before)
+                async with httpx.AsyncClient(timeout=httpx.Timeout(0.6, connect=0.5)) as client:
+                    resp = await client.get(f"{worker_url}/session/messages/{user_id}/{chat_id}")
+                    if resp.is_success:
+                        worker_msgs = resp.json().get("messages") or []
+                        if worker_msgs:
+                            for wm in worker_msgs:
+                                media_data = wm.get("media")
+                                media_obj = WhatsAppMediaAttachment(**media_data) if media_data else None
+                                msg_obj = WhatsAppMessageResponse(
+                                    id=wm.get("id") or f"msg-{uuid4().hex[:12]}",
+                                    chat_id=chat_id,
+                                    sender_id=wm.get("senderId") or "me",
+                                    sender_name=wm.get("senderName"),
+                                    is_from_me=bool(wm.get("isFromMe", False)),
+                                    is_eve=False,
+                                    is_forwarded=bool(wm.get("isForwarded", False)),
+                                    content=wm.get("content") or "",
+                                    media=media_obj,
+                                    reply_to_message_id=wm.get("replyToMessageId"),
+                                    sender_avatar_url=wm.get("senderAvatarUrl") or wm.get("sender_avatar_url"),
+                                    timestamp=datetime.fromisoformat(wm["timestamp"].replace("Z", "+00:00")) if isinstance(wm.get("timestamp"), str) else datetime.now(timezone.utc),
+                                    status=wm.get("status", "delivered"),
+                                )
+                                await asyncio.to_thread(whatsapp_repo.save_whatsapp_message, database, user_id, chat_id, msg_obj)
+                            msgs = await asyncio.to_thread(whatsapp_repo.list_whatsapp_messages, database, user_id, chat_id, limit, before)
             except Exception:
                 pass
         return msgs

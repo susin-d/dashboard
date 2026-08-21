@@ -1,3 +1,4 @@
+import asyncio
 import logging
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
@@ -47,7 +48,7 @@ async def transcribe(
     database: Client = Depends(get_firestore),
     user: dict = Depends(get_current_user),
 ):
-    engine, model = resolve_stt_engine(database, user["uid"])
+    engine, model = await asyncio.to_thread(resolve_stt_engine, database, user["uid"])
     if engine != "groq":
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
@@ -55,7 +56,8 @@ async def transcribe(
         )
     audio_bytes = await file.read()
     try:
-        text = transcribe_audio(
+        text = await asyncio.to_thread(
+            transcribe_audio,
             audio_bytes,
             file.content_type,
             language,
@@ -71,19 +73,20 @@ async def transcribe(
 
 
 @router.post("/synthesize")
-def synthesize(
+async def synthesize(
     payload: EveSynthesizeRequest,
     database: Client = Depends(get_firestore),
     user: dict = Depends(get_current_user),
 ):
-    engine, voice = resolve_tts_engine(database, user["uid"])
+    engine, voice = await asyncio.to_thread(resolve_tts_engine, database, user["uid"])
     if engine != "google":
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail="Google Cloud text-to-speech is not configured.",
         )
     try:
-        audio_bytes, media_type = synthesize_speech(
+        audio_bytes, media_type = await asyncio.to_thread(
+            synthesize_speech,
             payload.text,
             payload.language,
             payload.voice or voice,
@@ -100,35 +103,39 @@ def synthesize(
 
 
 @router.post("/chat", response_model=EveChatResponse)
-def chat(
+async def chat(
     payload: EveChatRequest,
     database: Client = Depends(get_firestore),
     user: dict = Depends(get_current_user),
 ):
-    message, changed_resources, actions = chat_with_eve(
+    # Offload heavy LLM + tool loop to thread to keep event loop responsive; LLM calls are sync httpx
+    message, changed_resources, actions = await asyncio.to_thread(
+        chat_with_eve,
         database,
         user,
         [item.model_dump() for item in payload.messages],
-        session_id=payload.session_id,
+        payload.session_id,
     )
     return {"message": message, "changed_resources": changed_resources, "actions": actions}
 
 
 @router.get("/sessions", response_model=EveSessionListResponse)
-def list_sessions(
+async def list_sessions(
     database: Client = Depends(get_firestore),
     user: dict = Depends(get_current_user),
 ):
-    return {"sessions": eve_sessions.list_sessions(database, user["uid"])}
+    sessions = await asyncio.to_thread(eve_sessions.list_sessions, database, user["uid"])
+    return {"sessions": sessions}
 
 
 @router.post("/sessions", response_model=EveSessionResponse, status_code=status.HTTP_201_CREATED)
-def create_session(
+async def create_session(
     payload: EveSessionCreateRequest,
     database: Client = Depends(get_firestore),
     user: dict = Depends(get_current_user),
 ):
-    session = eve_sessions.create_session(
+    session = await asyncio.to_thread(
+        eve_sessions.create_session,
         database,
         user["uid"],
         [item.model_dump() for item in payload.messages],
@@ -137,65 +144,71 @@ def create_session(
 
 
 @router.get("/sessions/{session_id}", response_model=EveSessionResponse)
-def get_session(
+async def get_session(
     session_id: str,
     database: Client = Depends(get_firestore),
     user: dict = Depends(get_current_user),
 ):
     try:
-        session = eve_sessions.get_session(database, user["uid"], session_id)
+        session = await asyncio.to_thread(eve_sessions.get_session, database, user["uid"], session_id)
     except ValueError as error:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(error)) from error
     return {"session": session}
 
 
 @router.delete("/sessions/{session_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_session(
+async def delete_session(
     session_id: str,
     database: Client = Depends(get_firestore),
     user: dict = Depends(get_current_user),
 ):
-    if not eve_sessions.delete_session(database, user["uid"], session_id):
+    ok = await asyncio.to_thread(eve_sessions.delete_session, database, user["uid"], session_id)
+    if not ok:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Session not found.")
 
 
 @router.get("/memories", response_model=EveMemoriesResponse)
-def get_memories(
+async def get_memories(
     database: Client = Depends(get_firestore),
     user: dict = Depends(get_current_user),
 ):
-    return {"memories": list_memories(database, user["uid"])}
+    memories = await asyncio.to_thread(list_memories, database, user["uid"])
+    return {"memories": memories}
 
 
 @router.post("/memories", response_model=EveMemoriesResponse, status_code=status.HTTP_201_CREATED)
-def create_memory(
+async def create_memory(
     payload: EveMemoryCreate,
     database: Client = Depends(get_firestore),
     user: dict = Depends(get_current_user),
 ):
-    memory = add_memory(database, user["uid"], payload.content)
-    return {"memories": [memory, *list_memories(database, user["uid"])]}
+    memory = await asyncio.to_thread(add_memory, database, user["uid"], payload.content)
+    # Invalidate handled inside service, but also refresh list via thread
+    memories = await asyncio.to_thread(list_memories, database, user["uid"])
+    return {"memories": [memory, *memories]}
 
 
 @router.delete("/memories/{memory_id}", response_model=EveMemoryDeleteResponse)
-def remove_memory(
+async def remove_memory(
     memory_id: str,
     database: Client = Depends(get_firestore),
     user: dict = Depends(get_current_user),
 ):
-    if not delete_memory(database, user["uid"], memory_id):
+    ok = await asyncio.to_thread(delete_memory, database, user["uid"], memory_id)
+    if not ok:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Memory not found.")
     return {"message": "Memory removed."}
 
 
 @router.post("/delete", response_model=EveDeleteResponse)
-def delete_record(
+async def delete_record(
     payload: EveDeleteRequest,
     database: Client = Depends(get_firestore),
     user: dict = Depends(get_current_user),
 ):
     try:
-        message, changed_resources = delete_workspace_record(
+        message, changed_resources = await asyncio.to_thread(
+            delete_workspace_record,
             database,
             user,
             payload.resource,
@@ -207,13 +220,14 @@ def delete_record(
 
 
 @router.post("/restore", response_model=EveRestoreResponse)
-def restore_record(
+async def restore_record(
     payload: EveRestoreRequest,
     database: Client = Depends(get_firestore),
     user: dict = Depends(get_current_user),
 ):
     try:
-        message, changed_resources = restore_workspace_record(
+        message, changed_resources = await asyncio.to_thread(
+            restore_workspace_record,
             database,
             user,
             payload.resource,

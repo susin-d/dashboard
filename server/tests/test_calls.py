@@ -217,8 +217,8 @@ class TestCallEndpoints(unittest.TestCase):
         self.assertEqual(items[0]["status"], "ringing")
 
     def test_list_incoming_marks_stale_ringing_as_missed(self):
-        # A ringing call that has not been updated in over MISSED_AFTER (45s)
-        # must be auto-expired by the server-side guard on the incoming list.
+        # Stale ringing expiry is now handled by background worker / cron to keep
+        # per-request latency low (previously done synchronously on every GET).
         from datetime import datetime, timedelta, timezone
 
         stale_updated_at = (
@@ -243,12 +243,13 @@ class TestCallEndpoints(unittest.TestCase):
         collection.document.return_value.update.reset_mock()
         response = self.client.get("/api/v1/calls/incoming")
         self.assertEqual(response.status_code, 200)
-        # Guard calls update({status: "missed", ...}) on the stale document.
+        # No synchronous expiry on request — background worker (ServerBackgroundWorker)
+        # or cron now handles stale call cleanup.
         update_calls = [
             c for c in collection.document.return_value.update.call_args_list
             if c.args[0].get("status") == "missed"
         ]
-        self.assertEqual(len(update_calls), 1)
+        self.assertEqual(len(update_calls), 0)
 
     def test_prune_messages_keeps_bounded_array(self):
         from app.repositories.calls import MAX_SIGNAL_MESSAGES, CallRepository

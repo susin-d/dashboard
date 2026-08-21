@@ -116,12 +116,14 @@ async def google_contacts_callback(
 
 
 @router.get("/accounts")
-def get_google_contacts_accounts(
+async def get_google_contacts_accounts(
     database: Client = Depends(get_firestore),
     user: dict = Depends(get_current_user),
 ):
+    import asyncio
+    docs = await asyncio.to_thread(lambda: list(accounts_collection(database, user["uid"]).stream()))
     accounts = []
-    for doc in accounts_collection(database, user["uid"]).stream():
+    for doc in docs:
         data = doc.to_dict() or {}
         accounts.append({
             "id": doc.id,
@@ -286,15 +288,17 @@ async def import_google_contacts(
 
 
 @router.post("/disconnect")
-def disconnect_google_contacts(
+async def disconnect_google_contacts(
     account_id: str | None = Query(None),
     database: Client = Depends(get_firestore),
     user: dict = Depends(get_current_user),
 ):
+    import asyncio
     coll = accounts_collection(database, user["uid"])
     if account_id:
-        coll.document(account_id).delete()
+        await asyncio.to_thread(coll.document(account_id).delete)
     else:
-        for doc in coll.stream():
-            doc.reference.delete()
+        docs = await asyncio.to_thread(lambda: list(coll.stream()))
+        for doc in docs:
+            await asyncio.to_thread(doc.reference.delete)
     return {"status": "disconnected"}

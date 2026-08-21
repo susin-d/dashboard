@@ -78,13 +78,26 @@ def delete_notification_doc(session: Session, doc_id: str) -> None:
 def query_notifications(session: Session, user_id: str, query: SqlQuery) -> list[SqlSnapshot]:
     """Execute query on the user's notifications collection."""
     stmt = select(Notification).where(Notification.user_id == user_id)
+    has_deleted_filter = any(f[0] == "deleted" for f in query.filters)
+    if not has_deleted_filter:
+        stmt = stmt.where(Notification.deleted == False)  # noqa: E712
     for field, op, val in query.filters:
         if field == "unread" and op in ("==", "="):
             stmt = stmt.where(Notification.read != val)
         elif field == "read" and op in ("==", "="):
             stmt = stmt.where(Notification.read == val)
+        elif field == "deleted" and op in ("==", "="):
+            stmt = stmt.where(Notification.deleted == val) if val else stmt.where(Notification.deleted == False)  # noqa: E712
+    if query._start_after_doc_id:
+        cursor = session.get(Notification, query._start_after_doc_id)
+        if cursor and cursor.created_at:
+            if query._direction == "DESC":
+                stmt = stmt.where(Notification.created_at < cursor.created_at)
+            else:
+                stmt = stmt.where(Notification.created_at > cursor.created_at)
     if query._order_by == "created_at":
         stmt = stmt.order_by(Notification.created_at.desc() if query._direction == "DESC" else Notification.created_at.asc())
+        stmt = stmt.order_by(Notification.id.desc() if query._direction == "DESC" else Notification.id.asc())
     if query._limit:
         stmt = stmt.limit(query._limit)
     notifs = session.scalars(stmt).all()

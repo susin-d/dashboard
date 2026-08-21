@@ -75,8 +75,27 @@ def delete_todo_doc(session: Session, doc_id: str) -> None:
 def query_todos(session: Session, user_id: str, query: SqlQuery) -> list[SqlSnapshot]:
     """Execute query on the user's todos collection."""
     stmt = select(Todo).where(Todo.user_id == user_id)
+    # Server-side deleted filter
+    has_deleted_filter = any(f[0] == "deleted" for f in query.filters)
+    if not has_deleted_filter:
+        stmt = stmt.where(Todo.deleted == False)  # noqa: E712
+    for field, op, val in query.filters:
+        if field == "deleted" and op in ("==", "="):
+            stmt = stmt.where(Todo.deleted == val) if val else stmt.where(Todo.deleted == False)  # noqa: E712
+        elif field == "completed" and op in ("==", "="):
+            stmt = stmt.where(Todo.completed == val)
+    # Keyset pagination: start_after cursor id -> filter by created_at
+    if query._start_after_doc_id:
+        cursor = session.get(Todo, query._start_after_doc_id)
+        if cursor and cursor.created_at:
+            if query._order_by == "created_at" and query._direction == "DESC":
+                stmt = stmt.where(Todo.created_at < cursor.created_at)
+            elif query._order_by == "created_at":
+                stmt = stmt.where(Todo.created_at > cursor.created_at)
     if query._order_by == "created_at":
         stmt = stmt.order_by(Todo.created_at.desc() if query._direction == "DESC" else Todo.created_at.asc())
+        # tie-breaker for stable pagination
+        stmt = stmt.order_by(Todo.id.desc() if query._direction == "DESC" else Todo.id.asc())
     if query._limit:
         stmt = stmt.limit(query._limit)
     todos = session.scalars(stmt).all()

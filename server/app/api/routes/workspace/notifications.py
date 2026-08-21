@@ -1,5 +1,6 @@
 """Notification routes: list, update, delete, and mark all as read."""
 
+import asyncio
 from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
 from google.cloud.firestore_v1 import Client
 
@@ -13,76 +14,78 @@ router = APIRouter()
 
 
 @router.get("/notifications", response_model=PageResponse)
-def list_notifications(
+async def list_notifications(
     cursor: str | None = None,
     limit: int = Query(DEFAULT_PAGE_SIZE, ge=1, le=MAX_PAGE_SIZE),
     database: Client = Depends(get_firestore),
     user: dict = Depends(get_current_user),
 ):
     repository = NotificationRepository(database, user["uid"])
-    items, next_cursor, has_more = repository.list_page(cursor, limit)
+    items, next_cursor, has_more = await asyncio.to_thread(repository.list_page, cursor, limit)
     return {"items": items, "next_cursor": next_cursor, "has_more": has_more}
 
 
 @router.get("/notifications/{notification_id}", response_model=NotificationResponse)
-def get_notification(
+async def get_notification(
     notification_id: str,
     database: Client = Depends(get_firestore),
     user: dict = Depends(get_current_user),
 ):
     repository = NotificationRepository(database, user["uid"])
-    result = repository.get(notification_id)
+    result = await asyncio.to_thread(repository.get, notification_id)
     if not result:
         raise HTTPException(status_code=404, detail="Notification not found.")
     return result
 
 
 @router.patch("/notifications/{notification_id}", response_model=NotificationResponse)
-def update_notification(
+async def update_notification(
     notification_id: str,
     changes: NotificationUpdate,
     database: Client = Depends(get_firestore),
     user: dict = Depends(get_current_user),
 ):
     repository = NotificationRepository(database, user["uid"])
-    result = repository.update(notification_id, changes)
+    result = await asyncio.to_thread(repository.update, notification_id, changes)
     if not result:
         raise HTTPException(status_code=404, detail="Notification not found.")
     return result
 
 
 @router.delete("/notifications/{notification_id}", status_code=204)
-def delete_notification(
+async def delete_notification(
     notification_id: str,
     database: Client = Depends(get_firestore),
     user: dict = Depends(get_current_user),
 ):
     repository = NotificationRepository(database, user["uid"])
-    if not repository.delete(notification_id):
+    ok = await asyncio.to_thread(repository.delete, notification_id)
+    if not ok:
         raise HTTPException(status_code=404, detail="Notification not found.")
     return Response(status_code=204)
 
 
 @router.post("/notifications/mark-all-read")
-def mark_all_notifications_read(
+async def mark_all_notifications_read(
     database: Client = Depends(get_firestore),
     user: dict = Depends(get_current_user),
 ):
     repository = NotificationRepository(database, user["uid"])
-    updated_count = repository.mark_all_read()
+    updated_count = await asyncio.to_thread(repository.mark_all_read)
     return {"updated": updated_count}
 
 
 @router.post("/notifications/{notification_id}/restore", response_model=NotificationResponse)
-def restore_notification(
+async def restore_notification(
     notification_id: str,
     database: Client = Depends(get_firestore),
     user: dict = Depends(get_current_user),
 ):
     repository = NotificationRepository(database, user["uid"])
-    if not repository.restore(notification_id):
+    ok = await asyncio.to_thread(repository.restore, notification_id)
+    if not ok:
         raise HTTPException(status_code=404, detail="Notification not found.")
-    result = repository.get(notification_id)
+    result = await asyncio.to_thread(repository.get, notification_id)
     if not result:
         raise HTTPException(status_code=404, detail="Notification not found.")
     return result

@@ -47,13 +47,22 @@ def drive_state_serializer() -> URLSafeTimedSerializer:
     return google_oauth_state_serializer("starwaves-google-drive-oauth")
 
 
+_drive_token_cache: dict[str, tuple[float, str]] = {}
+_DRIVE_TOKEN_TTL = 3000
+
 async def access_token(database: Client, user_id: str) -> str:
+    import time
+    cached = _drive_token_cache.get(user_id)
+    if cached and cached[0] > time.monotonic():
+        return cached[1]
     snapshot = await asyncio.to_thread(drive_reference(database, user_id).get)
     if not snapshot.exists:
         raise HTTPException(status_code=409, detail="Connect Google Drive first.")
     try:
         refresh_token = decrypt_google_token(snapshot.to_dict()["refresh_token"])
-        return await refresh_google_token(refresh_token)
+        token = await refresh_google_token(refresh_token)
+        _drive_token_cache[user_id] = (time.monotonic() + _DRIVE_TOKEN_TTL, token)
+        return token
     except (KeyError, ValueError, httpx.HTTPError) as error:
         raise HTTPException(status_code=502, detail=str(error)) from None
 
@@ -107,6 +116,7 @@ async def google_drive_callback(
                 merge=True,
             ),
         )
+        _drive_cache_invalidate(user_id)
     except Exception as error:
         logger.error("Google Drive OAuth callback error: %s", error, exc_info=True)
         reason = quote(format_oauth_error(error))
@@ -114,16 +124,40 @@ async def google_drive_callback(
     return oauth_callback_html(settings.frontend_url, "drive")
 
 
+_drive_status_cache: dict[str, tuple[float, dict]] = {}
+_DRIVE_TTL = 30
+
+def _drive_cache_get(uid: str):
+    import time
+    e = _drive_status_cache.get(uid)
+    if e and e[0] > time.monotonic():
+        return e[1]
+    return None
+
+def _drive_cache_set(uid: str, data: dict):
+    import time
+    _drive_status_cache[uid] = (time.monotonic() + _DRIVE_TTL, data)
+
+def _drive_cache_invalidate(uid: str):
+    _drive_status_cache.pop(uid, None)
+    _drive_token_cache.pop(uid, None)
+
+
 @router.get("/status")
-def google_drive_status(
+async def google_drive_status(
     database: Client = Depends(get_firestore),
     user: dict = Depends(get_current_user),
 ):
-    snapshot = drive_reference(database, user["uid"]).get()
+    cached = _drive_cache_get(user["uid"])
+    if cached is not None:
+        return cached
+    snapshot = await asyncio.to_thread(drive_reference(database, user["uid"]).get)
     if not snapshot.exists:
-        return {"connected": False, "account": None}
+        result = {"connected": False, "account": None}
+        _drive_cache_set(user["uid"], result)
+        return result
     account = snapshot.to_dict()
-    return {
+    result = {
         "connected": True,
         "account": {
             "email": account["email"],
@@ -131,6 +165,8 @@ def google_drive_status(
             "picture": account.get("picture", ""),
         },
     }
+    _drive_cache_set(user["uid"], result)
+    return result
 
 
 @router.get("/files")
@@ -255,3 +291,4 @@ def disconnect_google_drive(
     user: dict = Depends(get_current_user),
 ):
     drive_reference(database, user["uid"]).delete()
+    _drive_cache_invalidate(user["uid"])

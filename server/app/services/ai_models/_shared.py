@@ -232,16 +232,40 @@ def load_ai_preference(database: Client, user_uid: str) -> dict[str, Any] | None
         return None
     return snapshot.to_dict() or None
 
+_ai_config_cache: dict[str, tuple[float, AiConfig]] = {}
+_AI_CACHE_TTL = 60  # seconds
+
+def _ai_cache_get(user_uid: str) -> AiConfig | None:
+    import time
+    entry = _ai_config_cache.get(user_uid)
+    if entry and entry[0] > time.monotonic():
+        return entry[1]
+    return None
+
+def _ai_cache_set(user_uid: str, config: AiConfig) -> None:
+    import time
+    _ai_config_cache[user_uid] = (time.monotonic() + _AI_CACHE_TTL, config)
+
+def invalidate_ai_config_cache(user_uid: str) -> None:
+    _ai_config_cache.pop(user_uid, None)
+
 
 def resolve_ai_config(database: Client, user_uid: str) -> AiConfig:
     """Resolve a user's AI provider/model choice, falling back to the server default."""
+    cached = _ai_cache_get(user_uid)
+    if cached is not None:
+        return cached
     preference = load_ai_preference(database, user_uid)
     if not preference:
-        return build_ai_config("default")
+        cfg = build_ai_config("default")
+        _ai_cache_set(user_uid, cfg)
+        return cfg
 
     chosen_provider = preference.get("provider") or "default"
     if chosen_provider == "default":
-        return build_ai_config("default")
+        cfg = build_ai_config("default")
+        _ai_cache_set(user_uid, cfg)
+        return cfg
 
     model = preference.get("model")
     user_api_key = None
@@ -251,7 +275,9 @@ def resolve_ai_config(database: Client, user_uid: str) -> AiConfig:
     elif preference.get("api_key") and preference.get("provider") == chosen_provider:
         user_api_key = preference.get("api_key")
 
-    return build_ai_config(chosen_provider, model, user_api_key=user_api_key)
+    cfg = build_ai_config(chosen_provider, model, user_api_key=user_api_key)
+    _ai_cache_set(user_uid, cfg)
+    return cfg
 
 
 def run_tool_loop(

@@ -11,6 +11,7 @@ from app.services.ai_models import (
     AI_PROVIDERS,
     DEFAULT_PROVIDER,
     _provider_key_set,
+    invalidate_ai_config_cache,
     load_ai_preference,
     provider_catalog,
     validate_preference,
@@ -110,6 +111,11 @@ def save_ai_models(
 
     reference = _reference(database, user["uid"])
     reference.set(update_payload, merge=True)
+    # Invalidate cached AI config so next chat uses new provider/model
+    try:
+        invalidate_ai_config_cache(user["uid"])
+    except Exception:
+        pass
 
     default_model = AI_PROVIDERS.get(DEFAULT_PROVIDER, {}).get("default_model", settings.openai_model)
     return {

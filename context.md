@@ -4,7 +4,7 @@ Living project snapshot for AI agents. `AGENTS.md` holds the permanent rules;
 this file holds the **current state** of the codebase and must be kept up to
 date whenever the implementation changes.
 
-> **Last updated:** 2026-08-20 (WhatsApp chat selection fix: preserve active conversation when chats list changes and stop mutating the state array during sorting)
+> **Last updated:** 2026-08-21 (Performance pass: async I/O, server-side pagination, per-endpoint caches, Postgres tuning, workspace-files parallelism, stale-call cleanup moved to worker)
 
 ---
 
@@ -67,12 +67,13 @@ Starwaves/
 
 ## 3. Backend (FastAPI)
 
-- **App factory**: `server/app/main.py` → `create_app()` with `@asynccontextmanager` `lifespan` manager (CORS + `/api/v1` router + `/ws/calls` and `/ws/whatsapp` WebSocket endpoints + `ServerBackgroundWorker` daemon thread).
-- **Background Worker Daemon**: `server/app/core/worker.py` -> `ServerBackgroundWorker` runs in long-running server environments (Docker / Uvicorn daemons / systemd) to auto-execute due Eve schedules, trigger voice calls, and expire stale calls every 30s.
-- **WebSocket Managers**: `server/app/core/ws_manager.py` (`CallWSManager`) for real-time WebRTC call signaling and `server/app/core/whatsapp_ws_manager.py` (`WhatsAppWSManager`) for instant WhatsApp message streaming, QR updates, typing indicators, and Eve events.
-- **Route registry**: `server/app/api/router.py` includes all top-level routers.
-- **Prefix**: `/api/v1` (see `server/app/core/config.py`).
-- **Auth**: Firebase ID tokens via `server/app/core/auth.py`.
+- **App factory**: `server/app/main.py` → `create_app()` with `@asynccontextmanager` `lifespan` manager (CORS + `/api/v1` router + `/ws/calls` and `/ws/whatsapp` WebSocket endpoints + `ServerBackgroundWorker` daemon thread); startup logs include active OpenAI model + base URL.
+ - **Background Worker Daemon**: `server/app/core/worker.py` -> `ServerBackgroundWorker` runs in long-running server environments (Docker / Uvicorn daemons / systemd) to auto-execute due Eve schedules, trigger voice calls, and expire stale calls every 30s (stale-call expiry no longer runs per-request on `GET /calls/incoming|recent` for latency).
+ - **WebSocket Managers**: `server/app/core/ws_manager.py` (`CallWSManager`) for real-time WebRTC call signaling and `server/app/core/whatsapp_ws_manager.py` (`WhatsAppWSManager`) for instant WhatsApp message streaming, QR updates, typing indicators, and Eve events.
+ - **Route registry**: `server/app/api/router.py` includes all top-level routers.
+ - **Prefix**: `/api/v1` (see `server/app/core/config.py`).
+ - **Auth**: Bearer `itsdangerous` tokens via `server/app/core/auth.py`.
+ - **Performance Layer (2026-08-21)**: All hot read paths are non-blocking (`async def` + `asyncio.to_thread` for the sync SQL compat layer), pagination uses server-side `WHERE deleted=false` + keyset `start_after` with `limit+1` (no 3x over-fetch), and per-endpoint in-memory TTL caches: Gmail status/token (30s/50m), Google Calendar data (5m), Drive status/token (30s/50m), GitHub status (30s), AI config (60s), Eve memories (60s), web search/pages (10m), workspace tree (3s). WhatsApp service is fully `httpx.AsyncClient` with short connect timeouts; workspace file reads/writes/tree/sync are `to_thread` with sync parallelization. Postgres is tuned (`shared_buffers 256MB`, `synchronous_commit off`, `work_mem 16MB` in `docker-compose.yml`).
 
 ### Route groups
 

@@ -79,8 +79,24 @@ def delete_contact_doc(session: Session, doc_id: str) -> None:
 def query_contacts(session: Session, user_id: str, query: SqlQuery) -> list[SqlSnapshot]:
     """Execute query on the user's contacts collection."""
     stmt = select(Contact).where(Contact.user_id == user_id)
+    has_deleted_filter = any(f[0] == "deleted" for f in query.filters)
+    if not has_deleted_filter:
+        stmt = stmt.where(Contact.deleted == False)  # noqa: E712
+    for field, op, val in query.filters:
+        if field == "deleted" and op in ("==", "="):
+            stmt = stmt.where(Contact.deleted == val) if val else stmt.where(Contact.deleted == False)  # noqa: E712
+    if query._start_after_doc_id:
+        cursor = session.get(Contact, query._start_after_doc_id)
+        if cursor and cursor.created_at:
+            if query._direction == "DESC":
+                stmt = stmt.where(Contact.created_at < cursor.created_at)
+            else:
+                stmt = stmt.where(Contact.created_at > cursor.created_at)
     if query._order_by == "created_at":
         stmt = stmt.order_by(Contact.created_at.desc() if query._direction == "DESC" else Contact.created_at.asc())
+        stmt = stmt.order_by(Contact.id.desc() if query._direction == "DESC" else Contact.id.asc())
+    elif query._order_by == "name":
+        stmt = stmt.order_by(Contact.name.asc())
     if query._limit:
         stmt = stmt.limit(query._limit)
     contacts = session.scalars(stmt).all()

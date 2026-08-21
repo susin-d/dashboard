@@ -30,11 +30,11 @@ router = APIRouter(prefix="/whatsapp", tags=["whatsapp"])
 
 
 @router.get("/status", response_model=WhatsAppStatusResponse)
-def get_whatsapp_status(
+async def get_whatsapp_status(
     current_user: dict = Depends(get_current_user),
     database: Client = Depends(get_firestore),
 ):
-    return WhatsAppService.get_status(database, current_user["uid"])
+    return await WhatsAppService.get_status(database, current_user["uid"])
 
 
 @router.post("/pair", response_model=WhatsAppPairResponse)
@@ -74,22 +74,22 @@ async def disconnect_whatsapp(
 
 
 @router.get("/chats", response_model=List[WhatsAppChatResponse])
-def list_whatsapp_chats(
+async def list_whatsapp_chats(
     current_user: dict = Depends(get_current_user),
     database: Client = Depends(get_firestore),
 ):
-    return WhatsAppService.list_chats(database, current_user["uid"])
+    return await WhatsAppService.list_chats(database, current_user["uid"])
 
 
 @router.get("/chats/{chat_id}/messages", response_model=List[WhatsAppMessageResponse])
-def get_whatsapp_messages(
+async def get_whatsapp_messages(
     chat_id: str,
     limit: int = Query(default=50, ge=1, le=100),
     before: Optional[str] = Query(default=None, description="ISO timestamp to fetch messages prior to"),
     current_user: dict = Depends(get_current_user),
     database: Client = Depends(get_firestore),
 ):
-    return WhatsAppService.get_messages(database, current_user["uid"], chat_id, limit=limit, before=before)
+    return await WhatsAppService.get_messages(database, current_user["uid"], chat_id, limit=limit, before=before)
 
 
 @router.post("/send", response_model=WhatsAppMessageResponse, status_code=status.HTTP_201_CREATED)

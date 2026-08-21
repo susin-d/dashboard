@@ -13,7 +13,7 @@ import { whatsappSocket } from '../../lib/whatsappSocket'
 import { WhatsAppQrModal } from '../../components/whatsapp/WhatsAppQrModal'
 
 const DEFAULT_KEYWORDS = ['@eve', 'eve', '@susindran', '@susin', 'urgent', 'help', 'summary', 'schedule']
-const KEYWORD_PRESETS = ['@eve', 'urgent', 'help', 'summary', 'schedule', 'action items', 'meeting', 'status']
+const KEYWORD_PRESETS = ['@eve', 'urgent', 'help', 'summary', 'schedule', 'meeting', 'status']
 
 export function WhatsAppSection() {
   const [status, setStatus] = useState({ connected: false })
@@ -51,7 +51,7 @@ export function WhatsAppSection() {
     }
   }
 
-  const currentKeywords = settings.keywords || DEFAULT_KEYWORDS
+  const currentKeywords = settings.keywords?.length ? settings.keywords : DEFAULT_KEYWORDS
 
   const handleAddKeyword = (kwToAdd) => {
     const raw = (typeof kwToAdd === 'string' ? kwToAdd : keywordInput).trim()
@@ -143,8 +143,7 @@ export function WhatsAppSection() {
 
   const handleSaveSettings = async (updates) => {
     try {
-      const newSettings = { ...settings, ...updates }
-      const saved = await updateWhatsAppSettings(newSettings)
+      const saved = await updateWhatsAppSettings(updates)
       setSettings(saved)
       setMessage('WhatsApp settings updated.')
     } catch {

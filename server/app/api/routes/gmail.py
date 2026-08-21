@@ -107,6 +107,7 @@ async def gmail_callback(
                 merge=True,
             ),
         )
+        _invalidate_gmail_cache(user_id)
     except Exception as error:
         logger.error("Gmail OAuth callback error: %s", error, exc_info=True)
         reason = quote(format_oauth_error(error))
@@ -156,11 +157,36 @@ async def connect_gmail(
             merge=True,
         ),
     )
+    _invalidate_gmail_cache(user["uid"])
     return {
         "connected": True,
         "account": {"id": doc_id, "email": email},
         "refreshable": False,
     }
+
+
+_gmail_cache: dict[str, tuple[float, dict]] = {}
+_GMAIL_CACHE_TTL = 30  # seconds
+_gmail_token_cache: dict[str, tuple[float, dict]] = {}
+_GMAIL_TOKEN_TTL = 3000  # ~50 minutes
+
+def _get_cached_gmail_status(user_id: str):
+    import time
+    entry = _gmail_cache.get(user_id)
+    if entry and entry[0] > time.monotonic():
+        return entry[1]
+    return None
+
+def _set_cached_gmail_status(user_id: str, data: dict):
+    import time
+    _gmail_cache[user_id] = (time.monotonic() + _GMAIL_CACHE_TTL, data)
+
+def _invalidate_gmail_cache(user_id: str):
+    _gmail_cache.pop(user_id, None)
+    # remove token cache entries for user
+    for key in list(_gmail_token_cache.keys()):
+        if key.startswith(user_id + ":"):
+            _gmail_token_cache.pop(key, None)
 
 
 @router.get("/token")
@@ -170,6 +196,11 @@ async def get_gmail_token(
     user: dict = Depends(get_current_user),
 ):
     """Return a fresh Gmail access token for the given account (or first account)."""
+    cache_key = f"{user['uid']}:{email or ''}"
+    import time as _time
+    cached = _gmail_token_cache.get(cache_key)
+    if cached and cached[0] > _time.monotonic():
+        return cached[1]
     collection = gmail_accounts_collection(database, user["uid"])
     if email:
         doc_id = integration_account_id(email)
@@ -187,12 +218,14 @@ async def get_gmail_token(
     if not encrypted_refresh_token:
         stored_access_token = data.get("access_token")
         if stored_access_token:
-            return {
+            result = {
                 "email": data.get("email", ""),
                 "access_token": stored_access_token,
                 "expires_in": 3599,
                 "refreshable": False,
             }
+            _gmail_token_cache[cache_key] = (_time.monotonic() + _GMAIL_TOKEN_TTL, result)
+            return result
         raise HTTPException(
             status_code=400,
             detail="No refresh token stored for this Gmail account. Please reconnect via the OAuth flow.",
@@ -208,19 +241,21 @@ async def get_gmail_token(
             detail="Could not refresh Gmail access token. Please reconnect your account.",
         ) from error
 
-    return {
+    result = {
         "email": data.get("email", ""),
         "access_token": access_token,
         "expires_in": 3599,
     }
+    _gmail_token_cache[cache_key] = (_time.monotonic() + _GMAIL_TOKEN_TTL, result)
+    return result
 
 
 @router.get("/accounts")
-def get_gmail_accounts(
+async def get_gmail_accounts(
     database: Client = Depends(get_firestore),
     user: dict = Depends(get_current_user),
 ):
-    snapshots = list(gmail_accounts_collection(database, user["uid"]).stream())
+    snapshots = await asyncio.to_thread(lambda: list(gmail_accounts_collection(database, user["uid"]).stream()))
     accounts = []
     for snapshot in snapshots:
         data = snapshot.to_dict()
@@ -233,11 +268,14 @@ def get_gmail_accounts(
 
 
 @router.get("/status")
-def gmail_status(
+async def gmail_status(
     database: Client = Depends(get_firestore),
     user: dict = Depends(get_current_user),
 ):
-    snapshots = list(gmail_accounts_collection(database, user["uid"]).stream())
+    cached = _get_cached_gmail_status(user["uid"])
+    if cached is not None:
+        return cached
+    snapshots = await asyncio.to_thread(lambda: list(gmail_accounts_collection(database, user["uid"]).stream()))
     accounts = []
     for snapshot in snapshots:
         data = snapshot.to_dict()
@@ -249,11 +287,13 @@ def gmail_status(
 
     connected = len(accounts) > 0
     primary_account = accounts[0] if accounts else None
-    return {
+    result = {
         "connected": connected,
         "account": primary_account,
         "accounts": accounts,
     }
+    _set_cached_gmail_status(user["uid"], result)
+    return result
 
 
 @router.delete("/accounts/{account_id}", status_code=204)
@@ -263,6 +303,7 @@ def disconnect_gmail_account(
     user: dict = Depends(get_current_user),
 ):
     gmail_accounts_collection(database, user["uid"]).document(account_id).delete()
+    _invalidate_gmail_cache(user["uid"])
 
 
 @router.delete("", status_code=204)
@@ -277,3 +318,4 @@ async def disconnect_all_gmail(
         for snapshot in snapshots:
             batch.delete(snapshot.reference)
         await asyncio.to_thread(batch.commit)
+    _invalidate_gmail_cache(user["uid"])

@@ -33,11 +33,24 @@ def decode_cursor(cursor: str | None) -> str | None:
 
 
 def paginate_collection(collection, order_field: str, cursor: str | None, limit: int):
-    query = collection.order_by(order_field, direction=firestore.Query.DESCENDING)
+    # Use server-side deleted filter when available; fall back to Python filter for legacy stores.
+    # Fetch limit+1 to detect has_more without over-fetching 3x.
+    try:
+        # Try to push deleted filter to SQL layer (if supported)
+        base_query = collection.where("deleted", "==", False)
+    except Exception:
+        base_query = collection
+    query = base_query.order_by(order_field, direction=firestore.Query.DESCENDING)
     cursor_id = decode_cursor(cursor)
     if cursor_id:
-        query = query.start_after(collection.document(cursor_id).get())
-    raw_documents = list(query.limit(limit * 3 + 1).stream())
+        try:
+            cursor_doc = collection.document(cursor_id).get()
+            if cursor_doc.exists:
+                query = query.start_after(cursor_doc)
+        except Exception:
+            pass
+    raw_documents = list(query.limit(limit + 1).stream())
+    # Defensive filter if backend didn't handle deleted
     documents = [d for d in raw_documents if not (d.to_dict() or {}).get("deleted")]
     has_more = len(documents) > limit
     documents = documents[:limit]

@@ -85,8 +85,22 @@ def delete_hackathon_doc(session: Session, doc_id: str) -> None:
 def query_hackathons(session: Session, user_id: str, query: SqlQuery) -> list[SqlSnapshot]:
     """Execute query on the user's hackathons collection."""
     stmt = select(Hackathon).where(Hackathon.user_id == user_id)
+    has_deleted_filter = any(f[0] == "deleted" for f in query.filters)
+    if not has_deleted_filter:
+        stmt = stmt.where(Hackathon.deleted == False)  # noqa: E712
+    for field, op, val in query.filters:
+        if field == "deleted" and op in ("==", "="):
+            stmt = stmt.where(Hackathon.deleted == val) if val else stmt.where(Hackathon.deleted == False)  # noqa: E712
+    if query._start_after_doc_id:
+        cursor = session.get(Hackathon, query._start_after_doc_id)
+        if cursor and cursor.created_at:
+            if query._direction == "DESC":
+                stmt = stmt.where(Hackathon.created_at < cursor.created_at)
+            else:
+                stmt = stmt.where(Hackathon.created_at > cursor.created_at)
     if query._order_by == "created_at":
         stmt = stmt.order_by(Hackathon.created_at.desc() if query._direction == "DESC" else Hackathon.created_at.asc())
+        stmt = stmt.order_by(Hackathon.id.desc() if query._direction == "DESC" else Hackathon.id.asc())
     if query._limit:
         stmt = stmt.limit(query._limit)
     hackathons = session.scalars(stmt).all()

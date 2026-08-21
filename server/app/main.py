@@ -30,6 +30,11 @@ ALLOWED_ORIGIN_REGEX = (
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     logger.info("Initializing %s (env=%s)...", settings.app_name, settings.app_env)
+    logger.info(
+        "AI runtime config: provider=openai model=%s base_url=%s",
+        settings.openai_model,
+        settings.openai_url or "https://api.openai.com/v1 (default)",
+    )
     try:
         await init_db()
     except Exception as err:

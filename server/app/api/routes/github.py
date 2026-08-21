@@ -69,6 +69,7 @@ async def github_callback(
                 merge=True,
             ),
         )
+        _github_status_invalidate(user_id)
     except Exception as error:
         logger.error("GitHub OAuth callback error: %s", error, exc_info=True)
         reason = quote(format_oauth_error(error, "GitHub"))
@@ -82,13 +83,36 @@ async def github_callback(
     )
 
 
+_github_status_cache: dict[str, tuple[float, dict]] = {}
+_GITHUB_STATUS_TTL = 30
+
+def _github_status_get(uid: str):
+    import time
+    e = _github_status_cache.get(uid)
+    if e and e[0] > time.monotonic():
+        return e[1]
+    return None
+
+def _github_status_set(uid: str, data: dict):
+    import time
+    _github_status_cache[uid] = (time.monotonic() + _GITHUB_STATUS_TTL, data)
+
+def _github_status_invalidate(uid: str):
+    _github_status_cache.pop(uid, None)
+
+
 @router.get("/status")
-def github_status(
+async def github_status(
     database: Client = Depends(get_firestore),
     user: dict = Depends(get_current_user),
 ):
-    snapshot = reference(database, user["uid"]).get()
-    return {"connected": snapshot.exists}
+    cached = _github_status_get(user["uid"])
+    if cached is not None:
+        return cached
+    snapshot = await asyncio.to_thread(reference(database, user["uid"]).get)
+    result = {"connected": snapshot.exists}
+    _github_status_set(user["uid"], result)
+    return result
 
 
 @router.get("/data")
@@ -117,3 +141,4 @@ def disconnect_github(
     user: dict = Depends(get_current_user),
 ):
     reference(database, user["uid"]).delete()
+    _github_status_invalidate(user["uid"])
