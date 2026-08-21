@@ -8,6 +8,7 @@ from google.cloud.firestore_v1 import Client
 
 from app.repositories import eve_sessions
 from app.services.ai_models import AIServiceError, PROVIDER_CLIENTS, any_provider_available, resolve_ai_config, run_tool_loop
+from app.services.eve.auto_memory import extract_and_save_memories
 from app.services.eve.dispatcher import _run_tool
 from app.services.eve.instructions import EVE_INSTRUCTIONS
 from app.services.eve.memories import _build_instructions, _get_cached_memories, _set_cached_memories
@@ -86,4 +87,9 @@ def chat_with_eve(
             ]
             + [{"role": "assistant", "content": message}],
         )
+
+    # Auto-remember: capture durable facts from this exchange when enabled.
+    # Covers every AI surface funneling through chat_with_eve (chat, WhatsApp
+    # auto-replies, scheduled prompts, voice calls). Never raises.
+    extract_and_save_memories(database, user, messages, message)
     return message, changed_resources, actions

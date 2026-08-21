@@ -3,6 +3,7 @@ import { TabNav } from '../components/ui'
 import { AccountSection } from './settings/AccountSection'
 import { AiModelsSection } from './settings/AiModelsSection'
 import { AppsSection } from './settings/AppsSection'
+import { AutoMemorySection } from './settings/AutoMemorySection'
 import { CodingSection } from './settings/CodingSection'
 import { EveVoiceSection } from './settings/EveVoiceSection'
 import { HackathonSourcesSection } from './settings/HackathonSourcesSection'
@@ -16,6 +17,7 @@ const SETTINGS_SECTIONS = [
   { id: 'settings-apps', href: '#settings-apps', label: 'Integrations' },
   { id: 'settings-whatsapp', href: '#settings-whatsapp', label: 'WhatsApp' },
   { id: 'settings-ai-models', href: '#settings-ai-models', label: 'AI Models' },
+  { id: 'settings-eve-memory', href: '#settings-eve-memory', label: 'Eve memory' },
   { id: 'settings-coding', href: '#settings-coding', label: 'Coding profiles' },
   { id: 'settings-hackathons', href: '#settings-hackathons', label: 'Hackathons' },
   { id: 'settings-eve-voice', href: '#settings-eve-voice', label: 'Eve voice' },
@@ -129,6 +131,7 @@ export function SettingPage({
       />
       <WhatsAppSection />
       <AiModelsSection />
+      <AutoMemorySection />
       <CodingSection user={user} onContestSitesChange={onContestSitesChange} />
       <HackathonSourcesSection user={user} onHackathonsChange={onHackathonsChange} />
       <EveVoiceSection />

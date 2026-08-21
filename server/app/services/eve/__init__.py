@@ -4,8 +4,8 @@ Implementation is split into single-responsibility modules:
 - constants, instructions, tools/*, workspace_records, workspace_insights, memories, dispatcher, chat, handlers/*
 """
 
+from app.services.eve.auto_memory import extract_and_save_memories
 from app.services.eve.chat import chat_with_eve
-from app.services.eve.chat_stream import stream_chat_with_eve
 from app.services.eve.constants import (
     MAX_RECORDS_PER_READ,
     SUPPORTED_RESOURCES,
@@ -19,6 +19,11 @@ from app.services.eve.memories import (
     _get_cached_memories,
     _set_cached_memories,
     invalidate_memories_cache,
+)
+from app.services.eve.memory_settings import (
+    EVE_MEMORY_SETTINGS_DOC,
+    load_memory_settings,
+    resolve_auto_remember,
 )
 from app.services.ai_models import (
     AIServiceError,
@@ -47,6 +52,7 @@ from app.services.eve.workspace_records import (
 __all__ = [
     "AIServiceError",
     "EVE_INSTRUCTIONS",
+    "EVE_MEMORY_SETTINGS_DOC",
     "EVE_TOOLS",
     "MAX_RECORDS_PER_READ",
     "PROVIDER_CLIENTS",
@@ -73,8 +79,10 @@ __all__ = [
     "any_provider_available",
     "chat_with_eve",
     "delete_workspace_record",
+    "extract_and_save_memories",
     "invalidate_memories_cache",
+    "load_memory_settings",
+    "resolve_auto_remember",
     "restore_workspace_record",
     "run_tool_loop",
-    "stream_chat_with_eve",
 ]

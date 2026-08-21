@@ -72,3 +72,11 @@ class EveMemoriesResponse(BaseModel):
 
 class EveMemoryDeleteResponse(BaseModel):
     message: str
+
+
+class EveMemorySettingsUpdate(BaseModel):
+    auto_remember: bool
+
+
+class EveMemorySettingsResponse(BaseModel):
+    auto_remember: bool

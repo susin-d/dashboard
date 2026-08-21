@@ -1,4 +1,4 @@
-import { Code2, Layers, MessageCircle, Palette, PhoneCall, Rocket, Shield, Sparkles, UserCheck } from 'lucide-react'
+import { BrainCog, Code2, Layers, MessageCircle, Palette, PhoneCall, Rocket, Shield, Sparkles, UserCheck } from 'lucide-react'
 
 export const SETTINGS_SECTIONS_ITEMS = [
   {
@@ -65,6 +65,19 @@ export const SETTINGS_SECTIONS_ITEMS = [
     hash: 'settings-ai-models',
     icon: Sparkles,
     keywords: ['ai models', 'openai', 'gpt-5', 'gpt-4o', 'anthropic', 'claude', 'gemini', 'api key', 'llm'],
+  },
+  {
+    id: 'setting-eve-memory',
+    type: 'section',
+    category: 'settings',
+    group: 'Settings & Preferences',
+    title: 'Eve Memory & Auto-Remember',
+    subtitle: 'Toggle automatic memory saving across chats, WhatsApp, calls & schedules',
+    badge: 'Settings > Eve Memory',
+    page: 'setting',
+    hash: 'settings-eve-memory',
+    icon: BrainCog,
+    keywords: ['eve memory', 'auto remember', 'auto-remember', 'memory', 'remember', 'forget', 'long-term memory', 'recall'],
   },
   {
     id: 'setting-coding',
