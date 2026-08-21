@@ -112,6 +112,20 @@ class ProviderResponse:
     raw: Any = None
 
 
+@dataclass
+class StreamChunk:
+    """One streamed provider event: incremental text or the complete response.
+
+    Providers yield zero or more ``text_delta`` chunks followed by exactly one
+    ``final`` chunk carrying the same ProviderResponse shape as a non-streaming
+    call, so the shared tool loop stays provider-agnostic.
+    """
+
+    kind: str  # "text_delta" | "final"
+    text: str = ""
+    response: ProviderResponse | None = None
+
+
 class ProviderClient:
     """Adapter interface for an AI provider's tool-calling SDK.
 
@@ -136,6 +150,15 @@ class ProviderClient:
         conversation: Any,
         tools: list[dict[str, Any]],
     ) -> ProviderResponse:
+        raise NotImplementedError
+
+    def call_stream(
+        self,
+        model: str,
+        instructions: str,
+        conversation: Any,
+        tools: list[dict[str, Any]],
+    ) -> Iterator[StreamChunk]:
         raise NotImplementedError
 
     def continuation(self, response: ProviderResponse) -> list[Any]:
@@ -594,6 +617,66 @@ def run_tool_loop(
             except Exception as error:
                 logger.error(f"[AI Tool Loop] Unexpected failure in tool '{call.name}': {type(error).__name__}: {error}", exc_info=True)
                 result = {"error": f"Tool execution failed: {type(error).__name__}: {error}"}
+            conversation.extend(
+                client.tool_result_blocks(call, json.dumps(result, default=str))
+            )
+    logger.error(f"[AI Tool Loop] Exceeded maximum tool rounds ({MAX_TOOL_ROUNDS}) for {config.provider}/{config.model}")
+    raise AIServiceError(f"The AI request exceeded the maximum number of tool rounds ({MAX_TOOL_ROUNDS}).")
+
+
+def run_tool_loop_stream(
+    client: ProviderClient,
+    config: AiConfig,
+    instructions: str,
+    conversation: list[dict[str, str]],
+    tools: list[dict[str, Any]],
+    run_tool: Callable[[str, dict[str, Any]], tuple[Any, str | None, dict[str, Any] | None]],
+) -> Iterator[dict[str, Any]]:
+    """Run the provider tool-calling loop with streamed text deltas.
+
+    Yields event dicts:
+    - {"type": "delta", "text": str}            — incremental assistant text
+    - {"type": "tool_start", "name": str}       — a workspace tool begins executing
+    - {"type": "tool_end", "name": str}         — the tool finished
+    - {"type": "done", "message": str, "changed_resources": [...], "actions": [...]}
+    """
+    conversation = client.normalize_messages(conversation)
+    changed_resources: list[str] = []
+    actions: list[dict[str, Any]] = []
+    for _round_idx in range(MAX_TOOL_ROUNDS):
+        final_response: ProviderResponse | None = None
+        for chunk in client.call_stream(config.model, instructions, conversation, tools):
+            if chunk.kind == "text_delta":
+                yield {"type": "delta", "text": chunk.text}
+            elif chunk.kind == "final" and chunk.response is not None:
+                final_response = chunk.response
+        if final_response is None:
+            raise AIServiceError("Provider stream ended without a final response.")
+        response = final_response
+        if not response.tool_calls:
+            yield {
+                "type": "done",
+                "message": response.text or "I could not generate a response. Please try again.",
+                "changed_resources": changed_resources,
+                "actions": actions,
+            }
+            return
+        conversation.extend(client.continuation(response))
+        for call in response.tool_calls:
+            yield {"type": "tool_start", "name": call.name}
+            try:
+                result, changed_resource, action = run_tool(call.name, call.arguments)
+                if changed_resource and changed_resource not in changed_resources:
+                    changed_resources.append(changed_resource)
+                if action:
+                    actions.append(action)
+            except (KeyError, TypeError, ValueError, ValidationError) as error:
+                logger.warning(f"[AI Tool Loop] Tool '{call.name}' returned error: {error}")
+                result = {"error": str(error)}
+            except Exception as error:
+                logger.error(f"[AI Tool Loop] Unexpected failure in tool '{call.name}': {type(error).__name__}: {error}", exc_info=True)
+                result = {"error": f"Tool execution failed: {type(error).__name__}: {error}"}
+            yield {"type": "tool_end", "name": call.name}
             conversation.extend(
                 client.tool_result_blocks(call, json.dumps(result, default=str))
             )

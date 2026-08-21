@@ -1,5 +1,7 @@
 import json
 import logging
+from collections.abc import Iterator
+from types import SimpleNamespace
 from typing import Any
 
 from google import genai
@@ -10,6 +12,7 @@ from app.services.ai_models._shared import (
     AIServiceError,
     ProviderClient,
     ProviderResponse,
+    StreamChunk,
     ToolCall,
 )
 
@@ -24,6 +27,22 @@ def _convert_tool(tool: dict[str, Any]) -> types.Tool:
         parameters=tool.get("parameters"),
     )
     return types.Tool(function_declarations=[function])
+
+
+def _parts_tool_calls(parts: list[Any]) -> list[ToolCall]:
+    """Extract tool calls from a sequence of Gemini content parts."""
+    tool_calls: list[ToolCall] = []
+    for part in parts:
+        function_call = getattr(part, "function_call", None)
+        if function_call is not None and getattr(function_call, "name", None):
+            tool_calls.append(
+                ToolCall(
+                    call_id=function_call.id or function_call.name,
+                    name=function_call.name,
+                    arguments=dict(function_call.args or {}),
+                )
+            )
+    return tool_calls
 
 
 class GeminiProviderClient(ProviderClient):
@@ -99,6 +118,50 @@ class GeminiProviderClient(ProviderClient):
             text="".join(text_parts) or None,
             tool_calls=tool_calls,
             raw=response,
+        )
+
+    def call_stream(
+        self,
+        model: str,
+        instructions: str,
+        conversation: Any,
+        tools: list[dict[str, Any]],
+    ) -> Iterator[StreamChunk]:
+        config = types.GenerateContentConfig(
+            system_instruction=instructions,
+            tools=[_convert_tool(tool) for tool in tools],
+        )
+        collected_parts: list[Any] = []
+        try:
+            chunks = self.client.models.generate_content_stream(
+                model=model,
+                contents=conversation,
+                config=config,
+            )
+            for chunk in chunks:
+                candidates = getattr(chunk, "candidates", None)
+                parts = candidates[0].content.parts if candidates and candidates[0].content else []
+                for part in parts:
+                    collected_parts.append(part)
+                    if getattr(part, "text", None):
+                        yield StreamChunk(kind="text_delta", text=part.text)
+        except APIError as error:
+            logger.error(f"[Gemini Provider] Streaming call failed for model '{model}': {type(error).__name__}: {error}", exc_info=True)
+            raise AIServiceError(f"Gemini API error ({type(error).__name__}): {error}") from error
+        except Exception as error:
+            logger.error(f"[Gemini Provider] Unexpected streaming failure for model '{model}': {type(error).__name__}: {error}", exc_info=True)
+            raise AIServiceError(f"Gemini client error ({type(error).__name__}): {error}") from error
+
+        if not collected_parts:
+            raise AIServiceError("Gemini stream returned no content.")
+        # Synthesize a raw response shaped like the non-streaming one so
+        # continuation() can reuse candidates[0].content unchanged.
+        content = types.Content(role="model", parts=list(collected_parts))
+        raw = SimpleNamespace(candidates=[SimpleNamespace(content=content)])
+        text = "".join(p for p in (getattr(part, "text", None) for part in collected_parts) if p) or None
+        yield StreamChunk(
+            kind="final",
+            response=ProviderResponse(text=text, tool_calls=_parts_tool_calls(collected_parts), raw=raw),
         )
 
     def continuation(self, response: ProviderResponse) -> list[Any]:

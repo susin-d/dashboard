@@ -14,6 +14,7 @@ from app.services.ai_models._shared import (
     provider_catalog,
     resolve_ai_config,
     run_tool_loop,
+    run_tool_loop_stream,
     validate_preference,
 )
 from app.services.ai_models.anthropic import AnthropicProviderClient
@@ -47,5 +48,6 @@ __all__ = [
     "provider_catalog",
     "resolve_ai_config",
     "run_tool_loop",
+    "run_tool_loop_stream",
     "validate_preference",
 ]

@@ -449,6 +449,66 @@
   }
 }
 
+/* Streaming Response States */
+.eve-streaming-text {
+  position: relative;
+}
+
+.eve-stream-caret {
+  display: inline-block;
+  width: 8px;
+  height: 1em;
+  margin-left: 2px;
+  vertical-align: text-bottom;
+  background: var(--text-primary);
+  animation: eve-caret-blink 0.9s steps(1) infinite;
+}
+
+@keyframes eve-caret-blink {
+  0%, 55% { opacity: 1; }
+  56%, 100% { opacity: 0; }
+}
+
+.eve-tool-activity {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 0.55rem 0.9rem;
+  border: 1px solid var(--border-color, #27272a);
+  border-radius: 10px;
+  background: var(--bg-tertiary, #18181b);
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+  font-weight: 650;
+}
+
+.eve-tool-activity .spin {
+  color: var(--text-muted);
+}
+
+.eve-stop-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 34px;
+  padding: 0 12px;
+  border: 2px solid var(--text-primary);
+  border-radius: var(--radius-full);
+  background: var(--bg-card);
+  color: var(--text-primary);
+  font: inherit;
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.eve-stop-btn:hover {
+  background: var(--color-primary);
+  color: var(--text-inverse);
+}
+
 /* Starter Prompts */
 .eve-starter-prompts {
   display: flex;

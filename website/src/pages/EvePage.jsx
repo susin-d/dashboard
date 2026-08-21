@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import {
   createEveMemory,
   createEveSession,
@@ -8,6 +8,7 @@ import {
   listEveMemories,
   listEveSessions,
   sendEveMessage,
+  streamEveMessage,
 } from '../lib/eveApi'
 import { loadAiModels, saveAiModelPreference } from '../lib/aiModelsApi'
 import { EveChatSection } from './eve/EveChatSection'
@@ -65,6 +66,9 @@ export function EvePage({
   const [messages, setMessages] = useState(STARTER_MESSAGES)
   const [draft, setDraft] = useState('')
   const [isSending, setIsSending] = useState(false)
+  const [streamText, setStreamText] = useState('')
+  const [activeTool, setActiveTool] = useState(null)
+  const abortRef = useRef(null)
   const [error, setError] = useState('')
   const [promptQueue, setPromptQueue] = useState([])
   const [sessions, setSessions] = useState([])
@@ -133,6 +137,9 @@ export function EvePage({
       } else if (action.type === 'open_record') {
         if (action.page === 'project-detail') onNavigate?.('project-detail', action.projectId)
         if (action.page === 'document-opener') onNavigate?.('document-opener', null, action.documentId)
+      } else if (action.type === 'open_studio_project' || action.type === 'show_build_approval') {
+        if (action.projectId) onNavigate?.('studio-detail', action.projectId)
+        else onNavigate?.('studio')
       } else if (action.type === 'refresh_workspace_data') {
         onWorkspaceChanged?.()
       } else if (action.type === 'trigger_eve_call') {
@@ -143,17 +150,57 @@ export function EvePage({
     })
   }
 
+  const stopGenerating = () => {
+    abortRef.current?.abort()
+  }
+
   const sendMessage = async (customContent, attachments = []) => {
     const content = (customContent ?? draft).trim()
     if ((!content && (!attachments || attachments.length === 0)) || isSending) return
-
     try {
       await sendPrompt(content, messages, attachments)
     } catch (requestError) {
       setError(requestError.message || 'Failed to send message to Eve.')
-    } finally {
-      setIsSending(false)
     }
+  }
+
+  const buildApiMessages = (nextMessages) =>
+    nextMessages.map((m) => {
+      if (m.role === 'user' && m.attachments?.length) {
+        const fileBlocks = m.attachments
+          .map((att) => {
+            if (att.textContent) {
+              return `[Attached file: ${att.name}]\n\`\`\`\n${att.textContent}\n\`\`\``
+            }
+            return `[Attached file: ${att.name} (${att.type || 'file'})]`
+          })
+          .join('\n\n')
+        return {
+          role: 'user',
+          content: `${fileBlocks}\n\n${m.content || 'Please review the attached file(s).'}`,
+        }
+      }
+      return { role: m.role, content: m.content }
+    })
+
+  const runNonStreamedTurn = async (apiMessages, nextMessages) => {
+    let sessionId = activeSessionId
+    if (!sessionId) {
+      const createdSession = await createEveSession(nextMessages)
+      sessionId = createdSession.session.id
+      setActiveSessionId(sessionId)
+    }
+    const response = await sendEveMessage(apiMessages, sessionId)
+    return { response, sessionId }
+  }
+
+  const commitTurn = (baseMessages, assistantContent, changedResources, actions) => {
+    const finalMessages = [...baseMessages, { role: 'assistant', content: assistantContent }]
+    setMessages(finalMessages)
+    if (changedResources?.length) onWorkspaceChanged?.()
+    handleActions(actions)
+    refreshSidebar()
+    return finalMessages
   }
 
   const sendPrompt = async (content, baseMessages, attachments = []) => {
@@ -174,41 +221,69 @@ export function EvePage({
     setDraft('')
     setError('')
     setIsSending(true)
+    setStreamText('')
+    setActiveTool(null)
 
-    let sessionId = activeSessionId
-    if (!sessionId) {
-      const createdSession = await createEveSession(nextMessages)
-      sessionId = createdSession.session.id
-      setActiveSessionId(sessionId)
-    }
+    const apiMessages = buildApiMessages(nextMessages)
 
-    const apiMessages = nextMessages.map((m) => {
-      if (m.role === 'user' && m.attachments?.length) {
-        const fileBlocks = (m.attachments === userMessage.attachments ? attachments : m.attachments)
-          .map((att) => {
-            if (att.textContent) {
-              return `[Attached file: ${att.name}]\n\`\`\`\n${att.textContent}\n\`\`\``
-            }
-            return `[Attached file: ${att.name} (${att.type || 'file'})]`
-          })
-          .join('\n\n')
-        return {
-          role: 'user',
-          content: `${fileBlocks}\n\n${m.content || 'Please review the attached file(s).'}`,
+    const controller = new AbortController()
+    abortRef.current = controller
+
+    try {
+      let receivedText = ''
+      let donePayload = null
+      let fallbackToRest = false
+
+      try {
+        await streamEveMessage({
+          messages: apiMessages,
+          sessionId: activeSessionId,
+          signal: controller.signal,
+          onDelta: (text) => {
+            receivedText += text
+            setStreamText((current) => current + text)
+          },
+          onToolStart: setActiveTool,
+          onToolEnd: () => setActiveTool(null),
+          onDone: (payload) => {
+            donePayload = payload
+          },
+        })
+      } catch (streamError) {
+        if (controller.signal.aborted) {
+          if (!receivedText) return nextMessages
+          // User pressed Stop — keep whatever was generated.
+          donePayload = { message: receivedText, changed_resources: [], actions: [], session_id: activeSessionId }
+        } else if (!receivedText) {
+          // Stream never produced tokens — fall back once to the classic endpoint.
+          fallbackToRest = true
+        } else {
+          // Partial answer already streamed — keep it visible and report the error.
+          setError(streamError.message || 'Eve response was interrupted.')
+          return commitTurn(nextMessages, receivedText)
         }
       }
-      return { role: m.role, content: m.content }
-    })
 
-    const response = await sendEveMessage(apiMessages, sessionId)
-    const finalMessages = [...nextMessages, { role: 'assistant', content: response.message }]
-    setMessages(finalMessages)
-    if (response.changed_resources?.length) {
-      onWorkspaceChanged?.()
+      if (fallbackToRest) {
+        const { response, sessionId } = await runNonStreamedTurn(apiMessages, nextMessages)
+        if (!activeSessionId && sessionId) setActiveSessionId(sessionId)
+        return commitTurn(nextMessages, response.message, response.changed_resources, response.actions)
+      }
+
+      const finalSessionId = donePayload?.session_id ?? activeSessionId
+      if (finalSessionId && !activeSessionId) setActiveSessionId(finalSessionId)
+      return commitTurn(
+        nextMessages,
+        donePayload?.message ?? '',
+        donePayload?.changed_resources,
+        donePayload?.actions,
+      )
+    } finally {
+      abortRef.current = null
+      setIsSending(false)
+      setStreamText('')
+      setActiveTool(null)
     }
-    handleActions(response.actions)
-    refreshSidebar()
-    return finalMessages
   }
 
   const startNewChat = () => {
@@ -302,16 +377,14 @@ export function EvePage({
     const queuedPrompts = [...promptQueue]
     setPromptQueue([])
     setError('')
-    setIsSending(true)
     let conversation = messages
-    try {
-      for (const prompt of queuedPrompts) {
+    for (const prompt of queuedPrompts) {
+      try {
         conversation = await sendPrompt(prompt, conversation)
+      } catch (requestError) {
+        setError(requestError.message || 'Failed to send message to Eve.')
+        break
       }
-    } catch (requestError) {
-      setError(requestError.message || 'Failed to send message to Eve.')
-    } finally {
-      setIsSending(false)
     }
   }
 
@@ -348,6 +421,9 @@ export function EvePage({
             draft={draft}
             setDraft={setDraft}
             isSending={isSending}
+            streamText={streamText}
+            activeTool={activeTool}
+            onStop={stopGenerating}
             error={error}
             promptQueue={promptQueue}
             addToQueue={addToQueue}

@@ -5,6 +5,7 @@ Implementation is split into single-responsibility modules:
 """
 
 from app.services.eve.chat import chat_with_eve
+from app.services.eve.chat_stream import stream_chat_with_eve
 from app.services.eve.constants import (
     MAX_RECORDS_PER_READ,
     SUPPORTED_RESOURCES,
@@ -75,4 +76,5 @@ __all__ = [
     "invalidate_memories_cache",
     "restore_workspace_record",
     "run_tool_loop",
+    "stream_chat_with_eve",
 ]

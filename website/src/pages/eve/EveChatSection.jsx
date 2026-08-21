@@ -19,6 +19,9 @@ import {
   Paperclip,
   X,
   FileText,
+  Loader2,
+  Square,
+  Wrench,
 } from 'lucide-react'
 import { Markdown } from '../../components/ui/Markdown'
 
@@ -37,6 +40,9 @@ export function EveChatSection({
   draft,
   setDraft,
   isSending,
+  streamText = '',
+  activeTool = null,
+  onStop,
   error,
   promptQueue,
   addToQueue,
@@ -68,7 +74,7 @@ export function EveChatSection({
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [messages, isSending])
+  }, [messages, isSending, streamText, activeTool])
 
   useEffect(() => {
     const handlePointerDown = (event) => {
@@ -255,11 +261,24 @@ export function EveChatSection({
             </div>
             <div className="eve-bubble-content">
               <span className="eve-sender-name">Eve</span>
-              <div className="eve-typing-indicator" aria-label="Eve is processing">
-                <span />
-                <span />
-                <span />
-              </div>
+              {streamText ? (
+                <div className="eve-bubble-text eve-bubble-markdown eve-streaming-text">
+                  <Markdown content={streamText} />
+                  <span className="eve-stream-caret" aria-hidden="true" />
+                </div>
+              ) : activeTool ? (
+                <div className="eve-tool-activity" role="status">
+                  <Loader2 size={13} className="spin" />
+                  <Wrench size={12} />
+                  <span>Using tool: {activeTool}…</span>
+                </div>
+              ) : (
+                <div className="eve-typing-indicator" aria-label="Eve is thinking">
+                  <span />
+                  <span />
+                  <span />
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -634,6 +653,19 @@ export function EveChatSection({
               </div>
 
               <div className="eve-composer-bottom-right">
+                {isSending && (
+                  <button
+                    type="button"
+                    className="eve-stop-btn"
+                    onClick={onStop}
+                    title="Stop generating"
+                    aria-label="Stop generating"
+                  >
+                    <Square size={12} />
+                    <span>Stop</span>
+                  </button>
+                )}
+
                 <button
                   type="button"
                   className="eve-bottom-icon-btn"

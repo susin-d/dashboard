@@ -1,5 +1,7 @@
 import json
 import logging
+from collections.abc import Iterator
+from types import SimpleNamespace
 from typing import Any
 
 from openai import OpenAI, OpenAIError
@@ -8,6 +10,7 @@ from app.services.ai_models._shared import (
     AIServiceError,
     ProviderClient,
     ProviderResponse,
+    StreamChunk,
     ToolCall,
 )
 
@@ -76,6 +79,87 @@ class OpenAiCompatibleClient(ProviderClient):
         ] if message else []
         text = message.content if message else None
         return ProviderResponse(text=text, tool_calls=tool_calls, raw=response)
+
+    def call_stream(
+        self,
+        model: str,
+        instructions: str,
+        conversation: Any,
+        tools: list[dict[str, Any]],
+    ) -> Iterator[StreamChunk]:
+        try:
+            stream = self.client.chat.completions.create(
+                model=model,
+                messages=[{"role": "system", "content": instructions}, *conversation],
+                tools=tools or None,
+                stream=True,
+            )
+        except OpenAIError as error:
+            logger.error(f"[OpenAI-Compatible Provider] Streaming call failed for model '{model}': {type(error).__name__}: {error}", exc_info=True)
+            raise AIServiceError(f"Provider API error ({type(error).__name__}): {error}") from error
+        except Exception as error:
+            logger.error(f"[OpenAI-Compatible Provider] Unexpected streaming failure for model '{model}': {type(error).__name__}: {error}", exc_info=True)
+            raise AIServiceError(f"Provider client error ({type(error).__name__}): {error}") from error
+
+        content_slots: list[dict[str, Any]] = []
+        text_parts: list[str] = []
+        try:
+            for chunk in stream:
+                choice = chunk.choices[0] if chunk.choices else None
+                delta = choice.delta if choice else None
+                if delta is None:
+                    continue
+                if getattr(delta, "content", None):
+                    text_parts.append(delta.content)
+                    yield StreamChunk(kind="text_delta", text=delta.content)
+                for tc in (getattr(delta, "tool_calls", None) or []):
+                    # Accumulate streamed tool-call argument fragments by index.
+                    while len(content_slots) <= tc.index:
+                        content_slots.append({"id": "", "name": "", "arguments": ""})
+                    slot = content_slots[tc.index]
+                    if tc.id:
+                        slot["id"] = tc.id
+                    if tc.function and tc.function.name:
+                        slot["name"] = tc.function.name
+                    if tc.function and tc.function.arguments:
+                        slot["arguments"] += tc.function.arguments
+        except AIServiceError:
+            raise
+        except Exception as error:
+            logger.error(f"[OpenAI-Compatible Provider] Streaming iteration failed for model '{model}': {type(error).__name__}: {error}", exc_info=True)
+            raise AIServiceError(f"Provider client error ({type(error).__name__}): {error}") from error
+
+        # Synthesize a raw response shaped like the non-streaming one so
+        # continuation() can read choices[0].message unchanged.
+        synthetic_tool_calls = [
+            SimpleNamespace(
+                id=slot["id"] or slot["name"],
+                function=SimpleNamespace(name=slot["name"], arguments=slot["arguments"]),
+            )
+            for slot in content_slots
+            if slot["name"]
+        ]
+        message = SimpleNamespace(
+            content="".join(text_parts) or None,
+            tool_calls=synthetic_tool_calls or None,
+        )
+        raw = SimpleNamespace(choices=[SimpleNamespace(message=message)])
+        yield StreamChunk(
+            kind="final",
+            response=ProviderResponse(
+                text="".join(text_parts) or None,
+                tool_calls=[
+                    ToolCall(
+                        call_id=slot["id"] or slot["name"],
+                        name=slot["name"],
+                        arguments=_parse_arguments(slot["arguments"]),
+                    )
+                    for slot in content_slots
+                    if slot["name"]
+                ],
+                raw=raw,
+            ),
+        )
 
     def continuation(self, response: ProviderResponse) -> list[Any]:
         raw = response.raw

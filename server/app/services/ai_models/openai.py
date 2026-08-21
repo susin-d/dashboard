@@ -8,6 +8,7 @@ from app.services.ai_models._shared import (
     AIServiceError,
     ProviderClient,
     ProviderResponse,
+    StreamChunk,
     ToolCall,
 )
 
@@ -39,6 +40,22 @@ class OpenAiProviderClient(ProviderClient):
             for message in messages
         ]
 
+    def _response_from(self, response: Any) -> ProviderResponse:
+        tool_calls = [
+            ToolCall(
+                call_id=item.call_id,
+                name=item.name,
+                arguments=_parse_arguments(item.arguments),
+            )
+            for item in response.output
+            if item.type == "function_call"
+        ]
+        return ProviderResponse(
+            text=getattr(response, "output_text", None) or None,
+            tool_calls=tool_calls,
+            raw=response,
+        )
+
     def call(
         self,
         model: str,
@@ -60,20 +77,48 @@ class OpenAiProviderClient(ProviderClient):
         except Exception as error:
             logger.error(f"[OpenAI Provider] Unexpected failure calling model '{model}': {type(error).__name__}: {error}", exc_info=True)
             raise AIServiceError(f"OpenAI client error ({type(error).__name__}): {error}") from error
-        tool_calls = [
-            ToolCall(
-                call_id=item.call_id,
-                name=item.name,
-                arguments=_parse_arguments(item.arguments),
+        return self._response_from(response)
+
+    def call_stream(
+        self,
+        model: str,
+        instructions: str,
+        conversation: Any,
+        tools: list[dict[str, Any]],
+    ):
+        try:
+            stream = self.client.responses.create(
+                model=model,
+                instructions=instructions,
+                input=conversation,
+                tools=tools,
+                store=False,
+                stream=True,
             )
-            for item in response.output
-            if item.type == "function_call"
-        ]
-        return ProviderResponse(
-            text=getattr(response, "output_text", None) or None,
-            tool_calls=tool_calls,
-            raw=response,
-        )
+        except OpenAIError as error:
+            logger.error(f"[OpenAI Provider] Streaming call failed for model '{model}': {type(error).__name__}: {error}", exc_info=True)
+            raise AIServiceError(f"OpenAI API error ({type(error).__name__}): {error}") from error
+        except Exception as error:
+            logger.error(f"[OpenAI Provider] Unexpected streaming failure for model '{model}': {type(error).__name__}: {error}", exc_info=True)
+            raise AIServiceError(f"OpenAI client error ({type(error).__name__}): {error}") from error
+
+        try:
+            for event in stream:
+                event_type = getattr(event, "type", "")
+                if event_type == "response.output_text.delta":
+                    delta_text = getattr(event, "delta", "") or ""
+                    if delta_text:
+                        yield StreamChunk(kind="text_delta", text=delta_text)
+                elif event_type == "response.completed":
+                    completed = getattr(event, "response", None)
+                    if completed is None:
+                        raise AIServiceError("OpenAI stream completed without a response payload.")
+                    yield StreamChunk(kind="final", response=self._response_from(completed))
+        except AIServiceError:
+            raise
+        except Exception as error:
+            logger.error(f"[OpenAI Provider] Streaming iteration failed for model '{model}': {type(error).__name__}: {error}", exc_info=True)
+            raise AIServiceError(f"OpenAI client error ({type(error).__name__}): {error}") from error
 
     def continuation(self, response: ProviderResponse) -> list[Any]:
         return list(response.raw.output)
