@@ -428,7 +428,7 @@ export function WhatsAppPage() {
     }
   }
 
-  const handleConfirmPairing = async (phoneNumber, pushName) => {
+  const _handleConfirmPairing = async (phoneNumber, pushName) => {
     try {
       const updated = await confirmWhatsAppPairing(phoneNumber, pushName)
       setStatus(updated)

@@ -4,7 +4,7 @@ Living project snapshot for AI agents. `AGENTS.md` holds the permanent rules;
 this file holds the **current state** of the codebase and must be kept up to
 date whenever the implementation changes.
 
-> **Last updated:** 2026-08-21 (Performance pass: async I/O, server-side pagination, per-endpoint caches, Postgres tuning, workspace-files parallelism, stale-call cleanup moved to worker)
+> **Last updated:** 2026-08-21 (Refactor: split large files into single-responsibility modules — `eve` service → `eve/` package with handlers/tools, `WhatsAppConversation` → `conversation/` subcomponents, `ProjectsPage` → `projects/` subcomponents, `useCallCenter` → `call/` subhooks)
 
 ---
 
@@ -25,10 +25,10 @@ programming, and an AI assistant into one dashboard.
 ```text
 Starwaves/
 ├── website/                 React frontend
-│   ├── src/components/      Shared UI components (+ ui/ primitives, whatsapp/ components)
-│   ├── src/hooks/           Auth, routing, theme, workspace data hooks
+│   ├── src/components/      Shared UI components (+ ui/ primitives, whatsapp/ components + whatsapp/conversation/ subcomponents)
+│   ├── src/hooks/           Auth, routing, theme, workspace data hooks + call/ subhooks (callConstants, callHelpers, useWebRTC, useEveVoice)
 │   ├── src/lib/             Frontend API clients (whatsappApi, whatsappSocket, workspaceFilesApi, workspaceApi/ split by feature)
-│   ├── src/pages/           Workspace pages (+ settings/ feature sections, workspace/ components)
+│   ├── src/pages/           Workspace pages (+ settings/ feature sections, workspace/ components + projects/ subcomponents)
 │   ├── src/styles/          Tokens, components, and page styles
 │   ├── src/themes/          Theme presets + customizer options/engine
 │   ├── src/utils/           Pure parsers/transformers
@@ -45,7 +45,7 @@ Starwaves/
 │   │   ├── models/          SQLAlchemy declarative models for PostgreSQL
 │   │   ├── repositories/    Data access & file storage (whatsapp.py, workspace_files.py)
 │   │   ├── schemas/         API request and response models (whatsapp.py, workspace_files.py)
-│   │   └── services/        External integration services (whatsapp.py, eve.py coding & WhatsApp tools)
+│   │   └── services/        External integration services (whatsapp.py, eve/ package with handlers/tools, web_browsing, speech)
 │   ├── tests/               Backend unittest suite
 │   ├── templates/email/     Email HTML templates
 │   ├── Dockerfile           Python 3.12-slim container build
@@ -97,7 +97,7 @@ Starwaves/
 
 ### Services (`server/app/services/`)
 
-`coding_stats`, `contests`, `email`, `eve` (includes coding agent tools `read_workspace_file`, `write_workspace_file`, `list_workspace_files`, `search_workspace_files`, `run_workspace_command`, web browsing tools `browse_web`, `search_web`, `fetch_web_page`, and WhatsApp tools `list_whatsapp_chats`, `read_whatsapp_messages`, `send_whatsapp_message`, `summarize_whatsapp_chat`), `web_browsing` (open web search via DuckDuckGo HTML/API/Lite, web page text/markdown extraction, and unified browser), `whatsapp` (session pairing, message dispatch, Eve AI hooks), `github`, `google_calendar`, `google_contacts`,
+`coding_stats`, `contests`, `email`, `eve/` package (single-responsibility split: `constants.py`, `instructions.py`, `tools/` per-domain catalog `workspace|navigation|search|memory|schedule|files|whatsapp|web`, `workspace_records.py`, `workspace_insights.py`, `memories.py`, `dispatcher.py` routing via `handlers/` `memory|schedule|call|workspace_files|whatsapp|web|navigation|workspace`, `chat.py` + `__init__.py` facade; includes coding agent tools `read_workspace_file`, `write_workspace_file`, `list_workspace_files`, `search_workspace_files`, `run_workspace_command`, web browsing tools `browse_web`, `search_web`, `fetch_web_page`, and WhatsApp tools `list_whatsapp_chats`, `read_whatsapp_messages`, `send_whatsapp_message`, `summarize_whatsapp_chat`), `web_browsing` (open web search via DuckDuckGo HTML/API/Lite, web page text/markdown extraction, and unified browser), `whatsapp` (session pairing, message dispatch, Eve AI hooks), `github`, `google_calendar`, `google_contacts`,
 `hackathon_sources`, `notifications`, plus `oauth/` package (`_shared.py`,
 `google.py`, `github.py`) that centralizes provider-agnostic OAuth helpers
 (`format_oauth_error`, state-serializer factory, `integration_account_id`,
@@ -145,7 +145,7 @@ SMTP, Firestore database id, CORS origins. Loads `.env.prod` before `.env`.
   reuse `ConfirmDialog`. Filter, search, metric grids, loading indicators, and alerts across pages use the
   standardized `SearchBar`, `CustomDropdown`, `FilterBar`, `Pagination`, `FilterPills`, `MetricGrid`, `LoadingState`, and `Alert` primitives.
 - **Hooks** (`src/hooks/`): `useAuth`, `useRouter`,
-  `useThemeCustomizer`, `useWorkspaceData`, `useCallCenter`, plus
+  `useThemeCustomizer`, `useWorkspaceData`, `useCallCenter` (facade → `call/` package: `callConstants`, `callHelpers`, `useWebRTC`, `useEveVoice`, `useCallCenter` orchestrator), plus
   `usePersistentState`, `useLocalNotifications`, `useDialogAccessibility`,
   `useSpeechVoices`.
 - **API clients** (`src/lib/`): one per backend feature (`todosApi`,
@@ -165,13 +165,13 @@ SMTP, Firestore database id, CORS origins. Loads `.env.prod` before `.env`.
 - **Utils** (`src/utils/`): `browserNotifications`, `calendarEvents`,
   `calendarReminders`, `icsParser`, `popupOAuth`, `projectLifecycle`,
   `callWebRTC`, `callDisplay`, `speech`.
-- **Pages** (`src/pages/`): Dashboard, Projects, ProjectDetail, Jobs,
+- **Pages** (`src/pages/`): Dashboard, Projects (facade → `projects/` package: `constants`, `useProjectFilters`, `ProjectMetrics`, `ProjectGridCard`, `ProjectListCard`, `ProjectFormModal`), ProjectDetail, Jobs,
   Hackathons, HackathonDetail, Todo, Documents, DocumentOpener, Workspace, Mails,
   WhatsApp, Calendar, Chats, Calls, Contacts, CompetitiveCoding, Stats, Eve, Settings, Themes,
   Profile, Onboarding, Auth, ForgotPassword, Landing, TermsOfService, PrivacyPolicy.
 - **Call components** (`src/components/calls/`): `CallScreen`,
   `IncomingCallOverlay`.
-- **WhatsApp components** (`src/components/whatsapp/`): `WhatsAppChatList`, `WhatsAppConversation`, `WhatsAppQrModal`, `WhatsAppInfoDrawer`.
+- **WhatsApp components** (`src/components/whatsapp/`): `WhatsAppChatList`, `WhatsAppConversation` (facade → `conversation/` package: `utils`, `useParticipantInfo`, `useConversationScroll`, `WhatsAppConversationHeader`, `WhatsAppMessagesFeed`, `WhatsAppMessageBubble`, `WhatsAppComposer`, `WhatsAppModals`), `WhatsAppQrModal`, `WhatsAppInfoDrawer`.
 - **Settings sections** (`src/pages/settings/`): Profile, Account, Apps,
   WhatsAppSection, WorkspaceApps, Theme, Calendar, IcsCalendar, Gmail, Github, GoogleChat,
   Coding, HackathonSources, DataSources, PushNotifications, EveVoice,
@@ -257,6 +257,7 @@ SMTP, Firestore database id, CORS origins. Loads `.env.prod` before `.env`.
 - Vercel cron hookup: `vercel.json` configures serverless cron job `/api/v1/cron/execute-schedules` scheduled every 15 minutes (`*/15 * * * *`).
 - Cinematic Landing Page: `LandingPage.jsx` redesigned as an immersive, scroll-driven storytelling experience with an animated star-field canvas (WebGL-style particles), IntersectionObserver-based scroll-reveal animations, animated number counters, staggered feature card entrances, a vertical timeline workflow, and a cinematic dark final CTA with radial spotlight gradient. All monochrome. Hero uses `margin-top: -72px` to bleed behind the semi-transparent nav. Mounted on root route `/` in `App.jsx`.
 - Advanced Global Search & Command Palette (`⌘ K` / `Ctrl+K`): topbar search bar triggers a centered command palette modal (`AdvancedSearchModal.jsx` + `searchIndex.js` + `search-palette.css`) supporting instant search across 22+ top-level pages, 9 deep-anchored settings sections (Profile, Themes, Connected Apps, WhatsApp, AI Models, Coding Profiles, Hackathons, Eve Voice, Account & Security), Eve AI subpages and tools, live workspace records (Projects, Jobs, Documents, Hackathons, Tasks), and quick actions (Create Task/Project/Job/Document, Call Eve, New Eve Chat, Toggle Dark/Light Theme, Sign Out). Features category filter pills (`All`, `Pages`, `Settings`, `Eve AI`, `Records`, `Actions`), full keyboard navigation (`↑` / `↓` arrow selection, `↵` execution, `Esc` close), recent searches persistence, smooth section scrolling with target highlight, and strict monochrome styling.
+- Large-file refactor (single-responsibility): `server/app/services/eve.py` (1156 lines) split into `eve/` package (`constants`, `instructions`, `tools/*` 8 per-domain catalogs, `workspace_records`, `workspace_insights`, `memories`, `dispatcher` + `handlers/*` 8 domain handlers, `chat`, `__init__` facade; max 252 lines); `website/src/components/whatsapp/WhatsAppConversation.jsx` (1754) split into `conversation/` package (`utils`, `useParticipantInfo`, `useConversationScroll`, `WhatsAppConversationHeader`, `WhatsAppMessagesFeed`, `WhatsAppMessageBubble`, `WhatsAppComposer`, `WhatsAppModals`, `index` facade; max 388); `website/src/pages/ProjectsPage.jsx` (817) split into `projects/` package (`constants`, `useProjectFilters`, `ProjectMetrics`, `ProjectGridCard`, `ProjectListCard`, `ProjectFormModal`, `index` facade; max 211); `website/src/hooks/useCallCenter.js` (914) split into `call/` package (`callConstants`, `callHelpers`, `useWebRTC`, `useEveVoice`, `useCallCenter` orchestrator; max 399) with facades preserving import paths. All splits respect one-file = one-feature and one-function = one-thing; verification passes (`npm run lint`/`build`/`test`, `python -m unittest` 81 OK).
 
 ## 7. Known limitations
 
