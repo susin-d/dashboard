@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
-import { Bot, Check, Eye, EyeOff, Key, Lock, Save } from 'lucide-react'
+import { Bot, Check, Eye, EyeOff, Key, Lock, Save, Loader2 } from 'lucide-react'
 import {
+  listProviderModels,
   loadAiModels,
   saveAiModelPreference,
 } from '../../lib/aiModelsApi'
@@ -15,6 +16,9 @@ export function AiModelsSection() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState('')
+  const [liveModels, setLiveModels] = useState({}) // providerId -> models[]
+  const [loadingModels, setLoadingModels] = useState(false)
+  const [liveError, setLiveError] = useState('')
 
   useEffect(() => {
     let active = true
@@ -65,24 +69,69 @@ export function AiModelsSection() {
     label: provider.label,
   }))
 
+  // Merge live-fetched models (via list API) with catalog models
+  const effectiveModels = isDefault
+    ? []
+    : liveModels[selectedProvider] || selectedProviderDescriptor?.models || []
+
   const modelOptions = isDefault
     ? [{ value: 'default', label: 'Default' }]
-    : (selectedProviderDescriptor?.models || []).map((model) => ({
+    : effectiveModels.map((model) => ({
         value: model.id,
         label: model.label,
       }))
+
+  // Live fetch models via provider API when user types a new key (uses /settings/ai-models/models/{provider}?api_key=...)
+  useEffect(() => {
+    if (isDefault) {
+      setLiveError('')
+      return
+    }
+    const key = apiKey.trim()
+    if (!key || key.length < 8) {
+      setLiveError('')
+      return
+    }
+    let cancelled = false
+    const timer = setTimeout(async () => {
+      setLoadingModels(true)
+      setLiveError('')
+      try {
+        const res = await listProviderModels(selectedProvider, key)
+        if (cancelled) return
+        const models = res.models || []
+        if (models.length) {
+          setLiveModels((prev) => ({ ...prev, [selectedProvider]: models }))
+          const ids = new Set(models.map((m) => m.id))
+          if (!ids.has(selectedModel)) {
+            setSelectedModel(models[0]?.id || selectedModel)
+          }
+        }
+      } catch (e) {
+        if (!cancelled) setLiveError(e.message || 'Could not fetch models for this key.')
+      } finally {
+        if (!cancelled) setLoadingModels(false)
+      }
+    }, 700)
+    return () => {
+      cancelled = true
+      clearTimeout(timer)
+    }
+  }, [selectedProvider, apiKey, isDefault, selectedModel])
 
   const handleProviderChange = (providerId) => {
     setSelectedProvider(providerId)
     if (providerId === 'default') {
       setSelectedModel('default')
     } else {
+      const nextModels = liveModels[providerId] || providers.find((provider) => provider.id === providerId)?.models || []
       const nextProvider = providers.find((provider) => provider.id === providerId)
-      const nextModels = nextProvider?.models || []
       setSelectedModel(nextProvider?.default_model || nextModels[0]?.id || '')
     }
     setApiKey('')
     setMessage('')
+    setLiveError('')
+    setLoadingModels(false)
   }
 
   const handleModelChange = (modelId) => {
@@ -115,8 +164,13 @@ export function AiModelsSection() {
       const data = await saveAiModelPreference(payload)
       if (data.providers) {
         setProviders(data.providers)
+        const savedProv = data.providers.find((p) => p.id === selectedProvider)
+        if (savedProv?.models?.length) {
+          setLiveModels((prev) => ({ ...prev, [selectedProvider]: savedProv.models.map((m) => ({ id: m.id, label: m.label })) }))
+        }
       }
       setApiKey('')
+      setLiveError('')
       setMessage('AI model preference saved. Eve will use this model.')
     } catch (error) {
       setMessage(error.message)
@@ -169,14 +223,24 @@ export function AiModelsSection() {
                 <label>
                   <span>
                     <strong>Model</strong>
-                    <small>Which model from the selected provider Eve uses.</small>
+                    <small>
+                      {loadingModels ? 'Fetching models via API…' : `Which model from the selected provider Eve uses.${effectiveModels.length ? ` ${effectiveModels.length} available via API.` : ''}`}
+                    </small>
+                    {loadingModels && (
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, marginTop: 4, fontSize: '11px', color: 'var(--text-muted)' }}>
+                        <Loader2 size={12} className="spin" /> Listing models from provider API…
+                      </span>
+                    )}
+                    {liveError && !loadingModels && (
+                      <span style={{ display: 'block', marginTop: 4, fontSize: '11px', color: 'var(--text-muted)' }}>{liveError}</span>
+                    )}
                   </span>
                   <CustomDropdown
                     value={selectedModel}
                     options={modelOptions}
                     onChange={handleModelChange}
                     ariaLabel="AI model"
-                    disabled={isDefault}
+                    disabled={isDefault || loadingModels}
                   />
                 </label>
 

@@ -141,11 +141,170 @@ def _client_options(provider: str, user_api_key: str | None = None) -> dict[str,
     return options
 
 
+def _effective_api_key(provider: str, user_keys: dict[str, str]) -> str | None:
+    if user_keys.get(provider):
+        return user_keys[provider]
+    if provider == "openai":
+        return settings.openai_api_key
+    if provider == "anthropic":
+        return settings.anthropic_api_key
+    if provider == "gemini":
+        return settings.gemini_api_key
+    return None
+
+
+def _effective_base_url(provider: str) -> str | None:
+    if provider == "openai":
+        return settings.openai_url
+    if provider == "anthropic":
+        return settings.anthropic_url
+    if provider == "gemini":
+        return settings.gemini_url
+    return None
+
+
+def _format_model_label(model_id: str) -> str:
+    raw = model_id.replace("models/", "")
+    parts = raw.replace("-", " ").replace("_", " ").split()
+    return " ".join(word.capitalize() if word.isalpha() else word for word in parts)
+
+
+# Cache for live model listings to avoid hammering provider APIs
+_live_model_cache: dict[str, tuple[float, list[dict[str, str]]]] = {}
+_LIVE_MODEL_TTL = 300  # seconds
+
+
+def _live_cache_get(provider: str, api_key: str) -> list[dict[str, str]] | None:
+    import time
+    key = f"{provider}:{api_key[:8]}"
+    entry = _live_model_cache.get(key)
+    if entry and entry[0] > time.monotonic():
+        return entry[1]
+    return None
+
+
+def _live_cache_set(provider: str, api_key: str, models: list[dict[str, str]]) -> None:
+    import time
+    key = f"{provider}:{api_key[:8]}"
+    _live_model_cache[key] = (time.monotonic() + _LIVE_MODEL_TTL, models)
+
+
+async def _fetch_openai_models(api_key: str, base_url: str | None = None) -> list[dict[str, str]]:
+    import httpx
+    url = f"{(base_url or 'https://api.openai.com/v1').rstrip('/')}/models"
+    try:
+        async with httpx.AsyncClient(timeout=httpx.Timeout(6.0, connect=3.0)) as client:
+            resp = await client.get(url, headers={"Authorization": f"Bearer {api_key}"})
+            if resp.status_code != 200:
+                logger.warning(f"[AI Models] OpenAI list models failed {resp.status_code}: {resp.text[:200]}")
+                return []
+            data = resp.json()
+            items = data.get("data") or []
+            models: list[dict[str, str]] = []
+            for it in items:
+                mid = it.get("id") or ""
+                if not mid:
+                    continue
+                # Filter to chat/completion models only
+                low = mid.lower()
+                if any(x in low for x in ("embedding", "whisper", "tts", "dall", "audio", "realtime", "transcribe", "moderation")):
+                    continue
+                if not (low.startswith("gpt-") or low.startswith("o1") or low.startswith("o3") or low.startswith("o4") or low.startswith("chatgpt")):
+                    continue
+                models.append({"id": mid, "label": _format_model_label(mid)})
+            # Sort: prefer newest gpt-5, gpt-4o etc.
+            models.sort(key=lambda x: x["id"])
+            return models
+    except Exception as e:
+        logger.warning(f"[AI Models] OpenAI list exception: {e}")
+        return []
+
+
+async def _fetch_gemini_models(api_key: str) -> list[dict[str, str]]:
+    import httpx
+    url = f"https://generativelanguage.googleapis.com/v1beta/models?key={api_key}"
+    try:
+        async with httpx.AsyncClient(timeout=httpx.Timeout(6.0, connect=3.0)) as client:
+            resp = await client.get(url)
+            if resp.status_code != 200:
+                logger.warning(f"[AI Models] Gemini list models failed {resp.status_code}: {resp.text[:200]}")
+                return []
+            data = resp.json()
+            items = data.get("models") or []
+            models: list[dict[str, str]] = []
+            for it in items:
+                name = it.get("name") or ""  # e.g. models/gemini-2.5-flash
+                mid = name.replace("models/", "")
+                if not mid or "gemini" not in mid.lower():
+                    continue
+                methods = it.get("supportedGenerationMethods") or []
+                if "generateContent" not in methods:
+                    continue
+                label = it.get("displayName") or _format_model_label(mid)
+                models.append({"id": mid, "label": label})
+            models.sort(key=lambda x: x["id"])
+            return models
+    except Exception as e:
+        logger.warning(f"[AI Models] Gemini list exception: {e}")
+        return []
+
+
+async def _fetch_anthropic_models(api_key: str) -> list[dict[str, str]]:
+    import httpx
+    url = "https://api.anthropic.com/v1/models"
+    try:
+        async with httpx.AsyncClient(timeout=httpx.Timeout(6.0, connect=3.0)) as client:
+            resp = await client.get(
+                url,
+                headers={
+                    "x-api-key": api_key,
+                    "anthropic-version": "2023-06-01",
+                },
+            )
+            if resp.status_code != 200:
+                logger.warning(f"[AI Models] Anthropic list models failed {resp.status_code}: {resp.text[:200]}")
+                return []
+            data = resp.json()
+            items = data.get("data") or []
+            models: list[dict[str, str]] = []
+            for it in items:
+                mid = it.get("id") or it.get("name") or ""
+                if not mid or "claude" not in mid.lower():
+                    continue
+                label = it.get("display_name") or _format_model_label(mid)
+                models.append({"id": mid, "label": label})
+            models.sort(key=lambda x: x["id"])
+            return models
+    except Exception as e:
+        logger.warning(f"[AI Models] Anthropic list exception: {e}")
+        return []
+
+
+async def fetch_provider_models(provider: str, api_key: str | None = None, user_keys: dict[str, str] | None = None) -> list[dict[str, str]]:
+    effective = api_key or _effective_api_key(provider, user_keys or {})
+    if not effective:
+        return []
+    cached = _live_cache_get(provider, effective)
+    if cached is not None:
+        return cached
+    if provider == "openai":
+        models = await _fetch_openai_models(effective, _effective_base_url(provider))
+    elif provider == "gemini":
+        models = await _fetch_gemini_models(effective)
+    elif provider == "anthropic":
+        models = await _fetch_anthropic_models(effective)
+    else:
+        return []
+    if models:
+        _live_cache_set(provider, effective, models)
+    return models
+
+
 def any_provider_available() -> bool:
     return any(_provider_key_set(provider) for provider in AI_PROVIDERS)
 
 
-def provider_catalog(user_api_keys: dict[str, str] | None = None) -> list[dict[str, Any]]:
+async def provider_catalog(user_api_keys: dict[str, str] | None = None) -> list[dict[str, Any]]:
     keys = user_api_keys or {}
     catalog = [
         {
@@ -166,22 +325,47 @@ def provider_catalog(user_api_keys: dict[str, str] | None = None) -> list[dict[s
         }
     ]
     for provider_id, descriptor in AI_PROVIDERS.items():
+        # Try live API list if key available, fallback to static catalog
+        live_models: list[dict[str, str]] = []
+        effective_key = _effective_api_key(provider_id, keys)
+        if effective_key:
+            try:
+                live_models = await fetch_provider_models(provider_id, effective_key, keys)
+            except Exception:
+                live_models = []
+        static_models = descriptor["models"]
+        chosen_models = live_models if live_models else static_models
+        # Map to catalog shape with is_default flag
+        default_id = descriptor["default_model"]
+        models_payload = []
+        for item in chosen_models:
+            # live_models already are {id,label}, static are same shape
+            mid = item["id"]
+            lbl = item.get("label") or _format_model_label(mid)
+            models_payload.append({
+                "id": mid,
+                "label": lbl,
+                "is_default": mid == default_id,
+            })
+        # Ensure default still present even if live list missed it
+        if live_models and not any(m["id"] == default_id for m in models_payload):
+            # Add static default as fallback entry
+            static_default = next((m for m in static_models if m["id"] == default_id), None)
+            if static_default:
+                models_payload.insert(0, {
+                    "id": static_default["id"],
+                    "label": static_default["label"],
+                    "is_default": True,
+                })
         catalog.append({
             "id": provider_id,
             "label": descriptor["label"],
-            "available": bool(keys.get(provider_id)),
-            "env_configured": False,
+            "available": bool(keys.get(provider_id)) or _provider_key_set(provider_id),
+            "env_configured": _provider_key_set(provider_id),
             "is_default": False,
             "has_user_key": bool(keys.get(provider_id)),
             "default_model": descriptor["default_model"],
-            "models": [
-                {
-                    "id": item["id"],
-                    "label": item["label"],
-                    "is_default": item["id"] == descriptor["default_model"],
-                }
-                for item in descriptor["models"]
-            ],
+            "models": models_payload,
         })
     return catalog
 
@@ -192,7 +376,8 @@ def validate_preference(provider: str, model: str) -> bool:
     descriptor = AI_PROVIDERS.get(provider)
     if not descriptor:
         return False
-    return any(item["id"] == model for item in descriptor["models"])
+    # Allow any non-empty model id for known provider (live API may expose models beyond static catalog)
+    return isinstance(model, str) and len(model.strip()) > 0
 
 
 def build_ai_config(
@@ -208,7 +393,8 @@ def build_ai_config(
         user_api_key = None
 
     descriptor = AI_PROVIDERS[provider]
-    if not model or model == "default" or not any(item["id"] == model for item in descriptor["models"]):
+    # Accept any live model id; only fallback when empty/default
+    if not model or model == "default":
         model = descriptor["default_model"]
     return AiConfig(
         provider=provider,

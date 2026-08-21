@@ -17,6 +17,15 @@ export function loadAiModels() {
   return request()
 }
 
+export async function listProviderModels(provider, apiKey = null) {
+  const qs = apiKey ? `?api_key=${encodeURIComponent(apiKey)}` : ''
+  return apiRequest(`/models/${encodeURIComponent(provider)}${qs}`, {
+    basePath: BASE_PATH,
+    errorMessage: `Could not list models for ${provider}.`,
+    missingTokenMessage: TOKEN_MESSAGE,
+  })
+}
+
 export function saveAiModelPreference(preference) {
   return request({ method: 'PUT', body: JSON.stringify(preference) })
 }

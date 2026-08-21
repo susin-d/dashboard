@@ -56,7 +56,7 @@ def _preference_payload(preference: dict | None, user_keys: dict[str, str]) -> d
 
 
 @router.get("", response_model=AiModelsResponse)
-def get_ai_models(
+async def get_ai_models(
     database: Client = Depends(get_firestore),
     user: dict = Depends(get_current_user),
 ):
@@ -64,15 +64,45 @@ def get_ai_models(
     user_keys = _extract_user_keys(preference)
     default_model = AI_PROVIDERS.get(DEFAULT_PROVIDER, {}).get("default_model", settings.openai_model)
     return {
-        "providers": provider_catalog(user_keys),
+        "providers": await provider_catalog(user_keys),
         "preference": _preference_payload(preference, user_keys),
         "default_provider": DEFAULT_PROVIDER,
         "default_model": default_model,
     }
 
 
+@router.get("/models/{provider}")
+async def list_provider_models(
+    provider: str,
+    api_key: str | None = None,
+    database: Client = Depends(get_firestore),
+    user: dict = Depends(get_current_user),
+):
+    from app.services.ai_models._shared import fetch_provider_models
+    preference = load_ai_preference(database, user["uid"])
+    user_keys = _extract_user_keys(preference)
+    # Use provided api_key if present, else stored user key / env key
+    effective_key = api_key or user_keys.get(provider)
+    if not effective_key:
+        # Try env-configured key via provider catalog helper
+        from app.services.ai_models._shared import _effective_api_key
+        effective_key = _effective_api_key(provider, user_keys)
+    if provider not in AI_PROVIDERS:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Unknown provider")
+    if not effective_key:
+        # No key available — return static fallback list
+        static = AI_PROVIDERS[provider]["models"]
+        return {"provider": provider, "models": static}
+    models = await fetch_provider_models(provider, effective_key, user_keys)
+    if not models:
+        # API returned empty — fallback to static so UI still usable
+        static = AI_PROVIDERS[provider]["models"]
+        return {"provider": provider, "models": static, "fallback": True}
+    return {"provider": provider, "models": models}
+
+
 @router.put("", response_model=AiModelsResponse)
-def save_ai_models(
+async def save_ai_models(
     payload: AiModelPreferenceUpdate,
     database: Client = Depends(get_firestore),
     user: dict = Depends(get_current_user),
@@ -119,7 +149,7 @@ def save_ai_models(
 
     default_model = AI_PROVIDERS.get(DEFAULT_PROVIDER, {}).get("default_model", settings.openai_model)
     return {
-        "providers": provider_catalog(user_keys),
+        "providers": await provider_catalog(user_keys),
         "preference": {
             "provider": payload.provider,
             "model": payload.model,
