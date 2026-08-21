@@ -4,7 +4,7 @@ Living project snapshot for AI agents. `AGENTS.md` holds the permanent rules;
 this file holds the **current state** of the codebase and must be kept up to
 date whenever the implementation changes.
 
-> **Last updated:** 2026-08-21 (Themes: removed 30 Tri/Tetra/Duo colored presets, regenerated 12 fresh Two-Color duotone themes — 6 dark + 6 light, each strict 2-color pairing; palette consolidated to Monochrome + Two Color; 10 mono retained + 12 duo = 22 total)
+> **Last updated:** 2026-08-21 (Landing redesign: cinematic hero with preview card + integrations bar + 8-feature grid + Eve spotlight + refreshed palette to strict monochrome; LandingPage split into landing/ package (constants, StarFieldCanvas, useScrollReveal, 10 sections) facade at 1 line, new dedicated landing.css 433 lines; verified build/lint/test)
 
 ---
 
@@ -29,9 +29,9 @@ Starwaves/
 │   ├── src/hooks/           Auth, routing, theme, workspace data hooks + call/ subhooks (callConstants, callHelpers, useWebRTC, useEveVoice)
 │   ├── src/lib/             Frontend API clients (whatsappApi, whatsappSocket, workspaceFilesApi, workspaceApi/ split by feature)
 │   ├── src/config/          Search index split into search/ (categories, pages, evePages, settingsSections, actions, staticItems, buildSearchIndex, filterSearchItems)
-│   ├── src/pages/           Workspace pages (+ settings/ feature sections, workspace/ components + projects/ + contacts/ subcomponents)
-│   ├── src/styles/          Tokens, components, and page styles
-│   ├── src/themes/          Theme presets (22: 10 mono + 12 fresh Two-Color duotone) + customizer options/engine
+│   ├── src/pages/           Workspace pages (+ settings/ feature sections, workspace/ components + projects/ + contacts/ + landing/ subcomponents)
+│   ├── src/styles/          Tokens, components, and page styles (pages/landing.css 433 lines + landing-auth.css)
+│   ├── src/themes/          Theme presets (22: 10 mono + 12 Two-Color duotone) + customizer options/engine
 │   ├── src/utils/           Pure parsers/transformers
 │   ├── src-tauri/           Tauri v2 desktop shell scaffold
 │   ├── Dockerfile           Multi-stage Node.js build + Nginx runtime
@@ -169,7 +169,7 @@ SMTP, Firestore database id, CORS origins. Loads `.env.prod` before `.env`.
 - **Pages** (`src/pages/`): Dashboard, Projects (facade → `projects/` package: `constants`, `useProjectFilters`, `ProjectMetrics`, `ProjectGridCard`, `ProjectListCard`, `ProjectFormModal`), ProjectDetail, Jobs,
   Hackathons, HackathonDetail, Todo, Documents, DocumentOpener, Workspace, Mails,
   WhatsApp, Calendar, Chats, Calls, Contacts (facade → `contacts/` package: `constants`, `useContacts`, `useContactForm`, `useContactImport`, `ContactCard`, `ContactGrid`, `ContactFormModal`, `ContactImportModal`), CompetitiveCoding, Stats, Eve, Settings, Themes,
-  Profile, Onboarding, Auth, ForgotPassword, Landing, TermsOfService, PrivacyPolicy.
+  Profile, Onboarding, Auth, ForgotPassword, Landing (facade `LandingPage.jsx` → `landing/` package: `constants`, `StarFieldCanvas`, `useScrollReveal`, `sections/` `LandingNav`, `HeroSection`, `IntegrationsBar`, `ShowcaseSection`, `StatsSection`, `FeaturesSection`, `EveSpotlightSection`, `WorkflowSection`, `FAQSection`, `GoogleDataSection`, `FinalCTASection`, `LandingFooter` + `LandingPage.jsx` composer; 433-line `styles/pages/landing.css`), TermsOfService, PrivacyPolicy.
 - **Config** (`src/config/`): `searchIndex` (facade → `search/` package: `categories`, `pages`, `evePages`, `settingsSections`, `actions`, `staticItems`, `buildSearchIndex`, `filterSearchItems`).
 - **Call components** (`src/components/calls/`): `CallScreen`,
   `IncomingCallOverlay`.
@@ -183,11 +183,11 @@ SMTP, Firestore database id, CORS origins. Loads `.env.prod` before `.env`.
 
 ## 5. Design system
 
-- Duotone + Monochrome. Tokens in `src/styles/tokens.css`, per-theme CSS overrides in
+- Strict Monochrome only (black/white/gray: #09090b/#18181b/#27272a/#71717a/#a1a1aa/#e4e4e7/#f4f4f5/#fff). Tokens in `src/styles/tokens.css`, per-theme CSS overrides in
   `src/styles/themes/` (light `index.css` + dark `dark.css` + preset files),
   import order via `src/App.css` (tokens → base → utilities → responsive →
-  components → pages).
-- Light theme default, `html.dark-theme` for dark mode.
+  components → pages including `pages/landing.css` after `landing-auth.css`).
+- Light theme default, `html.dark-theme` for dark mode; landing hero/final CTA remain fixed dark #09090b with star-field + radial spotlight.
 - Icons: `lucide-react` only.
 
 ## 6. Current implementation state
@@ -257,9 +257,9 @@ SMTP, Firestore database id, CORS origins. Loads `.env.prod` before `.env`.
 - User session signout: explicit Sign Out actions provided in the topbar profile dropdown (`Header.jsx`), Profile Card (`ProfileCard.jsx`), and Account & Security settings (`AccountSection.jsx`). Invoking sign out clears local authentication session tokens via `clearAuthSession()`, resets workspace state, and redirects the user to the `/login` route.
 - Android shell via Capacitor (`website/android/`).
 - Vercel cron hookup: `vercel.json` configures serverless cron job `/api/v1/cron/execute-schedules` scheduled every 15 minutes (`*/15 * * * *`).
-- Cinematic Landing Page: `LandingPage.jsx` redesigned as an immersive, scroll-driven storytelling experience with an animated star-field canvas (WebGL-style particles), IntersectionObserver-based scroll-reveal animations, animated number counters, staggered feature card entrances, a vertical timeline workflow, and a cinematic dark final CTA with radial spotlight gradient. All monochrome. Hero uses `margin-top: -72px` to bleed behind the semi-transparent nav. Mounted on root route `/` in `App.jsx`.
+- Cinematic Landing Page (2026-08-21 redesign): `LandingPage.jsx` now a 1-line facade re-exporting `landing/LandingPage.jsx` (38 lines) that composes 10 single-responsibility sections (`LandingNav`, `HeroSection` with `StarFieldCanvas` + grid overlay + floating glass preview card, `IntegrationsBar`, `ShowcaseSection` with 6-tab interactive preview including new Eve tab, `StatsSection` with animated counters, `FeaturesSection` with 8-card monochrome grid, `EveSpotlightSection` with 3-column highlights + code preview, `WorkflowSection`, `FAQSection` with accessible button semantics, `GoogleDataSection`, `FinalCTASection` with micro-copy, `LandingFooter`) plus `constants.js` and `useScrollReveal` hook. All sections respect `prefers-reduced-motion`, hit-target ≥44px on mobile, semantic headings and ARIA. Styles live in dedicated `styles/pages/landing.css` (433 lines, imported after `landing-auth.css` via `App.css`) with hero glow, integrations pill marquee, 4-col → 2-col → 1-col responsive grids, Eve dark spotlight, and scroll-reveal system. All monochrome. Hero bleeds behind nav via `margin-top: -64px` and `padding-top` 104px. Mounted on `/` in `App.jsx`.
 - Advanced Global Search & Command Palette (`⌘ K` / `Ctrl+K`): topbar search bar triggers a centered command palette modal (`AdvancedSearchModal.jsx` + `searchIndex.js` + `search-palette.css`) supporting instant search across 22+ top-level pages, 9 deep-anchored settings sections (Profile, Themes, Connected Apps, WhatsApp, AI Models, Coding Profiles, Hackathons, Eve Voice, Account & Security), Eve AI subpages and tools, live workspace records (Projects, Jobs, Documents, Hackathons, Tasks), and quick actions (Create Task/Project/Job/Document, Call Eve, New Eve Chat, Toggle Dark/Light Theme, Sign Out). Features category filter pills (`All`, `Pages`, `Settings`, `Eve AI`, `Records`, `Actions`), full keyboard navigation (`↑` / `↓` arrow selection, `↵` execution, `Esc` close), recent searches persistence, smooth section scrolling with target highlight, and strict monochrome styling.
-- Large-file refactor (single-responsibility): `server/app/services/eve.py` (1156) → `eve/` package (max 252); `website/src/components/whatsapp/WhatsAppConversation.jsx` (1754) → `conversation/` (max 388); `website/src/pages/ProjectsPage.jsx` (817) → `projects/` (max 211); `website/src/hooks/useCallCenter.js` (914) → `call/` (max 399); continuation: `website/src/pages/ContactsPage.jsx` (806) → `contacts/` (8 modules: `constants`, `useContacts`, `useContactForm`, `useContactImport`, `ContactCard`, `ContactGrid`, `ContactFormModal`, `ContactImportModal`, max ~120) and `website/src/config/searchIndex.js` (785) → `search/` (7 modules: `categories`, `pages`, `evePages`, `settingsSections`, `actions`, `staticItems`, `buildSearchIndex`/`filterSearchItems`, max ~180) with facades preserving import paths. All splits respect AGENTS.md §1.6/§1.7/§1.8; verification passes (`npm run lint`/`build`/`test`, `python -m unittest` 81 OK).
+- Large-file refactor (single-responsibility): `server/app/services/eve.py` (1156) → `eve/` package (max 252); `website/src/components/whatsapp/WhatsAppConversation.jsx` (1754) → `conversation/` (max 388); `website/src/pages/ProjectsPage.jsx` (817) → `projects/` (max 211); `website/src/hooks/useCallCenter.js` (914) → `call/` (max 399); continuation: `website/src/pages/ContactsPage.jsx` (806) → `contacts/` (8 modules: `constants`, `useContacts`, `useContactForm`, `useContactImport`, `ContactCard`, `ContactGrid`, `ContactFormModal`, `ContactImportModal`, max ~120), `website/src/config/searchIndex.js` (785) → `search/` (7 modules: `categories`, `pages`, `evePages`, `settingsSections`, `actions`, `staticItems`, `buildSearchIndex`/`filterSearchItems`, max ~180), and `website/src/pages/LandingPage.jsx` (803) → `landing/` (14 modules: `constants` 163, `StarFieldCanvas` 77, `useScrollReveal` 26, `sections/` 10 components ≤130, composer 38, facade 1) with `styles/pages/landing.css` 433 lines via `App.css`. All splits respect AGENTS.md §1.6/§1.7/§1.8; verification passes (`npm run lint`/`build`/`test`, `python -m unittest` 81 OK).
 
 ## 7. Known limitations
 
