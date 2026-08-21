@@ -4,7 +4,7 @@ Living project snapshot for AI agents. `AGENTS.md` holds the permanent rules;
 this file holds the **current state** of the codebase and must be kept up to
 date whenever the implementation changes.
 
-> **Last updated:** 2026-08-21 (Rule formalized: AGENTS.md §1.8 Large File Refactor — ~400 line soft limit / 500 hard limit, facade-preserving package splits + verification)
+> **Last updated:** 2026-08-21 (Continuation: split `ContactsPage` 806 → `contacts/` 8 modules + `searchIndex` 785 → `search/` 7 modules; facade-preserving; lint/build/test OK)
 
 ---
 
@@ -28,7 +28,8 @@ Starwaves/
 │   ├── src/components/      Shared UI components (+ ui/ primitives, whatsapp/ components + whatsapp/conversation/ subcomponents)
 │   ├── src/hooks/           Auth, routing, theme, workspace data hooks + call/ subhooks (callConstants, callHelpers, useWebRTC, useEveVoice)
 │   ├── src/lib/             Frontend API clients (whatsappApi, whatsappSocket, workspaceFilesApi, workspaceApi/ split by feature)
-│   ├── src/pages/           Workspace pages (+ settings/ feature sections, workspace/ components + projects/ subcomponents)
+│   ├── src/config/          Search index split into search/ (categories, pages, evePages, settingsSections, actions, staticItems, buildSearchIndex, filterSearchItems)
+│   ├── src/pages/           Workspace pages (+ settings/ feature sections, workspace/ components + projects/ + contacts/ subcomponents)
 │   ├── src/styles/          Tokens, components, and page styles
 │   ├── src/themes/          Theme presets + customizer options/engine
 │   ├── src/utils/           Pure parsers/transformers
@@ -167,8 +168,9 @@ SMTP, Firestore database id, CORS origins. Loads `.env.prod` before `.env`.
   `callWebRTC`, `callDisplay`, `speech`.
 - **Pages** (`src/pages/`): Dashboard, Projects (facade → `projects/` package: `constants`, `useProjectFilters`, `ProjectMetrics`, `ProjectGridCard`, `ProjectListCard`, `ProjectFormModal`), ProjectDetail, Jobs,
   Hackathons, HackathonDetail, Todo, Documents, DocumentOpener, Workspace, Mails,
-  WhatsApp, Calendar, Chats, Calls, Contacts, CompetitiveCoding, Stats, Eve, Settings, Themes,
+  WhatsApp, Calendar, Chats, Calls, Contacts (facade → `contacts/` package: `constants`, `useContacts`, `useContactForm`, `useContactImport`, `ContactCard`, `ContactGrid`, `ContactFormModal`, `ContactImportModal`), CompetitiveCoding, Stats, Eve, Settings, Themes,
   Profile, Onboarding, Auth, ForgotPassword, Landing, TermsOfService, PrivacyPolicy.
+- **Config** (`src/config/`): `searchIndex` (facade → `search/` package: `categories`, `pages`, `evePages`, `settingsSections`, `actions`, `staticItems`, `buildSearchIndex`, `filterSearchItems`).
 - **Call components** (`src/components/calls/`): `CallScreen`,
   `IncomingCallOverlay`.
 - **WhatsApp components** (`src/components/whatsapp/`): `WhatsAppChatList`, `WhatsAppConversation` (facade → `conversation/` package: `utils`, `useParticipantInfo`, `useConversationScroll`, `WhatsAppConversationHeader`, `WhatsAppMessagesFeed`, `WhatsAppMessageBubble`, `WhatsAppComposer`, `WhatsAppModals`), `WhatsAppQrModal`, `WhatsAppInfoDrawer`.
@@ -257,7 +259,7 @@ SMTP, Firestore database id, CORS origins. Loads `.env.prod` before `.env`.
 - Vercel cron hookup: `vercel.json` configures serverless cron job `/api/v1/cron/execute-schedules` scheduled every 15 minutes (`*/15 * * * *`).
 - Cinematic Landing Page: `LandingPage.jsx` redesigned as an immersive, scroll-driven storytelling experience with an animated star-field canvas (WebGL-style particles), IntersectionObserver-based scroll-reveal animations, animated number counters, staggered feature card entrances, a vertical timeline workflow, and a cinematic dark final CTA with radial spotlight gradient. All monochrome. Hero uses `margin-top: -72px` to bleed behind the semi-transparent nav. Mounted on root route `/` in `App.jsx`.
 - Advanced Global Search & Command Palette (`⌘ K` / `Ctrl+K`): topbar search bar triggers a centered command palette modal (`AdvancedSearchModal.jsx` + `searchIndex.js` + `search-palette.css`) supporting instant search across 22+ top-level pages, 9 deep-anchored settings sections (Profile, Themes, Connected Apps, WhatsApp, AI Models, Coding Profiles, Hackathons, Eve Voice, Account & Security), Eve AI subpages and tools, live workspace records (Projects, Jobs, Documents, Hackathons, Tasks), and quick actions (Create Task/Project/Job/Document, Call Eve, New Eve Chat, Toggle Dark/Light Theme, Sign Out). Features category filter pills (`All`, `Pages`, `Settings`, `Eve AI`, `Records`, `Actions`), full keyboard navigation (`↑` / `↓` arrow selection, `↵` execution, `Esc` close), recent searches persistence, smooth section scrolling with target highlight, and strict monochrome styling.
-- Large-file refactor (single-responsibility): `server/app/services/eve.py` (1156 lines) split into `eve/` package (`constants`, `instructions`, `tools/*` 8 per-domain catalogs, `workspace_records`, `workspace_insights`, `memories`, `dispatcher` + `handlers/*` 8 domain handlers, `chat`, `__init__` facade; max 252 lines); `website/src/components/whatsapp/WhatsAppConversation.jsx` (1754) split into `conversation/` package (`utils`, `useParticipantInfo`, `useConversationScroll`, `WhatsAppConversationHeader`, `WhatsAppMessagesFeed`, `WhatsAppMessageBubble`, `WhatsAppComposer`, `WhatsAppModals`, `index` facade; max 388); `website/src/pages/ProjectsPage.jsx` (817) split into `projects/` package (`constants`, `useProjectFilters`, `ProjectMetrics`, `ProjectGridCard`, `ProjectListCard`, `ProjectFormModal`, `index` facade; max 211); `website/src/hooks/useCallCenter.js` (914) split into `call/` package (`callConstants`, `callHelpers`, `useWebRTC`, `useEveVoice`, `useCallCenter` orchestrator; max 399) with facades preserving import paths. All splits respect one-file = one-feature and one-function = one-thing; verification passes (`npm run lint`/`build`/`test`, `python -m unittest` 81 OK).
+- Large-file refactor (single-responsibility): `server/app/services/eve.py` (1156) → `eve/` package (max 252); `website/src/components/whatsapp/WhatsAppConversation.jsx` (1754) → `conversation/` (max 388); `website/src/pages/ProjectsPage.jsx` (817) → `projects/` (max 211); `website/src/hooks/useCallCenter.js` (914) → `call/` (max 399); continuation: `website/src/pages/ContactsPage.jsx` (806) → `contacts/` (8 modules: `constants`, `useContacts`, `useContactForm`, `useContactImport`, `ContactCard`, `ContactGrid`, `ContactFormModal`, `ContactImportModal`, max ~120) and `website/src/config/searchIndex.js` (785) → `search/` (7 modules: `categories`, `pages`, `evePages`, `settingsSections`, `actions`, `staticItems`, `buildSearchIndex`/`filterSearchItems`, max ~180) with facades preserving import paths. All splits respect AGENTS.md §1.6/§1.7/§1.8; verification passes (`npm run lint`/`build`/`test`, `python -m unittest` 81 OK).
 
 ## 7. Known limitations
 
