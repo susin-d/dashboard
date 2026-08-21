@@ -60,6 +60,13 @@ Instructions and guidelines for AI Coding Agents working in the **Starwaves** co
    - A single dispatcher that routes to many unrelated operations (e.g. `confirmDisconnect` switching over 8 kinds) should be replaced by per-feature handlers that each live next to their feature.
    - If a function's name needs "and" to describe it, split it.
 
+8. **Large File Refactor — Split Oversized Modules**:
+   - Fix large files by splitting them into smaller, single-responsibility modules. No file should exceed ~400 lines (hard limit 500); anything larger is a candidate for immediate refactor.
+   - When a file exceeds the limit, split it into a package where each sub-module owns one feature and the original path is preserved as a thin facade re-exporting the public API (e.g. `server/app/services/eve.py` → `server/app/services/eve/` with `constants.py`, `tools/`, `handlers/`, `chat.py` + `__init__.py`; `website/src/components/whatsapp/WhatsAppConversation.jsx` → `conversation/` with `utils.js`, `hooks/`, `Header.jsx`, `Feed.jsx`, `Bubble.jsx`, `Composer.jsx`, `Modals.jsx` + `index.jsx`).
+   - Keep the original import path working via the facade so callers need no changes (e.g. `from app.services.eve import chat_with_eve` and `import { WhatsAppConversation } from '../components/whatsapp/WhatsAppConversation'` continue to work).
+   - Each new module must itself satisfy **One File = One Feature** and **One Function = One Thing** and stay under the line limit. Prefer `constants.py`/`helpers.js`, per-domain `tools/` and `handlers/`, and dedicated hooks (`useWebRTC`, `useEveVoice`, `useProjectFilters`) over a catch-all `utils` file.
+   - Verify after splitting with `npm run lint` / `npm run build` / `npm test` (frontend) and `python -m unittest discover tests` (backend) and update `context.md` to document the new package layout.
+
 
 
 ---

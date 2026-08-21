@@ -4,7 +4,7 @@ Living project snapshot for AI agents. `AGENTS.md` holds the permanent rules;
 this file holds the **current state** of the codebase and must be kept up to
 date whenever the implementation changes.
 
-> **Last updated:** 2026-08-21 (Refactor: split large files into single-responsibility modules — `eve` service → `eve/` package with handlers/tools, `WhatsAppConversation` → `conversation/` subcomponents, `ProjectsPage` → `projects/` subcomponents, `useCallCenter` → `call/` subhooks)
+> **Last updated:** 2026-08-21 (Rule formalized: AGENTS.md §1.8 Large File Refactor — ~400 line soft limit / 500 hard limit, facade-preserving package splits + verification)
 
 ---
 
