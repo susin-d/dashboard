@@ -36,7 +36,9 @@ def chat_with_eve(
             logger.warning(f"[Eve Chat] Session '{session_id}' not found for user {user_id}: {error}")
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(error)) from error
 
-    instructions = _build_instructions(database, user_id)
+    # RAG: last user message as query for pgvector semantic recall (top 5)
+    last_query = next((m["content"] for m in reversed(messages) if m.get("role") == "user"), None)
+    instructions = _build_instructions(database, user_id, query=last_query)
     config = resolve_ai_config(database, user_id)
     client_class = PROVIDER_CLIENTS[config.provider]
     client = client_class(config.client_options)

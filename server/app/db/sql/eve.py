@@ -36,6 +36,18 @@ def eve_memory_to_dict(m: EveMemory) -> dict[str, Any]:
     }
 
 
+def _cosine_sim(a: list[float], b: list[float]) -> float:
+    """In-process cosine fallback for SQLite/tests without pgvector."""
+    if not a or not b or len(a) != len(b):
+        return -1.0
+    dot = sum(x * y for x, y in zip(a, b))
+    norm_a = sum(x * x for x in a) ** 0.5
+    norm_b = sum(y * y for y in b) ** 0.5
+    if norm_a == 0 or norm_b == 0:
+        return -1.0
+    return dot / (norm_a * norm_b)
+
+
 def get_eve_session_doc(session: Session, user_id: str, doc_id: str) -> SqlSnapshot:
     """Fetch Eve chat session by user ID and session ID."""
     s = session.get(EveSession, doc_id)
@@ -119,17 +131,25 @@ def set_eve_memory_doc(
 ) -> None:
     """Create or update an Eve persistent memory."""
     m = session.get(EveMemory, doc_id)
+    emb = data.get("embedding")
+    # coerce embedding: pgvector accepts list[float], JSON fallback stores same
     if not m:
         m = EveMemory(
             id=doc_id,
             user_id=user_id,
             content=data.get("content", ""),
+            embedding=emb,
         )
         session.add(m)
     else:
         for k, val in data.items():
             if hasattr(m, k):
-                setattr(m, k, coerce_model_value(k, val))
+                if k == "embedding" and val is not None:
+                    setattr(m, k, val)
+                elif k != "embedding":
+                    setattr(m, k, coerce_model_value(k, val))
+                else:
+                    setattr(m, k, val)
     session.commit()
 
 
@@ -150,3 +170,66 @@ def query_eve_memories(session: Session, user_id: str, query: SqlQuery) -> list[
         stmt = stmt.limit(query._limit)
     memories = session.scalars(stmt).all()
     return [SqlSnapshot(m.id, eve_memory_to_dict(m)) for m in memories]
+
+
+def search_eve_memories(
+    session: Session, user_id: str, query_embedding: list[float], limit: int = 5
+) -> list[dict[str, Any]]:
+    """Vector search for Eve memories (pgvector cosine) with SQLite fallback."""
+    try:
+        # Try pgvector: SELECT ... ORDER BY embedding <=> query_vec LIMIT
+        # importing Vector ensures operator available; fallback if extension missing
+        from sqlalchemy import text as _text
+
+        # Use raw SQL for pgvector operator when available (SQLite will error and fallback)
+        # HNSW index requires: embedding <=> :vec ; we normalize via cosine distance
+        # Note: psycopg adapter expects vector as string " [0.1,0.2...]"
+        vec_str = "[" + ",".join(str(float(x)) for x in query_embedding) + "]"
+        sql = _text(
+            """
+            SELECT id, content, created_at, updated_at
+            FROM eve_memories
+            WHERE user_id = :uid AND embedding IS NOT NULL
+            ORDER BY embedding <=> CAST(:vec AS vector)
+            LIMIT :lim
+            """
+        )
+        rows = session.execute(sql, {"uid": user_id, "vec": vec_str, "lim": limit}).fetchall()
+        if rows:
+            return [
+                {
+                    "id": r[0],
+                    "content": r[1],
+                    "created_at": r[2].isoformat() if hasattr(r[2], "isoformat") else str(r[2]),
+                    "updated_at": r[3].isoformat() if hasattr(r[3], "isoformat") else str(r[3]),
+                }
+                for r in rows
+            ]
+        # Empty vector result → fallback to python scan
+        raise ValueError("empty pgvector result, fallback")
+    except Exception:
+        # SQLite/python fallback: fetch all with embedding and cosine rank
+        stmt = select(EveMemory).where(EveMemory.user_id == user_id).where(EveMemory.embedding.is_not(None))  # type: ignore
+        candidates = session.scalars(stmt).all()
+        scored = []
+        for m in candidates:
+            emb = getattr(m, "embedding", None)
+            if isinstance(emb, str):
+                # JSON-string fallback
+                try:
+                    import json
+
+                    emb = json.loads(emb)
+                except Exception:
+                    continue
+            if not emb:
+                continue
+            score = _cosine_sim(query_embedding, emb if isinstance(emb, list) else list(emb))
+            scored.append((score, m))
+        scored.sort(key=lambda x: x[0], reverse=True)
+        top = [m for score, m in scored[:limit] if score > -1]
+        # If no embeddings yet, fallback to recent
+        if not top:
+            stmt2 = select(EveMemory).where(EveMemory.user_id == user_id).order_by(EveMemory.created_at.desc()).limit(limit)
+            top = session.scalars(stmt2).all()
+        return [eve_memory_to_dict(m) for m in top]

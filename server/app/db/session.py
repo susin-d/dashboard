@@ -90,6 +90,7 @@ async def init_db() -> None:
     # Run sync ALTERs off the loop so single worker stays responsive
     await asyncio.to_thread(_ensure_call_messages_column)
     await asyncio.to_thread(_ensure_whatsapp_columns)
+    await asyncio.to_thread(_ensure_eve_memory_embedding)
     # Composite indexes for pagination hot paths (lean, concurrent-safe)
     await asyncio.to_thread(_ensure_performance_indexes)
 
@@ -158,6 +159,51 @@ def _ensure_whatsapp_columns() -> None:
             conn.execute(text("ALTER TABLE whatsapp_chats ADD COLUMN IF NOT EXISTS is_muted BOOLEAN DEFAULT FALSE"))
             conn.execute(text("ALTER TABLE whatsapp_chats ADD COLUMN IF NOT EXISTS is_archived BOOLEAN DEFAULT FALSE"))
             conn.execute(text("ALTER TABLE whatsapp_chats ADD COLUMN IF NOT EXISTS eve_auto_reply BOOLEAN DEFAULT FALSE"))
+        conn.commit()
+
+
+def _ensure_eve_memory_embedding() -> None:
+    """Enable pgvector and add embedding column + HNSW index (postgres only)."""
+    if is_sqlite:
+        # SQLite: create embedding as JSON text fallback (type affinity)
+        with sync_engine.connect() as conn:
+            cols = {row[1] for row in conn.execute(text("PRAGMA table_info(eve_memories)"))}
+            if "embedding" not in cols:
+                try:
+                    conn.execute(text("ALTER TABLE eve_memories ADD COLUMN embedding JSON"))
+                except Exception:
+                    # fallback to TEXT if JSON not supported
+                    try:
+                        conn.execute(text("ALTER TABLE eve_memories ADD COLUMN embedding TEXT"))
+                    except Exception:
+                        pass
+            conn.commit()
+        return
+    with sync_engine.connect() as conn:
+        try:
+            # Enable extension (requires superuser on first run; pgvector image has it preinstalled)
+            conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector"))
+        except Exception:
+            pass
+        # Add column if missing
+        conn.execute(text("ALTER TABLE eve_memories ADD COLUMN IF NOT EXISTS embedding vector(1536)"))
+        # HNSW index for cosine recall; IF NOT EXISTS safe for re-entry, small tables so no CONCURRENTLY
+        try:
+            conn.execute(
+                text(
+                    "CREATE INDEX IF NOT EXISTS ix_eve_memories_embedding ON eve_memories USING hnsw (embedding vector_cosine_ops)"
+                )
+            )
+        except Exception:
+            # Fallback to ivfflat if hnsw not available
+            try:
+                conn.execute(
+                    text(
+                        "CREATE INDEX IF NOT EXISTS ix_eve_memories_embedding ON eve_memories USING ivfflat (embedding vector_cosine_ops) WITH (lists = 100)"
+                    )
+                )
+            except Exception:
+                pass
         conn.commit()
 
 

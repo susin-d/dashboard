@@ -16,6 +16,11 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import relationship
 
+try:
+    from pgvector.sqlalchemy import Vector  # type: ignore
+except Exception:  # fallback for sqlite tests without pgvector
+    Vector = None  # type: ignore
+
 from app.db.session import Base
 
 
@@ -224,6 +229,8 @@ class EveMemory(Base):
     id = Column(String(64), primary_key=True, default=generate_uuid)
     user_id = Column(String(64), ForeignKey("users.id", ondelete="CASCADE"), index=True, nullable=False)
     content = Column(Text, nullable=False)
+    # pgvector 1536-dim (text-embedding-3-small) for semantic recall; falls back to JSON on SQLite/tests
+    embedding = Column(Vector(1536) if Vector else JSON, nullable=True)  # type: ignore
     created_at = Column(DateTime(timezone=True), default=utc_now, nullable=False)
     updated_at = Column(DateTime(timezone=True), default=utc_now, onupdate=utc_now, nullable=False)
 

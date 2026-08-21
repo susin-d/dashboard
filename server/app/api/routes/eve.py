@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 from app.core.auth import get_current_user
 from app.db import get_firestore
 from app.repositories import eve_sessions
-from app.repositories.eve import add_memory, delete_memory, list_memories
+from app.repositories.eve import add_memory, delete_memory, list_memories, search_memories
 from app.schemas.eve import (
     EveChatRequest,
     EveChatResponse,
@@ -173,6 +173,19 @@ async def get_memories(
     user: dict = Depends(get_current_user),
 ):
     memories = await asyncio.to_thread(list_memories, database, user["uid"])
+    return {"memories": memories}
+
+
+@router.get("/memories/search", response_model=EveMemoriesResponse)
+async def search_eve_memories_route(
+    q: str,
+    limit: int = 5,
+    database: Client = Depends(get_firestore),
+    user: dict = Depends(get_current_user),
+):
+    if limit < 1 or limit > 20:
+        raise HTTPException(status_code=400, detail="limit must be 1..20")
+    memories = await asyncio.to_thread(search_memories, database, user["uid"], q, limit)
     return {"memories": memories}
 
 

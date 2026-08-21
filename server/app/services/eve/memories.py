@@ -1,8 +1,13 @@
-"""Eve memory helpers — single responsibility: persistent memory cache and instructions builder."""
+"""Eve memory helpers — single responsibility: persistent memory cache and instructions builder.
+
+pgvector RAG: when a query is supplied, use semantic search (cosine) to return top 5
+relevant memories; otherwise fall back to recent 40 chronological. Keeps 1-10 users
+lean: no extra RAM, HNSW index on postgres, Redis cache still 60s.
+"""
 
 from google.cloud.firestore_v1 import Client
 
-from app.repositories.eve import list_memories
+from app.repositories.eve import list_memories, search_memories
 from app.services.eve.instructions import EVE_INSTRUCTIONS
 
 _memories_cache: dict[str, tuple[float, list[dict]]] = {}
@@ -23,7 +28,21 @@ def invalidate_memories_cache(user_id: str) -> None:
     _memories_cache.pop(user_id, None)
 
 
-def _build_instructions(database: Client, user_id: str) -> str:
+def _build_instructions(database: Client, user_id: str, query: str | None = None) -> str:
+    # RAG path: semantic search when query present and pgvector available
+    if query:
+        try:
+            memories = search_memories(database, user_id, query, limit=5)
+            if memories:
+                memory_lines = "\n".join(f"- {memory['content']}" for memory in memories)
+                return (
+                    EVE_INSTRUCTIONS
+                    + "\n\nRelevant saved memories for this query (pgvector cosine):\n"
+                    + memory_lines
+                    + "\n\nAlso you may reference other memories if relevant."
+                )
+        except Exception:
+            pass
     cached = _get_cached_memories(database, user_id)
     if cached is not None:
         memories = cached

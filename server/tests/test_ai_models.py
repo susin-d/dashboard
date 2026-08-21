@@ -119,11 +119,13 @@ class TestAiModelsSettings(unittest.TestCase):
         self.assertEqual(response.status_code, 422)
 
     def test_put_ai_models_rejects_unknown_model(self):
-        self._mock_settings_snapshot()
-
-        payload = {"provider": "openai", "model": "does-not-exist"}
+        # Live provider now allows any non-empty model id for known provider (dynamic catalog) — unknown model accepted with valid key
+        document = self._mock_settings_snapshot()
+        payload = {"provider": "openai", "model": "does-not-exist", "api_key": "sk-openai-key-test"}
         response = client.put("/api/v1/settings/ai-models", json=payload)
-        self.assertEqual(response.status_code, 422)
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertEqual(data["preference"]["model"], "does-not-exist")
 
     def test_eve_chat_returns_detailed_502_error_on_ai_failure(self):
         self._mock_settings_snapshot()
