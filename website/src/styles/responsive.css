@@ -197,15 +197,7 @@
   .topbar {
     padding-right: 8px;
     padding-left: 8px;
-  }
-
-  .search {
-    width: 96px;
-  }
-
-  .search:focus-within,
-  .search.open {
-    width: 132px;
+    gap: 6px;
   }
 
   .content {

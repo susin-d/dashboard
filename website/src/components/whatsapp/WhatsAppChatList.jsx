@@ -7,8 +7,9 @@ function formatSenderName(name) {
   const str = String(name).trim()
   if (str === '1289' || str === 'Contact' || str.includes('@s.whatsapp.net') || str.includes('@g.us') || str.includes('@lid')) return ''
   const clean = str.replace(/@s\.whatsapp\.net|@g\.us|@lid/g, '').trim()
+  // Numeric JID/phone without a display name — hide per requirement (show name if exists, else show nothing)
   if (/^\+?\d{6,}$/.test(clean)) {
-    return clean.startsWith('+') ? clean : `+${clean}`
+    return ''
   }
   return clean
 }
@@ -232,6 +233,9 @@ export function WhatsAppChatList({
                       src={chat.avatar_url}
                       alt={chat.name}
                       className="whatsapp-avatar-img"
+                      loading="lazy"
+                      decoding="async"
+                      referrerPolicy="no-referrer"
                       onError={(e) => {
                         e.currentTarget.style.display = 'none'
                         if (e.currentTarget.nextSibling) {
@@ -245,7 +249,7 @@ export function WhatsAppChatList({
                       className="whatsapp-avatar-fallback"
                       style={chat.avatar_url ? { display: 'none' } : {}}
                     >
-                      {chat.name && chat.name !== 'Contact' && chat.name !== chat.id ? (
+                      {chat.name && chat.name !== 'Contact' && chat.name !== chat.id && !/^\+?\d{6,}$/.test(String(chat.name).replace(/@s\.whatsapp\.net|@g\.us|@lid/g, '').trim()) ? (
                         <span className="whatsapp-avatar-initial">{getSenderInitial(chat.name)}</span>
                       ) : chat.is_group ? (
                         <Users size={20} />
@@ -261,9 +265,15 @@ export function WhatsAppChatList({
                     <span className="whatsapp-chat-name" title={chat.name}>
                       {chat.pinned && <Pin size={12} style={{ display: 'inline', marginRight: 4 }} />}
                       {chat.is_muted && <BellOff size={12} style={{ display: 'inline', marginRight: 4, opacity: 0.6 }} />}
-                      {chat.is_group && (!chat.name || chat.name === 'Contact' || chat.name === chat.id)
-                        ? 'Group conversation'
-                        : chat.name}
+                      {(() => {
+                        const cleanName = String(chat.name || '').replace(/@s\.whatsapp\.net|@g\.us|@lid/g, '').trim()
+                        const isNumericName = /^\+?\d{6,}$/.test(cleanName)
+                        if (chat.is_group && (!chat.name || chat.name === 'Contact' || chat.name === chat.id || isNumericName)) {
+                          return 'Group conversation'
+                        }
+                        if (!chat.name || chat.name === 'Contact' || isNumericName) return ''
+                        return chat.name
+                      })()}
                     </span>
                     <span className="whatsapp-chat-time">
                       {formatChatTime(chat.last_message?.timestamp || chat.updated_at)}

@@ -255,7 +255,25 @@ export function Header({
             aria-expanded={profileMenuOpen}
             onClick={() => setProfileMenuOpen((open) => !open)}
           >
-            <span className="avatar">{user.initials}</span>
+            {user.photoURL ? (
+              <img
+                src={user.photoURL}
+                alt={user.fullName}
+                className="avatar"
+                style={{ width: 30, height: 30, borderRadius: 8, objectFit: 'cover' }}
+                loading="eager"
+                decoding="async"
+                referrerPolicy="no-referrer"
+                onError={(e) => {
+                  e.currentTarget.style.display = 'none'
+                  const fb = e.currentTarget.nextElementSibling
+                  if (fb) fb.style.display = 'grid'
+                }}
+              />
+            ) : null}
+            <span className="avatar" style={user.photoURL ? { display: 'none' } : {}}>
+              {user.initials}
+            </span>
             <span className="profile-name">{user.firstName}</span>
             <ChevronDown
               className={profileMenuOpen ? 'chevron-open' : ''}

@@ -45,6 +45,9 @@ export function WhatsAppPage() {
   const [syncStepText, setSyncStepText] = useState('Checking WhatsApp server gateway...')
   const [syncError, setSyncError] = useState(null)
 
+  const [hasMoreMessages, setHasMoreMessages] = useState(true)
+  const [isLoadingMore, setIsLoadingMore] = useState(false)
+
   // Request browser notifications permission on mount
   useEffect(() => {
     if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'default') {
@@ -52,7 +55,7 @@ export function WhatsAppPage() {
     }
   }, [])
 
-  // Sync and load initial status and chats with progressive loading bar
+  // Sync and load initial status and chats with progressive loading bar — pages after loading all new messages
   const runFullSync = async () => {
     setSyncStatus('syncing')
     setSyncProgress(20)
@@ -68,17 +71,39 @@ export function WhatsAppPage() {
       })
       setStatus(stat)
 
-      // Step 2: Sync chats and contacts
-      setSyncProgress(70)
-      setSyncStepText('Syncing conversations, messages, and media...')
+      // Step 2: Sync chats and contacts (server syncs new chats BEFORE returning)
+      setSyncProgress(60)
+      setSyncStepText('Syncing conversations and contacts...')
       const chatList = await fetchWhatsAppChats().catch((err) => {
         throw new Error(`Failed to sync chat history: ${err.message || 'Database error'}`)
       })
 
       setChats(chatList)
-      setSelectedChatId((current) => current || (chatList.length > 0 ? chatList[0].id : null))
+      const initialChatId = chatList.length > 0 ? chatList[0].id : null
+      setSelectedChatId((current) => current || initialChatId)
 
-      // Step 3: Complete
+      // Step 3: Sync latest messages for initial chat BEFORE paging to ready — ensures pagination reflects all new messages
+      if (initialChatId) {
+        setSyncProgress(85)
+        setSyncStepText('Syncing latest messages...')
+        try {
+          const initialMsgs = await fetchWhatsAppMessages(initialChatId, 50)
+          const cleanSelected = initialChatId.replace(/@s\.whatsapp\.net|@g\.us|@lid/g, '')
+          const validMsgs = (initialMsgs || []).filter((m) => {
+            if (!m.chat_id) return true
+            const cleanMsg = m.chat_id.replace(/@s\.whatsapp\.net|@g\.us|@lid/g, '')
+            return cleanMsg === cleanSelected || m.chat_id === initialChatId
+          })
+          setMessages(validMsgs)
+          // Page only if full page returned — otherwise no more older messages
+          setHasMoreMessages(validMsgs.length >= 50)
+          markWhatsAppChatRead(initialChatId).catch(() => {})
+        } catch {
+          // Non-fatal: messages will be loaded by effect after sync
+        }
+      }
+
+      // Step 4: Complete — page to app only after all new messages synced
       setSyncProgress(100)
       setSyncStepText('WhatsApp is synced and ready.')
       setTimeout(() => {
@@ -255,9 +280,6 @@ export function WhatsAppPage() {
     }
   }, [])
 
-  const [hasMoreMessages, setHasMoreMessages] = useState(true)
-  const [isLoadingMore, setIsLoadingMore] = useState(false)
-
   useEffect(() => {
     if (!chats.length) {
       if (selectedChatId !== null) {
@@ -272,11 +294,30 @@ export function WhatsAppPage() {
     }
   }, [chats, selectedChatId])
 
-  // Load messages when selectedChatId changes
+  // Load messages when selectedChatId changes — pages only after all new messages synced
   useEffect(() => {
     if (!selectedChatId) {
       setMessages([])
       setHasMoreMessages(false)
+      return
+    }
+
+    // If sync already fetched messages for this chat, don't clear/refetch (avoids flicker after runFullSync)
+    if (syncStatus !== 'ready') {
+      // During initial sync, runFullSync handles the first chat's messages
+      return
+    }
+    const cleanSelectedEarly = selectedChatId.replace(/@s\.whatsapp\.net|@g\.us|@lid/g, '')
+    const hasMessagesForChat =
+      messages.length > 0 &&
+      messages.some((m) => {
+        if (!m.chat_id) return true
+        const cm = m.chat_id.replace(/@s\.whatsapp\.net|@g\.us|@lid/g, '')
+        return cm === cleanSelectedEarly || m.chat_id === selectedChatId
+      })
+    if (hasMessagesForChat && selectedChatIdRef.current === selectedChatId) {
+      // Messages already synced for this chat — keep them, just ensure pagination reflects limit
+      if (messages.length >= 50) setHasMoreMessages(true)
       return
     }
 
@@ -295,7 +336,7 @@ export function WhatsAppPage() {
             return cleanMsg === cleanSelected || m.chat_id === selectedChatId
           })
           setMessages(validMsgs)
-          setHasMoreMessages(validMsgs.length > 0)
+          setHasMoreMessages(validMsgs.length >= 50)
           markWhatsAppChatRead(selectedChatId).catch(() => {})
           setChats((prev) =>
             prev.map((c) => (c.id === selectedChatId ? { ...c, unread_count: 0 } : c)),
@@ -313,7 +354,9 @@ export function WhatsAppPage() {
     return () => {
       isCurrent = false
     }
-  }, [selectedChatId])
+    // messages intentionally excluded — runFullSync populates first chat before this effect
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedChatId, syncStatus])
 
   const handleLoadMoreMessages = async () => {
     if (isLoadingMore || !hasMoreMessages || messages.length === 0 || !selectedChatId) return
@@ -322,6 +365,7 @@ export function WhatsAppPage() {
       const sorted = [...messages].sort((a, b) => new Date(a.timestamp || 0) - new Date(b.timestamp || 0))
       const earliestMsg = sorted[0]
       const beforeTimestamp = earliestMsg?.timestamp
+      // Server now syncs all new messages BEFORE paging, so beforeTimestamp pagination is correct
       const olderMsgs = await fetchWhatsAppMessages(selectedChatId, 50, beforeTimestamp)
       const cleanSelected = selectedChatId.replace(/@s\.whatsapp\.net|@g\.us|@lid/g, '')
       const validOlder = (olderMsgs || []).filter((m) => {
@@ -332,6 +376,8 @@ export function WhatsAppPage() {
       if (validOlder.length === 0) {
         setHasMoreMessages(false)
       } else {
+        // If server returned less than full page, no more older messages after this
+        const hasMore = validOlder.length >= 50
         setMessages((prev) => {
           const prevIds = new Set(prev.map((m) => m.id))
           const fresh = validOlder.filter((m) => !prevIds.has(m.id))
@@ -339,8 +385,16 @@ export function WhatsAppPage() {
             setHasMoreMessages(false)
             return prev
           }
+          if (!hasMore) setHasMoreMessages(false)
+          else if (fresh.length < validOlder.length) {
+            // Some duplicates — still keep hasMore based on server response
+            setHasMoreMessages(hasMore)
+          } else {
+            setHasMoreMessages(hasMore)
+          }
           return [...fresh, ...prev]
         })
+        if (!hasMore) setHasMoreMessages(false)
       }
     } catch (err) {
       console.error('Failed to load older WhatsApp messages:', err)

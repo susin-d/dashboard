@@ -171,15 +171,19 @@ export function WhatsAppInfoDrawer({
             <div className="whatsapp-drawer-section">
               <h4>{chat.participants.length} Participants</h4>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', maxHeight: '240px', overflowY: 'auto' }}>
-                {chat.participants.map((p, idx) => {
-                  if (!p) return null
-                  const raw = String(p).trim()
-                  const cleanP = raw.replace(/@s\.whatsapp\.net|@g\.us|@lid/g, '').trim()
-                  const isPhone = /^\+?\d{6,}$/.test(cleanP)
-                  const displayName = isPhone ? (cleanP.startsWith('+') ? cleanP : `+${cleanP}`) : cleanP
-                  return (
+                {chat.participants
+                  .map((p) => {
+                    if (!p) return null
+                    const raw = String(p).trim()
+                    const cleanP = raw.replace(/@s\.whatsapp\.net|@g\.us|@lid/g, '').trim()
+                    const isPhone = /^\+?\d{6,}$/.test(cleanP)
+                    if (isPhone) return null
+                    return { raw: p, displayName: cleanP || raw }
+                  })
+                  .filter(Boolean)
+                  .map(({ raw, displayName }, idx) => (
                     <div
-                      key={p || idx}
+                      key={raw || idx}
                       style={{
                         display: 'flex',
                         alignItems: 'center',
@@ -200,8 +204,7 @@ export function WhatsAppInfoDrawer({
                         </div>
                       </div>
                     </div>
-                  )
-                })}
+                  ))}
               </div>
             </div>
           )}

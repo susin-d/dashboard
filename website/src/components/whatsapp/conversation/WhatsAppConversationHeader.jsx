@@ -38,6 +38,9 @@ export function WhatsAppConversationHeader({
               src={chat.avatar_url}
               alt={chat.name}
               className="whatsapp-avatar-img"
+              loading="lazy"
+              decoding="async"
+              referrerPolicy="no-referrer"
               onError={(e) => {
                 e.currentTarget.style.display = 'none'
                 if (e.currentTarget.nextSibling) {
@@ -48,7 +51,7 @@ export function WhatsAppConversationHeader({
           ) : null}
           {!isEve && (
             <div className="whatsapp-avatar-fallback" style={chat?.avatar_url ? { display: 'none' } : {}}>
-              {chat?.name && chat.name !== 'Contact' && chat.name !== chat.id ? (
+              {chat?.name && chat.name !== 'Contact' && chat.name !== chat.id && !/^\+?\d{6,}$/.test(String(chat.name).replace(/@s\.whatsapp\.net|@g\.us|@lid/g, '').trim()) ? (
                 <span className="whatsapp-avatar-initial">{getSenderInitial(chat.name)}</span>
               ) : chat?.is_group ? (
                 <Users size={20} />
@@ -60,9 +63,13 @@ export function WhatsAppConversationHeader({
         </div>
         <div className="whatsapp-contact-details">
           <h3 title={chat?.name}>
-            {chat?.is_group && (!chat?.name || chat?.name === 'Contact' || chat?.name === chat.id)
-              ? 'Group conversation'
-              : chat?.name || 'Conversation'}
+            {(() => {
+              const clean = String(chat?.name || '').replace(/@s\.whatsapp\.net|@g\.us|@lid/g, '').trim()
+              const isNum = /^\+?\d{6,}$/.test(clean)
+              if (chat?.is_group && (!chat?.name || chat?.name === 'Contact' || chat?.name === chat?.id || isNum)) return 'Group conversation'
+              if (!chat?.name || chat?.name === 'Contact' || isNum) return 'Conversation'
+              return chat.name
+            })()}
           </h3>
           <span className={`whatsapp-contact-subtitle ${isTyping ? 'is-typing' : ''}`} title={chat?.participants?.join(', ')}>
             {isTyping ? (

@@ -281,6 +281,7 @@ function App() {
       emailVerified: Boolean(activeUser.emailVerified || activeUser.email_verified || isGoogle),
       role: 'Member',
       roleLabel: isGoogle ? 'Google account' : 'Email account',
+      photoURL: activeUser.photoURL || activeUser.photoUrl || activeUser.photo_url || activeUser.avatar_url || activeUser.picture || null,
     }
   }, [activeUser])
 

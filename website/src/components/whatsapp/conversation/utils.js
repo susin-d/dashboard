@@ -17,22 +17,28 @@ export function extractFirstUrl(text) {
 }
 
 export function formatSenderName(name, senderId) {
-  if (!name && !senderId) return 'Contact'
+  if (!name && !senderId) return ''
   const raw =
     name && name !== 'Contact' && name !== '1289' && !name.includes('@s.whatsapp.net') && !name.includes('@g.us') && !name.includes('@lid')
       ? name
-      : senderId || 'Contact'
+      : senderId || ''
 
+  if (!raw) return ''
   const clean = raw.replace(/@s\.whatsapp\.net|@g\.us|@lid/g, '').trim()
+  // Hide numeric JID/phone when no display name exists
   if (/^\+?\d{6,}$/.test(clean)) {
-    return clean.startsWith('+') ? clean : `+${clean}`
+    return ''
   }
-  return clean || 'Contact'
+  return clean || ''
 }
 
 export function formatMessageContent(text) {
   if (!text) return ''
-  return text.replace(/@(\d{7,15})/g, '**@+$1**')
+  // Hide raw numeric JID mentions — they are shown as names via participant map; if no name, show nothing
+  const stripped = text.replace(/@\+?\d{7,15}\b/g, '').replace(/\s{2,}/g, ' ').trim()
+  // If stripping leaves empty but original was only a mention, return empty to avoid showing bare JID
+  if (!stripped && /@\+?\d/.test(text)) return ''
+  return stripped || text.replace(/@(\d{7,15})/g, '').trim()
 }
 
 export function getSenderInitial(name) {

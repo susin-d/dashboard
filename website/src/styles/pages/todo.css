@@ -42,6 +42,8 @@
   overflow: hidden;
   border: 1px solid var(--border-color);
   border-radius: var(--radius-lg);
+  background: var(--bg-card);
+  box-shadow: var(--shadow-sm);
 }
 
 .todo-item {
@@ -49,8 +51,13 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 10px 14px;
+  padding: 12px 14px;
   background: var(--bg-card);
+  transition: background var(--transition-fast);
+}
+
+.todo-item:hover {
+  background: var(--bg-card-hover);
 }
 
 .todo-item + .todo-item {
@@ -77,9 +84,24 @@
   font-size: 10px;
 }
 
+.todo-item.completed {
+  background: var(--bg-tertiary);
+}
+
+.todo-item.completed:hover {
+  background: var(--bg-tertiary);
+}
+
 .todo-item.completed .todo-item-copy > span {
-  color: var(--text-disabled);
+  color: var(--text-muted);
   text-decoration: line-through;
+  text-decoration-thickness: 1.5px;
+  text-decoration-color: var(--text-muted);
+}
+
+.todo-item.completed .todo-item-copy small {
+  color: var(--text-muted);
+  opacity: 0.9;
 }
 
 .todo-check {
@@ -90,13 +112,35 @@
   flex: 0 0 auto;
   color: var(--text-inverse);
   background: var(--bg-card);
-  border: 1px solid var(--border-heavy);
+  border: 1.5px solid var(--border-heavy);
   border-radius: 7px;
+  cursor: pointer;
+  transition: background var(--transition-fast), border-color var(--transition-fast), color var(--transition-fast), transform var(--transition-fast);
+}
+
+.todo-check:hover {
+  border-color: var(--border-focus);
+  background: var(--bg-hover-subtle);
+}
+
+.todo-check:active {
+  transform: scale(0.94);
+}
+
+.todo-check:focus-visible {
+  outline: 2px solid var(--border-focus);
+  outline-offset: 2px;
 }
 
 .todo-item.completed .todo-check {
   background: var(--color-primary);
   border-color: var(--color-primary);
+  color: var(--text-inverse);
+}
+
+.todo-item.completed .todo-check:hover {
+  background: var(--color-primary-hover);
+  border-color: var(--color-primary-hover);
 }
 
 .todo-delete {

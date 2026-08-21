@@ -54,12 +54,15 @@ export function WhatsAppMessageBubble({
   return (
     <div className={`whatsapp-message-row ${isOutgoing ? 'outgoing' : 'incoming'}`}>
       {!isOutgoing && chat?.is_group && (
-        <div className="whatsapp-sender-avatar" title={msg.sender_name || 'Sender'}>
+        <div className="whatsapp-sender-avatar" title={formatSenderName(msg.sender_name, msg.sender_id) || 'Sender'}>
           {msg.sender_avatar_url ? (
             <img
               src={msg.sender_avatar_url}
-              alt={msg.sender_name || 'Sender'}
+              alt={formatSenderName(msg.sender_name, msg.sender_id) || 'Sender'}
               className="whatsapp-sender-avatar-img"
+              loading="lazy"
+              decoding="async"
+              referrerPolicy="no-referrer"
               onError={(e) => {
                 e.currentTarget.style.display = 'none'
                 if (e.currentTarget.nextSibling) {
@@ -69,7 +72,10 @@ export function WhatsAppMessageBubble({
             />
           ) : null}
           <div className="whatsapp-sender-avatar-fallback" style={msg.sender_avatar_url ? { display: 'none' } : {}}>
-            {getSenderInitial(msg.sender_name || msg.sender_id)}
+            {(() => {
+              const n = formatSenderName(msg.sender_name, msg.sender_id)
+              return n ? getSenderInitial(n) : '?'
+            })()}
           </div>
         </div>
       )}
@@ -179,9 +185,12 @@ export function WhatsAppMessageBubble({
               onSetActiveMenuMessageId(msg.id)
             }}
           >
-            {!isOutgoing && chat?.is_group && (
-              <div className="whatsapp-sender-name">{formatSenderName(msg.sender_name, msg.sender_id)}</div>
-            )}
+            {(() => {
+              const senderDisplay = formatSenderName(msg.sender_name, msg.sender_id)
+              return !isOutgoing && chat?.is_group && senderDisplay ? (
+                <div className="whatsapp-sender-name">{senderDisplay}</div>
+              ) : null
+            })()}
             {(msg.is_forwarded || msg.isForwarded) && (
               <div className="whatsapp-forwarded-tag">
                 <CornerUpLeft size={13} style={{ transform: 'scaleX(-1)' }} />
@@ -204,7 +213,10 @@ export function WhatsAppMessageBubble({
                 title="Click to jump to quoted message"
               >
                 <div className="whatsapp-quoted-body">
-                  <span className="whatsapp-quoted-sender">{quotedMsg.is_from_me ? 'You' : formatSenderName(quotedMsg.sender_name, quotedMsg.sender_id)}</span>
+                  {(() => {
+                    const qName = quotedMsg.is_from_me ? 'You' : formatSenderName(quotedMsg.sender_name, quotedMsg.sender_id)
+                    return qName ? <span className="whatsapp-quoted-sender">{qName}</span> : null
+                  })()}
                   <p className="whatsapp-quoted-text">
                     {quotedMsg.media && !quotedMsg.content ? (
                       <span className="whatsapp-quoted-media-tag">

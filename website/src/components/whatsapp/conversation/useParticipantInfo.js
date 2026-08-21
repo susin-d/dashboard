@@ -44,7 +44,7 @@ export function useParticipantInfo({ chat, allChats, messages }) {
       }
       if (Array.isArray(chat.participants)) {
         for (const p of chat.participants) {
-          if (p) register(p, p, null)
+          if (p) register(p, null, null)
         }
       }
     }
@@ -57,7 +57,7 @@ export function useParticipantInfo({ chat, allChats, messages }) {
       }
       if (Array.isArray(c.participants)) {
         for (const p of c.participants) {
-          if (p) register(p, p, null)
+          if (p) register(p, null, null)
         }
       }
     }
@@ -139,11 +139,14 @@ export function useParticipantInfo({ chat, allChats, messages }) {
         const cleanP = String(p).replace(/@s\.whatsapp\.net|@lid/g, '').trim()
         if (cleanP === cleanSender || cleanP === userPart || (userPart && cleanP.includes(userPart))) {
           const isNum = /^\+?\d+$/.test(cleanP)
+          if (isNum) {
+            return { name: '', isMe: false, avatar: participantInfoMap.avatarMap.get(cleanP) || null, initial: '?' }
+          }
           return {
-            name: isNum ? (cleanP.startsWith('+') ? cleanP : `+${cleanP}`) : cleanP,
+            name: cleanP,
             isMe: false,
             avatar: participantInfoMap.avatarMap.get(cleanP) || null,
-            initial: isNum ? '+' : getSenderInitial(cleanP),
+            initial: getSenderInitial(cleanP),
           }
         }
       }
@@ -182,28 +185,38 @@ export function useParticipantInfo({ chat, allChats, messages }) {
     }
 
     if (/^\+?\d{6,}$/.test(cleanSender || userPart)) {
-      const phone = (cleanSender || userPart).startsWith('+') ? cleanSender || userPart : `+${cleanSender || userPart}`
-      return { name: phone, isMe: false, avatar: participantInfoMap.avatarMap.get(userPart) || null, initial: '+' }
+      return { name: '', isMe: false, avatar: participantInfoMap.avatarMap.get(userPart) || null, initial: '?' }
     }
 
     if (cleanSender && cleanSender !== 'Contact' && cleanSender !== '1289') {
+      if (/^\+?\d{6,}$/.test(cleanSender)) return { name: '', isMe: false, avatar: null, initial: '?' }
       return { name: cleanSender, isMe: false, avatar: null, initial: getSenderInitial(cleanSender) }
     }
 
-    return { name: 'Contact', isMe: false, avatar: null, initial: 'C' }
+    return { name: '', isMe: false, avatar: null, initial: '?' }
   }
 
   const formatParticipantsSubtitle = (participants) => {
     if (!participants || participants.length === 0) return 'Group conversation'
-    const formatted = participants.map((p) => {
-      if (!p) return 'Contact'
-      const raw = String(p).trim()
-      if (participantNameMap.has(raw)) return participantNameMap.get(raw)
-      const clean = raw.replace(/@s\.whatsapp\.net|@g\.us|@lid/g, '').trim()
-      if (participantNameMap.has(clean)) return participantNameMap.get(clean)
-      if (/^\+?\d{6,}$/.test(clean)) return clean.startsWith('+') ? clean : `+${clean}`
-      return clean || 'Contact'
-    })
+    const formatted = participants
+      .map((p) => {
+        if (!p) return ''
+        const raw = String(p).trim()
+        if (participantNameMap.has(raw)) {
+          const v = participantNameMap.get(raw)
+          if (v && v !== 'Contact' && !/^\+?\d{6,}$/.test(v.replace(/\D/g, ''))) return v
+        }
+        const clean = raw.replace(/@s\.whatsapp\.net|@g\.us|@lid/g, '').trim()
+        if (participantNameMap.has(clean)) {
+          const v = participantNameMap.get(clean)
+          if (v && v !== 'Contact') return v
+        }
+        // Numeric JID without display name — hide per requirement
+        if (/^\+?\d{6,}$/.test(clean)) return ''
+        return clean || ''
+      })
+      .filter(Boolean)
+    if (formatted.length === 0) return 'Group conversation'
     return formatted.slice(0, 4).join(', ') + (formatted.length > 4 ? ` and ${formatted.length - 4} more...` : '')
   }
 
