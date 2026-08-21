@@ -1,5 +1,6 @@
 import json
 import logging
+from collections.abc import Iterator
 from dataclasses import dataclass
 from typing import Any, Callable
 
@@ -17,6 +18,8 @@ AI_MODELS_SETTINGS_DOC = "ai-models"
 # Curated catalog of AI providers and their supported models. The server must
 # have an API key configured for a provider before it can be used (env vars),
 # but the catalog itself is always returned to the frontend for display.
+# Providers using an OpenAI-compatible /chat/completions API are marked
+# "openai_compatible" and share OpenAiProviderClient.
 AI_PROVIDERS: dict[str, dict[str, Any]] = {
     "openai": {
         "label": "OpenAI",
@@ -45,6 +48,40 @@ AI_PROVIDERS: dict[str, dict[str, Any]] = {
             {"id": "gemini-2.5-flash", "label": "Gemini 2.5 Flash"},
             {"id": "gemini-2.5-pro", "label": "Gemini 2.5 Pro"},
             {"id": "gemini-2.0-flash", "label": "Gemini 2.0 Flash"},
+        ],
+    },
+    "openrouter": {
+        "label": "OpenRouter",
+        "default_model": settings.openrouter_model,
+        "openai_compatible": True,
+        "requires_base_url": True,
+        "models": [
+            {"id": "openai/gpt-4o", "label": "GPT-4o (via OpenRouter)"},
+            {"id": "anthropic/claude-sonnet-4.5", "label": "Claude Sonnet 4.5 (via OpenRouter)"},
+            {"id": "google/gemini-2.5-flash", "label": "Gemini 2.5 Flash (via OpenRouter)"},
+            {"id": "meta-llama/llama-3.1-70b-instruct", "label": "Llama 3.1 70B (via OpenRouter)"},
+        ],
+    },
+    "ollama": {
+        "label": "Ollama (local)",
+        "default_model": settings.ollama_model,
+        "openai_compatible": True,
+        "requires_base_url": True,
+        "models": [
+            {"id": "llama3.1", "label": "Llama 3.1"},
+            {"id": "llama3.2", "label": "Llama 3.2"},
+            {"id": "qwen2.5", "label": "Qwen 2.5"},
+            {"id": "mistral", "label": "Mistral"},
+        ],
+    },
+    "opencode": {
+        "label": "OpenCode",
+        "default_model": settings.opencode_model,
+        "openai_compatible": True,
+        "requires_base_url": True,
+        "models": [
+            {"id": "opencode/gpt-5-mini", "label": "GPT-5 mini (via OpenCode)"},
+            {"id": "opencode/claude-sonnet-4-5", "label": "Claude Sonnet 4.5 (via OpenCode)"},
         ],
     },
 }
@@ -108,6 +145,15 @@ class ProviderClient:
         raise NotImplementedError
 
 
+# Default base URLs for OpenAI-compatible providers
+PROVIDER_DEFAULT_BASE_URLS: dict[str, str] = {
+    "openai": "https://api.openai.com/v1",
+    "openrouter": "https://openrouter.ai/api/v1",
+    "ollama": "http://127.0.0.1:11434/v1",
+    "opencode": "https://opencode.ai/api/v1",
+}
+
+
 def _provider_key_set(provider: str) -> bool:
     if provider == "openai":
         return bool(settings.openai_api_key)
@@ -115,29 +161,31 @@ def _provider_key_set(provider: str) -> bool:
         return bool(settings.anthropic_api_key)
     if provider == "gemini":
         return bool(settings.gemini_api_key)
+    if provider == "openrouter":
+        return bool(settings.openrouter_api_key)
+    if provider == "ollama":
+        # Ollama is local — available when a URL is configured (key optional)
+        return bool(settings.ollama_url)
+    if provider == "opencode":
+        return bool(settings.opencode_api_key)
     return False
 
 
 def _client_options(provider: str, user_api_key: str | None = None) -> dict[str, Any]:
     api_key = user_api_key
     if not api_key:
-        if provider == "openai":
-            api_key = settings.openai_api_key
-        elif provider == "anthropic":
-            api_key = settings.anthropic_api_key
-        elif provider == "gemini":
-            api_key = settings.gemini_api_key
+        api_key = _effective_api_key(provider, {})
 
-    if not api_key:
-        return {}
+    options: dict[str, Any] = {}
+    if api_key:
+        options["api_key"] = api_key
+    elif provider == "ollama":
+        # Ollama needs a placeholder key for the OpenAI SDK
+        options["api_key"] = "ollama"
 
-    options: dict[str, Any] = {"api_key": api_key}
-    if provider == "openai" and settings.openai_url:
-        options["base_url"] = settings.openai_url
-    elif provider == "anthropic" and settings.anthropic_url:
-        options["base_url"] = settings.anthropic_url
-    elif provider == "gemini" and settings.gemini_url:
-        options["base_url"] = settings.gemini_url
+    base_url = _effective_base_url(provider)
+    if base_url:
+        options["base_url"] = base_url
     return options
 
 
@@ -150,16 +198,28 @@ def _effective_api_key(provider: str, user_keys: dict[str, str]) -> str | None:
         return settings.anthropic_api_key
     if provider == "gemini":
         return settings.gemini_api_key
+    if provider == "openrouter":
+        return settings.openrouter_api_key
+    if provider == "ollama":
+        return settings.ollama_api_key or "ollama"
+    if provider == "opencode":
+        return settings.opencode_api_key
     return None
 
 
 def _effective_base_url(provider: str) -> str | None:
     if provider == "openai":
-        return settings.openai_url
+        return settings.openai_url or PROVIDER_DEFAULT_BASE_URLS["openai"]
     if provider == "anthropic":
         return settings.anthropic_url
     if provider == "gemini":
         return settings.gemini_url
+    if provider == "openrouter":
+        return settings.openrouter_url or PROVIDER_DEFAULT_BASE_URLS["openrouter"]
+    if provider == "ollama":
+        return settings.ollama_url or PROVIDER_DEFAULT_BASE_URLS["ollama"]
+    if provider == "opencode":
+        return settings.opencode_url or PROVIDER_DEFAULT_BASE_URLS["opencode"]
     return None
 
 
@@ -280,6 +340,37 @@ async def _fetch_anthropic_models(api_key: str) -> list[dict[str, str]]:
         return []
 
 
+async def _fetch_openai_compatible_models(api_key: str, base_url: str, provider: str) -> list[dict[str, str]]:
+    """List models from any OpenAI-compatible /v1/models endpoint (OpenRouter, Ollama, OpenCode)."""
+    import httpx
+    url = f"{base_url.rstrip('/')}/models"
+    headers = {"Authorization": f"Bearer {api_key}"} if api_key else {}
+    try:
+        async with httpx.AsyncClient(timeout=httpx.Timeout(8.0, connect=4.0)) as client:
+            resp = await client.get(url, headers=headers)
+            if resp.status_code != 200:
+                logger.warning(f"[AI Models] {provider} list models failed {resp.status_code}: {resp.text[:200]}")
+                return []
+            data = resp.json()
+            items = data.get("data") or []
+            models: list[dict[str, str]] = []
+            for it in items:
+                mid = it.get("id") or ""
+                if not mid:
+                    continue
+                low = mid.lower()
+                # Filter out non-chat endpoints
+                if any(x in low for x in ("embed", "whisper", "tts", "dall", "audio", "realtime", "transcribe", "moderation", "rerank")):
+                    continue
+                label = it.get("name") or _format_model_label(mid)
+                models.append({"id": mid, "label": label})
+            models.sort(key=lambda x: x["id"])
+            return models
+    except Exception as e:
+        logger.warning(f"[AI Models] {provider} list exception: {e}")
+        return []
+
+
 async def fetch_provider_models(provider: str, api_key: str | None = None, user_keys: dict[str, str] | None = None) -> list[dict[str, str]]:
     effective = api_key or _effective_api_key(provider, user_keys or {})
     if not effective:
@@ -287,12 +378,15 @@ async def fetch_provider_models(provider: str, api_key: str | None = None, user_
     cached = _live_cache_get(provider, effective)
     if cached is not None:
         return cached
+    base_url = _effective_base_url(provider)
     if provider == "openai":
-        models = await _fetch_openai_models(effective, _effective_base_url(provider))
+        models = await _fetch_openai_models(effective, base_url)
     elif provider == "gemini":
         models = await _fetch_gemini_models(effective)
     elif provider == "anthropic":
         models = await _fetch_anthropic_models(effective)
+    elif provider in ("openrouter", "ollama", "opencode"):
+        models = await _fetch_openai_compatible_models(effective, base_url or PROVIDER_DEFAULT_BASE_URLS[provider], provider)
     else:
         return []
     if models:

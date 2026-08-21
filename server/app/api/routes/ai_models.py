@@ -122,8 +122,11 @@ async def save_ai_models(
 
     api_key_to_save = payload.api_key.strip() if payload.api_key else None
 
+    # Ollama is local — key optional (server URL is configured via OLLAMA_URL env)
+    key_optional = payload.provider == "ollama"
+
     # If provider is not default/env-configured, require user API key
-    if not has_env and not api_key_to_save and not user_keys.get(payload.provider):
+    if not key_optional and not has_env and not api_key_to_save and not user_keys.get(payload.provider):
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail=f"API key is required for {provider_label}.",

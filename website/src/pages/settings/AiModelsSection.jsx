@@ -146,7 +146,8 @@ export function AiModelsSection() {
       return
     }
 
-    if (!isDefault && !hasUserKey && !apiKey.trim()) {
+    // Ollama is local — API key optional (server URL configured via OLLAMA_URL)
+    if (!isDefault && selectedProvider !== 'ollama' && !hasUserKey && !apiKey.trim()) {
       setMessage(`Please provide an API key for ${selectedProviderDescriptor?.label || 'the selected provider'}.`)
       return
     }

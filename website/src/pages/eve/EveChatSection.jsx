@@ -575,6 +575,34 @@ export function EveChatSection({
                             { id: 'claude-haiku-4-5', label: 'Claude Haiku 4.5' },
                           ],
                         },
+                        {
+                          id: 'openrouter',
+                          label: 'OpenRouter',
+                          models: [
+                            { id: 'openai/gpt-4o', label: 'GPT-4o (via OpenRouter)' },
+                            { id: 'anthropic/claude-sonnet-4.5', label: 'Claude Sonnet 4.5 (via OpenRouter)' },
+                            { id: 'google/gemini-2.5-flash', label: 'Gemini 2.5 Flash (via OpenRouter)' },
+                            { id: 'meta-llama/llama-3.1-70b-instruct', label: 'Llama 3.1 70B (via OpenRouter)' },
+                          ],
+                        },
+                        {
+                          id: 'ollama',
+                          label: 'Ollama (local)',
+                          models: [
+                            { id: 'llama3.1', label: 'Llama 3.1' },
+                            { id: 'llama3.2', label: 'Llama 3.2' },
+                            { id: 'qwen2.5', label: 'Qwen 2.5' },
+                            { id: 'mistral', label: 'Mistral' },
+                          ],
+                        },
+                        {
+                          id: 'opencode',
+                          label: 'OpenCode',
+                          models: [
+                            { id: 'opencode/gpt-5-mini', label: 'GPT-5 mini (via OpenCode)' },
+                            { id: 'opencode/claude-sonnet-4-5', label: 'Claude Sonnet 4.5 (via OpenCode)' },
+                          ],
+                        },
                       ]).map((prov) => (
                         <div key={prov.id} className="eve-model-menu-group">
                           <span className="eve-model-menu-group-label">{prov.label}</span>

@@ -92,7 +92,17 @@ class Settings:
     gemini_model: str = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
     groq_api_key: str | None = os.getenv("GROQ_API_KEY")
     groq_url: str | None = os.getenv("GROQ_URL") or None
+    groq_model: str = os.getenv("GROQ_MODEL", "llama-3.1-70b-versatile")
     groq_stt_model: str = os.getenv("GROQ_STT_MODEL", "whisper-large-v3")
+    openrouter_api_key: str | None = os.getenv("OPENROUTER_API_KEY")
+    openrouter_url: str | None = os.getenv("OPENROUTER_URL") or None
+    openrouter_model: str = os.getenv("OPENROUTER_MODEL", "openai/gpt-4o")
+    ollama_url: str | None = os.getenv("OLLAMA_URL") or None
+    ollama_model: str = os.getenv("OLLAMA_MODEL", "llama3.1")
+    ollama_api_key: str | None = os.getenv("OLLAMA_API_KEY")
+    opencode_api_key: str | None = os.getenv("OPENCODE_API_KEY")
+    opencode_url: str | None = os.getenv("OPENCODE_URL") or None
+    opencode_model: str = os.getenv("OPENCODE_MODEL", "opencode/gpt-5-mini")
     google_cloud_tts_api_key: str | None = os.getenv("GOOGLE_CLOUD_TTS_API_KEY")
     google_cloud_tts_url: str | None = os.getenv(
         "GOOGLE_CLOUD_TTS_URL",

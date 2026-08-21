@@ -19,11 +19,15 @@ from app.services.ai_models._shared import (
 from app.services.ai_models.anthropic import AnthropicProviderClient
 from app.services.ai_models.gemini import GeminiProviderClient
 from app.services.ai_models.openai import OpenAiProviderClient
+from app.services.ai_models.openai_compat import OpenAiCompatibleClient
 
 PROVIDER_CLIENTS = {
     "openai": OpenAiProviderClient,
     "anthropic": AnthropicProviderClient,
     "gemini": GeminiProviderClient,
+    "openrouter": OpenAiCompatibleClient,
+    "ollama": OpenAiCompatibleClient,
+    "opencode": OpenAiCompatibleClient,
 }
 
 __all__ = [
