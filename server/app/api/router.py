@@ -14,6 +14,7 @@ from app.api.routes import (
     eve_memory_settings,
     eve_schedules,
     eve_speech,
+    eve_stream,
     gmail,
     google_calendar,
     google_contacts,
@@ -23,6 +24,7 @@ from app.api.routes import (
     health,
     notifications,
     profiles,
+    studio,
     todos,
     whatsapp,
     workspace,
@@ -42,6 +44,7 @@ api_router.include_router(notifications.router, tags=["notifications"])
 api_router.include_router(profiles.router, tags=["profiles"])
 api_router.include_router(documents.router, tags=["documents"])
 api_router.include_router(eve.router, tags=["Eve AI assistant"])
+api_router.include_router(eve_stream.router, tags=["Eve AI assistant"])
 api_router.include_router(eve_schedules.router, tags=["Eve automated schedules"])
 api_router.include_router(eve_memory_settings.router, tags=["Eve memory settings"])
 api_router.include_router(eve_speech.router, tags=["Eve speech settings"])
@@ -66,6 +69,7 @@ api_router.include_router(
     tags=["Google Chat integration"],
 )
 api_router.include_router(todos.router, tags=["todos"])
+api_router.include_router(studio.router, tags=["Studio builder"])
 api_router.include_router(workspace.router, tags=["workspace data"])
 api_router.include_router(workspace_files.router, tags=["workspace files"])
 

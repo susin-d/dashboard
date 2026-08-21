@@ -2,10 +2,13 @@ from datetime import datetime, timezone
 import logging
 from typing import List, Optional
 from uuid import uuid4
+
+import httpx
 from fastapi import APIRouter, Depends, Query, status
 from google.cloud.firestore_v1 import Client
 
 from app.core.auth import get_current_user
+from app.core.config import settings
 from app.core.whatsapp_ws_manager import whatsapp_ws_manager
 from app.db import get_firestore
 from app.repositories import whatsapp as whatsapp_repo

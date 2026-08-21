@@ -5,6 +5,7 @@ from app.services.eve.tools.memory import MEMORY_TOOLS
 from app.services.eve.tools.navigation import NAVIGATION_TOOLS
 from app.services.eve.tools.schedule import SCHEDULE_TOOLS
 from app.services.eve.tools.search import SEARCH_TOOLS
+from app.services.eve.tools.studio import STUDIO_TOOLS
 from app.services.eve.tools.web import WEB_TOOLS
 from app.services.eve.tools.whatsapp import WHATSAPP_TOOLS
 from app.services.eve.tools.workspace import WORKSPACE_TOOLS
@@ -18,4 +19,5 @@ EVE_TOOLS = (
     + FILES_TOOLS
     + WHATSAPP_TOOLS
     + WEB_TOOLS
+    + STUDIO_TOOLS
 )

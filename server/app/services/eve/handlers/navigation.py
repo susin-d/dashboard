@@ -24,3 +24,13 @@ def handle_open_record(database: Client, user_id: str, arguments: dict) -> tuple
 
 def handle_refresh_workspace_data(database: Client, user_id: str, arguments: dict) -> tuple[dict, None, dict]:
     return {"queued": True}, None, {"type": "refresh_workspace_data"}
+
+
+def handle_open_studio_project(database: Client, user_id: str, arguments: dict) -> tuple[dict, None, dict]:
+    """Open a Studio project in the builder view (emitted by Studio tools)."""
+    project_id = _clean_record_id("studio", arguments["project_id"])
+    return (
+        {"queued": True, "projectId": project_id},
+        None,
+        {"type": "open_studio_project", "projectId": project_id},
+    )

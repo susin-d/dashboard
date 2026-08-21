@@ -13,12 +13,22 @@ from app.services.eve.handlers.memory import (
 from app.services.eve.handlers.navigation import (
     handle_navigate_page,
     handle_open_record,
+    handle_open_studio_project,
     handle_refresh_workspace_data,
 )
 from app.services.eve.handlers.schedule import (
     handle_create_eve_schedule,
     handle_delete_eve_schedule,
     handle_list_eve_schedules,
+)
+from app.services.eve.handlers.studio import (
+    handle_create_studio_project,
+    handle_get_studio_project,
+    handle_list_studio_projects,
+    handle_publish_studio_template,
+    handle_run_studio_command,
+    handle_submit_build_plan,
+    handle_write_studio_files,
 )
 from app.services.eve.handlers.web import (
     handle_browse_web,
@@ -71,6 +81,7 @@ _TOOL_HANDLERS: dict[str, Any] = {
     "summarize_whatsapp_chat": handle_summarize_whatsapp_chat,
     "navigate_page": handle_navigate_page,
     "open_record": handle_open_record,
+    "open_studio_project": handle_open_studio_project,
     "refresh_workspace_data": handle_refresh_workspace_data,
     "search_workspace": handle_search_workspace,
     "workspace_insight": handle_workspace_insight,
@@ -87,6 +98,13 @@ _TOOL_HANDLERS: dict[str, Any] = {
     "web_search": handle_search_web,
     "fetch_web_page": handle_fetch_web_page,
     "read_web_page": handle_fetch_web_page,
+    "create_studio_project": handle_create_studio_project,
+    "list_studio_projects": handle_list_studio_projects,
+    "get_studio_project": handle_get_studio_project,
+    "submit_build_plan": handle_submit_build_plan,
+    "write_studio_files": handle_write_studio_files,
+    "run_studio_command": handle_run_studio_command,
+    "publish_studio_template": handle_publish_studio_template,
 }
 
 

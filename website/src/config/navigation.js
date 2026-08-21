@@ -1,4 +1,5 @@
 import {
+  Blocks,
   Bot,
   Brain,
   BriefcaseBusiness,
@@ -11,6 +12,7 @@ import {
   FolderKanban,
   History,
   LayoutDashboard,
+  LayoutTemplate,
   ListTodo,
   Mail,
   MessageCircle,
@@ -30,6 +32,8 @@ export const navigationItems = [
   { id: 'projects', label: 'Projects', icon: FolderKanban, group: 'Work' },
   { id: 'documents', label: 'Documents', icon: Files, group: 'Work' },
   { id: 'workspace', label: 'Workspace', icon: SquareTerminal, group: 'Work' },
+  { id: 'studio', label: 'Studio', icon: Blocks, group: 'Studio' },
+  { id: 'studio-templates', label: 'Templates', icon: LayoutTemplate, group: 'Studio' },
   { id: 'eve', label: 'Chat', icon: Bot, group: 'Eve AI' },
   { id: 'eve-sessions', label: 'Chat Sessions', icon: History, group: 'Eve AI' },
   { id: 'eve-memory', label: 'Eve Memory', icon: Brain, group: 'Eve AI' },

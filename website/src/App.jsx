@@ -24,6 +24,9 @@ const ChatsPage = lazy(() => import('./pages/ChatsPage').then((m) => ({ default:
 const CallsPage = lazy(() => import('./pages/CallsPage').then((m) => ({ default: m.CallsPage })))
 const ContactsPage = lazy(() => import('./pages/ContactsPage').then((m) => ({ default: m.ContactsPage })))
 const WorkspacePage = lazy(() => import('./pages/WorkspacePage').then((m) => ({ default: m.WorkspacePage })))
+const StudioProjectsPage = lazy(() => import('./pages/studio/StudioProjectsPage').then((m) => ({ default: m.StudioProjectsPage })))
+const StudioBuilderPage = lazy(() => import('./pages/studio/StudioBuilderPage').then((m) => ({ default: m.StudioBuilderPage })))
+const StudioTemplatesPage = lazy(() => import('./pages/studio/StudioTemplatesPage').then((m) => ({ default: m.StudioTemplatesPage })))
 import { AuthPage } from './pages/AuthPage'
 import { ForgotPasswordPage } from './pages/ForgotPasswordPage'
 import { OnboardingPage } from './pages/OnboardingPage'
@@ -461,6 +464,28 @@ function App() {
       <DocumentsPage documents={documents} setDocuments={setDocuments} createIntent={creationIntent} onOpenDocument={(documentId) => navigate('document-opener', { documentId })} />
     ),
     workspace: <WorkspacePage />,
+    studio: (
+      <StudioProjectsPage
+        onOpenProject={(project) => navigateWorkspace('studio-detail', project.id)}
+        onNavigate={navigateWorkspace}
+      />
+    ),
+    'studio-detail': selectedProjectId ? (
+      <StudioBuilderPage
+        projectId={selectedProjectId}
+        onBack={() => navigateWorkspace('studio')}
+      />
+    ) : (
+      <StudioProjectsPage
+        onOpenProject={(project) => navigateWorkspace('studio-detail', project.id)}
+        onNavigate={navigateWorkspace}
+      />
+    ),
+    'studio-templates': (
+      <StudioTemplatesPage
+        onOpenProject={(project) => navigateWorkspace('studio-detail', project.id)}
+      />
+    ),
     'document-opener': (
       <DocumentOpenerPage
         document={selectedDocument}
@@ -591,7 +616,9 @@ function App() {
               ? 'hackathons'
               : activePage === 'document-opener'
                 ? 'documents'
-                : activePage
+                : activePage === 'studio-detail'
+                  ? 'studio'
+                  : activePage
         }
         onNavigate={navigateWorkspace}
         onCreate={requestCreation}

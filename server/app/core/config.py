@@ -131,6 +131,11 @@ class Settings:
     )
     workspace_storage_path: str = os.getenv("WORKSPACE_STORAGE_PATH", "workspaces")
     redis_url: str | None = os.getenv("REDIS_URL") or None
+    studio_preview_domain: str = os.getenv(
+        "STUDIO_PREVIEW_DOMAIN",
+        "",
+    )
+    studio_command_timeout: int = int(os.getenv("STUDIO_COMMAND_TIMEOUT", "300"))
     whatsapp_gateway_url: str = os.getenv(
         "WHATSAPP_GATEWAY_URL",
         "http://whatsapp-worker:3001" if os.path.exists("/.dockerenv") else "http://127.0.0.1:3001",

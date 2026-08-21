@@ -58,7 +58,10 @@ def send_multicast_notification(
     if not device_tokens:
         return {"success_count": 0, "failure_count": 0, "invalid_tokens": []}
 
-    app = get_firebase_app()
+    app = _get_fcm_app()
+    if not app:
+        logger.debug("Firebase messaging app not initialized; skipping push notification.")
+        return {"success_count": 0, "failure_count": 0, "invalid_tokens": []}
     message = messaging.MulticastMessage(
         notification=messaging.Notification(
             title=title,

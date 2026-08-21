@@ -6,6 +6,7 @@ Implementation is split into single-responsibility modules:
 
 from app.services.eve.auto_memory import extract_and_save_memories
 from app.services.eve.chat import chat_with_eve
+from app.services.eve.chat_stream import stream_chat_with_eve
 from app.services.eve.constants import (
     MAX_RECORDS_PER_READ,
     SUPPORTED_RESOURCES,
@@ -85,4 +86,5 @@ __all__ = [
     "resolve_auto_remember",
     "restore_workspace_record",
     "run_tool_loop",
+    "stream_chat_with_eve",
 ]

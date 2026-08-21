@@ -22,6 +22,8 @@ const workspacePages = new Set([
   'jobs',
   'documents',
   'workspace',
+  'studio',
+  'studio-templates',
   'profile',
   'themes',
   'setting',
@@ -35,6 +37,9 @@ export function workspaceStateFromPath(pathname) {
   }
   if (page === 'projects' && detailId) {
     return { page: 'project-detail', projectId: detailId, documentId: null, hackathonId: null }
+  }
+  if (page === 'studio' && detailId) {
+    return { page: 'studio-detail', projectId: detailId, documentId: null, hackathonId: null }
   }
   if (page === 'documents' && detailId) {
     return { page: 'document-opener', projectId: null, documentId: detailId, hackathonId: null }
@@ -104,6 +109,8 @@ export function useRouter() {
     else if (page === 'onboarding') path = '/onboarding'
     else if (page === 'project-detail' && options.projectId) {
       path = `/app/projects/${options.projectId}`
+    } else if (page === 'studio-detail' && options.projectId) {
+      path = `/app/studio/${options.projectId}`
     } else if (page === 'document-opener' && options.documentId) {
       path = `/app/documents/${options.documentId}`
     } else if (page === 'hackathon-detail' && options.hackathonId) {
