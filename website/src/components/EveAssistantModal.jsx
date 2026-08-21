@@ -1,6 +1,6 @@
 import { useEffect, useId, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { Bot, ListPlus, Maximize2, Play, Plus, Send, ShieldCheck, X } from 'lucide-react'
+import { Bot, Maximize2, Play, Plus, Send, ShieldCheck, X } from 'lucide-react'
 import { ConfirmDialog } from './ui/ConfirmDialog'
 import {
   createEveSession,
@@ -235,14 +235,6 @@ export function EveAssistantModal({ isOpen, onClose, onNavigate, onWorkspaceChan
     return { messages: finalMessages, sessionId: nextSessionId }
   }
 
-  const addToQueue = () => {
-    const content = draft.trim()
-    if (!content) return
-    setPromptQueue((current) => [...current, content])
-    setDraft('')
-    composerRef.current?.focus()
-  }
-
   const removeFromQueue = (index) => {
     setPromptQueue((current) => current.filter((_, itemIndex) => itemIndex !== index))
   }
@@ -440,6 +432,28 @@ export function EveAssistantModal({ isOpen, onClose, onNavigate, onWorkspaceChan
 
             {/* ── Composer ── */}
             <form className="eve-composer" onSubmit={handleSubmit}>
+              {promptQueue.length > 0 && (
+                <div className="eve-queue-strip" aria-label="Queued messages">
+                  <div className="eve-queue-list">
+                    {promptQueue.map((queuedPrompt, index) => (
+                      <span className="eve-queue-item" key={`${queuedPrompt}-${index}`}>
+                        <span className="eve-queue-item-text">{queuedPrompt}</span>
+                        <button
+                          className="eve-queue-item-remove"
+                          type="button"
+                          onClick={() => removeFromQueue(index)}
+                          aria-label="Remove queued message"
+                        >
+                          <X size={12} />
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                  <button className="eve-queue-clear" type="button" onClick={clearQueue}>
+                    Clear queue
+                  </button>
+                </div>
+              )}
               <div className="eve-composer-field">
                 <label className="eve-composer-label" htmlFor="eve-message">Message Eve</label>
 
@@ -494,16 +508,6 @@ export function EveAssistantModal({ isOpen, onClose, onNavigate, onWorkspaceChan
                         Run queue ({promptQueue.length})
                       </button>
                     )}
-                    <button
-                      className="eve-queue-add"
-                      type="button"
-                      onClick={addToQueue}
-                      disabled={!draft.trim()}
-                      aria-label="Add message to queue"
-                      title="Add to queue"
-                    >
-                      <ListPlus size={16} />
-                    </button>
                     <button className="eve-send-button" type="submit" disabled={!draft.trim()} aria-label={isSending ? 'Queue message' : 'Send message'}>
                       <Send size={15} />
                     </button>
@@ -511,28 +515,6 @@ export function EveAssistantModal({ isOpen, onClose, onNavigate, onWorkspaceChan
                 </div>
                 <div className="eve-char-bar" style={{ '--char-progress': charProgress }} />
               </div>
-              {promptQueue.length > 0 && (
-                <div className="eve-queue-strip" aria-label="Queued messages">
-                  <div className="eve-queue-list">
-                    {promptQueue.map((queuedPrompt, index) => (
-                      <span className="eve-queue-item" key={`${queuedPrompt}-${index}`}>
-                        <span className="eve-queue-item-text">{queuedPrompt}</span>
-                        <button
-                          className="eve-queue-item-remove"
-                          type="button"
-                          onClick={() => removeFromQueue(index)}
-                          aria-label="Remove queued message"
-                        >
-                          <X size={12} />
-                        </button>
-                      </span>
-                    ))}
-                  </div>
-                  <button className="eve-queue-clear" type="button" onClick={clearQueue}>
-                    Clear queue
-                  </button>
-                </div>
-              )}
             </form>
           </aside>
         </div>,
@@ -549,3 +531,4 @@ export function EveAssistantModal({ isOpen, onClose, onNavigate, onWorkspaceChan
     </>
   )
 }
+
