@@ -43,16 +43,42 @@ def from_snapshot(snapshot) -> ContactResponse:
 
 
 def list_contacts(database: Client, user_id: str) -> list[ContactResponse]:
+    # Legacy capped to 100
     query = collection(database, user_id).order_by(
         "name",
         direction=firestore.Query.ASCENDING,
     )
     results = []
+    count = 0
     for snapshot in query.stream():
+        if count >= 100:
+            break
         data = snapshot.to_dict() or {}
         if not data.get("deleted"):
             results.append(from_snapshot(snapshot))
+            count += 1
     return results
+
+
+def list_contacts_page(database: Client, user_id: str, cursor: str | None, limit: int):
+    from app.repositories.pagination import paginate_collection
+
+    # Contacts ordered by name ASC, but pagination helper uses DESC; handle via ASC query manually
+    # For consistency, we still use paginate_collection with name ASC by passing collection and custom logic
+    # Fallback: use DESC on created_at for pagination stability; name ordering is secondary
+    coll = collection(database, user_id)
+    # Use created_at DESC for stable keyset; frontend sorts by name after fetch (1-10 users small set)
+    # For larger scale, add dedicated name index
+    raw, next_cursor, has_more = paginate_collection(coll, "created_at", cursor, limit)
+    items = []
+    for data in raw:
+        if data.get("deleted"):
+            continue
+        fake = type("S", (), {"id": data["id"], "to_dict": lambda s, d=data: d})()
+        items.append(from_snapshot(fake))
+    # Sort paginated chunk by name for presentation
+    items.sort(key=lambda c: (c.name or "").lower())
+    return items, next_cursor, has_more
 
 
 def get_contact(

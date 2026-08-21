@@ -183,15 +183,25 @@ async def sync_files(
     user: dict = Depends(get_current_user),
 ):
     _require_non_serverless()
-    # Parallelize writes with asyncio.to_thread + gather for up to 10 concurrent
+    # Caps for e2-micro: max 50 files, 10MB total, bounded concurrency 5
+    MAX_SYNC_FILES = 50
+    MAX_SYNC_BYTES = 10 * 1024 * 1024
+    if len(body.files) > MAX_SYNC_FILES:
+        raise HTTPException(status_code=400, detail=f"Sync limited to {MAX_SYNC_FILES} files per request (got {len(body.files)}).")
+    total_bytes = sum(len((e.content or "").encode("utf-8")) for e in body.files)
+    if total_bytes > MAX_SYNC_BYTES:
+        raise HTTPException(status_code=400, detail=f"Sync payload too large: {total_bytes} bytes > {MAX_SYNC_BYTES}.")
     import asyncio as _asyncio
 
+    sem = _asyncio.Semaphore(5)
+
     async def _write(entry):
-        try:
-            await _asyncio.to_thread(workspace_files.write_file, user["uid"], entry.path, entry.content, entry.encoding, workspace_id)
-            return (True, None)
-        except (ValueError, OSError) as error:
-            return (False, f"{entry.path}: {error}")
+        async with sem:
+            try:
+                await _asyncio.to_thread(workspace_files.write_file, user["uid"], entry.path, entry.content, entry.encoding, workspace_id)
+                return (True, None)
+            except (ValueError, OSError) as error:
+                return (False, f"{entry.path}: {error}")
 
     results = await _asyncio.gather(*[_write(e) for e in body.files])
     synced = sum(1 for ok, _ in results if ok)

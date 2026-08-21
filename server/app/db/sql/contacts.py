@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-from sqlalchemy import select
+from sqlalchemy import and_, or_, select
 from sqlalchemy.orm import Session
 
 from app.db.sql._shared import coerce_model_value
@@ -89,9 +89,19 @@ def query_contacts(session: Session, user_id: str, query: SqlQuery) -> list[SqlS
         cursor = session.get(Contact, query._start_after_doc_id)
         if cursor and cursor.created_at:
             if query._direction == "DESC":
-                stmt = stmt.where(Contact.created_at < cursor.created_at)
+                stmt = stmt.where(
+                    or_(
+                        Contact.created_at < cursor.created_at,
+                        and_(Contact.created_at == cursor.created_at, Contact.id < cursor.id),
+                    )
+                )
             else:
-                stmt = stmt.where(Contact.created_at > cursor.created_at)
+                stmt = stmt.where(
+                    or_(
+                        Contact.created_at > cursor.created_at,
+                        and_(Contact.created_at == cursor.created_at, Contact.id > cursor.id),
+                    )
+                )
     if query._order_by == "created_at":
         stmt = stmt.order_by(Contact.created_at.desc() if query._direction == "DESC" else Contact.created_at.asc())
         stmt = stmt.order_by(Contact.id.desc() if query._direction == "DESC" else Contact.id.asc())

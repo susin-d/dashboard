@@ -1,28 +1,29 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react'
 import { AppLayout } from './layouts/AppLayout'
-import { CalendarPage } from './pages/CalendarPage'
-import { CompetitiveCodingPage } from './pages/CompetitiveCodingPage'
 import { DashboardPage } from './pages/DashboardPage'
-import { EvePage } from './pages/EvePage'
 import { DocumentsPage } from './pages/DocumentsPage'
 import { DocumentOpenerPage } from './pages/DocumentOpenerPage'
 import { HackathonsPage } from './pages/HackathonsPage'
 import { HackathonDetailPage } from './pages/HackathonDetailPage'
 import { JobsPage } from './pages/JobsPage'
-import { MailsPage } from './pages/MailsPage'
-import { WhatsAppPage } from './pages/WhatsAppPage'
-import { ChatsPage } from './pages/ChatsPage'
-import { CallsPage } from './pages/CallsPage'
-import { ContactsPage } from './pages/ContactsPage'
-import { IncomingCallOverlay } from './components/calls/IncomingCallOverlay'
-import { ProfilePage } from './pages/ProfilePage'
-import { ProjectDetailPage } from './pages/ProjectDetailPage'
 import { ProjectsPage } from './pages/ProjectsPage'
+import { ProjectDetailPage } from './pages/ProjectDetailPage'
 import { SettingPage } from './pages/SettingPage'
 import { ThemesPage } from './pages/ThemesPage'
 import { StatsPage } from './pages/StatsPage'
 import { TodoPage } from './pages/TodoPage'
-import { WorkspacePage } from './pages/WorkspacePage'
+import { ProfilePage } from './pages/ProfilePage'
+import { IncomingCallOverlay } from './components/calls/IncomingCallOverlay'
+// Heavy pages lazy (Vercel split: monaco, whatsapp 1.3k, WebRTC, Eve)
+const CalendarPage = lazy(() => import('./pages/CalendarPage').then((m) => ({ default: m.CalendarPage })))
+const CompetitiveCodingPage = lazy(() => import('./pages/CompetitiveCodingPage').then((m) => ({ default: m.CompetitiveCodingPage })))
+const EvePage = lazy(() => import('./pages/EvePage').then((m) => ({ default: m.EvePage })))
+const MailsPage = lazy(() => import('./pages/MailsPage').then((m) => ({ default: m.MailsPage })))
+const WhatsAppPage = lazy(() => import('./pages/WhatsAppPage').then((m) => ({ default: m.WhatsAppPage })))
+const ChatsPage = lazy(() => import('./pages/ChatsPage').then((m) => ({ default: m.ChatsPage })))
+const CallsPage = lazy(() => import('./pages/CallsPage').then((m) => ({ default: m.CallsPage })))
+const ContactsPage = lazy(() => import('./pages/ContactsPage').then((m) => ({ default: m.ContactsPage })))
+const WorkspacePage = lazy(() => import('./pages/WorkspacePage').then((m) => ({ default: m.WorkspacePage })))
 import { AuthPage } from './pages/AuthPage'
 import { ForgotPasswordPage } from './pages/ForgotPasswordPage'
 import { OnboardingPage } from './pages/OnboardingPage'
@@ -320,20 +321,20 @@ function App() {
 
   const pages = {
     dashboard: (
-      <DashboardPage
-        tasks={tasks}
-        projects={projects}
-        jobs={jobs}
-        documents={documents}
-        contestSites={contestSites}
-        hackathons={hackathons}
-        notifications={notifications}
-        calendarEventIndex={calendarEventIndex}
-        onNavigate={navigateWorkspace}
-        onCreate={requestCreation}
-        onOpenNotifications={() => setNotificationsOpen(true)}
-      />
-    ),
+        <DashboardPage
+          tasks={tasks}
+          projects={projects}
+          jobs={jobs}
+          documents={documents}
+          contestSites={contestSites}
+          hackathons={hackathons}
+          notifications={notifications}
+          calendarEventIndex={calendarEventIndex}
+          onNavigate={navigateWorkspace}
+          onCreate={requestCreation}
+          onOpenNotifications={() => setNotificationsOpen(true)}
+        />
+      ),
     eve: (
       <EvePage
         activeSubpage="chat"
@@ -512,21 +513,21 @@ function App() {
         onSignOut={handleSignOut}
       />
     ),
-    themes: <ThemesPage />,
-    setting: (
-      <SettingPage
-        user={userProfile}
-        onNavigate={navigateWorkspace}
-        onGoogleCalendarsChange={setGoogleCalendarEvents}
-        onHackathonsChange={setHackathons}
-        onContestSitesChange={setContestSites}
-        importedIcsCalendars={importedIcsCalendars}
-        setImportedIcsCalendars={setImportedIcsCalendars}
-        importedIcsEvents={importedIcsEvents}
-        setImportedIcsEvents={setImportedIcsEvents}
-        onSignOut={handleSignOut}
-      />
-    ),
+      themes: <ThemesPage />,
+      setting: (
+        <SettingPage
+          user={userProfile}
+          onNavigate={navigateWorkspace}
+          onGoogleCalendarsChange={setGoogleCalendarEvents}
+          onHackathonsChange={setHackathons}
+          onContestSitesChange={setContestSites}
+          importedIcsCalendars={importedIcsCalendars}
+          setImportedIcsCalendars={setImportedIcsCalendars}
+          importedIcsEvents={importedIcsEvents}
+          setImportedIcsEvents={setImportedIcsEvents}
+          onSignOut={handleSignOut}
+        />
+      ),
   }
 
   if (route === '/') {
@@ -614,7 +615,7 @@ function App() {
           contestSites,
         }}
       >
-        {pages[activePage] ?? pages.dashboard}
+        <Suspense fallback={<WaveLoader />}>{pages[activePage] ?? pages.dashboard}</Suspense>
       </AppLayout>
       <IncomingCallOverlay callCenter={callCenter} myUid={userProfile?.uid} />
     </>

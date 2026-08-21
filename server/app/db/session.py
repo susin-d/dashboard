@@ -1,5 +1,6 @@
 """Async database engine, session generator, and model initialization."""
 
+import asyncio
 from collections.abc import AsyncGenerator
 from sqlalchemy.ext.asyncio import (
     AsyncSession,
@@ -48,7 +49,7 @@ engine = create_async_engine(
     echo=False,
     future=True,
     pool_pre_ping=True,
-    **({} if is_sqlite else {"pool_size": 10, "max_overflow": 20}),
+    **({} if is_sqlite else {"pool_size": 5, "max_overflow": 5, "pool_recycle": 300, "pool_timeout": 30}),
 )
 
 sync_engine = create_engine(
@@ -56,7 +57,7 @@ sync_engine = create_engine(
     echo=False,
     future=True,
     pool_pre_ping=True,
-    **({} if is_sqlite else {"pool_size": 10, "max_overflow": 20}),
+    **({} if is_sqlite else {"pool_size": 5, "max_overflow": 5, "pool_recycle": 300, "pool_timeout": 30}),
 )
 
 async_session_factory = async_sessionmaker(
@@ -79,11 +80,18 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
 
 
 async def init_db() -> None:
-    """Initialize database tables."""
+    """Initialize database tables.
+
+    e2-micro note: _ensure_* ALTERs run off the event loop via to_thread to avoid
+    blocking lifespan; create_all is already async via run_sync.
+    """
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
-    _ensure_call_messages_column()
-    _ensure_whatsapp_columns()
+    # Run sync ALTERs off the loop so single worker stays responsive
+    await asyncio.to_thread(_ensure_call_messages_column)
+    await asyncio.to_thread(_ensure_whatsapp_columns)
+    # Composite indexes for pagination hot paths (lean, concurrent-safe)
+    await asyncio.to_thread(_ensure_performance_indexes)
 
 
 def _ensure_call_messages_column() -> None:
@@ -150,4 +158,51 @@ def _ensure_whatsapp_columns() -> None:
             conn.execute(text("ALTER TABLE whatsapp_chats ADD COLUMN IF NOT EXISTS is_muted BOOLEAN DEFAULT FALSE"))
             conn.execute(text("ALTER TABLE whatsapp_chats ADD COLUMN IF NOT EXISTS is_archived BOOLEAN DEFAULT FALSE"))
             conn.execute(text("ALTER TABLE whatsapp_chats ADD COLUMN IF NOT EXISTS eve_auto_reply BOOLEAN DEFAULT FALSE"))
+        conn.commit()
+
+
+def _ensure_performance_indexes() -> None:
+    """Create composite indexes for pagination hot paths (lean, e2-micro safe).
+
+    Uses IF NOT EXISTS + CONCURRENTLY avoidance (within transaction) for 1-10 users.
+    For larger scale, move to Alembic migration with CONCURRENTLY outside txn.
+    """
+    if is_sqlite:
+        # SQLite: simple indexes; sync_engine already handles it, errors ignored if exists
+        stmts = [
+            "CREATE INDEX IF NOT EXISTS ix_jobs_user_deleted_created ON jobs(user_id, deleted, created_at DESC, id DESC)",
+            "CREATE INDEX IF NOT EXISTS ix_projects_user_deleted_created ON projects(user_id, deleted, created_at DESC, id DESC)",
+            "CREATE INDEX IF NOT EXISTS ix_hackathons_user_deleted_created ON hackathons(user_id, deleted, created_at DESC, id DESC)",
+            "CREATE INDEX IF NOT EXISTS ix_documents_user_deleted_updated ON documents(user_id, deleted, updated_at DESC, id DESC)",
+            "CREATE INDEX IF NOT EXISTS ix_todos_user_deleted_due ON todos(user_id, deleted, due_date, created_at DESC)",
+            "CREATE INDEX IF NOT EXISTS ix_contacts_user_deleted_name ON contacts(user_id, deleted, name)",
+            "CREATE INDEX IF NOT EXISTS ix_notifications_user_read_created ON notifications(user_id, read, created_at DESC)",
+            "CREATE INDEX IF NOT EXISTS ix_calls_status_updated ON calls(status, updated_at) WHERE status='ringing'",
+            "CREATE INDEX IF NOT EXISTS ix_whatsapp_messages_user_chat_ts ON whatsapp_messages(user_id, chat_id, timestamp DESC)",
+            "CREATE INDEX IF NOT EXISTS ix_calls_participants_created ON calls(caller_id, receiver_id, created_at DESC)",
+        ]
+        with sync_engine.connect() as conn:
+            for stmt in stmts:
+                try:
+                    conn.execute(text(stmt))
+                except Exception:
+                    pass
+            conn.commit()
+        return
+    # Postgres: IF NOT EXISTS is safe inside txn for 1-10 users; no CONCURRENTLY needed on small tables
+    stmts = [
+        "CREATE INDEX IF NOT EXISTS ix_jobs_user_deleted_created ON jobs(user_id, deleted, created_at DESC, id DESC)",
+        "CREATE INDEX IF NOT EXISTS ix_projects_user_deleted_created ON projects(user_id, deleted, created_at DESC, id DESC)",
+        "CREATE INDEX IF NOT EXISTS ix_hackathons_user_deleted_created ON hackathons(user_id, deleted, created_at DESC, id DESC)",
+        "CREATE INDEX IF NOT EXISTS ix_documents_user_deleted_updated ON documents(user_id, deleted, updated_at DESC, id DESC)",
+        "CREATE INDEX IF NOT EXISTS ix_todos_user_deleted_due ON todos(user_id, deleted, due_date, created_at DESC)",
+        "CREATE INDEX IF NOT EXISTS ix_contacts_user_deleted_name ON contacts(user_id, deleted, name)",
+        "CREATE INDEX IF NOT EXISTS ix_notifications_user_read_created ON notifications(user_id, read, created_at DESC)",
+        "CREATE INDEX IF NOT EXISTS ix_calls_status_updated ON calls(status, updated_at) WHERE status='ringing'",
+        "CREATE INDEX IF NOT EXISTS ix_whatsapp_messages_user_chat_ts ON whatsapp_messages(user_id, chat_id, timestamp DESC)",
+        "CREATE INDEX IF NOT EXISTS ix_calls_participants_created ON calls(caller_id, receiver_id, created_at DESC)",
+    ]
+    with sync_engine.connect() as conn:
+        for stmt in stmts:
+            conn.execute(text(stmt))
         conn.commit()

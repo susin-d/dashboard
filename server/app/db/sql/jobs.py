@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-from sqlalchemy import select
+from sqlalchemy import and_, or_, select
 from sqlalchemy.orm import Session
 
 from app.db.sql._shared import coerce_model_value
@@ -99,9 +99,19 @@ def query_jobs(session: Session, user_id: str, query: SqlQuery) -> list[SqlSnaps
         cursor = session.get(Job, query._start_after_doc_id)
         if cursor and cursor.created_at:
             if query._order_by in ("created_at", None) and query._direction == "DESC":
-                stmt = stmt.where(Job.created_at < cursor.created_at)
+                stmt = stmt.where(
+                    or_(
+                        Job.created_at < cursor.created_at,
+                        and_(Job.created_at == cursor.created_at, Job.id < cursor.id),
+                    )
+                )
             elif query._order_by == "created_at":
-                stmt = stmt.where(Job.created_at > cursor.created_at)
+                stmt = stmt.where(
+                    or_(
+                        Job.created_at > cursor.created_at,
+                        and_(Job.created_at == cursor.created_at, Job.id > cursor.id),
+                    )
+                )
     if query._order_by == "created_at":
         stmt = stmt.order_by(Job.created_at.desc() if query._direction == "DESC" else Job.created_at.asc())
         stmt = stmt.order_by(Job.id.desc() if query._direction == "DESC" else Job.id.asc())

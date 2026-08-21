@@ -1,3 +1,4 @@
+import asyncio
 import logging
 import os
 import re
@@ -27,6 +28,20 @@ ALLOWED_ORIGIN_REGEX = (
 )
 
 
+def _is_allowed_origin(origin: str | None) -> bool:
+    """Check origin against ALLOWED_ORIGIN_REGEX and explicit cors_origins.
+
+    Used to avoid echoing arbitrary Origin headers with Allow-Credentials.
+    """
+    if not origin:
+        return False
+    # Check regex first (covers localhost, susindran.in, vercel.app)
+    if re.match(ALLOWED_ORIGIN_REGEX, origin):
+        return True
+    # Fallback to explicit allowlist with exact match
+    return origin in settings.cors_origins
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     logger.info("Initializing %s (env=%s)...", settings.app_name, settings.app_env)
@@ -39,8 +54,10 @@ async def lifespan(app: FastAPI):
         await init_db()
     except Exception as err:
         logger.warning("Could not auto-init database tables: %s", err)
-    # Only start background worker daemon in non-serverless environments
-    is_serverless = bool(os.getenv("VERCEL") or os.getenv("AWS_LAMBDA_FUNCTION_NAME"))
+    # Unified serverless detection: VERCEL (Vercel), AWS_LAMBDA_FUNCTION_NAME (Lambda), or explicit IS_SERVERLESS
+    is_serverless = bool(
+        os.getenv("VERCEL") or os.getenv("AWS_LAMBDA_FUNCTION_NAME") or os.getenv("IS_SERVERLESS") == "true"
+    )
     if not is_serverless:
         try:
             server_worker.start()
@@ -85,7 +102,7 @@ def create_app() -> FastAPI:
             content={"detail": exc.detail},
             headers=getattr(exc, "headers", None) or {},
         )
-        if origin:
+        if _is_allowed_origin(origin):
             response.headers["Access-Control-Allow-Origin"] = origin
             response.headers["Access-Control-Allow-Credentials"] = "true"
         return response
@@ -97,7 +114,7 @@ def create_app() -> FastAPI:
             status_code=422,
             content={"detail": exc.errors()},
         )
-        if origin:
+        if _is_allowed_origin(origin):
             response.headers["Access-Control-Allow-Origin"] = origin
             response.headers["Access-Control-Allow-Credentials"] = "true"
         return response
@@ -114,7 +131,7 @@ def create_app() -> FastAPI:
                 else "An internal server error occurred."
             },
         )
-        if origin:
+        if _is_allowed_origin(origin):
             response.headers["Access-Control-Allow-Origin"] = origin
             response.headers["Access-Control-Allow-Credentials"] = "true"
         return response

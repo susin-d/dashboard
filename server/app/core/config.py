@@ -115,8 +115,12 @@ class Settings:
     smtp_use_tls: bool = os.getenv("SMTP_USE_TLS", "true").lower() == "true"
     smtp_use_ssl: bool = os.getenv("SMTP_USE_SSL", "false").lower() == "true"
     cron_secret: str | None = os.getenv("CRON_SECRET", "starwaves-cron-secret")
-    is_serverless: bool = os.getenv("IS_SERVERLESS", "false").lower() == "true"
+    # Unified serverless flag: VERCEL/Lambda auto-detect + explicit IS_SERVERLESS override (see main.py lifespan)
+    is_serverless: bool = bool(
+        os.getenv("VERCEL") or os.getenv("AWS_LAMBDA_FUNCTION_NAME") or os.getenv("IS_SERVERLESS", "false").lower() == "true"
+    )
     workspace_storage_path: str = os.getenv("WORKSPACE_STORAGE_PATH", "workspaces")
+    redis_url: str | None = os.getenv("REDIS_URL") or None
     whatsapp_gateway_url: str = os.getenv(
         "WHATSAPP_GATEWAY_URL",
         "http://whatsapp-worker:3001" if os.path.exists("/.dockerenv") else "http://127.0.0.1:3001",

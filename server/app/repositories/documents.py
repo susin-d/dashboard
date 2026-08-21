@@ -24,16 +24,35 @@ def _from_snapshot(snapshot) -> DocumentResponse:
 
 
 def list_documents(database: Client, user_id: str) -> list[DocumentResponse]:
+    # Legacy capped to 100 for e2-micro safety
     query = _collection(database, user_id).order_by(
         "modified_at",
         direction=firestore.Query.DESCENDING,
     )
     results = []
+    count = 0
     for snapshot in query.stream():
+        if count >= 100:
+            break
         data = snapshot.to_dict() or {}
         if not data.get("deleted"):
             results.append(_from_snapshot(snapshot))
+            count += 1
     return results
+
+
+def list_documents_page(database: Client, user_id: str, cursor: str | None, limit: int):
+    from app.repositories.pagination import paginate_collection
+
+    coll = _collection(database, user_id)
+    raw, next_cursor, has_more = paginate_collection(coll, "modified_at", cursor, limit)
+    items = []
+    for data in raw:
+        if data.get("deleted"):
+            continue
+        fake = type("S", (), {"id": data["id"], "to_dict": lambda s, d=data: d})()
+        items.append(_from_snapshot(fake))
+    return items, next_cursor, has_more
 
 
 def get_document(

@@ -4,7 +4,7 @@ Living project snapshot for AI agents. `AGENTS.md` holds the permanent rules;
 this file holds the **current state** of the codebase and must be kept up to
 date whenever the implementation changes.
 
-> **Last updated:** 2026-08-21 (Continuation: split `ContactsPage` 806 → `contacts/` 8 modules + `searchIndex` 785 → `search/` 7 modules; facade-preserving; lint/build/test OK)
+> **Last updated:** 2026-08-21 (Perf+Scalability for e2-micro 1-10 users: lean PG 128M/50 conns, pools 5/5, redis 96M, vite split 917KB→415KB main + lazy, worker bounds 200/500, sync caps 50/10M, CORS origin validate, indexes + keyset tie-breaker, todos/docs/contacts paginated; Vercel frontend + VM api.starwaves, no backup)
 
 ---
 
@@ -56,14 +56,14 @@ Starwaves/
 │       ├── internal/        Internal modular packages (models, parser, contacts, webhook, events, session, api)
 │       ├── Dockerfile       Alpine multi-stage Go build
 │       └── main.go          Service entry point & router initialization
-├── nginx/                   Nginx reverse proxy configuration
-│   ├── nginx.conf           Global Nginx configuration (Gzip, buffers, security)
-│   └── conf.d/default.conf  Reverse proxy virtual host (port 80/443, WebSocket, health, frontend SPA)
-├── docker-compose.yml       Multi-container orchestration for PostgreSQL 16, FastAPI server, React website, WhatsApp worker, & Nginx
-├── .env.docker.example      Docker deployment environment template (PostgreSQL DATABASE_URL)
-├── DOCKER.md                Container setup & operational documentation
+├── nginx/                   Nginx reverse proxy (e2-micro: 5r/s limit_req on /api/ & /ws/, 20M cap, Gzip)
+│   ├── nginx.conf           Global config with limit_req_zone api 5r/s
+│   └── conf.d/default.conf  VM api domain (api.starwaves.susindran.in) — /health, /ws/ 3600s, /api/ 60s, optional SPA
+├── docker-compose.yml       Lean e2-micro compose: PG 128M/50 conns + redis 96M + server 512M/0.8cpu + workspace-data + redis-data + whatsapp-data
+├── .env.docker.example      Docker env template + REDIS_URL + WORKSPACE_STORAGE_PATH + CRON_SECRET + Vercel split + swap warning
+├── DOCKER.md                Lean e2-micro + Vercel split + swap 1G + down -v warning
 ├── SPEECH_PROVIDERS.md      TTS/STT provider comparison for Eve voice
-└── vercel.json              Serverless rewrites
+└── vercel.json              Vercel SPA rewrites (frontend only; VM handles /api via api.* domain)
 ```
 
 ## 3. Backend (FastAPI)
@@ -74,7 +74,7 @@ Starwaves/
  - **Route registry**: `server/app/api/router.py` includes all top-level routers.
  - **Prefix**: `/api/v1` (see `server/app/core/config.py`).
  - **Auth**: Bearer `itsdangerous` tokens via `server/app/core/auth.py`.
- - **Performance Layer (2026-08-21)**: All hot read paths are non-blocking (`async def` + `asyncio.to_thread` for the sync SQL compat layer), pagination uses server-side `WHERE deleted=false` + keyset `start_after` with `limit+1` (no 3x over-fetch), and per-endpoint in-memory TTL caches: Gmail status/token (30s/50m), Google Calendar data (5m), Drive status/token (30s/50m), GitHub status (30s), AI config (60s), Eve memories (60s), web search/pages (10m), workspace tree (3s). WhatsApp service is fully `httpx.AsyncClient` with short connect timeouts; workspace file reads/writes/tree/sync are `to_thread` with sync parallelization. Postgres is tuned (`shared_buffers 256MB`, `synchronous_commit off`, `work_mem 16MB` in `docker-compose.yml`).
+  - **Performance Layer (2026-08-21, rev e2-micro 1-10 users)**: Hot reads non-blocking (`async def` + `to_thread`), pagination `WHERE deleted=false` + keyset `(created_at,id)` tie-breaker + `limit+1`, `todos/docs/contacts` now paginated (`cursor&limit` 50, legacy list capped 100) with composite indexes (`ix_*_user_deleted_created`, `ix_calls_status_updated`, `ix_whatsapp_*`, etc. via `_ensure_performance_indexes` + `to_thread` in `init_db`). Pools tuned for 1GB: `pool 5/5 recycle 300 timeout 30` (was 10/20). Worker scans bounded: stale calls `limit 200`, maintenance `limit 500` + Redis `SETNX` locks (VM redis). `POST /workspace-files/sync` capped `50 files/10MB` + `Semaphore(5)`. `GET /calls/incoming|recent` now `async+to_thread`. CORS exception handlers validate origin via `_is_allowed_origin` (regex + allowlist). Unified `is_serverless` (VERCEL/Lambda/IS_SERVERLESS). Redis abstraction `app/core/cache.py` (Redis SETEX else LRU 1000 local, 96M allkeys-lru on VM). Workspace local disk via `workspace-data` volume + `WORKSPACE_STORAGE_PATH`/`REDIS_URL`. Frontend `vite` split `manualChunks(vendor|firebase|monaco|grid)` + lazy (`Calendar/Eve/Workspace/WhatsApp/Calls/Chats/Mails/CompetitiveCoding`), `request.js` dedup+30s cache+429 retry, Nginx `limit_req 5r/s`. Postgres lean: `128M shared, 512M effective_cache, 8M work, 64M maint, 50 max_conn, log_min 1000`.
 
 ### Route groups
 
@@ -128,7 +128,7 @@ OAuth secrets, Gmail/Drive/Chat callbacks, AI provider keys for EVE
 `GEMINI_API_KEY`/`GEMINI_URL`/`GEMINI_MODEL`), EVE speech keys
 (`GROQ_API_KEY`/`GROQ_URL`/`GROQ_STT_MODEL`,
 `GOOGLE_CLOUD_TTS_API_KEY`/`GOOGLE_CLOUD_TTS_URL`/`GOOGLE_CLOUD_TTS_VOICE`),
-`is_serverless`, `workspace_storage_path`,
+unified `is_serverless` (VERCEL|Lambda|IS_SERVERLESS), `workspace_storage_path`, `redis_url` (VM 96M),
 SMTP, Firestore database id, CORS origins. Loads `.env.prod` before `.env`.
 
 ## 4. Frontend (React)
@@ -155,7 +155,7 @@ SMTP, Firestore database id, CORS origins. Loads `.env.prod` before `.env`.
   `googleContacts`, `googleDriveApi`, `eveApi`, `eveSchedulesApi`, `emailApi`, `githubApi`,
   `googleChatApi`, `codingStatsApi`, `competitiveCodingProfileApi`,
   `documentsApi`, `contactsApi`, `callsApi`, `callsSocket`, `aiModelsApi`, `eveSpeechApi`), plus shared `request.js`
-  (single `API_URL` + `apiRequest` wrapper), `firebase.js`, `authApi.js`,
+  (`API_URL` + `apiRequest` with dedup Map + 30s GET cache (100 bound) + 429/502 retry + `clearRequestCache`), `firebase.js`, `authApi.js`,
   `index.js`.
 - **Themes** (`src/themes/`): `presets.js` holds `THEME_PRESETS` (parsed from
   CSS files in `src/styles/themes/`), option metadata (`PALETTE_GROUPS`,

@@ -23,16 +23,37 @@ def values_for_firestore(values: dict) -> dict:
 
 
 def list_todos(database: Client, user_id: str) -> list[TodoResponse]:
+    # Legacy: full fetch capped to 100 for safety; prefer paginated endpoint
     query = collection(database, user_id).order_by(
         "created_at",
         direction=firestore.Query.DESCENDING,
     )
     results = []
+    count = 0
     for snapshot in query.stream():
+        if count >= 100:
+            break
         data = snapshot.to_dict() or {}
         if not data.get("deleted"):
             results.append(from_snapshot(snapshot))
+            count += 1
     return results
+
+
+def list_todos_page(database: Client, user_id: str, cursor: str | None, limit: int):
+    from app.repositories.pagination import paginate_collection
+
+    coll = collection(database, user_id)
+    raw, next_cursor, has_more = paginate_collection(coll, "created_at", cursor, limit)
+    items = []
+    for data in raw:
+        # paginate_collection already filtered deleted when possible; double-check
+        if data.get("deleted"):
+            continue
+        # Reconstruct snapshot-like dict for from_snapshot
+        fake = type("S", (), {"id": data["id"], "to_dict": lambda s, d=data: d})()
+        items.append(from_snapshot(fake))
+    return items, next_cursor, has_more
 
 
 def get_todo(

@@ -6,6 +6,8 @@ is required. The HTTP endpoints remain for REST semantics and for callers
 that are not yet connected to the WebSocket.
 """
 
+import asyncio
+
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from google.cloud.firestore_v1 import Client
 
@@ -68,23 +70,25 @@ def _newest_incoming(repository: CallRepository, uid: str) -> dict | None:
 
 
 @router.get("/incoming", response_model=list[CallResponse])
-def list_incoming_calls(
+async def list_incoming_calls(
     database: Client = Depends(get_firestore),
     user: dict = Depends(get_current_user),
 ):
     repository = CallRepository(database)
-    # expire stale calls is handled by background worker; avoid per-request scan to keep latency low
-    return [_serialize(call) for call in repository.list_incoming(user["uid"])]
+    # Offload sync Firestore call to threadpool so single e2-micro worker stays responsive
+    incoming = await asyncio.to_thread(repository.list_incoming, user["uid"])
+    return [_serialize(call) for call in incoming]
 
 
 @router.get("/recent", response_model=list[CallResponse])
-def list_recent_calls(
+async def list_recent_calls(
     limit: int = Query(default=20, ge=1, le=RECENT_CALL_LIMIT),
     database: Client = Depends(get_firestore),
     user: dict = Depends(get_current_user),
 ):
     repository = CallRepository(database)
-    return [_serialize(call) for call in repository.list_recent(user["uid"], limit)]
+    recent = await asyncio.to_thread(repository.list_recent, user["uid"], limit)
+    return [_serialize(call) for call in recent]
 
 
 @router.post(
@@ -153,13 +157,14 @@ async def create_call(
 
 
 @router.get("/{call_id}", response_model=CallResponse)
-def get_call(
+async def get_call(
     call_id: str,
     database: Client = Depends(get_firestore),
     user: dict = Depends(get_current_user),
 ):
     repository = CallRepository(database)
-    call = _require_participant(repository.get(call_id), user["uid"])
+    call = await asyncio.to_thread(repository.get, call_id)
+    call = _require_participant(call, user["uid"])
     return _serialize(call)
 
 

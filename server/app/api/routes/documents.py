@@ -1,5 +1,5 @@
 import asyncio
-from fastapi import APIRouter, Depends, HTTPException, Response, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
 from google.cloud.firestore_v1 import Client
 
 from app.core.auth import get_current_user
@@ -10,11 +10,17 @@ from app.schemas.document import DocumentResponse, DocumentUpsert
 router = APIRouter(prefix="/documents")
 
 
-@router.get("", response_model=list[DocumentResponse])
+@router.get("")
 async def list_documents(
+    cursor: str | None = None,
+    limit: int | None = Query(default=None, ge=1, le=50),
     database: Client = Depends(get_firestore),
     user: dict = Depends(get_current_user),
 ):
+    if cursor is not None or limit is not None:
+        eff_limit = limit or 20
+        items, next_cursor, has_more = await asyncio.to_thread(documents.list_documents_page, database, user["uid"], cursor, eff_limit)
+        return {"items": items, "next_cursor": next_cursor, "has_more": has_more}
     return await asyncio.to_thread(documents.list_documents, database, user["uid"])
 
 

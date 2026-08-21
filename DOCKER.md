@@ -8,11 +8,12 @@ This guide explains how to build, run, and manage the full StarWaves stack (Reac
 
 | Service | Container Name | Internal Port | Host Port | Description |
 | --- | --- | --- | --- | --- |
-| **nginx** | `starwaves-nginx` | `80`, `443` | `80`, `443` | Edge reverse proxy routing `/` to website, `/api/` & `/ws/` to backend |
-| **website** | `starwaves-website` | `80` | `3000` | React 19 + Vite frontend SPA with client-side routing |
-| **server** | `starwaves-server` | `8000` | `8000` | FastAPI backend with Uvicorn, WebSockets, & background worker |
-| **postgres** | `starwaves-postgres` | `5432` | `5432` | PostgreSQL 16 relational database |
-| **whatsapp-worker** | `starwaves-whatsapp-worker` | `3001` | `3001` | Go WhatsApp Baileys/Whatsmeow worker daemon |
+| **nginx** | `starwaves-nginx` | `80`, `443` | `80`, `443` | Edge reverse proxy (VM: `api.starwaves.susindran.in` → `/api/` & `/ws/`; `/` local dev only) + 5r/s rate limit |
+| **website** | `starwaves-website` | `80` | `3000` | React 19 + Vite frontend SPA (prod on Vercel `starwaves.susindran.in`, VM keeps for local dev) |
+| **server** | `starwaves-server` | `8000` | `—` (expose only) | FastAPI (Uvicorn 1 worker, e2-micro 512M limit, pools 5/5, Redis cache) |
+| **postgres** | `starwaves-postgres` | `5432` | `5432` | PostgreSQL 16 (e2-micro: 128M shared_buffers, 512M effective_cache, 50 max_conn) |
+| **redis** | `starwaves-redis` | `6379` | `—` | Redis 7 (96M, allkeys-lru, RDB on VM disk) for caches/locks/rate limit |
+| **whatsapp-worker** | `starwaves-whatsapp-worker` | `3001` | `3001` | Go WhatsApp Whatsmeow worker (local volume `whatsapp-data`) |
 
 ---
 
@@ -87,7 +88,9 @@ curl -i http://localhost:3000/
 | **View nginx logs** | `docker compose logs -f nginx` |
 | **Restart services** | `docker compose restart` |
 | **Stop stack** | `docker compose down` |
-| **Stop stack & remove volumes** | `docker compose down -v` |
+| **Stop stack & remove volumes** | `docker compose down -v` ⚠️ **WILL DELETE** `postgres-data`, `workspace-data`, `whatsapp-data`, `redis-data` (no backup on free tier) |
+| **Check e2-micro RAM** | `docker stats --no-stream` + `free -h` + `df -h` |
+| **Create 1G swap (Ubuntu once)** | `sudo fallocate -l 1G /swapfile && sudo chmod 600 /swapfile && sudo mkswap /swapfile && sudo swapon /swapfile && echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab` |
 | **Run server unit tests inside container** | `docker compose exec server python -m unittest discover tests` |
 | **Rebuild website image without cache** | `docker compose build --no-cache website` |
 | **Rebuild server image without cache** | `docker compose build --no-cache server` |

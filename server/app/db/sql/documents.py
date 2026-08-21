@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-from sqlalchemy import select
+from sqlalchemy import and_, or_, select
 from sqlalchemy.orm import Session
 
 from app.db.sql._shared import coerce_model_value
@@ -94,13 +94,33 @@ def query_documents(session: Session, user_id: str, query: SqlQuery) -> list[Sql
             ts = cursor.updated_at or cursor.created_at
             if ts:
                 if query._order_by == "modified_at" and query._direction == "DESC":
-                    stmt = stmt.where(Document.updated_at < ts)
+                    stmt = stmt.where(
+                        or_(
+                            Document.updated_at < ts,
+                            and_(Document.updated_at == ts, Document.id < cursor.id),
+                        )
+                    )
                 elif query._order_by == "modified_at":
-                    stmt = stmt.where(Document.updated_at > ts)
+                    stmt = stmt.where(
+                        or_(
+                            Document.updated_at > ts,
+                            and_(Document.updated_at == ts, Document.id > cursor.id),
+                        )
+                    )
                 elif query._direction == "DESC":
-                    stmt = stmt.where(Document.created_at < cursor.created_at)
+                    stmt = stmt.where(
+                        or_(
+                            Document.created_at < cursor.created_at,
+                            and_(Document.created_at == cursor.created_at, Document.id < cursor.id),
+                        )
+                    )
                 else:
-                    stmt = stmt.where(Document.created_at > cursor.created_at)
+                    stmt = stmt.where(
+                        or_(
+                            Document.created_at > cursor.created_at,
+                            and_(Document.created_at == cursor.created_at, Document.id > cursor.id),
+                        )
+                    )
     if query._order_by == "created_at":
         stmt = stmt.order_by(Document.created_at.desc() if query._direction == "DESC" else Document.created_at.asc())
         stmt = stmt.order_by(Document.id.desc() if query._direction == "DESC" else Document.id.asc())

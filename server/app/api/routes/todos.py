@@ -1,21 +1,31 @@
 import asyncio
-from fastapi import APIRouter, Depends, HTTPException, Response, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
 from google.cloud.firestore_v1 import Client
 
 from app.core.auth import get_current_user
 from app.db import get_firestore
 from app.repositories import todos
+
 from app.schemas.todo import TodoCreate, TodoResponse, TodoUpdate
 
 router = APIRouter(prefix="/todos")
 
 
-@router.get("", response_model=list[TodoResponse])
+@router.get("")
 async def list_todos(
+    cursor: str | None = None,
+    limit: int | None = Query(default=None, ge=1, le=50),
     database: Client = Depends(get_firestore),
     user: dict = Depends(get_current_user),
 ):
-    return await asyncio.to_thread(todos.list_todos, database, user["uid"])
+    # Paginated when cursor/limit supplied; legacy list capped to 100 otherwise for e2-micro safety
+    if cursor is not None or limit is not None:
+        eff_limit = limit or 20
+        items, next_cursor, has_more = await asyncio.to_thread(todos.list_todos_page, database, user["uid"], cursor, eff_limit)
+        return {"items": items, "next_cursor": next_cursor, "has_more": has_more}
+    result = await asyncio.to_thread(todos.list_todos, database, user["uid"])
+    # Back-compat: frontend expects list; return list directly when no pagination
+    return result
 
 
 @router.get("/{todo_id}", response_model=TodoResponse)

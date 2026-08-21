@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-from sqlalchemy import select
+from sqlalchemy import and_, or_, select
 from sqlalchemy.orm import Session
 
 from app.db.sql._shared import coerce_model_value
@@ -84,14 +84,24 @@ def query_todos(session: Session, user_id: str, query: SqlQuery) -> list[SqlSnap
             stmt = stmt.where(Todo.deleted == val) if val else stmt.where(Todo.deleted == False)  # noqa: E712
         elif field == "completed" and op in ("==", "="):
             stmt = stmt.where(Todo.completed == val)
-    # Keyset pagination: start_after cursor id -> filter by created_at
+    # Keyset pagination: start_after cursor id -> filter by (created_at, id) for stable pagination
     if query._start_after_doc_id:
         cursor = session.get(Todo, query._start_after_doc_id)
         if cursor and cursor.created_at:
             if query._order_by == "created_at" and query._direction == "DESC":
-                stmt = stmt.where(Todo.created_at < cursor.created_at)
+                stmt = stmt.where(
+                    or_(
+                        Todo.created_at < cursor.created_at,
+                        and_(Todo.created_at == cursor.created_at, Todo.id < cursor.id),
+                    )
+                )
             elif query._order_by == "created_at":
-                stmt = stmt.where(Todo.created_at > cursor.created_at)
+                stmt = stmt.where(
+                    or_(
+                        Todo.created_at > cursor.created_at,
+                        and_(Todo.created_at == cursor.created_at, Todo.id > cursor.id),
+                    )
+                )
     if query._order_by == "created_at":
         stmt = stmt.order_by(Todo.created_at.desc() if query._direction == "DESC" else Todo.created_at.asc())
         # tie-breaker for stable pagination
