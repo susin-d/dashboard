@@ -28,7 +28,8 @@
 }
 
 .content.whatsapp-fullscreen-content,
-.content:has(.whatsapp-page-wrapper) {
+.content:has(.whatsapp-page-wrapper),
+.content:has(.workspace-page) {
   padding: 0 !important;
   overflow: hidden !important;
   height: 100% !important;
