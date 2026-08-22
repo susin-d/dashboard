@@ -1236,3 +1236,281 @@
 .workspace-toolbar {
   display: none !important;
 }
+
+/* ──── Overview: Workspaces grid ──── */
+
+.ws-overview {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 28px clamp(16px, 4vw, 44px) 48px;
+}
+
+.ws-overview-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  margin: 0 auto 22px;
+  max-width: 1080px;
+}
+
+.ws-overview-header h2 {
+  margin: 0 0 6px;
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--text-primary, #09090b);
+}
+
+.ws-overview-header p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-muted, #71717a);
+}
+
+.ws-overview-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 14px;
+  max-width: 1080px;
+  margin: 0 auto;
+}
+
+/* Card shell */
+.ws-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  border: 1px solid var(--border-color, #e4e4e7);
+  border-radius: 12px;
+  background: var(--bg-card, #ffffff);
+  box-shadow: var(--shadow-sm, 0 1px 3px rgba(0, 0, 0, 0.05));
+  transition:
+    border-color var(--transition-fast, 140ms ease),
+    box-shadow var(--transition-fast, 140ms ease),
+    transform var(--transition-fast, 140ms ease);
+}
+
+.ws-card:hover,
+.ws-card:focus-within {
+  border-color: var(--border-heavy, #a1a1aa);
+  box-shadow: var(--shadow-md, 0 4px 12px rgba(0, 0, 0, 0.08));
+  transform: translateY(-1px);
+}
+
+.ws-card.active {
+  border-color: var(--color-primary, #09090b);
+  box-shadow: var(--shadow-focus, 0 0 0 3px rgba(0, 0, 0, 0.05));
+}
+
+/* Open button: avatar left, name + meta stacked right */
+.ws-card-open {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-areas:
+    'avatar name'
+    'avatar meta';
+  align-items: center;
+  column-gap: 12px;
+  row-gap: 6px;
+  width: 100%;
+  padding: 16px;
+  background: none;
+  border: 0;
+  border-radius: inherit;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+}
+
+.ws-card-open:focus-visible {
+  outline: 2px solid var(--text-primary, #09090b);
+  outline-offset: 2px;
+}
+
+.ws-card-avatar {
+  grid-area: avatar;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: var(--color-primary, #09090b);
+  color: var(--text-inverse, #ffffff);
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.ws-card-name {
+  grid-area: name;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary, #09090b);
+}
+
+.ws-card-meta {
+  grid-area: meta;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  font-size: 12px;
+  color: var(--text-muted, #71717a);
+}
+
+.ws-card-count,
+.ws-card-updated {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+}
+
+.ws-card-updated {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Row actions — revealed on hover / keyboard focus */
+.ws-card-actions {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: flex;
+  gap: 6px;
+  opacity: 0;
+  transition: opacity var(--transition-fast, 140ms ease);
+}
+
+.ws-card:hover .ws-card-actions,
+.ws-card:focus-within .ws-card-actions {
+  opacity: 1;
+}
+
+.ws-card-actions button {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: 1px solid var(--border-color, #e4e4e7);
+  border-radius: 7px;
+  background: var(--bg-card, #ffffff);
+  color: var(--text-primary, #09090b);
+  cursor: pointer;
+  transition:
+    background var(--transition-fast, 140ms ease),
+    border-color var(--transition-fast, 140ms ease),
+    color var(--transition-fast, 140ms ease);
+}
+
+.ws-card-actions button:hover,
+.ws-card-actions button:focus-visible {
+  background: var(--bg-primary, #f4f4f5);
+  border-color: var(--border-heavy, #a1a1aa);
+}
+
+.ws-card-actions button.danger:hover,
+.ws-card-actions button.danger:focus-visible {
+  background: var(--color-primary, #09090b);
+  border-color: var(--color-primary, #09090b);
+  color: var(--text-inverse, #ffffff);
+}
+
+.ws-card-actions button:focus-visible {
+  outline: 2px solid var(--text-primary, #09090b);
+  outline-offset: 1px;
+}
+
+/* Active flag */
+.ws-card-flag {
+  position: absolute;
+  bottom: -9px;
+  right: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 9px;
+  border-radius: var(--radius-full, 999px);
+  background: var(--color-primary, #09090b);
+  color: var(--text-inverse, #ffffff);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+/* Create card */
+.ws-card-create {
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 104px;
+  padding: 20px 14px;
+  border-style: dashed;
+  border-color: var(--border-heavy, #a1a1aa);
+  background: transparent;
+  box-shadow: none;
+  color: var(--text-muted, #71717a);
+  cursor: pointer;
+  font: inherit;
+}
+
+.ws-card-create:hover {
+  background: var(--bg-card, #ffffff);
+  border-color: var(--color-primary, #09090b);
+  color: var(--text-primary, #09090b);
+  transform: translateY(-1px);
+}
+
+.ws-card-create:focus-visible {
+  outline: 2px solid var(--text-primary, #09090b);
+  outline-offset: 2px;
+}
+
+.ws-card-plus {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border: 1px solid var(--border-heavy, #a1a1aa);
+  border-radius: var(--radius-full, 999px);
+  transition: inherit;
+}
+
+.ws-card-create:hover .ws-card-plus {
+  background: var(--color-primary, #09090b);
+  border-color: var(--color-primary, #09090b);
+  color: var(--text-inverse, #ffffff);
+}
+
+.ws-card-create .ws-card-name {
+  overflow: visible;
+  white-space: normal;
+  font-weight: 600;
+  text-align: center;
+}
+
+.ws-card-create .ws-card-meta {
+  justify-content: center;
+  font-size: 11.5px;
+}
+
+@media (max-width: 520px) {
+  .ws-overview {
+    padding: 20px 14px 36px;
+  }
+
+  .ws-overview-grid {
+    grid-template-columns: 1fr;
+  }
+}
