@@ -4,7 +4,7 @@ Living project snapshot for AI agents. `AGENTS.md` holds the permanent rules;
 this file holds the **current state** of the codebase and must be kept up to
 date whenever the implementation changes.
 
-> **Last updated:** 2026-08-21 (Auto-remember: Eve auto-saves durable facts after every AI reply — chat, streaming chat, WhatsApp, calls, schedules — via one bounded extraction LLM call inside `chat_with_eve`/`stream_chat_with_eve`; ON by default; `GET/PUT /settings/eve-memory` + new Settings "Eve memory" section toggle + command-palette entry)
+> **Last updated:** 2026-08-22 (Auto-remember: Eve auto-saves durable facts after every AI reply — chat, streaming chat, WhatsApp, calls, schedules — via one bounded extraction LLM call inside `chat_with_eve`/`stream_chat_with_eve`; ON by default; `GET/PUT /settings/eve-memory` + new Settings "Eve memory" section toggle + command-palette entry)
 
 ---
 
@@ -56,9 +56,14 @@ Starwaves/
 │       ├── internal/        Internal modular packages (models, parser, contacts, webhook, events, session, api)
 │       ├── Dockerfile       Alpine multi-stage Go build
 │       └── main.go          Service entry point & router initialization
-├── nginx/                   Nginx reverse proxy (e2-micro: 5r/s limit_req on /api/ & /ws/, 20M cap, Gzip)
+├── nginx/                     Nginx reverse proxy (e2-micro: 5r/s limit_req on /api/ & /ws/, 20M cap, Gzip)
 │   ├── nginx.conf           Global config with limit_req_zone api 5r/s
 │   └── conf.d/default.conf  VM api domain (api.starwaves.susindran.in) — /health, /ws/ 3600s, /api/ 60s, optional SPA
+├── sql/                       Canonical database SQL (PostgreSQL 16, idempotent, run in listed order)
+│   ├── extensions.sql         pgvector extension (CREATE EXTENSION vector)
+│   ├── schema.sql             16 CREATE TABLE statements mirroring server/app/models/__init__.py
+│   ├── migrations.sql         Idempotent init_db backfill ALTERs (calls.messages, WhatsApp columns, eve_memories.embedding)
+│   └── indexes.sql            Model indexes + performance composites + partial ringing index + pgvector HNSW
 ├── docker-compose.yml       Lean e2-micro compose: pgvector/pgvector 0.8.0-pg16 (128M/50 conns) + redis 96M + server 512M/0.8cpu + workspace-data + redis-data + whatsapp-data
 ├── .env.docker.example      Docker env template + REDIS_URL + WORKSPACE_STORAGE_PATH + CRON_SECRET + Vercel split + swap warning
 ├── DOCKER.md                Lean e2-micro + Vercel split + swap 1G + down -v warning
