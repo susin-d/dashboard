@@ -57,7 +57,7 @@ export function AutoMemorySection() {
         >
           <label className="whatsapp-automation-item">
             <div className="whatsapp-automation-left">
-              <div>
+              <div className="whatsapp-automation-text">
                 <strong>{autoRemember ? 'On' : 'Off'}</strong>
                 <small>
                   {autoRemember
