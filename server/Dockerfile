@@ -20,9 +20,13 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy application source code
 COPY . .
 
-# Create a non-root app user for security best practices
+# Create a non-root app user for security best practices.
+# /app/workspaces must pre-exist with app ownership: named volumes seeded from
+# the image inherit it; without this, the mountpoint lands root-owned and the
+# API 500s on every workspace/studio file operation (Errno 13).
 RUN addgroup --gid 10001 appgroup && \
     adduser --uid 10001 --ingroup appgroup --disabled-password --gecos "" appuser && \
+    mkdir -p /app/workspaces && \
     chown -R appuser:appgroup /app
 
 USER appuser
