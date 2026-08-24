@@ -70,22 +70,28 @@ func (h *Handler) Pair(c *gin.Context) {
 
 	sess, err := h.sessions.GetOrCreate(req.UserID)
 	if err != nil {
+		log.Printf("[Pair] GetOrCreate failed for %s: %v", req.UserID, err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
 	sess.RLock()
 	isConnected := sess.Connected || (sess.Client != nil && sess.Client.IsConnected())
+	isLoggedIn := sess.Client != nil && sess.Client.IsLoggedIn()
+	hasDeviceID := sess.Device != nil && sess.Device.ID != nil
 	phoneNum := sess.PhoneNumber
 	pushName := sess.PushName
 	existingQR := sess.QRCode
 	sess.RUnlock()
 
-	if isConnected {
+	if isConnected || isLoggedIn || hasDeviceID {
+		// Already paired — frontend should use /session/status instead of re-pairing
+		log.Printf("[Pair] user %s already has device %v (connected=%v loggedIn=%v) — returning 200", req.UserID, hasDeviceID, isConnected, isLoggedIn)
 		c.JSON(http.StatusOK, gin.H{
 			"connected":   true,
 			"phoneNumber": phoneNum,
 			"pushName":    pushName,
+			"qrCode":      existingQR,
 		})
 		return
 	}
@@ -105,6 +111,7 @@ func (h *Handler) Pair(c *gin.Context) {
 
 		code, err := sess.Client.PairPhone(context.Background(), cleanPhone, true, whatsmeow.PairClientChrome, "Chrome (Linux)")
 		if err != nil {
+			log.Printf("[PairPhone] failed for %s (%s): %v", req.UserID, cleanPhone, err)
 			c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("pairing code failed: %v", err)})
 			return
 		}
@@ -136,15 +143,22 @@ func (h *Handler) Pair(c *gin.Context) {
 
 	qrChan, err := sess.Client.GetQRChannel(context.Background())
 	if err != nil {
+		log.Printf("[Pair] GetQRChannel failed for %s: %v", req.UserID, err)
 		if existingQR != "" {
 			c.JSON(http.StatusOK, gin.H{"connected": false, "qrCode": existingQR})
 			return
 		}
-		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("GetQRChannel error: %v", err)})
+		// Non-fatal: return 200 so frontend does not retry-storm, includes error for debugging
+		c.JSON(http.StatusOK, gin.H{"connected": false, "qrCode": "", "error": fmt.Sprintf("GetQRChannel error: %v", err)})
 		return
 	}
 
 	if err := sess.Client.Connect(); err != nil {
+		log.Printf("[Pair] Connect failed for %s: %v", req.UserID, err)
+		if strings.Contains(err.Error(), "already connected") || strings.Contains(err.Error(), "already logged in") {
+			c.JSON(http.StatusOK, gin.H{"connected": false, "qrCode": existingQR, "error": err.Error()})
+			return
+		}
 		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("connect error: %v", err)})
 		return
 	}
