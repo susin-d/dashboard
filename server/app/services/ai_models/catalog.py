@@ -94,10 +94,7 @@ AI_PROVIDERS: dict[str, dict[str, Any]] = {
         "default_model": settings.opencode_model,
         "openai_compatible": True,
         "requires_base_url": True,
-        "models": [
-            {"id": "opencode/gpt-5-mini", "label": "GPT-5 mini (via OpenCode)"},
-            {"id": "opencode/claude-sonnet-4-5", "label": "Claude Sonnet 4.5 (via OpenCode)"},
-        ],
+        "models": [],  # API-only — no static fallback
     },
 }
 
