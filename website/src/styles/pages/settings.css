@@ -73,10 +73,10 @@
 /* Card Shells */
 .workspace-settings-card,
 .coding-settings-card {
-  overflow: visible;
+  overflow: hidden;
   background: var(--bg-card);
   border: 1px solid var(--border-color);
-  border-radius: var(--radius-xl, 14px);
+  border-radius: 10px;
   box-shadow: var(--shadow-sm);
 }
 
