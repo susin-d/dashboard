@@ -81,8 +81,9 @@ async def _fetch_gemini_models(api_key: str) -> list[dict[str, str]]:
     models: list[dict[str, str]] = []
     for item in data.get("models") or []:
         mid = (item.get("name") or "").replace("models/", "")  # e.g. models/gemini-2.5-flash
-        if not mid or "gemini" not in mid.lower():
+        if not mid:
             continue
+        # Keep every chat-capable model the provider lists (Gemini, Gemma, LearnLM, …)
         if "generateContent" not in (item.get("supportedGenerationMethods") or []):
             continue
         label = item.get("displayName") or _format_model_label(mid)

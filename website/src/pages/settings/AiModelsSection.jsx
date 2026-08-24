@@ -73,6 +73,7 @@ export function AiModelsSection() {
   const effectiveModels = isDefault
     ? []
     : liveModels[selectedProvider] || selectedProviderDescriptor?.models || []
+  const usingLiveModels = Boolean(liveModels[selectedProvider]?.length)
 
   const modelOptions = isDefault
     ? [{ value: 'default', label: 'Default' }]
@@ -80,6 +81,44 @@ export function AiModelsSection() {
         value: model.id,
         label: model.label,
       }))
+
+  const modelsHint = loadingModels
+    ? 'Fetching models via API…'
+    : usingLiveModels
+      ? `Which model from the selected provider Eve uses. ${effectiveModels.length} available via provider API.`
+      : effectiveModels.length
+        ? `Which model from the selected provider Eve uses. ${effectiveModels.length} in catalog.`
+        : 'Which model from the selected provider Eve uses.'
+
+  // Live-fetch models via provider API whenever a provider is selected without a
+  // typed key — backend resolves the saved user key, then the server env key,
+  // then falls back to the static catalog (GET /settings/ai-models/models/{provider}).
+  useEffect(() => {
+    if (isDefault || apiKey.trim()) return
+    let cancelled = false
+    setLoadingModels(true)
+    setLiveError('')
+    listProviderModels(selectedProvider)
+      .then((res) => {
+        if (cancelled) return
+        const models = res.models || []
+        if (models.length) {
+          setLiveModels((prev) => ({ ...prev, [selectedProvider]: models }))
+          setSelectedModel((current) =>
+            models.some((m) => m.id === current) ? current : models[0]?.id || current,
+          )
+        }
+      })
+      .catch(() => {
+        // Static catalog from the loaded providers list remains as fallback
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingModels(false)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [selectedProvider, isDefault, apiKey])
 
   // Live fetch models via provider API when user types a new key (uses /settings/ai-models/models/{provider}?api_key=...)
   useEffect(() => {
@@ -224,9 +263,7 @@ export function AiModelsSection() {
                 <label>
                   <span>
                     <strong>Model</strong>
-                    <small>
-                      {loadingModels ? 'Fetching models via API…' : `Which model from the selected provider Eve uses.${effectiveModels.length ? ` ${effectiveModels.length} available via API.` : ''}`}
-                    </small>
+                    <small>{modelsHint}</small>
                     {loadingModels && (
                       <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, marginTop: 4, fontSize: '11px', color: 'var(--text-muted)' }}>
                         <Loader2 size={12} className="spin" /> Listing models from provider API…
