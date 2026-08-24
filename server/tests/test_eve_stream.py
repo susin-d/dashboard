@@ -7,15 +7,15 @@ from fastapi.testclient import TestClient
 from app.main import app
 from app.core.auth import get_current_user
 from app.db import get_firestore
-from app.services.ai_models._shared import (
+from app.services.ai_models.contracts import (
     AIServiceError,
     AiConfig,
-    ProviderResponse,
     ProviderClient,
+    ProviderResponse,
     StreamChunk,
     ToolCall,
-    run_tool_loop_stream,
 )
+from app.services.ai_models.loop import run_tool_loop_stream
 
 mock_user = {"uid": "test-user-123", "email": "test@example.com"}
 mock_db = MagicMock()

@@ -8,7 +8,7 @@ from app.services.web_browsing import (
     _clean_text,
     _extract_target_url,
 )
-from app.services.eve import _run_tool
+from app.services.eve import dispatch_tool
 
 
 class TestWebBrowsing(unittest.TestCase):
@@ -179,23 +179,23 @@ class TestWebBrowsing(unittest.TestCase):
         user_id = "test-user-id"
 
         # Test browse_web
-        res, changed, action = _run_tool(mock_db, user_id, "browse_web", {"query": "test"})
+        res, changed, action = dispatch_tool(mock_db, user_id, "browse_web", {"query": "test"})
         self.assertIn("search", res)
 
         # Test search_web
-        res, changed, action = _run_tool(mock_db, user_id, "search_web", {"query": "python"})
+        res, changed, action = dispatch_tool(mock_db, user_id, "search_web", {"query": "python"})
         self.assertEqual(res["query"], "python")
 
         # Test web_search alias
-        res, changed, action = _run_tool(mock_db, user_id, "web_search", {"query": "python"})
+        res, changed, action = dispatch_tool(mock_db, user_id, "web_search", {"query": "python"})
         self.assertEqual(res["query"], "python")
 
         # Test fetch_web_page
-        res, changed, action = _run_tool(mock_db, user_id, "fetch_web_page", {"url": "https://example.com"})
+        res, changed, action = dispatch_tool(mock_db, user_id, "fetch_web_page", {"url": "https://example.com"})
         self.assertEqual(res["title"], "Example")
 
         # Test read_web_page alias
-        res, changed, action = _run_tool(mock_db, user_id, "read_web_page", {"url": "https://example.com"})
+        res, changed, action = dispatch_tool(mock_db, user_id, "read_web_page", {"url": "https://example.com"})
         self.assertEqual(res["title"], "Example")
 
 

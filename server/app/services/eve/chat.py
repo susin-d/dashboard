@@ -7,11 +7,9 @@ from fastapi import HTTPException, status
 from google.cloud.firestore_v1 import Client
 
 from app.repositories import eve_sessions
-from app.services.ai_models import AIServiceError, PROVIDER_CLIENTS, any_provider_available, resolve_ai_config, run_tool_loop
+from app.services.ai_models import AIServiceError, any_provider_available, run_tool_loop
 from app.services.eve.auto_memory import extract_and_save_memories
-from app.services.eve.dispatcher import _run_tool
-from app.services.eve.instructions import EVE_INSTRUCTIONS
-from app.services.eve.memories import _build_instructions, _get_cached_memories, _set_cached_memories
+from app.services.eve.chat_context import resolve_chat_context
 from app.services.eve.tools import EVE_TOOLS
 
 logger = logging.getLogger(__name__)
@@ -37,43 +35,34 @@ def chat_with_eve(
             logger.warning(f"[Eve Chat] Session '{session_id}' not found for user {user_id}: {error}")
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(error)) from error
 
-    # RAG: last user message as query for pgvector semantic recall (top 5)
-    last_query = next((m["content"] for m in reversed(messages) if m.get("role") == "user"), None)
-    instructions = _build_instructions(database, user_id, query=last_query)
-    config = resolve_ai_config(database, user_id)
-    client_class = PROVIDER_CLIENTS[config.provider]
-    client = client_class(config.client_options)
-    conversation: list[Any] = [{"role": message["role"], "content": message["content"]} for message in messages]
-
-    def run_tool(name: str, arguments: dict[str, Any]):
-        return _run_tool(database, user_id, name, arguments)
+    context = resolve_chat_context(database, user_id, messages)
 
     try:
         message, changed_resources, actions = run_tool_loop(
-            client,
-            config,
-            instructions,
-            conversation,
+            context.client,
+            context.config,
+            context.instructions,
+            context.conversation,
             EVE_TOOLS,
-            run_tool,
+            context.run_tool,
         )
     except AIServiceError as error:
         logger.error(
-            f"[Eve Chat] AI service error with provider='{config.provider}', model='{config.model}' for user {user_id}: {error}",
+            f"[Eve Chat] AI service error with provider='{context.config.provider}', model='{context.config.model}' for user {user_id}: {error}",
             exc_info=True,
         )
         raise HTTPException(
             status_code=status.HTTP_502_BAD_GATEWAY,
-            detail=f"Eve AI service error ({config.provider}/{config.model}): {error}",
+            detail=f"Eve AI service error ({context.config.provider}/{context.config.model}): {error}",
         ) from error
     except Exception as error:
         logger.error(
-            f"[Eve Chat] Unexpected execution error with provider='{config.provider}', model='{config.model}' for user {user_id}: {type(error).__name__}: {error}",
+            f"[Eve Chat] Unexpected execution error with provider='{context.config.provider}', model='{context.config.model}' for user {user_id}: {type(error).__name__}: {error}",
             exc_info=True,
         )
         raise HTTPException(
             status_code=status.HTTP_502_BAD_GATEWAY,
-            detail=f"Eve chat error ({config.provider}/{config.model}): {type(error).__name__}: {error}",
+            detail=f"Eve chat error ({context.config.provider}/{context.config.model}): {type(error).__name__}: {error}",
         ) from error
 
     if session_id:
@@ -82,8 +71,8 @@ def chat_with_eve(
             user["uid"],
             session_id,
             [
-                {"role": message["role"], "content": message["content"]}
-                for message in messages
+                {"role": entry["role"], "content": entry["content"]}
+                for entry in messages
             ]
             + [{"role": "assistant", "content": message}],
         )

@@ -4,7 +4,7 @@ from typing import Any
 
 from openai import OpenAI, OpenAIError
 
-from app.services.ai_models._shared import (
+from app.services.ai_models.contracts import (
     AIServiceError,
     ProviderClient,
     ProviderResponse,

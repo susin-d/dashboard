@@ -108,7 +108,7 @@ _TOOL_HANDLERS: dict[str, Any] = {
 }
 
 
-def _run_tool(
+def dispatch_tool(
     database: Client, user_id: str, name: str, arguments: dict[str, Any]
 ) -> tuple[dict[str, Any], str | None, dict[str, Any] | None]:
     """Route a tool call to its single-responsibility handler."""

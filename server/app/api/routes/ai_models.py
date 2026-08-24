@@ -10,7 +10,9 @@ from app.services.ai_models import (
     AI_MODELS_SETTINGS_DOC,
     AI_PROVIDERS,
     DEFAULT_PROVIDER,
-    _provider_key_set,
+    effective_api_key,
+    fetch_provider_models,
+    has_server_key,
     invalidate_ai_config_cache,
     load_ai_preference,
     provider_catalog,
@@ -78,15 +80,13 @@ async def list_provider_models(
     database: Client = Depends(get_firestore),
     user: dict = Depends(get_current_user),
 ):
-    from app.services.ai_models._shared import fetch_provider_models
     preference = load_ai_preference(database, user["uid"])
     user_keys = _extract_user_keys(preference)
     # Use provided api_key if present, else stored user key / env key
     effective_key = api_key or user_keys.get(provider)
     if not effective_key:
-        # Try env-configured key via provider catalog helper
-        from app.services.ai_models._shared import _effective_api_key
-        effective_key = _effective_api_key(provider, user_keys)
+        # Fall back to the server env-configured key for this provider
+        effective_key = effective_api_key(provider, user_keys)
     if provider not in AI_PROVIDERS:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Unknown provider")
     if not effective_key:
@@ -118,7 +118,7 @@ async def save_ai_models(
     is_default = payload.provider == "default"
     provider_descriptor = AI_PROVIDERS.get(payload.provider, {})
     provider_label = "Default" if is_default else provider_descriptor.get("label", payload.provider)
-    has_env = is_default or _provider_key_set(payload.provider)
+    has_env = is_default or has_server_key(payload.provider)
 
     api_key_to_save = payload.api_key.strip() if payload.api_key else None
 

@@ -3,7 +3,7 @@
 from google.cloud.firestore_v1 import Client
 
 from app.repositories.eve import add_memory, delete_memory, list_memories
-from app.services.eve.memories import _get_cached_memories, _set_cached_memories, invalidate_memories_cache
+from app.services.eve.memories import get_cached_memories, set_cached_memories, invalidate_memories_cache
 
 
 def handle_remember_memory(database: Client, user_id: str, arguments: dict) -> tuple[dict, None, None]:
@@ -13,10 +13,10 @@ def handle_remember_memory(database: Client, user_id: str, arguments: dict) -> t
 
 
 def handle_recall_memories(database: Client, user_id: str, arguments: dict) -> tuple[dict, None, None]:
-    cached = _get_cached_memories(database, user_id)
+    cached = get_cached_memories(database, user_id)
     memories = cached if cached is not None else list_memories(database, user_id)
     if cached is None:
-        _set_cached_memories(user_id, memories)
+        set_cached_memories(user_id, memories)
     query = (arguments.get("query") or "").strip().lower()
     if query:
         memories = [m for m in memories if query in m.get("content", "").lower()]

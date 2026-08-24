@@ -8,7 +8,7 @@ from google import genai
 from google.genai import types
 from google.genai.errors import APIError
 
-from app.services.ai_models._shared import (
+from app.services.ai_models.contracts import (
     AIServiceError,
     ProviderClient,
     ProviderResponse,

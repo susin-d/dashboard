@@ -1,24 +1,23 @@
-from app.services.ai_models._shared import (
+from app.services.ai_models.anthropic import AnthropicProviderClient
+from app.services.ai_models.catalog import (
     AI_MODELS_SETTINGS_DOC,
     AI_PROVIDERS,
-    AIServiceError,
-    AiConfig,
     DEFAULT_PROVIDER,
     MAX_TOOL_ROUNDS,
-    ProviderClient,
-    _provider_key_set,
-    any_provider_available,
-    build_ai_config,
-    invalidate_ai_config_cache,
-    load_ai_preference,
-    provider_catalog,
-    resolve_ai_config,
-    run_tool_loop,
-    run_tool_loop_stream,
     validate_preference,
 )
-from app.services.ai_models.anthropic import AnthropicProviderClient
+from app.services.ai_models.config import (
+    any_provider_available,
+    effective_api_key,
+    has_server_key,
+    invalidate_ai_config_cache,
+    load_ai_preference,
+    resolve_ai_config,
+)
+from app.services.ai_models.contracts import AIServiceError, AiConfig, ProviderClient
+from app.services.ai_models.discovery import fetch_provider_models, provider_catalog
 from app.services.ai_models.gemini import GeminiProviderClient
+from app.services.ai_models.loop import run_tool_loop, run_tool_loop_stream
 from app.services.ai_models.openai import OpenAiProviderClient
 from app.services.ai_models.openai_compat import OpenAiCompatibleClient
 
@@ -40,9 +39,10 @@ __all__ = [
     "MAX_TOOL_ROUNDS",
     "PROVIDER_CLIENTS",
     "ProviderClient",
-    "_provider_key_set",
     "any_provider_available",
-    "build_ai_config",
+    "effective_api_key",
+    "fetch_provider_models",
+    "has_server_key",
     "invalidate_ai_config_cache",
     "load_ai_preference",
     "provider_catalog",

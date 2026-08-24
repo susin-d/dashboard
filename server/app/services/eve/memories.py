@@ -13,14 +13,14 @@ from app.services.eve.instructions import EVE_INSTRUCTIONS
 _memories_cache: dict[str, tuple[float, list[dict]]] = {}
 _MEM_TTL = 60  # seconds
 
-def _get_cached_memories(database: Client, user_id: str) -> list[dict] | None:
+def get_cached_memories(database: Client, user_id: str) -> list[dict] | None:
     import time
     entry = _memories_cache.get(user_id)
     if entry and entry[0] > time.monotonic():
         return entry[1]
     return None
 
-def _set_cached_memories(user_id: str, memories: list[dict]) -> None:
+def set_cached_memories(user_id: str, memories: list[dict]) -> None:
     import time
     _memories_cache[user_id] = (time.monotonic() + _MEM_TTL, memories)
 
@@ -28,7 +28,7 @@ def invalidate_memories_cache(user_id: str) -> None:
     _memories_cache.pop(user_id, None)
 
 
-def _build_instructions(database: Client, user_id: str, query: str | None = None) -> str:
+def build_memory_instructions(database: Client, user_id: str, query: str | None = None) -> str:
     # RAG path: semantic search when query present and pgvector available
     if query:
         try:
@@ -43,12 +43,12 @@ def _build_instructions(database: Client, user_id: str, query: str | None = None
                 )
         except Exception:
             pass
-    cached = _get_cached_memories(database, user_id)
+    cached = get_cached_memories(database, user_id)
     if cached is not None:
         memories = cached
     else:
         memories = list_memories(database, user_id)
-        _set_cached_memories(user_id, memories)
+        set_cached_memories(user_id, memories)
     if not memories:
         return EVE_INSTRUCTIONS
     memory_lines = "\n".join(f"- {memory['content']}" for memory in memories[:40])
