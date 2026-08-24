@@ -1,7 +1,8 @@
 /** Eve voice hook — single responsibility: STT/TTS and Eve conversation. */
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { sendEveMessage } from '../../lib/eveApi'
-import { loadEveSpeech, synthesizeEveSpeech, transcribeEveAudio } from '../../lib/eveSpeechApi'
+import { loadEveSpeech, transcribeEveAudio } from '../../lib/eveSpeechApi'
+import { streamEveSpeech } from '../../lib/eveSpeechStream'
 import { isSpeechRecognitionSupported, loadEveVoicePrefs, selectVoice } from '../../utils/speech'
 import { ECHO_COOLDOWN_MS } from './callConstants'
 import { pickAudioMimeType, resolveSpeechProviders } from './callHelpers'
@@ -35,35 +36,48 @@ export function useEveVoice({ isEveCall, phase, muted, localStreamRef, phaseRef 
   const speakServerResponse = useCallback((text) => {
     const prefs = loadEveVoicePrefs()
     const voice = speechPrefsRef.current.ttsVoice
-    synthesizeEveSpeech({
-      text,
-      language: prefs.language,
-      voice,
-      rate: prefs.rate,
-      pitch: prefs.pitch - 1,
-    })
-      .then((blob) => {
-        const url = URL.createObjectURL(blob)
-        const audio = new Audio(url)
-        eveAudioRef.current = audio
-        isEveSpeakingRef.current = true
-        setIsEveSpeaking(true)
-        const finish = () => {
-          URL.revokeObjectURL(url)
-          if (eveAudioRef.current === audio) eveAudioRef.current = null
+    const provider = speechPrefsRef.current.ttsProvider
+    // Google has no true streaming — use server-side streaming envelope which
+    // falls back to single-chunk for google but streams progressively for Fish.
+    const useStream = provider === 'openrouter' || provider === 'google'
+    if (useStream) {
+      // Stop any previous stream
+      if (eveAudioRef.current) {
+        try {
+          eveAudioRef.current.pause()
+        } catch {}
+        eveAudioRef.current = null
+      }
+      isEveSpeakingRef.current = true
+      setIsEveSpeaking(true)
+      streamEveSpeech({
+        text,
+        language: prefs.language,
+        voice,
+        rate: prefs.rate,
+        pitch: prefs.pitch - 1,
+      })
+        .then(({ audio }) => {
+          eveAudioRef.current = audio
+          const finish = () => {
+            if (eveAudioRef.current === audio) eveAudioRef.current = null
+            isEveSpeakingRef.current = false
+            lastSpeechEndRef.current = Date.now()
+            setIsEveSpeaking(false)
+          }
+          audio.onended = finish
+          audio.onerror = finish
+        })
+        .catch(() => {
           isEveSpeakingRef.current = false
           lastSpeechEndRef.current = Date.now()
           setIsEveSpeaking(false)
-        }
-        audio.onended = finish
-        audio.onerror = finish
-        audio.play().catch(finish)
-      })
-      .catch(() => {
-        isEveSpeakingRef.current = false
-        lastSpeechEndRef.current = Date.now()
-        setIsEveSpeaking(false)
-      })
+        })
+      return
+    }
+    // Fallback (should not reach here for server providers)
+    isEveSpeakingRef.current = false
+    setIsEveSpeaking(false)
   }, [])
 
   const speakEveResponse = useCallback(
@@ -72,7 +86,7 @@ export function useEveVoice({ isEveCall, phase, muted, localStreamRef, phaseRef 
       setEveTranscript(text)
       if (!ttsEnabledRef.current) return
 
-      if (speechPrefsRef.current.ttsProvider === 'google') {
+      if (speechPrefsRef.current.ttsProvider === 'google' || speechPrefsRef.current.ttsProvider === 'openrouter') {
         speakServerResponse(text)
         return
       }

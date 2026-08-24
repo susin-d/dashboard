@@ -78,6 +78,10 @@ def google_tts_available() -> bool:
     return bool(settings.google_cloud_tts_api_key)
 
 
+def openrouter_tts_available() -> bool:
+    return bool(settings.openrouter_api_key)
+
+
 def stt_catalog() -> list[dict[str, Any]]:
     return [
         {
@@ -109,6 +113,12 @@ def tts_catalog() -> list[dict[str, Any]]:
             "available": google_tts_available(),
             "voices": GOOGLE_TTS_VOICES,
         },
+        {
+            "id": "openrouter",
+            "label": "OpenRouter — Fish S2.1 Pro Free",
+            "available": openrouter_tts_available(),
+            "voices": [],
+        },
     ]
 
 
@@ -125,6 +135,9 @@ def _valid_tts_voice(provider: str, voice: str) -> bool:
         return not voice
     if provider == "google":
         return any(item["id"] == voice for item in GOOGLE_TTS_VOICES)
+    if provider == "openrouter":
+        # Fish via OpenRouter voices are provider-namespaced; accept any non-empty free-form id.
+        return True
     return False
 
 
@@ -174,6 +187,9 @@ def resolve_speech_preference(database: Client, user_uid: str) -> dict[str, str]
         stt_provider = DEFAULT_STT_PROVIDER
         stt_model = ""
     if tts_provider == "google" and not google_tts_available():
+        tts_provider = DEFAULT_TTS_PROVIDER
+        tts_voice = ""
+    if tts_provider == "openrouter" and not openrouter_tts_available():
         tts_provider = DEFAULT_TTS_PROVIDER
         tts_voice = ""
     if stt_provider == "browser":

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useWorkspace } from './workspace/useWorkspace'
 import { WorkspaceToolbar } from './workspace/WorkspaceToolbar'
+import { WorkspaceOverview } from './workspace/WorkspaceOverview'
 import { WorkspaceFileTree } from './workspace/WorkspaceFileTree'
 import { WorkspaceEditor } from './workspace/WorkspaceEditor'
 import { WorkspaceTerminal } from './workspace/WorkspaceTerminal'
@@ -9,6 +10,7 @@ import { Modal, ConfirmDialog, FormField } from '../components/ui'
 
 export function WorkspacePage() {
   const workspace = useWorkspace()
+  const [view, setView] = useState('overview')
   const [evePanelCollapsed, setEvePanelCollapsed] = useState(true)
   const [terminalVisible, setTerminalVisible] = useState(false)
   const [newFilePrompt, setNewFilePrompt] = useState(false)
@@ -97,6 +99,14 @@ export function WorkspacePage() {
     }
   }, [workspace, workspaceToDelete])
 
+  const handleOpenWorkspace = useCallback(
+    async (ws) => {
+      await workspace.switchWorkspace(ws.id)
+      setView('ide')
+    },
+    [workspace],
+  )
+
   const handleKeyboardSave = useCallback(
     (event) => {
       if ((event.ctrlKey || event.metaKey) && event.key === 's') {
@@ -114,11 +124,143 @@ export function WorkspacePage() {
     return () => document.removeEventListener('keydown', handleKeyboardSave)
   }, [handleKeyboardSave])
 
+  if (view === 'overview') {
+    return (
+      <div className="workspace-page">
+        {workspace.error && (
+          <div className="workspace-error">
+            <span>{workspace.error}</span>
+            <button onClick={workspace.clearError}>×</button>
+          </div>
+        )}
+        <WorkspaceOverview
+          workspaces={workspace.workspaces}
+          activeWorkspaceId={workspace.activeWorkspaceId}
+          loading={workspace.loading}
+          onOpenWorkspace={handleOpenWorkspace}
+          onOpenCreateWorkspace={() => {
+            setNewWorkspaceName('')
+            setCreateWorkspaceOpen(true)
+          }}
+          onOpenRenameWorkspace={handleOpenRenameWorkspace}
+          onOpenDeleteWorkspace={(ws) => setWorkspaceToDelete(ws)}
+        />
+
+        {/* Create Workspace Modal */}
+        <Modal
+          isOpen={createWorkspaceOpen}
+          onClose={() => setCreateWorkspaceOpen(false)}
+          title="Create New Workspace"
+          subtitle="Each workspace is an isolated folder — like a project root"
+        >
+          <form
+            onSubmit={(e) => {
+              e.preventDefault()
+              handleConfirmCreateWorkspace()
+            }}
+          >
+            <FormField label="Workspace Name" id="new-workspace-name">
+              <input
+                id="new-workspace-name"
+                type="text"
+                className="text-input"
+                value={newWorkspaceName}
+                onChange={(e) => setNewWorkspaceName(e.target.value)}
+                placeholder="e.g., Portfolio Website, Backend API, Notes"
+                autoFocus
+                data-modal-initial-focus
+              />
+            </FormField>
+            <p className="workspace-modal-hint">This will create a folder on disk/cloud. Switch workspaces to open its files in the editor.</p>
+            <div className="modal-actions">
+              <button
+                type="button"
+                className="secondary-button"
+                onClick={() => setCreateWorkspaceOpen(false)}
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="primary-button"
+                disabled={!newWorkspaceName.trim()}
+              >
+                Create Workspace
+              </button>
+            </div>
+          </form>
+        </Modal>
+
+        {/* Rename Workspace Modal */}
+        <Modal
+          isOpen={Boolean(workspaceToRename)}
+          onClose={() => setWorkspaceToRename(null)}
+          title="Rename Workspace"
+          subtitle={`Update display name for workspace`}
+        >
+          <form
+            onSubmit={(e) => {
+              e.preventDefault()
+              handleConfirmRenameWorkspace()
+            }}
+          >
+            <FormField label="Workspace Name" id="rename-workspace-name">
+              <input
+                id="rename-workspace-name"
+                type="text"
+                className="text-input"
+                value={renameWorkspaceName}
+                onChange={(e) => setRenameWorkspaceName(e.target.value)}
+                placeholder="e.g., Project Name"
+                autoFocus
+                data-modal-initial-focus
+              />
+            </FormField>
+            <div className="modal-actions">
+              <button
+                type="button"
+                className="secondary-button"
+                onClick={() => setWorkspaceToRename(null)}
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="primary-button"
+                disabled={!renameWorkspaceName.trim()}
+              >
+                Save Changes
+              </button>
+            </div>
+          </form>
+        </Modal>
+
+        {/* Delete Workspace Confirmation */}
+        <ConfirmDialog
+          isOpen={Boolean(workspaceToDelete)}
+          title="Delete Workspace"
+          message={`Are you sure you want to delete "${workspaceToDelete?.name}"? All files and folders inside this workspace will be permanently removed.`}
+          confirmLabel="Delete Workspace"
+          destructive={true}
+          onConfirm={async () => {
+            await handleConfirmDeleteWorkspace()
+            const stillExists = workspace.workspaces.some(
+              (ws) => ws.id === workspaceToDelete?.id,
+            )
+            if (!stillExists && view === 'ide') setView('overview')
+          }}
+          onCancel={() => setWorkspaceToDelete(null)}
+        />
+      </div>
+    )
+  }
+
   return (
     <div className="workspace-page">
       <WorkspaceToolbar
         workspaces={workspace.workspaces}
         activeWorkspace={workspace.activeWorkspace}
+        onBackToOverview={() => setView('overview')}
         onSwitchWorkspace={workspace.switchWorkspace}
         onOpenCreateWorkspace={() => {
           setNewWorkspaceName('')

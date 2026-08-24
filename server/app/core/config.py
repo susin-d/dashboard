@@ -109,6 +109,9 @@ class Settings:
         "https://texttospeech.googleapis.com/v1",
     )
     google_cloud_tts_voice: str = os.getenv("GOOGLE_CLOUD_TTS_VOICE", "en-US-Standard-C")
+    openrouter_tts_model: str = os.getenv("OPENROUTER_TTS_MODEL", "fish-audio/s2.1-pro-free:free")
+    openrouter_tts_voice: str = os.getenv("OPENROUTER_TTS_VOICE", "alloy")
+    openrouter_tts_url: str | None = os.getenv("OPENROUTER_TTS_URL") or None
     firestore_database_id: str = os.getenv(
         "FIRESTORE_DATABASE_ID",
         "(default)",

@@ -61,3 +61,23 @@ export function synthesizeEveSpeech({ text, language, voice, rate, pitch }) {
     return response.blob()
   })
 }
+
+export function synthesizeEveSpeechStream({ text, language, voice, rate, pitch }) {
+  const token = getStoredAuthToken()
+  if (!token) throw new Error(TOKEN_MESSAGE)
+  // Chunked transfer — caller should consume response.body as stream.
+  return fetchWithTimeout(`${API_URL}/eve/synthesize/stream`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ text, language, voice, rate, pitch }),
+  }).then(async (response) => {
+    if (!response.ok) {
+      const failure = await response.json().catch(() => null)
+      throw new Error(failure?.detail || PREVIEW_ERROR)
+    }
+    return response
+  })
+}

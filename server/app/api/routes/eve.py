@@ -2,7 +2,7 @@ import asyncio
 import logging
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
-from fastapi.responses import Response
+from fastapi.responses import Response, StreamingResponse
 from google.cloud.firestore_v1 import Client
 
 logger = logging.getLogger(__name__)
@@ -34,7 +34,9 @@ from app.services.speech import (
     SpeechServiceError,
     resolve_stt_engine,
     resolve_tts_engine,
+    stream_speech_openrouter,
     synthesize_speech,
+    synthesize_speech_openrouter,
     transcribe_audio,
 )
 
@@ -79,11 +81,92 @@ async def synthesize(
     user: dict = Depends(get_current_user),
 ):
     engine, voice = await asyncio.to_thread(resolve_tts_engine, database, user["uid"])
-    if engine != "google":
+    if engine not in ("google", "openrouter"):
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail="Google Cloud text-to-speech is not configured.",
+            detail="Server text-to-speech is not configured. Select a server TTS provider or use browser voice.",
         )
+    try:
+        if engine == "openrouter":
+            audio_bytes, media_type = await asyncio.to_thread(
+                synthesize_speech_openrouter,
+                payload.text,
+                payload.language,
+                payload.voice or voice,
+                payload.rate,
+                payload.pitch,
+            )
+        else:
+            audio_bytes, media_type = await asyncio.to_thread(
+                synthesize_speech,
+                payload.text,
+                payload.language,
+                payload.voice or voice,
+                payload.rate,
+                payload.pitch,
+            )
+    except SpeechServiceError as error:
+        logger.error(f"[Eve Synthesize] Speech synthesis failed for user {user.get('uid')}: {error}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail=f"Speech synthesis failed: {error}",
+        ) from error
+    return Response(content=audio_bytes, media_type=media_type)
+
+
+@router.post("/synthesize/stream")
+async def synthesize_stream(
+    payload: EveSynthesizeRequest,
+    database: Client = Depends(get_firestore),
+    user: dict = Depends(get_current_user),
+):
+    """Stream TTS audio — chunked transfer, no buffering (TTFA ~100ms for Fish).
+
+    Only OpenRouter supports true streaming; Google falls back to buffered
+    response via the same chunked envelope so callers can always use this route.
+    """
+    engine, voice = await asyncio.to_thread(resolve_tts_engine, database, user["uid"])
+    if engine not in ("google", "openrouter"):
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Server text-to-speech is not configured. Select a server TTS provider or use browser voice.",
+        )
+    if engine == "openrouter":
+        try:
+            # Offload the httpx.stream generator to a thread; StreamingResponse will
+            # pull from it synchronously. Wrap in a generator that yields bytes.
+            def _generator():
+                try:
+                    yield from stream_speech_openrouter(
+                        payload.text,
+                        payload.language,
+                        payload.voice or voice,
+                        payload.rate,
+                        payload.pitch,
+                    )
+                except SpeechServiceError as error:
+                    logger.error(f"[Eve Synthesize Stream] OpenRouter stream failed for user {user.get('uid')}: {error}", exc_info=True)
+                    # Cannot raise HTTPException mid-stream; just stop.
+                    return
+
+            return StreamingResponse(
+                _generator(),
+                media_type="audio/mpeg",
+                headers={
+                    "Cache-Control": "no-cache",
+                    "X-Accel-Buffering": "no",
+                    "X-Content-Type-Options": "nosniff",
+                },
+            )
+        except SpeechServiceError as error:
+            logger.error(f"[Eve Synthesize Stream] Speech synthesis failed for user {user.get('uid')}: {error}", exc_info=True)
+            raise HTTPException(
+                status_code=status.HTTP_502_BAD_GATEWAY,
+                detail=f"Speech synthesis failed: {error}",
+            ) from error
+
+    # Google: no true streaming — buffer then stream as single chunk so callers
+    # get a uniform streaming interface regardless of provider.
     try:
         audio_bytes, media_type = await asyncio.to_thread(
             synthesize_speech,
@@ -94,12 +177,20 @@ async def synthesize(
             payload.pitch,
         )
     except SpeechServiceError as error:
-        logger.error(f"[Eve Synthesize] Speech synthesis failed for user {user.get('uid')}: {error}", exc_info=True)
+        logger.error(f"[Eve Synthesize Stream] Speech synthesis failed for user {user.get('uid')}: {error}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_502_BAD_GATEWAY,
             detail=f"Speech synthesis failed: {error}",
         ) from error
-    return Response(content=audio_bytes, media_type=media_type)
+
+    def _buffered_stream():
+        yield audio_bytes
+
+    return StreamingResponse(
+        _buffered_stream(),
+        media_type=media_type,
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+    )
 
 
 @router.post("/chat", response_model=EveChatResponse)

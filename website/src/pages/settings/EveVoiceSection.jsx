@@ -4,8 +4,8 @@ import { useSpeechVoices } from '../../hooks/useSpeechVoices'
 import {
   loadEveSpeech,
   saveEveSpeechPreference,
-  synthesizeEveSpeech,
 } from '../../lib/eveSpeechApi'
+import { streamEveSpeech } from '../../lib/eveSpeechStream'
 import { CustomDropdown, SectionHeading, SettingsCard } from '../../components/ui'
 import {
   DEFAULT_EVE_VOICE_PREFS,
@@ -124,10 +124,10 @@ export function EveVoiceSection() {
     .filter((voice) => !prefs.language || voice.language === prefs.language)
     .map((voice) => ({ value: voice.id, label: voice.label }))
 
-  const ttsPreviewAvailable =
-    ttsProvider === 'google'
-      ? Boolean(ttsProviderDescriptor?.available)
-      : ttsSupported
+  const isServerTts = ttsProvider === 'google' || ttsProvider === 'openrouter'
+  const ttsPreviewAvailable = isServerTts
+    ? Boolean(ttsProviderDescriptor?.available)
+    : ttsSupported
 
   const updatePrefs = (patch, note) => {
     const next = { ...prefs, ...patch }
@@ -222,39 +222,27 @@ export function EveVoiceSection() {
     setMessage('Eve voice settings reset to defaults.')
   }
 
-  const playServerAudio = (blob) => {
-    const url = URL.createObjectURL(blob)
-    const audio = new Audio(url)
-    audio.onended = () => {
-      URL.revokeObjectURL(url)
-      setPreviewing(false)
-    }
-    audio.onerror = () => {
-      URL.revokeObjectURL(url)
-      setPreviewing(false)
-      setMessage('Could not play Eve speech preview.')
-    }
-    audio.play().catch(() => {
-      URL.revokeObjectURL(url)
-      setPreviewing(false)
-      setMessage('Could not play Eve speech preview.')
-    })
-  }
-
   const handlePreview = () => {
     if (previewing) return
-    if (ttsProvider === 'google') {
+    if (ttsProvider === 'google' || ttsProvider === 'openrouter') {
       setPreviewing(true)
       setMessage('')
-      synthesizeEveSpeech({
+      streamEveSpeech({
         text: PREVIEW_TEXT,
         language: prefs.language,
         voice: ttsVoice,
         rate: prefs.rate,
-        // Browser pitch defaults to 1 (neutral); Google Cloud expects 0 (neutral).
         pitch: prefs.pitch - 1,
       })
-        .then(playServerAudio)
+        .then(({ audio }) => {
+          const done = () => setPreviewing(false)
+          const fail = () => {
+            setPreviewing(false)
+            setMessage('Could not play Eve speech preview.')
+          }
+          audio.addEventListener('ended', done, { once: true })
+          audio.addEventListener('error', fail, { once: true })
+        })
         .catch((error) => {
           setPreviewing(false)
           setMessage(error.message)
@@ -308,9 +296,9 @@ export function EveVoiceSection() {
           ) : sttProviders.length === 0 && ttsProviders.length === 0 ? (
             <p className="hackathon-source-message" role="status" style={{ padding: '18px 22px' }}>
               No server speech provider is configured. Add{' '}
-              <code>GROQ_API_KEY</code> or <code>GOOGLE_CLOUD_TTS_API_KEY</code>{' '}
-              to the server to enable server-side Eve voice. Eve falls back to
-              this browser's built-in speech.
+              <code>GROQ_API_KEY</code>, <code>GOOGLE_CLOUD_TTS_API_KEY</code>, or{' '}
+              <code>OPENROUTER_API_KEY</code> to the server to enable server-side
+              Eve voice. Eve falls back to this browser's built-in speech.
             </p>
           ) : (
             <>
@@ -364,6 +352,28 @@ export function EveVoiceSection() {
                       options={ttsVoiceOptions}
                       onChange={handleTtsVoiceChange}
                       ariaLabel="Speech synthesis voice"
+                    />
+                  </label>
+                )}
+                {ttsProvider === 'openrouter' && (
+                  <label>
+                    <span>
+                      <strong>Voice hint</strong>
+                      <small>Optional voice id for Fish S2.1 Pro Free (e.g. alloy). Leave empty for default.</small>
+                    </span>
+                    <input
+                      value={ttsVoice}
+                      onChange={(event) => handleTtsVoiceChange(event.target.value)}
+                      placeholder="alloy (default)"
+                      aria-label="OpenRouter TTS voice"
+                      style={{
+                        width: '100%',
+                        padding: '10px 12px',
+                        border: '1px solid var(--border-color)',
+                        borderRadius: '8px',
+                        background: 'var(--bg-card)',
+                        color: 'var(--text-primary)',
+                      }}
                     />
                   </label>
                 )}
