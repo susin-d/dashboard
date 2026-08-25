@@ -1442,8 +1442,8 @@ input.workspace-browser-url:focus-visible {
   align-items: flex-end;
   justify-content: space-between;
   gap: 16px;
-  margin: 0 auto 22px;
-  max-width: 1080px;
+  margin: 0 auto 24px;
+  max-width: 1240px;
 }
 
 .ws-overview-header h2 {
@@ -1463,9 +1463,9 @@ input.workspace-browser-url:focus-visible {
 
 .ws-overview-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-  gap: 14px;
-  max-width: 1080px;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 16px;
+  max-width: 1240px;
   margin: 0 auto;
 }
 
@@ -1498,9 +1498,7 @@ input.workspace-browser-url:focus-visible {
 }
 
 /* Open button: avatar left, name + meta stacked right.
-   Right padding reserves space for the absolutely-positioned
-   hover actions (two 26px buttons + gap + 8px offset) so they
-   never overlap the workspace name. */
+   Only workspace name reserves space for the top-right hover actions. */
 .ws-card-open {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
@@ -1508,10 +1506,10 @@ input.workspace-browser-url:focus-visible {
     'avatar name'
     'avatar meta';
   align-items: center;
-  column-gap: 12px;
+  column-gap: 14px;
   row-gap: 6px;
   width: 100%;
-  padding: 16px 72px 16px 16px;
+  padding: 18px 20px;
   background: none;
   border: 0;
   border-radius: inherit;
@@ -1530,14 +1528,15 @@ input.workspace-browser-url:focus-visible {
   grid-area: avatar;
   display: grid;
   place-items: center;
-  width: 40px;
-  height: 40px;
+  width: 42px;
+  height: 42px;
   border-radius: 10px;
   background: var(--color-primary, #09090b);
   color: var(--text-inverse, #ffffff);
   font-size: 17px;
   font-weight: 700;
   letter-spacing: 0.02em;
+  flex-shrink: 0;
 }
 
 .ws-card-name {
@@ -1548,13 +1547,14 @@ input.workspace-browser-url:focus-visible {
   font-size: 15px;
   font-weight: 600;
   color: var(--text-primary, #09090b);
+  padding-right: 56px;
 }
 
 .ws-card-meta {
   grid-area: meta;
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 14px;
   min-width: 0;
   font-size: 12px;
   color: var(--text-muted, #71717a);
@@ -1566,6 +1566,7 @@ input.workspace-browser-url:focus-visible {
   align-items: center;
   gap: 5px;
   min-width: 0;
+  white-space: nowrap;
 }
 
 .ws-card-updated {
@@ -1577,8 +1578,8 @@ input.workspace-browser-url:focus-visible {
 /* Row actions — revealed on hover / keyboard focus */
 .ws-card-actions {
   position: absolute;
-  top: 8px;
-  right: 8px;
+  top: 12px;
+  right: 12px;
   display: flex;
   gap: 6px;
   opacity: 0;
@@ -1628,12 +1629,12 @@ input.workspace-browser-url:focus-visible {
 /* Active flag */
 .ws-card-flag {
   position: absolute;
-  bottom: -9px;
-  right: 12px;
+  bottom: 12px;
+  right: 14px;
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  padding: 3px 9px;
+  padding: 2px 8px;
   border-radius: var(--radius-full, 999px);
   background: var(--color-primary, #09090b);
   color: var(--text-inverse, #ffffff);
@@ -1647,9 +1648,9 @@ input.workspace-browser-url:focus-visible {
 .ws-card-create {
   align-items: center;
   justify-content: center;
-  gap: 10px;
-  min-height: 104px;
-  padding: 20px 14px;
+  gap: 8px;
+  min-height: 96px;
+  padding: 18px 20px;
   border-style: dashed;
   border-color: var(--border-heavy, #a1a1aa);
   background: transparent;
@@ -1674,8 +1675,8 @@ input.workspace-browser-url:focus-visible {
 .ws-card-plus {
   display: grid;
   place-items: center;
-  width: 34px;
-  height: 34px;
+  width: 32px;
+  height: 32px;
   border: 1px solid var(--border-heavy, #a1a1aa);
   border-radius: var(--radius-full, 999px);
   transition: inherit;
@@ -1692,6 +1693,7 @@ input.workspace-browser-url:focus-visible {
   white-space: normal;
   font-weight: 600;
   text-align: center;
+  padding-right: 0;
 }
 
 .ws-card-create .ws-card-meta {
