@@ -22,4 +22,5 @@ export { FilterBar } from './FilterBar'
 export { Alert } from './Alert'
 export { FilterPills } from './FilterPills'
 export { LoadingState } from './LoadingState'
+export { ModelSelectorDropdown } from './ModelSelectorDropdown'
 

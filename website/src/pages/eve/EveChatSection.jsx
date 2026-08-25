@@ -3,12 +3,9 @@ import {
   ListPlus,
   Send,
   Info,
-  ChevronDown,
   Plus,
   Mic,
   MicOff,
-  Sparkles,
-  Check,
   Paperclip,
   X,
   FileText,
@@ -20,6 +17,7 @@ import {
   Edit3,
 } from 'lucide-react'
 import { Markdown } from '../../components/ui/Markdown'
+import { ModelSelectorDropdown } from '../../components/ui/ModelSelectorDropdown'
 import { formatFileSize } from '../../utils/fileSize'
 
 const MAX_CHARS = 4000
@@ -53,10 +51,8 @@ export function EveChatSection({
   const fileInputRef = useRef(null)
   const [queueCollapsed, setQueueCollapsed] = useState(false)
   const [isRecording, setIsRecording] = useState(false)
-  const [modelPickerOpen, setModelPickerOpen] = useState(false)
   const [attachments, setAttachments] = useState([])
   const [isDragging, setIsDragging] = useState(false)
-  const modelPickerRef = useRef(null)
   const recognitionRef = useRef(null)
 
   const charProgress = draft.length / MAX_CHARS
@@ -64,23 +60,6 @@ export function EveChatSection({
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages, isSending, streamText, activeTool])
-
-  useEffect(() => {
-    const handlePointerDown = (event) => {
-      if (!modelPickerRef.current?.contains(event.target)) {
-        setModelPickerOpen(false)
-      }
-    }
-    const handleKeyDown = (event) => {
-      if (event.key === 'Escape') setModelPickerOpen(false)
-    }
-    document.addEventListener('pointerdown', handlePointerDown)
-    document.addEventListener('keydown', handleKeyDown)
-    return () => {
-      document.removeEventListener('pointerdown', handlePointerDown)
-      document.removeEventListener('keydown', handleKeyDown)
-    }
-  }, [])
 
   const processFiles = async (fileList) => {
     const files = Array.from(fileList || [])
@@ -196,8 +175,6 @@ export function EveChatSection({
     handleSubmit(e, attachments)
     setAttachments([])
   }
-
-  const currentModelLabel = activeModel?.label || activeModel?.model || 'GPT-5 mini'
 
   return (
     <main className="eve-chat-section">
@@ -500,109 +477,12 @@ export function EveChatSection({
                   <Plus size={14} />
                 </button>
 
-                <div className="eve-model-selector-container" ref={modelPickerRef}>
-                  <button
-                    type="button"
-                    className="eve-model-tag-btn"
-                    onClick={() => setModelPickerOpen((open) => !open)}
-                    aria-haspopup="listbox"
-                    aria-expanded={modelPickerOpen}
-                    title="Change AI model"
-                  >
-                    <Sparkles size={13} />
-                    <span>{currentModelLabel}</span>
-                    <ChevronDown size={13} className={`eve-model-chevron ${modelPickerOpen ? 'open' : ''}`} />
-                  </button>
-
-                  {modelPickerOpen && (
-                    <div className="eve-model-menu-popup" role="listbox" aria-label="Select AI Model">
-                      <div className="eve-model-menu-title">Select Active Model</div>
-                      {(aiProviders.length > 0 ? aiProviders : [
-                        {
-                          id: 'openai',
-                          label: 'OpenAI',
-                          models: [
-                            { id: 'gpt-5-mini', label: 'GPT-5 mini' },
-                            { id: 'gpt-5', label: 'GPT-5' },
-                            { id: 'gpt-4o', label: 'GPT-4o' },
-                            { id: 'gpt-4o-mini', label: 'GPT-4o mini' },
-                            { id: 'o3-mini', label: 'o3 mini' },
-                          ],
-                        },
-                        {
-                          id: 'gemini',
-                          label: 'Google Gemini',
-                          models: [
-                            { id: 'gemini-2.5-flash', label: 'Gemini 2.5 Flash' },
-                            { id: 'gemini-2.5-pro', label: 'Gemini 2.5 Pro' },
-                            { id: 'gemini-2.0-flash', label: 'Gemini 2.0 Flash' },
-                          ],
-                        },
-                        {
-                          id: 'anthropic',
-                          label: 'Anthropic',
-                          models: [
-                            { id: 'claude-sonnet-4-5', label: 'Claude Sonnet 4.5' },
-                            { id: 'claude-opus-4-1', label: 'Claude Opus 4.1' },
-                            { id: 'claude-haiku-4-5', label: 'Claude Haiku 4.5' },
-                          ],
-                        },
-                        {
-                          id: 'openrouter',
-                          label: 'OpenRouter',
-                          models: [
-                            { id: 'openai/gpt-4o', label: 'GPT-4o (via OpenRouter)' },
-                            { id: 'anthropic/claude-sonnet-4.5', label: 'Claude Sonnet 4.5 (via OpenRouter)' },
-                            { id: 'google/gemini-2.5-flash', label: 'Gemini 2.5 Flash (via OpenRouter)' },
-                            { id: 'meta-llama/llama-3.1-70b-instruct', label: 'Llama 3.1 70B (via OpenRouter)' },
-                          ],
-                        },
-                        {
-                          id: 'ollama',
-                          label: 'Ollama (local)',
-                          models: [
-                            { id: 'llama3.1', label: 'Llama 3.1' },
-                            { id: 'llama3.2', label: 'Llama 3.2' },
-                            { id: 'qwen2.5', label: 'Qwen 2.5' },
-                            { id: 'mistral', label: 'Mistral' },
-                          ],
-                        },
-                        {
-                          id: 'opencode',
-                          label: 'OpenCode',
-                          models: [
-                            { id: 'opencode/gpt-5-mini', label: 'GPT-5 mini (via OpenCode)' },
-                            { id: 'opencode/claude-sonnet-4-5', label: 'Claude Sonnet 4.5 (via OpenCode)' },
-                          ],
-                        },
-                      ]).map((prov) => (
-                        <div key={prov.id} className="eve-model-menu-group">
-                          <span className="eve-model-menu-group-label">{prov.label}</span>
-                          {(prov.models || []).map((m) => {
-                            const isSelected =
-                              activeModel?.provider === prov.id && activeModel?.model === m.id
-                            return (
-                              <button
-                                key={m.id}
-                                type="button"
-                                role="option"
-                                aria-selected={isSelected}
-                                className={`eve-model-menu-item ${isSelected ? 'active' : ''}`}
-                                onClick={() => {
-                                  onSelectAiModel?.(prov.id, m.id, m.label)
-                                  setModelPickerOpen(false)
-                                }}
-                              >
-                                <span>{m.label}</span>
-                                {isSelected && <Check size={13} />}
-                              </button>
-                            )
-                          })}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
+                <ModelSelectorDropdown
+                  direction="up"
+                  activeModel={activeModel}
+                  onSelectModel={onSelectAiModel}
+                  providers={aiProviders}
+                />
               </div>
 
               <div className="eve-composer-bottom-right">

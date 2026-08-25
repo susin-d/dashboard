@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
-import { ArrowUp, Mic, Paperclip, Plus, Sparkles, X } from 'lucide-react'
-import { CustomDropdown } from '../../components/ui/CustomDropdown'
+import { ArrowUp, Check, Mic, Paperclip, Plus, Sparkles, X } from 'lucide-react'
+import { ModelSelectorDropdown } from '../../components/ui/ModelSelectorDropdown'
 import { Markdown } from '../../components/ui/Markdown'
 import { createEveSession, sendEveMessage } from '../../lib/eveApi'
 import { formatFileSize } from '../../utils/fileSize'
@@ -12,13 +12,13 @@ const CHAT_SESSION_KEY_PREFIX = 'starwaves.studio.chat_session.'
 const TEXT_EXTENSION_PATTERN = /\.(txt|md|json|js|jsx|ts|tsx|html|css|py|csv|xml|yaml|yml|sql|sh|log|rs|go|java|c|cpp|h)$/i
 const ATTACHMENT_TEXT_MAX_LENGTH = 40000
 
-const MODEL_OPTIONS = [
-  { value: 'gpt-5-mini', label: 'GPT-5 mini' },
-  { value: 'gpt-oss:120b', label: 'Gpt oss:120b' },
-  { value: 'claude-3-5-sonnet', label: 'Claude 3.5 Sonnet' },
-  { value: 'gemini-1-5-flash', label: 'Gemini 1.5 Flash' },
-  { value: 'llama3.1', label: 'Llama 3.1' },
-]
+function isPlanMessage(content) {
+  if (!content || typeof content !== 'string') return false
+  return (
+    /(awaiting (?:your )?approval|click Approve|approve (?:the|this) plan|review the (?:build )?plan|submitted and is awaiting|let me know when you'?ve approved)/i.test(content) ||
+    (/(### Architecture|### Proposed Files|### Build Plan)/i.test(content) && /(approve|proceed|ready to build)/i.test(content))
+  )
+}
 
 function loadSessionId(projectId) {
   try {
@@ -181,12 +181,10 @@ export function BuilderChat({ projectId, projectName, onActions, onAssistantRepl
           <Sparkles size={14} className="builder-chat-sparkle" aria-hidden="true" />
           <span>Eve</span>
         </div>
-        <CustomDropdown
+        <ModelSelectorDropdown
           className="builder-model-dropdown"
           value={selectedModel}
-          options={MODEL_OPTIONS}
-          onChange={setSelectedModel}
-          ariaLabel="Change AI model"
+          onChange={(m) => setSelectedModel(m.model || m.value)}
         />
       </div>
 
@@ -194,6 +192,7 @@ export function BuilderChat({ projectId, projectName, onActions, onAssistantRepl
         {messages.map((message, index) => {
           const isLatestAssistant = message.role === 'assistant' && index === messages.length - 1
           const questions = isLatestAssistant && !isSending ? parseQuestionsFromMessage(message.content) : []
+          const showPlanApproval = isLatestAssistant && !isSending && questions.length === 0 && isPlanMessage(message.content)
 
           return (
             <div key={index} className={`eve-chat-bubble ${message.role}`}>
@@ -206,6 +205,40 @@ export function BuilderChat({ projectId, projectName, onActions, onAssistantRepl
                       onAnswerSingle={(ans) => handleSendDirectly(ans)}
                       onAnswerAll={(answersText) => handleSendDirectly(answersText)}
                     />
+                  )}
+                  {showPlanApproval && (
+                    <div className="studio-plan-inline-card" aria-label="Plan awaiting approval">
+                      <div className="studio-plan-inline-header">
+                        <Sparkles size={13} className="studio-plan-inline-icon" aria-hidden="true" />
+                        <span>Build Plan Ready for Approval</span>
+                      </div>
+                      <p className="studio-plan-inline-sub">
+                        Review the architecture above. Approve to let Eve generate the files and build the app.
+                      </p>
+                      <div className="studio-plan-inline-actions">
+                        <button
+                          type="button"
+                          className="secondary-button studio-plan-inline-reject"
+                          onClick={() => {
+                            setDraft('Please revise the plan: ')
+                            textareaRef.current?.focus()
+                          }}
+                        >
+                          <X size={13} />
+                          <span>Request Changes</span>
+                        </button>
+                        <button
+                          type="button"
+                          className="primary-button studio-plan-inline-approve"
+                          onClick={() =>
+                            handleSendDirectly('I approve this plan. Please generate the code and build all project files now.')
+                          }
+                        >
+                          <Check size={14} />
+                          <span>Approve &amp; Build</span>
+                        </button>
+                      </div>
+                    </div>
                   )}
                 </div>
               ) : (

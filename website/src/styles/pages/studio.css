@@ -1436,3 +1436,55 @@
   font-size: 0.78rem;
 }
 
+/* Inline Plan Approval Card */
+.studio-plan-inline-card {
+  margin-top: 0.75rem;
+  padding: 0.85rem 1rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md, 8px);
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  animation: studioQuestionFadeIn 150ms ease;
+}
+
+.studio-plan-inline-header {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.studio-plan-inline-icon {
+  color: var(--text-primary);
+  flex-shrink: 0;
+}
+
+.studio-plan-inline-sub {
+  font-size: 0.76rem;
+  color: var(--text-secondary);
+  line-height: 1.4;
+  margin: 0;
+}
+
+.studio-plan-inline-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.6rem;
+  padding-top: 0.4rem;
+}
+
+.studio-plan-inline-actions button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 0.85rem;
+  font-size: 0.76rem;
+  font-weight: 600;
+  border-radius: var(--radius-sm, 6px);
+}
+

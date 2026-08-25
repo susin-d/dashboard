@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { ArrowUp, Paperclip, Plus, Sparkles, X } from 'lucide-react'
 import { CustomDropdown } from '../../components/ui/CustomDropdown'
+import { ModelSelectorDropdown } from '../../components/ui/ModelSelectorDropdown'
 import { formatFileSize } from '../../utils/fileSize'
 import { PROMPT_SUGGESTIONS } from './studioConstants'
 
@@ -13,21 +14,13 @@ const MODE_OPTIONS = [
   { value: 'build', label: 'Build' },
 ]
 
-const MODEL_OPTIONS = [
-  { value: 'gpt-5-mini', label: 'GPT-5 mini' },
-  { value: 'gpt-oss:120b', label: 'Gpt oss:120b' },
-  { value: 'claude-3-5-sonnet', label: 'Claude 3.5 Sonnet' },
-  { value: 'gemini-1-5-flash', label: 'Gemini 1.5 Flash' },
-  { value: 'llama3.1', label: 'Llama 3.1' },
-]
-
 export function StudioHero({
   isSubmitting,
   onSubmitPrompt,
 }) {
   const [prompt, setPrompt] = useState('')
   const [mode, setMode] = useState('plan')
-  const [model, setModel] = useState('gpt-5-mini')
+  const [model, setModel] = useState('')
   const [attachments, setAttachments] = useState([])
   const textareaRef = useRef(null)
   const fileInputRef = useRef(null)
@@ -155,12 +148,11 @@ export function StudioHero({
             Add files
           </button>
           <div className="studio-prompt-tools">
-            <CustomDropdown
+            <ModelSelectorDropdown
               className="studio-prompt-mode"
               value={model}
-              options={MODEL_OPTIONS}
-              onChange={setModel}
-              ariaLabel="AI Model"
+              onChange={(m) => setModel(m.model || m.value)}
+              placeholder="Model"
             />
             <CustomDropdown
               className="studio-prompt-mode"
