@@ -21,7 +21,6 @@ import {
 } from '../../lib/studioApi'
 import { BuilderChat } from './BuilderChat'
 import { CommandConsole } from './CommandConsole'
-import { GitPanel } from './GitPanel'
 import { PlanApprovalCard } from './PlanApprovalCard'
 import { PreviewPane } from './PreviewPane'
 import { useStudioFiles } from './useStudioFiles'
@@ -230,7 +229,6 @@ export function StudioBuilderPage({ projectId, onBack }) {
                 className={`aistudio-tab-btn ${centerTab === 'preview' ? 'active' : ''}`}
                 onClick={() => setCenterTab('preview')}
               >
-                <span className="aistudio-tab-dot" aria-hidden="true" />
                 Preview
               </button>
               <button
@@ -293,7 +291,6 @@ export function StudioBuilderPage({ projectId, onBack }) {
                     onFileSelect={files.openFile}
                     onCreateFile={files.createFile}
                   />
-                  <GitPanel projectId={projectId} refreshKey={previewRefreshKey} />
                 </aside>
                 <main className="aistudio-code-editor">
                   <WorkspaceEditor
