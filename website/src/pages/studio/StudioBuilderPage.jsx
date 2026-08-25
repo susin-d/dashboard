@@ -1,11 +1,23 @@
 import { useCallback, useEffect, useState } from 'react'
-import { ArrowLeft, LayoutTemplate } from 'lucide-react'
+import {
+  ArrowLeft,
+  Copy,
+  ExternalLink,
+  LayoutGrid,
+  LayoutTemplate,
+  Maximize2,
+  Minimize2,
+  RefreshCw,
+  Share2,
+  Terminal,
+} from 'lucide-react'
 import { LoadingState } from '../../components/ui'
 import { WorkspaceEditor } from '../workspace/WorkspaceEditor'
 import { WorkspaceFileTree } from '../workspace/WorkspaceFileTree'
 import {
   getStudioProject,
   publishStudioTemplate,
+  startPreview,
 } from '../../lib/studioApi'
 import { BuilderChat } from './BuilderChat'
 import { CommandConsole } from './CommandConsole'
@@ -13,16 +25,17 @@ import { GitPanel } from './GitPanel'
 import { PlanApprovalCard } from './PlanApprovalCard'
 import { PreviewPane } from './PreviewPane'
 import { useStudioFiles } from './useStudioFiles'
-import { BUILDER_CENTER_TABS, buildStatusLabel, planStatusLabel } from './studioConstants'
 
 export function StudioBuilderPage({ projectId, onBack }) {
   const [project, setProject] = useState(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState('')
-  const [centerTab, setCenterTab] = useState('code')
+  const [centerTab, setCenterTab] = useState('preview')
   const [previewRefreshKey, setPreviewRefreshKey] = useState(0)
-  const [consoleVisible, setConsoleVisible] = useState(true)
+  const [consoleVisible, setConsoleVisible] = useState(false)
   const [publishMessage, setPublishMessage] = useState('')
+  const [shareCopied, setShareCopied] = useState(false)
+  const [isFullscreen, setIsFullscreen] = useState(false)
 
   const files = useStudioFiles(projectId)
 
@@ -80,12 +93,37 @@ export function StudioBuilderPage({ projectId, onBack }) {
     try {
       const result = await publishStudioTemplate(projectId)
       setPublishMessage(result.detail || 'Published as template.')
+      setTimeout(() => setPublishMessage(''), 4000)
     } catch (publishError) {
       setPublishMessage(publishError.message || 'Could not publish template.')
+      setTimeout(() => setPublishMessage(''), 4000)
     }
   }
 
-  if (isLoading) return <LoadingState message="Loading builder…" />
+  const handleShare = async () => {
+    try {
+      if (navigator.clipboard) {
+        await navigator.clipboard.writeText(window.location.href)
+        setShareCopied(true)
+        setTimeout(() => setShareCopied(false), 2500)
+      }
+    } catch {
+      // ignore
+    }
+  }
+
+  const handleOpenExternal = async () => {
+    try {
+      const result = await startPreview(projectId)
+      if (result.preview_url) {
+        window.open(result.preview_url, '_blank', 'noopener,noreferrer')
+      }
+    } catch {
+      // ignore
+    }
+  }
+
+  if (isLoading) return <LoadingState message="Loading Studio…" />
   if (error || !project) {
     return (
       <div className="studio-page">
@@ -98,92 +136,80 @@ export function StudioBuilderPage({ projectId, onBack }) {
   }
 
   return (
-    <div className="studio-builder">
-      <header className="studio-builder-header">
-        <button type="button" className="icon-button" onClick={onBack} aria-label="Back to Studio projects">
-          <ArrowLeft size={16} />
-        </button>
-        <div className="studio-builder-title">
-          <h1>{project.name}</h1>
-          <span className="studio-builder-status">
-            {buildStatusLabel(project.build_status)} · {planStatusLabel(project.plan_status)}
-          </span>
+    <div className={`studio-builder aistudio-container ${isFullscreen ? 'aistudio-fullscreen' : ''}`}>
+      {/* ── Top Navbar (AI Studio style) ── */}
+      <header className="aistudio-navbar">
+        <div className="aistudio-nav-left">
+          <button
+            type="button"
+            className="aistudio-back-btn"
+            onClick={onBack}
+            aria-label="Back to start"
+          >
+            <ArrowLeft size={14} aria-hidden="true" />
+            <span>Back to start</span>
+          </button>
         </div>
-        <div className="studio-builder-header-actions">
-          <button type="button" className="secondary-button" onClick={handlePublishTemplate}>
-            <LayoutTemplate size={14} />
-            Publish as Template
+
+        <div className="aistudio-nav-center">
+          <h1 className="aistudio-project-name">{project.name}</h1>
+        </div>
+
+        <div className="aistudio-nav-right">
+          {publishMessage && (
+            <span className="aistudio-nav-msg" role="status">{publishMessage}</span>
+          )}
+          <button
+            type="button"
+            className="aistudio-action-btn"
+            onClick={handlePublishTemplate}
+            title="Publish as reusable starter template"
+          >
+            <Copy size={13} aria-hidden="true" />
+            <span>Remix</span>
           </button>
           <button
             type="button"
-            className="secondary-button"
-            onClick={() => setConsoleVisible((visible) => !visible)}
+            className="aistudio-action-btn"
+            onClick={handleShare}
+            title="Share project link"
+          >
+            <Share2 size={13} aria-hidden="true" />
+            <span>{shareCopied ? 'Copied!' : 'Share'}</span>
+          </button>
+          <button
+            type="button"
+            className="aistudio-publish-pill"
+            onClick={handlePublishTemplate}
+          >
+            <LayoutTemplate size={13} aria-hidden="true" />
+            <span>Publish</span>
+          </button>
+          <button
+            type="button"
+            className={`aistudio-icon-toggle ${consoleVisible ? 'active' : ''}`}
+            onClick={() => setConsoleVisible((v) => !v)}
+            title="Toggle Console / Terminal"
+            aria-label="Toggle Console"
             aria-pressed={consoleVisible}
           >
-            Console
+            <Terminal size={15} />
           </button>
         </div>
       </header>
 
-      {publishMessage && (
-        <p className="studio-git-message" role="status">{publishMessage}</p>
-      )}
-
-      <div className="studio-builder-layout">
-        <aside className="studio-builder-left">
-          <WorkspaceFileTree
-            files={files.fileTree}
-            activeFile={files.activeTab}
-            onFileSelect={files.openFile}
-            onCreateFile={files.createFile}
-          />
-          <GitPanel projectId={projectId} refreshKey={previewRefreshKey} />
-        </aside>
-
-        <section className="studio-builder-center">
-          <div className="studio-center-tabs" role="tablist" aria-label="Code or preview">
-            {BUILDER_CENTER_TABS.map((tab) => (
-              <button
-                key={tab.id}
-                type="button"
-                role="tab"
-                aria-selected={centerTab === tab.id}
-                className={`studio-center-tab ${centerTab === tab.id ? 'active' : ''}`}
-                onClick={() => setCenterTab(tab.id)}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </div>
-
-          {centerTab === 'code' ? (
-            <div className="studio-editor-wrap">
-              <WorkspaceEditor
-                tabs={files.openTabs}
-                activeTab={files.activeTab}
-                onTabSelect={files.setActiveTab}
-                onTabClose={files.closeTab}
-                onContentChange={files.updateTabContent}
-                onSave={files.saveFile}
-                isFileDirty={files.isFileDirty}
+      {/* ── Main 2-Column Workspace (AI Studio Layout) ── */}
+      <div className="aistudio-body">
+        {/* Left Column: AI Assistant Chat & Planning */}
+        <aside className="aistudio-chat-col">
+          {project.plan_status === 'proposed' && project.plan && (
+            <div className="aistudio-plan-wrap">
+              <PlanApprovalCard
+                projectId={projectId}
+                plan={project.plan}
+                onResolved={handlePlanResolved}
               />
             </div>
-          ) : (
-            <PreviewPane projectId={projectId} refreshKey={previewRefreshKey} />
-          )}
-
-          {consoleVisible && (
-            <CommandConsole projectId={projectId} onCommandFinished={handleCommandFinished} />
-          )}
-        </section>
-
-        <aside className="studio-builder-right">
-          {project.plan_status === 'proposed' && project.plan && (
-            <PlanApprovalCard
-              projectId={projectId}
-              plan={project.plan}
-              onResolved={handlePlanResolved}
-            />
           )}
           <BuilderChat
             projectId={projectId}
@@ -191,6 +217,109 @@ export function StudioBuilderPage({ projectId, onBack }) {
             onActions={handleActions}
           />
         </aside>
+
+        {/* Right Column: Stage (Preview or Code Editor) */}
+        <section className="aistudio-stage-col">
+          {/* Stage Top Bar */}
+          <div className="aistudio-stage-bar">
+            <div className="aistudio-segmented-tabs" role="tablist" aria-label="View mode">
+              <button
+                type="button"
+                role="tab"
+                aria-selected={centerTab === 'preview'}
+                className={`aistudio-tab-btn ${centerTab === 'preview' ? 'active' : ''}`}
+                onClick={() => setCenterTab('preview')}
+              >
+                <span className="aistudio-tab-dot" aria-hidden="true" />
+                Preview
+              </button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={centerTab === 'code'}
+                className={`aistudio-tab-btn ${centerTab === 'code' ? 'active' : ''}`}
+                onClick={() => setCenterTab('code')}
+              >
+                Code
+              </button>
+            </div>
+
+            <div className="aistudio-route-bar" title="App Root">
+              <LayoutGrid size={13} aria-hidden="true" />
+              <span>/</span>
+            </div>
+
+            <div className="aistudio-stage-actions">
+              <button
+                type="button"
+                className="aistudio-stage-icon-btn"
+                onClick={() => setPreviewRefreshKey((k) => k + 1)}
+                title="Reload preview"
+                aria-label="Reload preview"
+              >
+                <RefreshCw size={13} />
+              </button>
+              <button
+                type="button"
+                className="aistudio-stage-icon-btn"
+                onClick={handleOpenExternal}
+                title="Open in new tab"
+                aria-label="Open in new tab"
+              >
+                <ExternalLink size={13} />
+              </button>
+              <button
+                type="button"
+                className="aistudio-stage-icon-btn"
+                onClick={() => setIsFullscreen((f) => !f)}
+                title={isFullscreen ? 'Exit fullscreen' : 'Fullscreen'}
+                aria-label="Toggle fullscreen"
+              >
+                {isFullscreen ? <Minimize2 size={13} /> : <Maximize2 size={13} />}
+              </button>
+            </div>
+          </div>
+
+          {/* Stage Canvas */}
+          <div className="aistudio-stage-canvas">
+            {centerTab === 'preview' ? (
+              <PreviewPane projectId={projectId} refreshKey={previewRefreshKey} />
+            ) : (
+              <div className="aistudio-code-layout">
+                <aside className="aistudio-code-explorer">
+                  <WorkspaceFileTree
+                    files={files.fileTree}
+                    activeFile={files.activeTab}
+                    onFileSelect={files.openFile}
+                    onCreateFile={files.createFile}
+                  />
+                  <GitPanel projectId={projectId} refreshKey={previewRefreshKey} />
+                </aside>
+                <main className="aistudio-code-editor">
+                  <WorkspaceEditor
+                    tabs={files.openTabs}
+                    activeTab={files.activeTab}
+                    onTabSelect={files.setActiveTab}
+                    onTabClose={files.closeTab}
+                    onContentChange={files.updateTabContent}
+                    onSave={files.saveFile}
+                    isFileDirty={files.isFileDirty}
+                  />
+                </main>
+              </div>
+            )}
+          </div>
+
+          {/* Bottom Console Drawer */}
+          {consoleVisible && (
+            <div className="aistudio-console-drawer">
+              <CommandConsole
+                projectId={projectId}
+                onCommandFinished={handleCommandFinished}
+              />
+            </div>
+          )}
+        </section>
       </div>
     </div>
   )
