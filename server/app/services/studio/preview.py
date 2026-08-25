@@ -108,6 +108,33 @@ def _resolve_preview_file(user_id: str, workspace_id: str, file_path: str) -> by
             except (ValueError, FileNotFoundError) as error:
                 last_error = error
 
+        # Root fallback: find any .html file in the workspace (e.g. hello.html, app.html)
+        try:
+            root = _workspace_root(user_id, workspace_id)
+            if os.path.isdir(root):
+                for item in sorted(os.listdir(root)):
+                    if item.lower().endswith(".html"):
+                        candidate_file = os.path.join(root, item)
+                        if os.path.isfile(candidate_file):
+                            with open(candidate_file, "rb") as handle:
+                                return handle.read()
+        except Exception:
+            pass
+
+        # Friendly placeholder if workspace has no HTML files yet
+        placeholder = (
+            b"<!DOCTYPE html><html><head><meta charset='utf-8'>"
+            b"<title>Studio Preview</title>"
+            b"<style>body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;"
+            b"background:#121212;color:#ffffff;display:flex;flex-direction:column;"
+            b"align-items:center;justify-content:center;height:100vh;margin:0;text-align:center;padding:1.5rem;}"
+            b"h2{margin:0 0 0.5rem;font-size:1.2rem;}p{color:#a1a1aa;font-size:0.9rem;margin:0;}"
+            b"code{background:#27272a;padding:0.2rem 0.4rem;border-radius:4px;color:#ffffff;}</style></head>"
+            b"<body><h2>No HTML entry file found</h2>"
+            b"<p>Ask Eve in chat to build a page or create an <code>index.html</code> file.</p></body></html>"
+        )
+        return placeholder
+
     raise last_error or FileNotFoundError(f"Preview file not found: {file_path}")
 
 

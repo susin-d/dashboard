@@ -77,6 +77,25 @@ export function StudioBuilderPage({ projectId, onBack }) {
     [loadProject],
   )
 
+  const handleAssistantReply = useCallback(async () => {
+    await files.refreshTree()
+    setPreviewRefreshKey((key) => key + 1)
+  }, [files])
+
+  const handleSelectCodeTab = useCallback(() => {
+    setCenterTab('code')
+    if (!files.activeTab && files.fileTree.length > 0) {
+      const nonDirs = files.fileTree.filter((f) => f.type !== 'directory')
+      const preferred =
+        nonDirs.find((f) => /^(index|hello|main|app)\./i.test(f.name)) ||
+        nonDirs.find((f) => f.name !== '.gitignore') ||
+        nonDirs[0]
+      if (preferred) {
+        files.openFile(preferred.path)
+      }
+    }
+  }, [files])
+
   const handlePlanResolved = async () => {
     await loadProject()
     setPreviewRefreshKey((key) => key + 1)
@@ -220,6 +239,7 @@ export function StudioBuilderPage({ projectId, onBack }) {
             projectId={projectId}
             projectName={project.name}
             onActions={handleActions}
+            onAssistantReply={handleAssistantReply}
           />
         </aside>
 
@@ -242,7 +262,7 @@ export function StudioBuilderPage({ projectId, onBack }) {
                 role="tab"
                 aria-selected={centerTab === 'code'}
                 className={`aistudio-tab-btn ${centerTab === 'code' ? 'active' : ''}`}
-                onClick={() => setCenterTab('code')}
+                onClick={handleSelectCodeTab}
               >
                 Code
               </button>

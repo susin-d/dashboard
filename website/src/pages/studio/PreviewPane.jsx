@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useState } from 'react'
 import { RefreshCw } from 'lucide-react'
+import { API_URL } from '../../lib/request'
 import { startPreview } from '../../lib/studioApi'
 
 export function PreviewPane({ projectId, refreshKey, deviceMode = 'desktop' }) {
   const [previewUrl, setPreviewUrl] = useState('')
-  const [hasBuildOutput, setHasBuildOutput] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
 
@@ -14,8 +14,12 @@ export function PreviewPane({ projectId, refreshKey, deviceMode = 'desktop' }) {
     setError('')
     try {
       const result = await startPreview(projectId)
-      setPreviewUrl(result.preview_url)
-      setHasBuildOutput(result.has_build_output)
+      let url = result.preview_url || ''
+      if (url.startsWith('/')) {
+        const base = API_URL.replace(/\/api\/v1\/?$/, '')
+        url = `${base}${url}`
+      }
+      setPreviewUrl(url)
     } catch (previewError) {
       setError(previewError.message || 'Could not start the preview.')
     } finally {
@@ -49,11 +53,6 @@ export function PreviewPane({ projectId, refreshKey, deviceMode = 'desktop' }) {
 
   return (
     <div className={`studio-preview studio-preview-${deviceMode}`}>
-      {!hasBuildOutput && (
-        <div className="studio-preview-dev-notice">
-          <span>Run a build (e.g. <code>npm run build</code>) for full static output if needed.</span>
-        </div>
-      )}
       <div className="studio-preview-frame-container">
         <iframe
           key={`${previewUrl}-${refreshKey}`}

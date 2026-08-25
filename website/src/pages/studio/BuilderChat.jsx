@@ -25,7 +25,7 @@ function storeSessionId(projectId, sessionId) {
   }
 }
 
-export function BuilderChat({ projectId, projectName, onActions }) {
+export function BuilderChat({ projectId, projectName, onActions, onAssistantReply }) {
   const starter = {
     role: 'assistant',
     content: `Hi! I'm Eve. Tell me what to build or change in **${projectName}** — I'll plan the architecture, and after your approval, I'll write the code.`,
@@ -130,6 +130,7 @@ export function BuilderChat({ projectId, projectName, onActions }) {
       const response = await sendEveMessage(apiMessages, sessionId)
       setMessages([...nextMessages, { role: 'assistant', content: response.message }])
       onActions?.(response.actions)
+      onAssistantReply?.()
     } catch (sendError) {
       setError(sendError.message || 'Eve could not respond. Try again.')
     } finally {
