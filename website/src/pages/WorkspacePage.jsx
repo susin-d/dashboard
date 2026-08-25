@@ -117,6 +117,19 @@ export function WorkspacePage() {
     }
   }, [])
 
+  const handleRunHtml = useCallback(() => {
+    setBrowserUrl('')
+    setBrowserVisible(true)
+  }, [])
+
+  const activeHtmlContent = (() => {
+    if (!browserVisible) return null
+    const tab = workspace.openTabs?.find((t) => t.path === workspace.activeTab)
+    if (!tab) return null
+    if (!tab.path?.toLowerCase().endsWith('.html')) return null
+    return tab.content ?? null
+  })()
+
   const handleKeyboardSave = useCallback(
     (event) => {
       if ((event.ctrlKey || event.metaKey) && event.key === 's') {
@@ -317,6 +330,7 @@ export function WorkspacePage() {
               onSave={workspace.saveFile}
               isFileDirty={workspace.isFileDirty}
               onCreateFile={handleCreateFile}
+              onRunHtml={handleRunHtml}
             />
             {terminalVisible && (
               <WorkspaceTerminal isTauri={workspace.isTauri} />
@@ -326,6 +340,7 @@ export function WorkspacePage() {
             <WorkspaceBrowser
               workspaceId={workspace.activeWorkspaceId}
               initialUrl={browserUrl}
+              htmlContent={activeHtmlContent}
               onClose={() => setBrowserVisible(false)}
             />
           )}

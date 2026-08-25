@@ -2,19 +2,17 @@
 
 import uuid
 
-from firebase_admin import firestore
-from google.cloud.firestore_v1 import Client
+from app.db import ArrayUnion, FieldFilter, Query, SERVER_TIMESTAMP, SqlClient
 
-from google.cloud.firestore_v1.base_query import FieldFilter
 
 from app.repositories.password import hash_password
 
 
-def get_users_collection(database: Client):
+def get_users_collection(database: SqlClient):
     return database.collection("users")
 
 
-def merge_duplicate_user_accounts(database: Client, email: str | None = None) -> list[dict]:
+def merge_duplicate_user_accounts(database: SqlClient, email: str | None = None) -> list[dict]:
     """Merges duplicate user documents sharing the same email into a single primary record."""
     users_coll = get_users_collection(database)
     all_docs = list(users_coll.stream())
@@ -45,7 +43,7 @@ def merge_duplicate_user_accounts(database: Client, email: str | None = None) ->
                 primary = candidate
 
         primary_uid = primary["uid"]
-        updates = {"updated_at": firestore.SERVER_TIMESTAMP}
+        updates = {"updated_at": SERVER_TIMESTAMP}
         combined_accounts = list(primary.get("combined_accounts") or [])
 
         for second in docs:
@@ -92,7 +90,7 @@ def merge_duplicate_user_accounts(database: Client, email: str | None = None) ->
     return merged_primary_users
 
 
-def get_user_by_email(database: Client, email: str) -> dict | None:
+def get_user_by_email(database: SqlClient, email: str) -> dict | None:
     normalized_email = email.lower().strip()
     query = get_users_collection(database).where(filter=FieldFilter("email", "==", normalized_email))
     docs = list(query.stream())
@@ -112,7 +110,7 @@ def get_user_by_email(database: Client, email: str) -> dict | None:
     return data
 
 
-def get_user_by_id(database: Client, uid: str) -> dict | None:
+def get_user_by_id(database: SqlClient, uid: str) -> dict | None:
     doc = get_users_collection(database).document(uid).get()
     if not doc.exists:
         return None
@@ -122,7 +120,7 @@ def get_user_by_id(database: Client, uid: str) -> dict | None:
 
 
 def create_user_with_password(
-    database: Client,
+    database: SqlClient,
     email: str,
     password: str,
     name: str | None = None,
@@ -137,7 +135,7 @@ def create_user_with_password(
             updates = {
                 "password_hash": pwd_hash,
                 "password_salt": pwd_salt,
-                "updated_at": firestore.SERVER_TIMESTAMP,
+                "updated_at": SERVER_TIMESTAMP,
             }
             if display_name and not existing.get("display_name"):
                 updates["display_name"] = display_name
@@ -155,8 +153,8 @@ def create_user_with_password(
         "display_name": display_name,
         "password_hash": pwd_hash,
         "password_salt": pwd_salt,
-        "created_at": firestore.SERVER_TIMESTAMP,
-        "updated_at": firestore.SERVER_TIMESTAMP,
+        "created_at": SERVER_TIMESTAMP,
+        "updated_at": SERVER_TIMESTAMP,
     }
 
     get_users_collection(database).document(uid).set(user_data)
@@ -164,7 +162,7 @@ def create_user_with_password(
 
 
 def get_or_create_google_user(
-    database: Client,
+    database: SqlClient,
     email: str,
     name: str | None = None,
     picture: str | None = None,
@@ -175,7 +173,7 @@ def get_or_create_google_user(
     display_name = name.strip() if name and name.strip() else normalized_email.split("@")[0]
 
     if existing:
-        updates = {"google_auth": True, "updated_at": firestore.SERVER_TIMESTAMP}
+        updates = {"google_auth": True, "updated_at": SERVER_TIMESTAMP}
         if picture and not existing.get("picture"):
             updates["picture"] = picture
         if display_name and not existing.get("display_name"):
@@ -191,28 +189,28 @@ def get_or_create_google_user(
         "display_name": display_name,
         "picture": picture or "",
         "google_auth": True,
-        "created_at": firestore.SERVER_TIMESTAMP,
-        "updated_at": firestore.SERVER_TIMESTAMP,
+        "created_at": SERVER_TIMESTAMP,
+        "updated_at": SERVER_TIMESTAMP,
     }
     get_users_collection(database).document(uid).set(user_data)
     user_data["is_new"] = True
     return user_data
 
 
-def mark_email_verified(database: Client, uid: str) -> bool:
+def mark_email_verified(database: SqlClient, uid: str) -> bool:
     doc_ref = get_users_collection(database).document(uid)
     doc = doc_ref.get()
     if not doc.exists:
         return False
     doc_ref.update({
         "email_verified": True,
-        "email_verified_at": firestore.SERVER_TIMESTAMP,
-        "updated_at": firestore.SERVER_TIMESTAMP,
+        "email_verified_at": SERVER_TIMESTAMP,
+        "updated_at": SERVER_TIMESTAMP,
     })
     return True
 
 
-def update_user_password(database: Client, uid: str, new_password: str) -> bool:
+def update_user_password(database: SqlClient, uid: str, new_password: str) -> bool:
     doc_ref = get_users_collection(database).document(uid)
     doc = doc_ref.get()
     if not doc.exists:
@@ -221,12 +219,12 @@ def update_user_password(database: Client, uid: str, new_password: str) -> bool:
     doc_ref.update({
         "password_hash": pwd_hash,
         "password_salt": pwd_salt,
-        "updated_at": firestore.SERVER_TIMESTAMP,
+        "updated_at": SERVER_TIMESTAMP,
     })
     return True
 
 
-def update_user_profile(database: Client, uid: str, display_name: str, email: str | None = None) -> dict:
+def update_user_profile(database: SqlClient, uid: str, display_name: str, email: str | None = None) -> dict:
     doc_ref = get_users_collection(database).document(uid)
     doc = doc_ref.get()
     clean_name = display_name.strip()
@@ -235,15 +233,15 @@ def update_user_profile(database: Client, uid: str, display_name: str, email: st
             "uid": uid,
             "email": email or "",
             "display_name": clean_name,
-            "created_at": firestore.SERVER_TIMESTAMP,
-            "updated_at": firestore.SERVER_TIMESTAMP,
+            "created_at": SERVER_TIMESTAMP,
+            "updated_at": SERVER_TIMESTAMP,
         }
         doc_ref.set(data)
         return data
 
     doc_ref.update({
         "display_name": clean_name,
-        "updated_at": firestore.SERVER_TIMESTAMP,
+        "updated_at": SERVER_TIMESTAMP,
     })
     data = doc.to_dict()
     data["uid"] = uid

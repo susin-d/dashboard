@@ -1,8 +1,7 @@
 from datetime import datetime, timezone
 from typing import Any
 
-from firebase_admin import firestore
-from google.cloud.firestore_v1 import Client
+from app.db import ArrayUnion, Query, SERVER_TIMESTAMP, SqlClient
 
 DEFAULT_TITLE = "New chat"
 STARTER_MESSAGE = {
@@ -13,7 +12,7 @@ MAX_TITLE_LENGTH = 48
 MAX_PREVIEW_LENGTH = 60
 
 
-def sessions_collection(database: Client, user_id: str):
+def sessions_collection(database: SqlClient, user_id: str):
     return database.collection("users").document(user_id).collection("eve_sessions")
 
 
@@ -46,10 +45,10 @@ def _preview(messages: list[dict[str, Any]]) -> str:
     return DEFAULT_TITLE
 
 
-def list_sessions(database: Client, user_id: str, limit: int = 50) -> list[dict[str, Any]]:
+def list_sessions(database: SqlClient, user_id: str, limit: int = 50) -> list[dict[str, Any]]:
     documents = (
         sessions_collection(database, user_id)
-        .order_by("updated_at", direction=firestore.Query.DESCENDING)
+        .order_by("updated_at", direction=Query.DESCENDING)
         .limit(limit)
         .stream()
     )
@@ -68,7 +67,7 @@ def list_sessions(database: Client, user_id: str, limit: int = 50) -> list[dict[
 
 
 def create_session(
-    database: Client,
+    database: SqlClient,
     user_id: str,
     messages: list[dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
@@ -85,7 +84,7 @@ def create_session(
     return {"id": reference.id, **data}
 
 
-def get_session(database: Client, user_id: str, session_id: str) -> dict[str, Any]:
+def get_session(database: SqlClient, user_id: str, session_id: str) -> dict[str, Any]:
     reference = sessions_collection(database, user_id).document(session_id)
     snapshot = reference.get()
     if not snapshot.exists:
@@ -94,7 +93,7 @@ def get_session(database: Client, user_id: str, session_id: str) -> dict[str, An
 
 
 def save_messages(
-    database: Client,
+    database: SqlClient,
     user_id: str,
     session_id: str,
     messages: list[dict[str, Any]],
@@ -118,7 +117,7 @@ def save_messages(
     }
 
 
-def delete_session(database: Client, user_id: str, session_id: str) -> bool:
+def delete_session(database: SqlClient, user_id: str, session_id: str) -> bool:
     reference = sessions_collection(database, user_id).document(session_id)
     if not reference.get().exists:
         return False

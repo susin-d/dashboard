@@ -38,6 +38,7 @@ export async function streamEveMessage({
   sessionId,
   signal,
   onDelta,
+  onThinking,
   onToolStart,
   onToolEnd,
   onDone,
@@ -83,10 +84,12 @@ export async function streamEveMessage({
     }
     if (event.type === 'delta') {
       if (event.text) onDelta?.(event.text)
+    } else if (event.type === 'thinking') {
+      if (event.text) onThinking?.(event.text)
     } else if (event.type === 'tool_start') {
-      onToolStart?.(event.name)
+      onToolStart?.(event.name, event.arguments, event.call_id)
     } else if (event.type === 'tool_end') {
-      onToolEnd?.(event.name)
+      onToolEnd?.(event.name, event.output, event.call_id)
     } else if (event.type === 'done') {
       onDone?.(event)
     } else if (event.type === 'error') {

@@ -6,7 +6,7 @@ from typing import Any
 from app.core.config import settings
 
 MAX_TOOL_ROUNDS = 6
-DEFAULT_PROVIDER = "openai"
+DEFAULT_PROVIDER = settings.default_ai_provider
 AI_MODELS_SETTINGS_DOC = "ai-models"
 
 # Default base URLs for OpenAI-compatible providers

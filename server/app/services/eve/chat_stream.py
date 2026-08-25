@@ -5,7 +5,7 @@ import logging
 from collections.abc import Iterator
 from typing import Any
 
-from google.cloud.firestore_v1 import Client
+from app.db import SqlClient
 
 from app.repositories import eve_sessions
 from app.services.ai_models import any_provider_available, run_tool_loop_stream
@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 
 
 def stream_chat_with_eve(
-    database: Client,
+    database: SqlClient,
     user: dict,
     messages: list[dict[str, str]],
     session_id: str | None = None,

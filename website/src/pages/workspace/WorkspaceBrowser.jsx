@@ -30,16 +30,17 @@ function normalizeUrl(raw) {
   return `https://${value}`
 }
 
-export function WorkspaceBrowser({ workspaceId, initialUrl, onClose }) {
+export function WorkspaceBrowser({ workspaceId, initialUrl, htmlContent, onClose }) {
   const [draft, setDraft] = useState(() => initialUrl || loadStoredUrl(workspaceId))
   const [url, setUrl] = useState(() => initialUrl || loadStoredUrl(workspaceId))
   const [reloadKey, setReloadKey] = useState(0)
 
   useEffect(() => {
+    if (htmlContent) return
     const stored = initialUrl || loadStoredUrl(workspaceId)
     setDraft(stored)
     setUrl(stored)
-  }, [workspaceId, initialUrl])
+  }, [workspaceId, initialUrl, htmlContent])
 
   const handleNavigate = (event) => {
     event.preventDefault()
@@ -51,43 +52,53 @@ export function WorkspaceBrowser({ workspaceId, initialUrl, onClose }) {
 
   const handleReload = () => setReloadKey((current) => current + 1)
 
+  const isHtmlPreview = Boolean(htmlContent)
+
   return (
     <section className="workspace-browser" aria-label="Workspace browser">
       <div className="workspace-browser-bar">
         <Globe size={13} aria-hidden="true" />
-        <form onSubmit={handleNavigate}>
-          <input
-            type="text"
-            className="workspace-browser-url"
-            value={draft}
-            onChange={(e) => setDraft(e.target.value)}
-            placeholder="Enter URL — e.g. localhost:5173"
-            aria-label="Browser URL"
-            spellCheck="false"
-          />
-        </form>
+        {isHtmlPreview ? (
+          <span className="workspace-browser-url workspace-browser-url-label">
+            HTML Preview
+          </span>
+        ) : (
+          <form onSubmit={handleNavigate}>
+            <input
+              type="text"
+              className="workspace-browser-url"
+              value={draft}
+              onChange={(e) => setDraft(e.target.value)}
+              placeholder="Enter URL — e.g. localhost:5173"
+              aria-label="Browser URL"
+              spellCheck="false"
+            />
+          </form>
+        )}
         <button
           type="button"
           className="workspace-browser-btn"
           onClick={handleReload}
-          disabled={!url}
-          title="Reload page"
-          aria-label="Reload page"
+          disabled={!isHtmlPreview && !url}
+          title="Reload"
+          aria-label="Reload"
         >
           <RefreshCw size={13} />
         </button>
-        <a
-          className="workspace-browser-btn"
-          href={url || undefined}
-          target="_blank"
-          rel="noreferrer"
-          title="Open in new tab"
-          aria-label="Open in new tab"
-          onClick={(e) => !url && e.preventDefault()}
-          aria-disabled={!url}
-        >
-          <ArrowUpRight size={13} />
-        </a>
+        {!isHtmlPreview && (
+          <a
+            className="workspace-browser-btn"
+            href={url || undefined}
+            target="_blank"
+            rel="noreferrer"
+            title="Open in new tab"
+            aria-label="Open in new tab"
+            onClick={(e) => !url && e.preventDefault()}
+            aria-disabled={!url}
+          >
+            <ArrowUpRight size={13} />
+          </a>
+        )}
         <button
           type="button"
           className="workspace-browser-btn"
@@ -98,7 +109,15 @@ export function WorkspaceBrowser({ workspaceId, initialUrl, onClose }) {
           <X size={13} />
         </button>
       </div>
-      {url ? (
+      {isHtmlPreview ? (
+        <iframe
+          key={`srcdoc-${reloadKey}`}
+          className="workspace-browser-frame"
+          srcDoc={htmlContent}
+          title="HTML preview"
+          sandbox="allow-scripts allow-forms allow-popups allow-modals"
+        />
+      ) : url ? (
         <iframe
           key={`${url}-${reloadKey}`}
           className="workspace-browser-frame"

@@ -3,12 +3,11 @@
 import logging
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from google.cloud.firestore_v1 import Client
+from app.db import SqlClient, get_firestore
 from pydantic import BaseModel, EmailStr
 
 from app.api.routes.auth._shared import _send_welcome_email_best_effort
 from app.core.auth import create_user_token
-from app.db import get_firestore
 from app.repositories.password import verify_password
 from app.repositories.users import create_user_with_password, get_user_by_email
 
@@ -30,7 +29,7 @@ class LoginRequest(BaseModel):
 @router.post("/signup")
 def signup(
     payload: SignupRequest,
-    database: Client = Depends(get_firestore),
+    database: SqlClient = Depends(get_firestore),
 ):
     try:
         user_record = create_user_with_password(
@@ -74,7 +73,7 @@ def signup(
 
 
 @router.post("/login")
-def login(payload: LoginRequest, database: Client = Depends(get_firestore)):
+def login(payload: LoginRequest, database: SqlClient = Depends(get_firestore)):
     clean_email = payload.email.lower().strip()
     try:
         user_record = get_user_by_email(database, clean_email)

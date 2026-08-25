@@ -1,11 +1,9 @@
 import hashlib
 from fastapi import APIRouter, Depends, HTTPException, status
-from firebase_admin import firestore
-from google.cloud.firestore_v1 import Client
+from app.db import ArrayUnion, SERVER_TIMESTAMP, SqlClient, get_firestore
 from pydantic import BaseModel, Field
 
 from app.core.auth import get_current_user
-from app.db import get_firestore
 from app.services.notifications import send_multicast_notification, send_push_notification
 
 router = APIRouter(prefix="/notifications")
@@ -23,7 +21,7 @@ class SendNotificationRequest(BaseModel):
     target_device_token: str | None = None
 
 
-def devices_collection(database: Client, user_id: str):
+def devices_collection(database: SqlClient, user_id: str):
     return database.collection("users").document(user_id).collection("devices")
 
 
@@ -31,7 +29,7 @@ def devices_collection(database: Client, user_id: str):
 def register_device_token(
     payload: RegisterDeviceTokenRequest,
     user: dict = Depends(get_current_user),
-    database: Client = Depends(get_firestore),
+    database: SqlClient = Depends(get_firestore),
 ):
     token_id = hashlib.sha256(payload.token.encode()).hexdigest()
     doc_ref = devices_collection(database, user["uid"]).document(token_id)
@@ -39,7 +37,7 @@ def register_device_token(
         {
             "token": payload.token,
             "device_name": payload.device_name or "Unknown Device",
-            "updated_at": firestore.SERVER_TIMESTAMP,
+            "updated_at": SERVER_TIMESTAMP,
         },
         merge=True,
     )
@@ -50,7 +48,7 @@ def register_device_token(
 def unregister_device_token(
     token_id: str,
     user: dict = Depends(get_current_user),
-    database: Client = Depends(get_firestore),
+    database: SqlClient = Depends(get_firestore),
 ):
     devices_collection(database, user["uid"]).document(token_id).delete()
 
@@ -58,7 +56,7 @@ def unregister_device_token(
 @router.get("/devices")
 def get_registered_devices(
     user: dict = Depends(get_current_user),
-    database: Client = Depends(get_firestore),
+    database: SqlClient = Depends(get_firestore),
 ):
     docs = devices_collection(database, user["uid"]).stream()
     devices = []
@@ -76,7 +74,7 @@ def get_registered_devices(
 def send_notification_to_user(
     payload: SendNotificationRequest,
     user: dict = Depends(get_current_user),
-    database: Client = Depends(get_firestore),
+    database: SqlClient = Depends(get_firestore),
 ):
     if payload.target_device_token:
         try:

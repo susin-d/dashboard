@@ -3,11 +3,10 @@
 import asyncio
 
 from fastapi import APIRouter, Depends, HTTPException, Response
-from google.cloud.firestore_v1 import Client
+from app.db import SqlClient, get_firestore
 
 from app.api.routes.studio._shared import require_non_serverless
 from app.core.auth import get_current_user
-from app.db import get_firestore
 from app.schemas.studio import StudioPreviewResponse
 from app.services.studio import preview as studio_preview
 
@@ -18,7 +17,7 @@ router = APIRouter(prefix="/studio")
 async def start_preview(
     workspace_id: str,
     user: dict = Depends(get_current_user),
-    database: Client = Depends(get_firestore),
+    database: SqlClient = Depends(get_firestore),
 ):
     """Return a signed preview URL for the project (build output preferred)."""
     require_non_serverless()

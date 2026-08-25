@@ -1,9 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
-from firebase_admin import firestore
-from google.cloud.firestore_v1 import Client
+from app.db import ArrayUnion, SERVER_TIMESTAMP, SqlClient, get_firestore
 
 from app.core.auth import get_current_user
-from app.db import get_firestore
 from app.core.config import settings
 from app.schemas.ai_models import AiModelsResponse, AiModelPreferenceUpdate
 from app.services.ai_models import (
@@ -22,7 +20,7 @@ from app.services.ai_models import (
 router = APIRouter(prefix="/settings/ai-models")
 
 
-def _reference(database: Client, user_id: str):
+def _reference(database: SqlClient, user_id: str):
     return (
         database.collection("users")
         .document(user_id)
@@ -59,7 +57,7 @@ def _preference_payload(preference: dict | None, user_keys: dict[str, str]) -> d
 
 @router.get("", response_model=AiModelsResponse)
 async def get_ai_models(
-    database: Client = Depends(get_firestore),
+    database: SqlClient = Depends(get_firestore),
     user: dict = Depends(get_current_user),
 ):
     preference = load_ai_preference(database, user["uid"])
@@ -77,7 +75,7 @@ async def get_ai_models(
 async def list_provider_models(
     provider: str,
     api_key: str | None = None,
-    database: Client = Depends(get_firestore),
+    database: SqlClient = Depends(get_firestore),
     user: dict = Depends(get_current_user),
 ):
     preference = load_ai_preference(database, user["uid"])
@@ -104,7 +102,7 @@ async def list_provider_models(
 @router.put("", response_model=AiModelsResponse)
 async def save_ai_models(
     payload: AiModelPreferenceUpdate,
-    database: Client = Depends(get_firestore),
+    database: SqlClient = Depends(get_firestore),
     user: dict = Depends(get_current_user),
 ):
     if not validate_preference(payload.provider, payload.model):
@@ -139,7 +137,7 @@ async def save_ai_models(
         "provider": payload.provider,
         "model": payload.model,
         "api_keys": user_keys,
-        "updated_at": firestore.SERVER_TIMESTAMP,
+        "updated_at": SERVER_TIMESTAMP,
     }
 
     reference = _reference(database, user["uid"])

@@ -9,6 +9,8 @@ from app.db.sql._shared import (
 )
 from app.db.sql.client import SqlClient, get_db_client, get_firestore
 from app.db.sql.query import (
+    FieldFilter,
+    Query,
     SqlBatch,
     SqlCollectionRef,
     SqlDocRef,
@@ -18,6 +20,8 @@ from app.db.sql.query import (
 
 __all__ = [
     "ArrayUnion",
+    "FieldFilter",
+    "Query",
     "SERVER_TIMESTAMP",
     "SqlBatch",
     "SqlClient",

@@ -4,14 +4,12 @@ from urllib.parse import quote
 
 import httpx
 from fastapi import APIRouter, Depends, HTTPException, Query
-from firebase_admin import firestore
-from google.cloud.firestore_v1 import Client
+from app.db import ArrayUnion, SERVER_TIMESTAMP, SqlClient, get_firestore
 from itsdangerous import URLSafeTimedSerializer
 from pydantic import BaseModel, Field
 
 from app.core.auth import get_current_user
 from app.core.config import settings
-from app.db import get_firestore
 from app.services.oauth import (
     decrypt_google_token,
     encrypt_google_token,
@@ -41,7 +39,7 @@ class GmailConnection(BaseModel):
     access_token: str = Field(min_length=1)
 
 
-def gmail_accounts_collection(database: Client, user_id: str):
+def gmail_accounts_collection(database: SqlClient, user_id: str):
     return integration_accounts_reference(database, user_id, "gmail")
 
 
@@ -67,7 +65,7 @@ def authorize_gmail(user: dict = Depends(get_current_user)):
 async def gmail_callback(
     code: str = Query(...),
     state: str = Query(...),
-    database: Client = Depends(get_firestore),
+    database: SqlClient = Depends(get_firestore),
 ):
     try:
         user_id = gmail_state_serializer().loads(state, max_age=600)["uid"]
@@ -102,7 +100,7 @@ async def gmail_callback(
                     "access_token": token_data["access_token"],
                     "refresh_token": encrypted_refresh_token,
                     "refreshable": True,
-                    "updated_at": firestore.SERVER_TIMESTAMP,
+                    "updated_at": SERVER_TIMESTAMP,
                 },
                 merge=True,
             ),
@@ -119,7 +117,7 @@ async def gmail_callback(
 @router.post("/accounts")
 async def connect_gmail(
     connection: GmailConnection,
-    database: Client = Depends(get_firestore),
+    database: SqlClient = Depends(get_firestore),
     user: dict = Depends(get_current_user),
 ):
     async with httpx.AsyncClient(timeout=20) as client:
@@ -152,7 +150,7 @@ async def connect_gmail(
                 "connected": True,
                 "access_token": connection.access_token,
                 "refreshable": False,
-                "updated_at": firestore.SERVER_TIMESTAMP,
+                "updated_at": SERVER_TIMESTAMP,
             },
             merge=True,
         ),
@@ -192,7 +190,7 @@ def _invalidate_gmail_cache(user_id: str):
 @router.get("/token")
 async def get_gmail_token(
     email: str | None = Query(default=None),
-    database: Client = Depends(get_firestore),
+    database: SqlClient = Depends(get_firestore),
     user: dict = Depends(get_current_user),
 ):
     """Return a fresh Gmail access token for the given account (or first account)."""
@@ -252,7 +250,7 @@ async def get_gmail_token(
 
 @router.get("/accounts")
 async def get_gmail_accounts(
-    database: Client = Depends(get_firestore),
+    database: SqlClient = Depends(get_firestore),
     user: dict = Depends(get_current_user),
 ):
     snapshots = await asyncio.to_thread(lambda: list(gmail_accounts_collection(database, user["uid"]).stream()))
@@ -269,7 +267,7 @@ async def get_gmail_accounts(
 
 @router.get("/status")
 async def gmail_status(
-    database: Client = Depends(get_firestore),
+    database: SqlClient = Depends(get_firestore),
     user: dict = Depends(get_current_user),
 ):
     cached = _get_cached_gmail_status(user["uid"])
@@ -299,7 +297,7 @@ async def gmail_status(
 @router.delete("/accounts/{account_id}", status_code=204)
 def disconnect_gmail_account(
     account_id: str,
-    database: Client = Depends(get_firestore),
+    database: SqlClient = Depends(get_firestore),
     user: dict = Depends(get_current_user),
 ):
     gmail_accounts_collection(database, user["uid"]).document(account_id).delete()
@@ -308,7 +306,7 @@ def disconnect_gmail_account(
 
 @router.delete("", status_code=204)
 async def disconnect_all_gmail(
-    database: Client = Depends(get_firestore),
+    database: SqlClient = Depends(get_firestore),
     user: dict = Depends(get_current_user),
 ):
     collection = gmail_accounts_collection(database, user["uid"])

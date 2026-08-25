@@ -1,7 +1,6 @@
 from datetime import datetime, timezone
 from typing import Any, List, Optional
-from firebase_admin import firestore
-from google.cloud.firestore_v1 import Client
+from app.db import ArrayUnion, Query, SERVER_TIMESTAMP, SqlClient
 
 from app.schemas.whatsapp import (
     WhatsAppChatResponse,
@@ -12,23 +11,23 @@ from app.schemas.whatsapp import (
 )
 
 
-def _chats_col(database: Client, user_id: str):
+def _chats_col(database: SqlClient, user_id: str):
     return database.collection("users").document(user_id).collection("whatsapp_chats")
 
 
-def _messages_col(database: Client, user_id: str, chat_id: str):
+def _messages_col(database: SqlClient, user_id: str, chat_id: str):
     return _chats_col(database, user_id).document(chat_id).collection("messages")
 
 
-def _session_doc(database: Client, user_id: str):
+def _session_doc(database: SqlClient, user_id: str):
     return database.collection("users").document(user_id).collection("whatsapp_session").document("default")
 
 
-def _settings_doc(database: Client, user_id: str):
+def _settings_doc(database: SqlClient, user_id: str):
     return database.collection("users").document(user_id).collection("whatsapp_settings").document("default")
 
 
-def get_whatsapp_status(database: Client, user_id: str) -> WhatsAppStatusResponse:
+def get_whatsapp_status(database: SqlClient, user_id: str) -> WhatsAppStatusResponse:
     snap = _session_doc(database, user_id).get()
     settings_snap = _settings_doc(database, user_id).get()
     auto_reply = False
@@ -51,7 +50,7 @@ def get_whatsapp_status(database: Client, user_id: str) -> WhatsAppStatusRespons
 
 
 def save_whatsapp_session(
-    database: Client,
+    database: SqlClient,
     user_id: str,
     connected: bool,
     phone_number: Optional[str] = None,
@@ -71,7 +70,7 @@ def save_whatsapp_session(
     doc_ref.set(payload, merge=True)
 
 
-def clear_whatsapp_session(database: Client, user_id: str):
+def clear_whatsapp_session(database: SqlClient, user_id: str):
     doc_ref = _session_doc(database, user_id)
     doc_ref.set({
         "connected": False,
@@ -82,7 +81,7 @@ def clear_whatsapp_session(database: Client, user_id: str):
     }, merge=True)
 
 
-def get_whatsapp_settings(database: Client, user_id: str) -> WhatsAppSettings:
+def get_whatsapp_settings(database: SqlClient, user_id: str) -> WhatsAppSettings:
     from app.core.config import settings as app_settings
 
     snap = _settings_doc(database, user_id).get()
@@ -110,13 +109,13 @@ def get_whatsapp_settings(database: Client, user_id: str) -> WhatsAppSettings:
     )
 
 
-def save_whatsapp_settings(database: Client, user_id: str, settings: WhatsAppSettings):
+def save_whatsapp_settings(database: SqlClient, user_id: str, settings: WhatsAppSettings):
     doc_ref = _settings_doc(database, user_id)
     doc_ref.set(settings.model_dump(), merge=True)
 
 
-def list_whatsapp_chats(database: Client, user_id: str) -> List[WhatsAppChatResponse]:
-    query = _chats_col(database, user_id).order_by("updated_at", direction=firestore.Query.DESCENDING)
+def list_whatsapp_chats(database: SqlClient, user_id: str) -> List[WhatsAppChatResponse]:
+    query = _chats_col(database, user_id).order_by("updated_at", direction=Query.DESCENDING)
     results = []
     for snap in query.stream():
         data = snap.to_dict() or {}
@@ -158,7 +157,7 @@ def list_whatsapp_chats(database: Client, user_id: str) -> List[WhatsAppChatResp
     return results
 
 
-def get_whatsapp_chat(database: Client, user_id: str, chat_id: str) -> Optional[WhatsAppChatResponse]:
+def get_whatsapp_chat(database: SqlClient, user_id: str, chat_id: str) -> Optional[WhatsAppChatResponse]:
     doc_ref = _chats_col(database, user_id).document(chat_id)
     snap = doc_ref.get()
     if not snap.exists:
@@ -182,7 +181,7 @@ def get_whatsapp_chat(database: Client, user_id: str, chat_id: str) -> Optional[
 
 
 def upsert_whatsapp_chat(
-    database: Client,
+    database: SqlClient,
     user_id: str,
     chat_id: str,
     name: str,
@@ -225,7 +224,7 @@ def upsert_whatsapp_chat(
 
 
 def list_whatsapp_messages(
-    database: Client,
+    database: SqlClient,
     user_id: str,
     chat_id: str,
     limit: int = 50,
@@ -241,13 +240,13 @@ def list_whatsapp_messages(
         if before_dt:
             query = (
                 col.where("timestamp", "<", before_dt)
-                .order_by("timestamp", direction=firestore.Query.DESCENDING)
+                .order_by("timestamp", direction=Query.DESCENDING)
                 .limit(limit)
             )
         else:
-            query = col.order_by("timestamp", direction=firestore.Query.DESCENDING).limit(limit)
+            query = col.order_by("timestamp", direction=Query.DESCENDING).limit(limit)
     else:
-        query = col.order_by("timestamp", direction=firestore.Query.DESCENDING).limit(limit)
+        query = col.order_by("timestamp", direction=Query.DESCENDING).limit(limit)
 
     results = []
     for snap in query.stream():
@@ -280,7 +279,7 @@ def list_whatsapp_messages(
 
 
 def save_whatsapp_message(
-    database: Client,
+    database: SqlClient,
     user_id: str,
     chat_id: str,
     message: WhatsAppMessageResponse,
@@ -300,7 +299,7 @@ def save_whatsapp_message(
 
 
 def add_message_reaction(
-    database: Client,
+    database: SqlClient,
     user_id: str,
     chat_id: str,
     message_id: str,
@@ -327,7 +326,7 @@ def add_message_reaction(
 
 
 def star_whatsapp_message(
-    database: Client,
+    database: SqlClient,
     user_id: str,
     chat_id: str,
     message_id: str,
@@ -338,7 +337,7 @@ def star_whatsapp_message(
 
 
 def delete_whatsapp_message(
-    database: Client,
+    database: SqlClient,
     user_id: str,
     chat_id: str,
     message_id: str,
@@ -348,7 +347,7 @@ def delete_whatsapp_message(
 
 
 def update_message_status(
-    database: Client,
+    database: SqlClient,
     user_id: str,
     chat_id: str,
     message_id: str,
@@ -358,5 +357,5 @@ def update_message_status(
     msg_ref.set({"status": status}, merge=True)
 
 
-def mark_chat_as_read(database: Client, user_id: str, chat_id: str):
+def mark_chat_as_read(database: SqlClient, user_id: str, chat_id: str):
     _chats_col(database, user_id).document(chat_id).set({"unread_count": 0}, merge=True)

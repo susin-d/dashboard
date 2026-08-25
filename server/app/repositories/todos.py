@@ -1,13 +1,12 @@
 from datetime import datetime, timezone
 
-from firebase_admin import firestore
-from google.cloud.firestore_v1 import Client
+from app.db import ArrayUnion, Query, SERVER_TIMESTAMP, SqlClient
 
 from app.repositories.helpers import dict_to_snapshot, restore_payload, soft_delete_payload
 from app.schemas.todo import TodoCreate, TodoResponse, TodoUpdate
 
 
-def collection(database: Client, user_id: str):
+def collection(database: SqlClient, user_id: str):
     return database.collection("users").document(user_id).collection("todos")
 
 
@@ -23,11 +22,11 @@ def values_for_firestore(values: dict) -> dict:
     return values
 
 
-def list_todos(database: Client, user_id: str) -> list[TodoResponse]:
+def list_todos(database: SqlClient, user_id: str) -> list[TodoResponse]:
     # Legacy: full fetch capped to 100 for safety; prefer paginated endpoint
     query = collection(database, user_id).order_by(
         "created_at",
-        direction=firestore.Query.DESCENDING,
+        direction=Query.DESCENDING,
     )
     results = []
     count = 0
@@ -41,7 +40,7 @@ def list_todos(database: Client, user_id: str) -> list[TodoResponse]:
     return results
 
 
-def list_todos_page(database: Client, user_id: str, cursor: str | None, limit: int):
+def list_todos_page(database: SqlClient, user_id: str, cursor: str | None, limit: int):
     from app.repositories.pagination import paginate_collection
 
     coll = collection(database, user_id)
@@ -55,7 +54,7 @@ def list_todos_page(database: Client, user_id: str, cursor: str | None, limit: i
 
 
 def get_todo(
-    database: Client,
+    database: SqlClient,
     user_id: str,
     todo_id: str,
 ) -> TodoResponse | None:
@@ -69,7 +68,7 @@ def get_todo(
 
 
 def create_todo(
-    database: Client,
+    database: SqlClient,
     user_id: str,
     todo: TodoCreate,
 ) -> TodoResponse:
@@ -79,15 +78,15 @@ def create_todo(
     reference.set(
         {
             **data,
-            "created_at": firestore.SERVER_TIMESTAMP,
-            "updated_at": firestore.SERVER_TIMESTAMP,
+            "created_at": SERVER_TIMESTAMP,
+            "updated_at": SERVER_TIMESTAMP,
         },
     )
     return TodoResponse(id=reference.id, **data, created_at=now, updated_at=now)
 
 
 def update_todo(
-    database: Client,
+    database: SqlClient,
     user_id: str,
     todo_id: str,
     changes: TodoUpdate,
@@ -99,7 +98,7 @@ def update_todo(
                 **values_for_firestore(
                     changes.model_dump(exclude_unset=True, mode="python"),
                 ),
-                "updated_at": firestore.SERVER_TIMESTAMP,
+                "updated_at": SERVER_TIMESTAMP,
             },
         )
     except Exception:
@@ -107,7 +106,7 @@ def update_todo(
     return from_snapshot(reference.get())
 
 
-def delete_todo(database: Client, user_id: str, todo_id: str) -> bool:
+def delete_todo(database: SqlClient, user_id: str, todo_id: str) -> bool:
     reference = collection(database, user_id).document(todo_id)
     if not reference.get().exists:
         return False
@@ -115,7 +114,7 @@ def delete_todo(database: Client, user_id: str, todo_id: str) -> bool:
     return True
 
 
-def restore_todo(database: Client, user_id: str, todo_id: str) -> bool:
+def restore_todo(database: SqlClient, user_id: str, todo_id: str) -> bool:
     reference = collection(database, user_id).document(todo_id)
     if not reference.get().exists:
         return False

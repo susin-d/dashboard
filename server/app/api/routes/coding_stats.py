@@ -1,10 +1,9 @@
 import asyncio
 
 from fastapi import APIRouter, Depends
-from google.cloud.firestore_v1 import Client
+from app.db import SqlClient, get_firestore
 
 from app.core.auth import get_current_user
-from app.db import get_firestore
 from app.services.coding_stats import (
     load_coding_stats,
     load_platform_coding_stats,
@@ -13,7 +12,7 @@ from app.services.coding_stats import (
 router = APIRouter(prefix="/stats/competitive-coding")
 
 
-def coding_settings(database: Client, user_id: str) -> dict:
+def coding_settings(database: SqlClient, user_id: str) -> dict:
     settings_collection = (
         database.collection("users")
         .document(user_id)
@@ -27,7 +26,7 @@ def coding_settings(database: Client, user_id: str) -> dict:
 
 @router.get("")
 async def get_coding_stats(
-    database: Client = Depends(get_firestore),
+    database: SqlClient = Depends(get_firestore),
     user: dict = Depends(get_current_user),
 ):
     settings = await asyncio.to_thread(coding_settings, database, user["uid"])
@@ -36,7 +35,7 @@ async def get_coding_stats(
 
 @router.get("/codeforces")
 async def get_codeforces_stats(
-    database: Client = Depends(get_firestore),
+    database: SqlClient = Depends(get_firestore),
     user: dict = Depends(get_current_user),
 ):
     settings = await asyncio.to_thread(coding_settings, database, user["uid"])
@@ -48,7 +47,7 @@ async def get_codeforces_stats(
 
 @router.get("/codechef")
 async def get_codechef_stats(
-    database: Client = Depends(get_firestore),
+    database: SqlClient = Depends(get_firestore),
     user: dict = Depends(get_current_user),
 ):
     settings = await asyncio.to_thread(coding_settings, database, user["uid"])
@@ -60,7 +59,7 @@ async def get_codechef_stats(
 
 @router.get("/leetcode")
 async def get_leetcode_stats(
-    database: Client = Depends(get_firestore),
+    database: SqlClient = Depends(get_firestore),
     user: dict = Depends(get_current_user),
 ):
     settings = await asyncio.to_thread(coding_settings, database, user["uid"])

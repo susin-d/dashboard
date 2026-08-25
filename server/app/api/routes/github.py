@@ -5,12 +5,10 @@ from urllib.parse import quote
 import httpx
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import RedirectResponse
-from firebase_admin import firestore
-from google.cloud.firestore_v1 import Client
+from app.db import ArrayUnion, SERVER_TIMESTAMP, SqlClient, get_firestore
 
 from app.core.auth import get_current_user
 from app.core.config import settings
-from app.db import get_firestore
 from app.services.github import fetch_github_data, state_serializer
 from app.services.oauth import (
     build_github_authorize_url,
@@ -27,7 +25,7 @@ router = APIRouter(prefix="/integrations/github")
 GITHUB_SCOPES = "read:user repo"
 
 
-def reference(database: Client, user_id: str):
+def reference(database: SqlClient, user_id: str):
     return (
         database.collection("users")
         .document(user_id)
@@ -54,7 +52,7 @@ def authorize_github(user: dict = Depends(get_current_user)):
 async def github_callback(
     code: str = Query(),
     state: str = Query(),
-    database: Client = Depends(get_firestore),
+    database: SqlClient = Depends(get_firestore),
 ):
     try:
         user_id = state_serializer().loads(state, max_age=600)["uid"]
@@ -64,7 +62,7 @@ async def github_callback(
                 {
                     "access_token": encrypt_token(token_data["access_token"]),
                     "scope": token_data.get("scope", ""),
-                    "updated_at": firestore.SERVER_TIMESTAMP,
+                    "updated_at": SERVER_TIMESTAMP,
                 },
                 merge=True,
             ),
@@ -103,7 +101,7 @@ def _github_status_invalidate(uid: str):
 
 @router.get("/status")
 async def github_status(
-    database: Client = Depends(get_firestore),
+    database: SqlClient = Depends(get_firestore),
     user: dict = Depends(get_current_user),
 ):
     cached = _github_status_get(user["uid"])
@@ -117,7 +115,7 @@ async def github_status(
 
 @router.get("/data")
 async def github_data(
-    database: Client = Depends(get_firestore),
+    database: SqlClient = Depends(get_firestore),
     user: dict = Depends(get_current_user),
 ):
     try:
@@ -137,7 +135,7 @@ async def github_data(
 
 @router.delete("", status_code=204)
 def disconnect_github(
-    database: Client = Depends(get_firestore),
+    database: SqlClient = Depends(get_firestore),
     user: dict = Depends(get_current_user),
 ):
     reference(database, user["uid"]).delete()

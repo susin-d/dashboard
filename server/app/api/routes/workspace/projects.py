@@ -2,11 +2,10 @@
 
 import asyncio
 from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
-from google.cloud.firestore_v1 import Client
+from app.db import SqlClient, get_firestore
 
 from app.api.routes.workspace._shared import DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE
 from app.core.auth import get_current_user
-from app.db import get_firestore
 from app.repositories import ProjectRepository
 from app.schemas.workspace import PageResponse, ProjectCreate, ProjectResponse, ProjectUpdate
 
@@ -17,7 +16,7 @@ router = APIRouter()
 async def list_projects(
     cursor: str | None = None,
     limit: int = Query(DEFAULT_PAGE_SIZE, ge=1, le=MAX_PAGE_SIZE),
-    database: Client = Depends(get_firestore),
+    database: SqlClient = Depends(get_firestore),
     user: dict = Depends(get_current_user),
 ):
     repository = ProjectRepository(database, user["uid"])
@@ -28,7 +27,7 @@ async def list_projects(
 @router.get("/projects/{project_id}", response_model=ProjectResponse)
 async def get_project(
     project_id: str,
-    database: Client = Depends(get_firestore),
+    database: SqlClient = Depends(get_firestore),
     user: dict = Depends(get_current_user),
 ):
     repository = ProjectRepository(database, user["uid"])
@@ -41,7 +40,7 @@ async def get_project(
 @router.post("/projects", response_model=ProjectResponse, status_code=201)
 async def create_project(
     project: ProjectCreate,
-    database: Client = Depends(get_firestore),
+    database: SqlClient = Depends(get_firestore),
     user: dict = Depends(get_current_user),
 ):
     repository = ProjectRepository(database, user["uid"])
@@ -52,7 +51,7 @@ async def create_project(
 async def patch_project(
     project_id: str,
     changes: ProjectUpdate,
-    database: Client = Depends(get_firestore),
+    database: SqlClient = Depends(get_firestore),
     user: dict = Depends(get_current_user),
 ):
     repository = ProjectRepository(database, user["uid"])
@@ -66,7 +65,7 @@ async def patch_project(
 @router.delete("/projects/{project_id}", status_code=204)
 async def delete_project(
     project_id: str,
-    database: Client = Depends(get_firestore),
+    database: SqlClient = Depends(get_firestore),
     user: dict = Depends(get_current_user),
 ):
     repository = ProjectRepository(database, user["uid"])
@@ -79,7 +78,7 @@ async def delete_project(
 @router.post("/projects/{project_id}/restore", response_model=ProjectResponse)
 async def restore_project(
     project_id: str,
-    database: Client = Depends(get_firestore),
+    database: SqlClient = Depends(get_firestore),
     user: dict = Depends(get_current_user),
 ):
     repository = ProjectRepository(database, user["uid"])

@@ -4,13 +4,13 @@ Handlers run synchronously inside Eve's tool loop (already executed off the
 event loop via ``asyncio.to_thread``), so disk/process work is safe here.
 """
 
-from google.cloud.firestore_v1 import Client
+from app.db import SqlClient
 
 from app.services.studio import commands as studio_commands
 from app.services.studio import projects as studio_projects
 
 
-def handle_create_studio_project(database: Client, user_id: str, arguments: dict):
+def handle_create_studio_project(database: SqlClient, user_id: str, arguments: dict):
     from app.schemas.studio import StudioProjectCreateRequest
 
     payload = StudioProjectCreateRequest(
@@ -42,7 +42,7 @@ def handle_create_studio_project(database: Client, user_id: str, arguments: dict
     )
 
 
-def handle_list_studio_projects(database: Client, user_id: str, arguments: dict):
+def handle_list_studio_projects(database: SqlClient, user_id: str, arguments: dict):
     projects = studio_projects.list_projects(user_id)
     return {
         "projects": [
@@ -62,7 +62,7 @@ def handle_list_studio_projects(database: Client, user_id: str, arguments: dict)
     }, None, None
 
 
-def handle_get_studio_project(database: Client, user_id: str, arguments: dict):
+def handle_get_studio_project(database: SqlClient, user_id: str, arguments: dict):
     try:
         project = studio_projects.get_project(user_id, arguments["workspace_id"])
     except FileNotFoundError as error:
@@ -88,7 +88,7 @@ def handle_get_studio_project(database: Client, user_id: str, arguments: dict):
     }, None, None
 
 
-def handle_submit_build_plan(database: Client, user_id: str, arguments: dict):
+def handle_submit_build_plan(database: SqlClient, user_id: str, arguments: dict):
     try:
         project = studio_projects.save_plan(
             user_id,
@@ -114,7 +114,7 @@ def handle_submit_build_plan(database: Client, user_id: str, arguments: dict):
     )
 
 
-def handle_write_studio_files(database: Client, user_id: str, arguments: dict):
+def handle_write_studio_files(database: SqlClient, user_id: str, arguments: dict):
     workspace_id = arguments["workspace_id"]
     try:
         project = studio_projects.get_project(user_id, workspace_id)
@@ -133,7 +133,7 @@ def handle_write_studio_files(database: Client, user_id: str, arguments: dict):
     return result, "studio-projects", None
 
 
-def handle_run_studio_command(database: Client, user_id: str, arguments: dict):
+def handle_run_studio_command(database: SqlClient, user_id: str, arguments: dict):
     timeout = int(arguments.get("timeout_seconds", 300))
     try:
         result = studio_commands.run_workspace_command(
@@ -147,7 +147,7 @@ def handle_run_studio_command(database: Client, user_id: str, arguments: dict):
     return result, None, None
 
 
-def handle_publish_studio_template(database: Client, user_id: str, arguments: dict):
+def handle_publish_studio_template(database: SqlClient, user_id: str, arguments: dict):
     try:
         result = studio_projects.publish_template(user_id, arguments["workspace_id"])
     except FileNotFoundError as error:

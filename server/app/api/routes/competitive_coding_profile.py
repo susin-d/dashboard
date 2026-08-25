@@ -1,9 +1,7 @@
 from fastapi import APIRouter, Depends
-from firebase_admin import firestore
-from google.cloud.firestore_v1 import Client
+from app.db import ArrayUnion, SERVER_TIMESTAMP, SqlClient, get_firestore
 
 from app.core.auth import get_current_user
-from app.db import get_firestore
 from app.schemas.competitive_coding_profile import (
     CompetitiveCodingProfileResponse,
     CompetitiveCodingProfileUpdate,
@@ -12,7 +10,7 @@ from app.schemas.competitive_coding_profile import (
 router = APIRouter(prefix="/settings/competitive-coding")
 
 
-def _reference(database: Client, user_id: str):
+def _reference(database: SqlClient, user_id: str):
     return (
         database.collection("users")
         .document(user_id)
@@ -23,7 +21,7 @@ def _reference(database: Client, user_id: str):
 
 @router.get("", response_model=CompetitiveCodingProfileResponse)
 def get_competitive_coding_profile(
-    database: Client = Depends(get_firestore),
+    database: SqlClient = Depends(get_firestore),
     user: dict = Depends(get_current_user),
 ):
     snapshot = _reference(database, user["uid"]).get()
@@ -45,14 +43,14 @@ def get_competitive_coding_profile(
 @router.put("", response_model=CompetitiveCodingProfileResponse)
 def save_competitive_coding_profile(
     profile: CompetitiveCodingProfileUpdate,
-    database: Client = Depends(get_firestore),
+    database: SqlClient = Depends(get_firestore),
     user: dict = Depends(get_current_user),
 ):
     reference = _reference(database, user["uid"])
     reference.set(
         {
             **profile.model_dump(mode="python"),
-            "updated_at": firestore.SERVER_TIMESTAMP,
+            "updated_at": SERVER_TIMESTAMP,
         },
         merge=True,
     )

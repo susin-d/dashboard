@@ -1,13 +1,12 @@
 import logging
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from google.cloud.firestore_v1 import Client
+from app.db import SqlClient, get_firestore
 from itsdangerous import BadSignature, SignatureExpired, URLSafeTimedSerializer
 from pydantic import BaseModel, EmailStr
 
 from app.core.auth import get_current_user
 from app.core.config import settings
-from app.db import get_firestore
 from app.repositories.users import get_user_by_id, mark_email_verified
 from app.services.email import (
     EmailDeliveryError,
@@ -176,7 +175,7 @@ def request_email_verification(
 @router.post("/verify-email/confirm")
 def confirm_email_verification(
     payload: VerifyEmailRequest,
-    database: Client = Depends(get_firestore),
+    database: SqlClient = Depends(get_firestore),
 ):
     try:
         data = email_token_serializer().loads(payload.token, max_age=86400)

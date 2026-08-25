@@ -1,11 +1,10 @@
 import asyncio
 import time as _time
 from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
-from google.cloud.firestore_v1 import Client
+from app.db import SqlClient, get_firestore
 
 from app.core.auth import get_current_user
 from app.core.config import settings
-from app.db import get_firestore
 from app.repositories import workspace_files
 
 _tree_cache: dict[str, tuple[float, list]] = {}

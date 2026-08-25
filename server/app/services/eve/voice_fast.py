@@ -1,14 +1,15 @@
 """Voice fast path — ultra low latency (<1s) Eve voice reply.
 
-Bypasses heavy RAG/tool loop and uses a tiny model (groq 8b instant or gpt-4o-mini)
-with streaming + sentence-chunked TTS so first audio plays ~500-700ms after STT.
+Bypasses heavy RAG/tool loop. Provider priority: Ollama (local, OLLAMA_URL) >
+groq 8b instant > gpt-4o-mini > user's resolved config. Streaming + sentence-
+chunked TTS so first audio plays ~500-700ms after STT.
 """
 
 import base64
 import logging
 import re
 
-from google.cloud.firestore_v1 import Client
+from app.db import SqlClient
 
 from app.core.config import settings
 from app.services.ai_models.catalog import DEFAULT_PROVIDER
@@ -27,8 +28,15 @@ VOICE_INSTRUCTIONS = (
 _SENTENCE_RE = re.compile(r"[^.!?]+[.!?]+[\s]*")
 
 
-def resolve_voice_config(database: Client | None, user_uid: str | None) -> AiConfig:
-    """Pick fastest available model for voice: groq 8b instant > gpt-4o-mini > default."""
+def resolve_voice_config(database: SqlClient | None, user_uid: str | None) -> AiConfig:
+    """Pick fastest available model for voice: ollama > groq 8b instant > gpt-4o-mini > user default."""
+    # Prefer Ollama when a local URL is configured — no API key required
+    if has_server_key("ollama"):
+        model = settings.ollama_model or "llama3.1"
+        try:
+            return build_ai_config("ollama", model)
+        except Exception:
+            pass
     # Prefer groq 8b instant if groq key exists (fastest ~250ms TTFT)
     if has_server_key("groq"):
         model = settings.groq_voice_model or "llama-3.1-8b-instant"
@@ -36,19 +44,19 @@ def resolve_voice_config(database: Client | None, user_uid: str | None) -> AiCon
             return build_ai_config("groq", model)
         except Exception:
             pass
-    # Fallback to openai gpt-4o-mini (400ms)
-    if has_server_key("openai"):
+    # Fallback to openai gpt-4o-mini only when the server key is present AND
+    # no custom base URL is configured (custom endpoints may not carry that model)
+    if has_server_key("openai") and not settings.openai_url:
         try:
             return build_ai_config("openai", "gpt-4o-mini")
         except Exception:
             pass
-    # Fallback to default provider's default model but still streaming
+    # Fallback to the user's resolved AI config (respects their chosen provider/model)
     if database is not None and user_uid:
         from app.services.ai_models.config import resolve_ai_config
 
         try:
-            cfg = resolve_ai_config(database, user_uid)
-            return cfg
+            return resolve_ai_config(database, user_uid)
         except Exception:
             pass
     return build_ai_config(DEFAULT_PROVIDER)
@@ -80,7 +88,7 @@ def _choose_tts(sentence: str, tts_provider: str | None, tts_voice: str | None, 
 
 
 def stream_voice_reply(
-    database: Client | None,
+    database: SqlClient | None,
     user: dict | None,
     prompt_text: str,
     session_id: str | None = None,
@@ -178,7 +186,7 @@ def stream_voice_reply(
 
 
 def voice_reply_blocking(
-    database: Client | None,
+    database: SqlClient | None,
     user: dict | None,
     prompt_text: str,
 ) -> str:

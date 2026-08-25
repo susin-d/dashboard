@@ -2,13 +2,12 @@
 
 import asyncio
 import logging
-from fastapi import APIRouter, Depends, Form, HTTPException, Query, Request
+from fastapi import APIRouter, Depends, Form, HTTPException, Request
 from fastapi.responses import PlainTextResponse
-from google.cloud.firestore_v1 import Client
 
 from app.core.auth import get_current_user
 from app.core.config import settings
-from app.db import get_firestore
+from app.db import ArrayUnion, SERVER_TIMESTAMP, SqlClient, get_firestore
 from app.repositories.calls import CallRepository
 from app.repositories.users import get_user_by_id
 from app.schemas.call import CallResponse, CallUser, EveTwilioCallRequest, TwilioCallCreate
@@ -45,7 +44,7 @@ def twilio_config(user: dict = Depends(get_current_user)):
 
 
 @router.post("/twilio", response_model=CallResponse)
-async def create_twilio_call(payload: TwilioCallCreate, database: Client = Depends(get_firestore), user: dict = Depends(get_current_user)):
+async def create_twilio_call(payload: TwilioCallCreate, database: SqlClient = Depends(get_firestore), user: dict = Depends(get_current_user)):
     if not is_twilio_configured():
         raise HTTPException(status_code=503, detail="Twilio PSTN calling is not configured on the server. Set TWILIO_* env vars.")
     repo = CallRepository(database)
@@ -77,7 +76,7 @@ async def create_twilio_call(payload: TwilioCallCreate, database: Client = Depen
 
 
 @router.post("/trigger-eve-twilio", response_model=CallResponse)
-async def trigger_eve_twilio_call(payload: EveTwilioCallRequest, database: Client = Depends(get_firestore), user: dict = Depends(get_current_user)):
+async def trigger_eve_twilio_call(payload: EveTwilioCallRequest, database: SqlClient = Depends(get_firestore), user: dict = Depends(get_current_user)):
     if not is_twilio_configured():
         raise HTTPException(status_code=503, detail="Twilio not configured.")
     repo = CallRepository(database)
@@ -88,10 +87,9 @@ async def trigger_eve_twilio_call(payload: EveTwilioCallRequest, database: Clien
     # prompt stored as Say text
     prompt = payload.prompt or "Hello, this is Eve from StarWaves. How can I help you today?"
     # Update call with say payload so twiml can render it
-    from firebase_admin import firestore  # type: ignore
     try:
         # Use messages array to carry prompt
-        repo._document(call["id"]).update({"messages": firestore.ArrayUnion([{"id": "eve-prompt", "from_uid": "eve-bot", "type": "say", "payload": prompt[:500], "created_at": call["created_at"]}])})
+        repo._document(call["id"]).update({"messages": ArrayUnion([{"id": "eve-prompt", "from_uid": "eve-bot", "type": "say", "payload": prompt[:500], "created_at": call["created_at"]}])})
         call["messages"] = [{"id": "eve-prompt", "from_uid": "eve-bot", "type": "say", "payload": prompt[:500], "created_at": call["created_at"]}]
     except Exception:
         pass
@@ -132,7 +130,7 @@ async def twilio_relay_twiml(call_id: str):
 
 
 @router.get("/twilio/twiml/{call_id}", response_class=PlainTextResponse)
-async def twilio_twiml(call_id: str, database: Client = Depends(get_firestore)):
+async def twilio_twiml(call_id: str, database: SqlClient = Depends(get_firestore)):
     # Twilio fetches this without auth — return TwiML
     repo = CallRepository(database)
     call = repo.get(call_id)
@@ -154,7 +152,7 @@ async def twilio_twiml(call_id: str, database: Client = Depends(get_firestore)):
 
 
 @router.post("/twilio/gather", response_class=PlainTextResponse)
-async def twilio_gather(request: Request, database: Client = Depends(get_firestore)):
+async def twilio_gather(request: Request, database: SqlClient = Depends(get_firestore)):
     # Twilio Gather speech result — we echo and hang up for MVP; future: pipe to Eve LLM
     form = await request.form()
     speech = form.get("SpeechResult") or form.get("speechResult") or ""
@@ -203,7 +201,7 @@ async def twilio_gather(request: Request, database: Client = Depends(get_firesto
 
 
 @router.post("/twilio/status", response_class=PlainTextResponse)
-async def twilio_status_callback(request: Request, database: Client = Depends(get_firestore)):
+async def twilio_status_callback(request: Request, database: SqlClient = Depends(get_firestore)):
     form = await request.form()
     # Twilio sends as form-encoded
     sid = form.get("CallSid") or form.get("Sid") or ""
@@ -245,7 +243,7 @@ async def twilio_status_callback(request: Request, database: Client = Depends(ge
 
 
 @router.post("/twilio/gather-fast", response_class=PlainTextResponse)
-async def twilio_gather_fast(request: Request, database: Client = Depends(get_firestore)):
+async def twilio_gather_fast(request: Request, database: SqlClient = Depends(get_firestore)):
     """Fast gather path: fast model, no tools/RAG — targets <1s Eve TwiML reply.
 
     Twilio posts SpeechResult here when <Gather action=.../gather-fast>. We resolve

@@ -2,11 +2,10 @@
 
 import asyncio
 from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
-from google.cloud.firestore_v1 import Client
+from app.db import SqlClient, get_firestore
 
 from app.api.routes.workspace._shared import DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE
 from app.core.auth import get_current_user
-from app.db import get_firestore
 from app.repositories import NotificationRepository
 from app.schemas.workspace import NotificationResponse, NotificationUpdate, PageResponse
 
@@ -17,7 +16,7 @@ router = APIRouter()
 async def list_notifications(
     cursor: str | None = None,
     limit: int = Query(DEFAULT_PAGE_SIZE, ge=1, le=MAX_PAGE_SIZE),
-    database: Client = Depends(get_firestore),
+    database: SqlClient = Depends(get_firestore),
     user: dict = Depends(get_current_user),
 ):
     repository = NotificationRepository(database, user["uid"])
@@ -28,7 +27,7 @@ async def list_notifications(
 @router.get("/notifications/{notification_id}", response_model=NotificationResponse)
 async def get_notification(
     notification_id: str,
-    database: Client = Depends(get_firestore),
+    database: SqlClient = Depends(get_firestore),
     user: dict = Depends(get_current_user),
 ):
     repository = NotificationRepository(database, user["uid"])
@@ -42,7 +41,7 @@ async def get_notification(
 async def update_notification(
     notification_id: str,
     changes: NotificationUpdate,
-    database: Client = Depends(get_firestore),
+    database: SqlClient = Depends(get_firestore),
     user: dict = Depends(get_current_user),
 ):
     repository = NotificationRepository(database, user["uid"])
@@ -55,7 +54,7 @@ async def update_notification(
 @router.delete("/notifications/{notification_id}", status_code=204)
 async def delete_notification(
     notification_id: str,
-    database: Client = Depends(get_firestore),
+    database: SqlClient = Depends(get_firestore),
     user: dict = Depends(get_current_user),
 ):
     repository = NotificationRepository(database, user["uid"])
@@ -67,7 +66,7 @@ async def delete_notification(
 
 @router.post("/notifications/mark-all-read")
 async def mark_all_notifications_read(
-    database: Client = Depends(get_firestore),
+    database: SqlClient = Depends(get_firestore),
     user: dict = Depends(get_current_user),
 ):
     repository = NotificationRepository(database, user["uid"])
@@ -78,7 +77,7 @@ async def mark_all_notifications_read(
 @router.post("/notifications/{notification_id}/restore", response_model=NotificationResponse)
 async def restore_notification(
     notification_id: str,
-    database: Client = Depends(get_firestore),
+    database: SqlClient = Depends(get_firestore),
     user: dict = Depends(get_current_user),
 ):
     repository = NotificationRepository(database, user["uid"])

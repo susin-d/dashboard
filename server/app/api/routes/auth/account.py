@@ -1,11 +1,10 @@
 """User account management: profile retrieval/update and account deletion."""
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from google.cloud.firestore_v1 import Client
+from app.db import SqlClient, get_firestore
 from pydantic import BaseModel
 
 from app.core.auth import get_current_user
-from app.db import get_firestore
 from app.repositories.account_deletion import delete_user_account
 from app.repositories.users import get_user_by_id, update_user_profile as update_profile_in_db
 
@@ -19,7 +18,7 @@ class ProfileUpdateRequest(BaseModel):
 @router.delete("/account")
 def delete_account(
     user: dict = Depends(get_current_user),
-    database: Client = Depends(get_firestore),
+    database: SqlClient = Depends(get_firestore),
 ):
     deleted = delete_user_account(database, user["uid"])
     if not deleted:
@@ -33,7 +32,7 @@ def delete_account(
 @router.get("/me")
 def get_me(
     user: dict = Depends(get_current_user),
-    database: Client = Depends(get_firestore),
+    database: SqlClient = Depends(get_firestore),
 ):
     user_record = get_user_by_id(database, user["uid"])
     if user_record:
@@ -57,7 +56,7 @@ def get_me(
 def update_user_profile(
     payload: ProfileUpdateRequest,
     user: dict = Depends(get_current_user),
-    database: Client = Depends(get_firestore),
+    database: SqlClient = Depends(get_firestore),
 ):
     try:
         user_record = update_profile_in_db(

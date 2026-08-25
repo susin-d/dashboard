@@ -2,11 +2,10 @@
 
 import asyncio
 from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
-from google.cloud.firestore_v1 import Client
+from app.db import SqlClient, get_firestore
 
 from app.api.routes.workspace._shared import DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE
 from app.core.auth import get_current_user
-from app.db import get_firestore
 from app.repositories import JobRepository
 from app.schemas.workspace import JobCreate, JobResponse, JobUpdate, PageResponse
 
@@ -17,7 +16,7 @@ router = APIRouter()
 async def list_jobs(
     cursor: str | None = None,
     limit: int = Query(DEFAULT_PAGE_SIZE, ge=1, le=MAX_PAGE_SIZE),
-    database: Client = Depends(get_firestore),
+    database: SqlClient = Depends(get_firestore),
     user: dict = Depends(get_current_user),
 ):
     repository = JobRepository(database, user["uid"])
@@ -28,7 +27,7 @@ async def list_jobs(
 @router.get("/jobs/{job_id}", response_model=JobResponse)
 async def get_job(
     job_id: str,
-    database: Client = Depends(get_firestore),
+    database: SqlClient = Depends(get_firestore),
     user: dict = Depends(get_current_user),
 ):
     repository = JobRepository(database, user["uid"])
@@ -41,7 +40,7 @@ async def get_job(
 @router.post("/jobs", response_model=JobResponse, status_code=201)
 async def create_job(
     job: JobCreate,
-    database: Client = Depends(get_firestore),
+    database: SqlClient = Depends(get_firestore),
     user: dict = Depends(get_current_user),
 ):
     repository = JobRepository(database, user["uid"])
@@ -52,7 +51,7 @@ async def create_job(
 async def update_job(
     job_id: str,
     changes: JobUpdate,
-    database: Client = Depends(get_firestore),
+    database: SqlClient = Depends(get_firestore),
     user: dict = Depends(get_current_user),
 ):
     repository = JobRepository(database, user["uid"])
@@ -66,7 +65,7 @@ async def update_job(
 @router.delete("/jobs/{job_id}", status_code=204)
 async def delete_job(
     job_id: str,
-    database: Client = Depends(get_firestore),
+    database: SqlClient = Depends(get_firestore),
     user: dict = Depends(get_current_user),
 ):
     repository = JobRepository(database, user["uid"])
@@ -79,7 +78,7 @@ async def delete_job(
 @router.post("/jobs/{job_id}/restore", response_model=JobResponse)
 async def restore_job(
     job_id: str,
-    database: Client = Depends(get_firestore),
+    database: SqlClient = Depends(get_firestore),
     user: dict = Depends(get_current_user),
 ):
     repository = JobRepository(database, user["uid"])

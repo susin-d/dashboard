@@ -3,8 +3,7 @@
 from datetime import datetime, timezone
 from typing import Any
 
-from firebase_admin import firestore
-from google.cloud.firestore_v1 import Client
+from app.db import ArrayUnion, Query, SERVER_TIMESTAMP, SqlClient
 
 from app.repositories.helpers import restore_payload, soft_delete_payload
 from app.repositories.pagination import paginate_collection, serialize_dates, user_collection
@@ -12,7 +11,7 @@ from app.schemas.workspace import ProjectCreate
 
 
 class ProjectRepository:
-    def __init__(self, database: Client, user_id: str):
+    def __init__(self, database: SqlClient, user_id: str):
         self.database = database
         self.user_id = user_id
         self.collection = user_collection(database, user_id, "projects")
@@ -36,8 +35,8 @@ class ProjectRepository:
         reference.set(
             {
                 **data,
-                "created_at": firestore.SERVER_TIMESTAMP,
-                "updated_at": firestore.SERVER_TIMESTAMP,
+                "created_at": SERVER_TIMESTAMP,
+                "updated_at": SERVER_TIMESTAMP,
             },
         )
         return {"id": reference.id, **data, "created_at": now, "updated_at": now}
@@ -48,7 +47,7 @@ class ProjectRepository:
             reference.update(
                 {
                     **serialize_dates(project.model_dump(mode="python")),
-                    "updated_at": firestore.SERVER_TIMESTAMP,
+                    "updated_at": SERVER_TIMESTAMP,
                 },
             )
         except Exception:
@@ -72,8 +71,8 @@ class ProjectRepository:
                     "github_url": updates.get("github_url"),
                     "live_url": updates.get("live_url"),
                     "lifecycle_phase": updates.get("lifecycle_phase") or "idea",
-                    "created_at": firestore.SERVER_TIMESTAMP,
-                    "updated_at": firestore.SERVER_TIMESTAMP,
+                    "created_at": SERVER_TIMESTAMP,
+                    "updated_at": SERVER_TIMESTAMP,
                     **serialized,
                 }
                 reference.set(base_data)
@@ -82,7 +81,7 @@ class ProjectRepository:
             reference.update(
                 {
                     **serialized,
-                    "updated_at": firestore.SERVER_TIMESTAMP,
+                    "updated_at": SERVER_TIMESTAMP,
                 },
             )
         except Exception:

@@ -3,11 +3,10 @@
 import asyncio
 
 from fastapi import APIRouter, Depends, Query
-from google.cloud.firestore_v1 import Client
+from app.db import SqlClient, get_firestore
 
 from app.api.routes.studio._shared import bad_request, not_found, require_non_serverless
 from app.core.auth import get_current_user
-from app.db import get_firestore
 from app.schemas.studio import (
     StudioMessageResponse,
     StudioProjectResponse,
@@ -44,7 +43,7 @@ def _to_response(project: dict) -> StudioProjectResponse:
 @router.get("", response_model=StudioTemplateListResponse)
 async def list_templates(
     user: dict = Depends(get_current_user),
-    database: Client = Depends(get_firestore),
+    database: SqlClient = Depends(get_firestore),
 ):
     """Curated templates + the user's own published templates."""
     require_non_serverless()
@@ -69,7 +68,7 @@ async def list_templates(
 async def publish_template(
     workspace_id: str,
     user: dict = Depends(get_current_user),
-    database: Client = Depends(get_firestore),
+    database: SqlClient = Depends(get_firestore),
 ):
     require_non_serverless()
     try:
@@ -89,7 +88,7 @@ async def remix_template(
     template_id: str,
     new_name: str = Query(min_length=1, max_length=100),
     user: dict = Depends(get_current_user),
-    database: Client = Depends(get_firestore),
+    database: SqlClient = Depends(get_firestore),
 ):
     require_non_serverless()
     try:

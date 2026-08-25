@@ -67,6 +67,8 @@ export function EvePage({
   const [draft, setDraft] = useState('')
   const [isSending, setIsSending] = useState(false)
   const [streamText, setStreamText] = useState('')
+  const [thinkingText, setThinkingText] = useState('')
+  const [toolCalls, setToolCalls] = useState([])
   const [activeTool, setActiveTool] = useState(null)
   const abortRef = useRef(null)
   const [error, setError] = useState('')
@@ -194,8 +196,23 @@ export function EvePage({
     return { response, sessionId }
   }
 
-  const commitTurn = (baseMessages, assistantContent, changedResources, actions) => {
-    const finalMessages = [...baseMessages, { role: 'assistant', content: assistantContent }]
+  const commitTurn = (
+    baseMessages,
+    assistantContent,
+    changedResources,
+    actions,
+    turnThinking = '',
+    turnToolCalls = [],
+  ) => {
+    const finalMessages = [
+      ...baseMessages,
+      {
+        role: 'assistant',
+        content: assistantContent,
+        thinking: turnThinking || undefined,
+        toolCalls: turnToolCalls?.length ? turnToolCalls : undefined,
+      },
+    ]
     setMessages(finalMessages)
     if (changedResources?.length) onWorkspaceChanged?.()
     handleActions(actions)
@@ -222,12 +239,17 @@ export function EvePage({
     setError('')
     setIsSending(true)
     setStreamText('')
+    setThinkingText('')
+    setToolCalls([])
     setActiveTool(null)
 
     const apiMessages = buildApiMessages(nextMessages)
 
     const controller = new AbortController()
     abortRef.current = controller
+
+    let currentThinking = ''
+    const currentToolCalls = []
 
     try {
       let receivedText = ''
@@ -243,24 +265,42 @@ export function EvePage({
             receivedText += text
             setStreamText((current) => current + text)
           },
-          onToolStart: setActiveTool,
-          onToolEnd: () => setActiveTool(null),
+          onThinking: (text) => {
+            currentThinking += text
+            setThinkingText((current) => current + text)
+          },
+          onToolStart: (name, args, callId) => {
+            setActiveTool(name)
+            const entry = { id: callId || `${name}-${Date.now()}`, name, arguments: args, status: 'running' }
+            currentToolCalls.push(entry)
+            setToolCalls([...currentToolCalls])
+          },
+          onToolEnd: (name, output, callId) => {
+            setActiveTool(null)
+            const idx = currentToolCalls.findIndex(
+              (t) => (callId && t.id === callId) || (!callId && t.name === name && t.status === 'running'),
+            )
+            if (idx !== -1) {
+              currentToolCalls[idx] = { ...currentToolCalls[idx], output, status: 'done' }
+              setToolCalls([...currentToolCalls])
+            }
+          },
           onDone: (payload) => {
             donePayload = payload
           },
         })
       } catch (streamError) {
         if (controller.signal.aborted) {
-          if (!receivedText) return nextMessages
+          if (!receivedText && !currentThinking) return nextMessages
           // User pressed Stop — keep whatever was generated.
           donePayload = { message: receivedText, changed_resources: [], actions: [], session_id: activeSessionId }
-        } else if (!receivedText) {
+        } else if (!receivedText && !currentThinking) {
           // Stream never produced tokens — fall back once to the classic endpoint.
           fallbackToRest = true
         } else {
           // Partial answer already streamed — keep it visible and report the error.
           setError(streamError.message || 'Eve response was interrupted.')
-          return commitTurn(nextMessages, receivedText)
+          return commitTurn(nextMessages, receivedText, [], [], currentThinking, currentToolCalls)
         }
       }
 
@@ -277,11 +317,15 @@ export function EvePage({
         donePayload?.message ?? '',
         donePayload?.changed_resources,
         donePayload?.actions,
+        currentThinking,
+        currentToolCalls,
       )
     } finally {
       abortRef.current = null
       setIsSending(false)
       setStreamText('')
+      setThinkingText('')
+      setToolCalls([])
       setActiveTool(null)
     }
   }
@@ -422,6 +466,8 @@ export function EvePage({
             setDraft={setDraft}
             isSending={isSending}
             streamText={streamText}
+            thinkingText={thinkingText}
+            toolCalls={toolCalls}
             activeTool={activeTool}
             onStop={stopGenerating}
             error={error}

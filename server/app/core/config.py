@@ -81,6 +81,7 @@ class Settings:
         "AUTH_SECRET_KEY",
         "starwaves-super-secret-auth-key-change-in-prod",
     )
+    default_ai_provider: str = os.getenv("DEFAULT_AI_PROVIDER", "ollama")
     openai_api_key: str | None = os.getenv("OPENAI_API_KEY")
     openai_url: str | None = os.getenv("OPENAI_URL") or None
     openai_model: str = os.getenv("OPENAI_MODEL", "gpt-5-mini")

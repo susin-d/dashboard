@@ -91,30 +91,30 @@ export function EveMemorySection({
       ) : (
         <div className="eve-memory-grid" role="list">
           {filteredMemories.map((memory) => (
-            <div key={memory.id} className="eve-memory-card">
+            <div key={memory.id} className="eve-memory-card" role="listitem">
               <div className="eve-memory-card-header">
                 <span className="eve-memory-tag">Fact</span>
-                <button
-                  type="button"
-                  className="eve-card-delete-btn"
-                  onClick={() => onRemoveMemory(memory.id)}
-                  disabled={isSending}
-                  aria-label="Delete this memory"
-                  title="Delete memory"
-                >
-                  <Trash2 size={13} />
-                </button>
               </div>
               <p className="eve-memory-card-text">{memory.content}</p>
               {memory.created_at && (
                 <time className="eve-memory-card-time">
-                  Saved {new Date(memory.created_at).toLocaleDateString(undefined, {
+                  {new Date(memory.created_at).toLocaleDateString(undefined, {
                     month: 'short',
                     day: 'numeric',
                     year: 'numeric',
                   })}
                 </time>
               )}
+              <button
+                type="button"
+                className="eve-card-delete-btn"
+                onClick={() => onRemoveMemory(memory.id)}
+                disabled={isSending}
+                aria-label="Delete this memory"
+                title="Delete memory"
+              >
+                <Trash2 size={13} />
+              </button>
             </div>
           ))}
         </div>

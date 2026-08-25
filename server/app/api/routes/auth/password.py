@@ -4,12 +4,11 @@ import logging
 import random
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from google.cloud.firestore_v1 import Client
+from app.db import SqlClient, get_firestore
 from itsdangerous import BadSignature, SignatureExpired
 from pydantic import BaseModel, EmailStr
 
 from app.api.routes.auth._shared import state_serializer
-from app.db import get_firestore
 from app.repositories.users import get_user_by_email, update_user_password
 from app.services.email import EmailDeliveryError, send_password_reset_email
 
@@ -36,7 +35,7 @@ class ResetPasswordRequest(BaseModel):
 @router.post("/forgot-password")
 def forgot_password(
     payload: ForgotPasswordRequest,
-    database: Client = Depends(get_firestore),
+    database: SqlClient = Depends(get_firestore),
 ):
     user_record = get_user_by_email(database, payload.email)
     token = None
@@ -65,7 +64,7 @@ def forgot_password(
 @router.post("/verify-reset-code")
 def verify_reset_code(
     payload: VerifyResetCodeRequest,
-    database: Client = Depends(get_firestore),
+    database: SqlClient = Depends(get_firestore),
 ):
     clean_code = payload.code.strip()
     if len(clean_code) != 6 or not clean_code.isdigit():
@@ -117,7 +116,7 @@ def verify_reset_code(
 @router.post("/reset-password")
 def reset_password(
     payload: ResetPasswordRequest,
-    database: Client = Depends(get_firestore),
+    database: SqlClient = Depends(get_firestore),
 ):
     if len(payload.password) < 8:
         raise HTTPException(

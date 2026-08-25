@@ -3,11 +3,10 @@
 import asyncio
 
 from fastapi import APIRouter, Depends
-from google.cloud.firestore_v1 import Client
+from app.db import SqlClient, get_firestore
 
 from app.api.routes.workspace._shared import hackathon_settings_reference, user_collection
 from app.core.auth import get_current_user
-from app.db import get_firestore
 from app.services.hackathon_sources import fetch_enabled_hackathons
 
 router = APIRouter()
@@ -15,7 +14,7 @@ router = APIRouter()
 
 @router.get("/calendar-data")
 async def calendar_data(
-    database: Client = Depends(get_firestore),
+    database: SqlClient = Depends(get_firestore),
     user: dict = Depends(get_current_user),
 ):
     def load_collections():

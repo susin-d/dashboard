@@ -3,12 +3,10 @@ from datetime import datetime, timezone
 from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from firebase_admin import firestore
-from google.cloud.firestore_v1 import Client
+from app.db import ArrayUnion, SERVER_TIMESTAMP, SqlClient, get_firestore
 
 from app.core.auth import get_current_user
 from app.core.config import settings
-from app.db import get_firestore
 from app.repositories import contacts as contacts_repo
 from app.schemas.contact import ContactCreate
 from app.services.google_contacts import (
@@ -34,7 +32,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/integrations/google-contacts")
 
 
-def accounts_collection(database: Client, user_id: str):
+def accounts_collection(database: SqlClient, user_id: str):
     return integration_accounts_reference(database, user_id, "google_contacts")
 
 
@@ -57,7 +55,7 @@ async def google_contacts_callback(
     code: str = Query(None),
     state: str = Query(None),
     error: str = Query(None),
-    database: Client = Depends(get_firestore),
+    database: SqlClient = Depends(get_firestore),
 ):
     if error or not code or not state:
         reason = error or "Authorization code or state was missing."
@@ -96,7 +94,7 @@ async def google_contacts_callback(
             "name": profile.get("name") or "",
             "avatar_url": profile.get("picture"),
             "access_token": encrypt_google_token(access_token),
-            "updated_at": firestore.SERVER_TIMESTAMP,
+            "updated_at": SERVER_TIMESTAMP,
         }
         if refresh_token:
             update_payload["refresh_token"] = encrypt_google_token(refresh_token)
@@ -117,7 +115,7 @@ async def google_contacts_callback(
 
 @router.get("/accounts")
 async def get_google_contacts_accounts(
-    database: Client = Depends(get_firestore),
+    database: SqlClient = Depends(get_firestore),
     user: dict = Depends(get_current_user),
 ):
     import asyncio
@@ -137,7 +135,7 @@ async def get_google_contacts_accounts(
 @router.post("/import")
 async def import_google_contacts(
     account_id: str | None = Query(None),
-    database: Client = Depends(get_firestore),
+    database: SqlClient = Depends(get_firestore),
     user: dict = Depends(get_current_user),
 ):
     user_uid = user["uid"]
@@ -205,7 +203,7 @@ async def import_google_contacts(
                 access_token = await refresh_google_token(refresh_token)
                 doc.reference.update({
                     "access_token": encrypt_google_token(access_token),
-                    "updated_at": firestore.SERVER_TIMESTAMP,
+                    "updated_at": SERVER_TIMESTAMP,
                 })
                 raw_contacts = await fetch_google_people_connections(access_token)
             except Exception as refresh_err:
@@ -269,8 +267,8 @@ async def import_google_contacts(
         new_ref = contacts_collection.document()
         new_ref.set({
             **data,
-            "created_at": firestore.SERVER_TIMESTAMP,
-            "updated_at": firestore.SERVER_TIMESTAMP,
+            "created_at": SERVER_TIMESTAMP,
+            "updated_at": SERVER_TIMESTAMP,
         })
 
         if email_clean:
@@ -290,7 +288,7 @@ async def import_google_contacts(
 @router.post("/disconnect")
 async def disconnect_google_contacts(
     account_id: str | None = Query(None),
-    database: Client = Depends(get_firestore),
+    database: SqlClient = Depends(get_firestore),
     user: dict = Depends(get_current_user),
 ):
     import asyncio

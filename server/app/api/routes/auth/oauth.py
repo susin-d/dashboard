@@ -6,13 +6,12 @@ from urllib.parse import urlencode, urlparse
 import httpx
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from fastapi.responses import HTMLResponse
-from google.cloud.firestore_v1 import Client
+from app.db import SqlClient, get_firestore
 from itsdangerous import BadSignature, SignatureExpired
 
 from app.api.routes.auth._shared import _send_welcome_email_best_effort, state_serializer
 from app.core.auth import create_user_token
 from app.core.config import settings
-from app.db import get_firestore
 from app.repositories.users import get_or_create_google_user
 
 router = APIRouter(prefix="/auth")
@@ -55,7 +54,7 @@ def google_login(request: Request, origin: str | None = None):
 async def google_callback(
     code: str = Query(...),
     state: str = Query(...),
-    database: Client = Depends(get_firestore),
+    database: SqlClient = Depends(get_firestore),
 ):
     try:
         state_data = state_serializer().loads(state, max_age=600)

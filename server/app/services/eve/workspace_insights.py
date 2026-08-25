@@ -3,7 +3,7 @@
 from datetime import date, datetime, timedelta, timezone
 from typing import Any
 
-from google.cloud.firestore_v1 import Client
+from app.db import SqlClient
 
 from app.services.eve.constants import SUPPORTED_RESOURCES
 from app.services.eve.workspace_records import _all_records, _record_text
@@ -45,7 +45,7 @@ def _deadline_entries(records: dict[str, list[dict[str, Any]]]) -> list[dict[str
 
 
 
-def _workspace_insight(database: Client, user_id: str, kind: str, date_value: str | None = None, query: str | None = None) -> dict[str, Any]:
+def _workspace_insight(database: SqlClient, user_id: str, kind: str, date_value: str | None = None, query: str | None = None) -> dict[str, Any]:
     records = _all_records(database, user_id)
     now = datetime.now(timezone.utc)
     today = date_value or now.date().isoformat()
@@ -74,7 +74,17 @@ def _workspace_insight(database: Client, user_id: str, kind: str, date_value: st
         if query:
             matches = [item for item in matches if query.lower() in _record_text(item)]
         return {"date": today, "events": matches}
-    raise ValueError("Unsupported insight kind.")
+    supported_kinds = (
+        "summarize_dashboard",
+        "summarize_upcoming_deadlines",
+        "find_overdue_tasks",
+        "find_stale_projects",
+        "suggest_next_actions",
+        "export_workspace_summary",
+        "summarize_calendar_day",
+        "filter_calendar_events",
+    )
+    return {"error": f"Unknown insight kind '{kind}'. Supported kinds: {', '.join(supported_kinds)}."}
 
 
 

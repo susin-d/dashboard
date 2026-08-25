@@ -1,6 +1,6 @@
 import { useCallback, useRef, useState } from 'react'
 import Editor from '@monaco-editor/react'
-import { X, FileCode, FolderOpen, FilePlus, Save, Circle } from 'lucide-react'
+import { X, FileCode, FolderOpen, FilePlus, Save, Circle, Play } from 'lucide-react'
 
 const EXTENSION_LANGUAGE_MAP = {
   js: 'javascript',
@@ -73,6 +73,10 @@ function getTheme() {
     : 'vs'
 }
 
+function isHtmlFile(filePath) {
+  return filePath?.split('.').pop().toLowerCase() === 'html'
+}
+
 export function WorkspaceEditor({
   tabs,
   activeTab,
@@ -82,6 +86,7 @@ export function WorkspaceEditor({
   onSave,
   isFileDirty,
   onCreateFile,
+  onRunHtml,
 }) {
   const editorRef = useRef(null)
   const [cursorPos, setCursorPos] = useState({ line: 1, column: 1 })
@@ -175,6 +180,18 @@ export function WorkspaceEditor({
             ))}
           </span>
           {isDirty && <span className="breadcrumb-dirty"><Circle size={8} fill="currentColor" /> Unsaved</span>}
+          {isHtmlFile(activeTab) && onRunHtml && (
+            <button
+              type="button"
+              className="breadcrumb-run-btn"
+              onClick={onRunHtml}
+              title="Run HTML — preview in the browser panel"
+              aria-label="Run HTML preview"
+            >
+              <Play size={11} />
+              Run
+            </button>
+          )}
         </div>
       )}
 

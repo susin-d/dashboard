@@ -4,7 +4,7 @@ import hashlib
 
 import httpx
 from fastapi.responses import HTMLResponse
-from google.cloud.firestore_v1 import Client
+from app.db import SqlClient
 from itsdangerous import URLSafeTimedSerializer
 
 
@@ -31,7 +31,7 @@ def integration_account_id(identifier: str) -> str:
     return hashlib.sha256(identifier.lower().strip().encode()).hexdigest()
 
 
-def integration_accounts_reference(database: Client, user_id: str, integration_name: str):
+def integration_accounts_reference(database: SqlClient, user_id: str, integration_name: str):
     return (
         database.collection("users")
         .document(user_id)

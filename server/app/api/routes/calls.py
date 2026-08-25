@@ -9,11 +9,10 @@ that are not yet connected to the WebSocket.
 import asyncio
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from google.cloud.firestore_v1 import Client
+from app.db import SqlClient, get_firestore
 
 from app.core.auth import get_current_user
 from app.core.ws_manager import call_ws_manager
-from app.db import get_firestore
 from app.repositories.calls import CallRepository
 from app.repositories.users import get_user_by_email, get_user_by_id
 from app.schemas.call import (
@@ -34,7 +33,7 @@ RECENT_CALL_LIMIT = 30
 EVE_BOT_USER = {"uid": "eve-bot", "email": "eve@starwaves.app", "display_name": "Eve AI Assistant"}
 
 
-def _resolve_callee(database: Client, identifier: str, current_user: dict) -> dict:
+def _resolve_callee(database: SqlClient, identifier: str, current_user: dict) -> dict:
     cleaned = identifier.strip().lower()
     if cleaned in ("eve", "eve-bot", "eve@starwaves.app"):
         return EVE_BOT_USER
@@ -71,7 +70,7 @@ def _newest_incoming(repository: CallRepository, uid: str) -> dict | None:
 
 @router.get("/incoming", response_model=list[CallResponse])
 async def list_incoming_calls(
-    database: Client = Depends(get_firestore),
+    database: SqlClient = Depends(get_firestore),
     user: dict = Depends(get_current_user),
 ):
     repository = CallRepository(database)
@@ -83,7 +82,7 @@ async def list_incoming_calls(
 @router.get("/recent", response_model=list[CallResponse])
 async def list_recent_calls(
     limit: int = Query(default=20, ge=1, le=RECENT_CALL_LIMIT),
-    database: Client = Depends(get_firestore),
+    database: SqlClient = Depends(get_firestore),
     user: dict = Depends(get_current_user),
 ):
     repository = CallRepository(database)
@@ -98,7 +97,7 @@ async def list_recent_calls(
 )
 async def trigger_eve_call(
     mode: str = Query(default="audio"),
-    database: Client = Depends(get_firestore),
+    database: SqlClient = Depends(get_firestore),
     user: dict = Depends(get_current_user),
 ):
     repository = CallRepository(database)
@@ -127,7 +126,7 @@ async def trigger_eve_call(
 )
 async def create_call(
     payload: CallCreate,
-    database: Client = Depends(get_firestore),
+    database: SqlClient = Depends(get_firestore),
     user: dict = Depends(get_current_user),
 ):
     callee_record = _resolve_callee(database, payload.callee_identifier, user)
@@ -159,7 +158,7 @@ async def create_call(
 @router.get("/{call_id}", response_model=CallResponse)
 async def get_call(
     call_id: str,
-    database: Client = Depends(get_firestore),
+    database: SqlClient = Depends(get_firestore),
     user: dict = Depends(get_current_user),
 ):
     repository = CallRepository(database)
@@ -172,7 +171,7 @@ async def get_call(
 async def update_call_status(
     call_id: str,
     payload: CallStatusUpdate,
-    database: Client = Depends(get_firestore),
+    database: SqlClient = Depends(get_firestore),
     user: dict = Depends(get_current_user),
 ):
     repository = CallRepository(database)
@@ -216,7 +215,7 @@ async def update_call_status(
 async def send_call_signal(
     call_id: str,
     payload: SignalCreate,
-    database: Client = Depends(get_firestore),
+    database: SqlClient = Depends(get_firestore),
     user: dict = Depends(get_current_user),
 ):
     repository = CallRepository(database)

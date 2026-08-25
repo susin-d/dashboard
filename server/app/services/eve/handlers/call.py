@@ -1,9 +1,9 @@
 """Call handlers — single responsibility: Eve voice call trigger (dual provider)."""
 
-from google.cloud.firestore_v1 import Client
+from app.db import ArrayUnion, Query, SERVER_TIMESTAMP, SqlClient
 
 
-def handle_trigger_eve_call(database: Client, user_id: str, arguments: dict) -> tuple[dict, None, dict]:
+def handle_trigger_eve_call(database: SqlClient, user_id: str, arguments: dict) -> tuple[dict, None, dict]:
     from app.core.config import settings
     from app.repositories.calls import CallRepository
     from app.repositories.users import get_user_by_id
@@ -69,7 +69,7 @@ def handle_trigger_eve_call(database: Client, user_id: str, arguments: dict) -> 
     }, None, {"type": "trigger_eve_call", "call_id": call["id"]}
 
 
-def handle_make_twilio_call(database: Client, user_id: str, arguments: dict) -> tuple[dict, None, dict]:
+def handle_make_twilio_call(database: SqlClient, user_id: str, arguments: dict) -> tuple[dict, None, dict]:
     from app.core.config import settings
     from app.repositories.calls import CallRepository
     from app.schemas.call import CallUser
@@ -87,10 +87,9 @@ def handle_make_twilio_call(database: Client, user_id: str, arguments: dict) -> 
     call = repo.create(caller=me, callee=callee, mode=arguments.get("mode", "audio"), provider="twilio", phone_number=phone)
     message = arguments.get("message")
     if message:
-        from firebase_admin import firestore
 
         try:
-            repo._document(call["id"]).update({"messages": firestore.ArrayUnion([{"id": "say", "from_uid": user_id, "type": "say", "payload": message[:500], "created_at": call["created_at"]}])})
+            repo._document(call["id"]).update({"messages": ArrayUnion([{"id": "say", "from_uid": user_id, "type": "say", "payload": message[:500], "created_at": call["created_at"]}])})
         except Exception:
             pass
     base = (settings.twilio_callback_base_url or "").rstrip("/") or "http://127.0.0.1:8000"

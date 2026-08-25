@@ -9,8 +9,7 @@ document; both participants poll ``GET /calls/{call_id}`` for new messages.
 import uuid
 from datetime import datetime, timedelta, timezone
 
-from firebase_admin import firestore
-from google.cloud.firestore_v1 import Client
+from app.db import ArrayUnion, Query, SERVER_TIMESTAMP, SqlClient
 
 from app.schemas.call import CallUser
 
@@ -28,7 +27,7 @@ def _now_iso() -> str:
 
 
 class CallRepository:
-    def __init__(self, database: Client):
+    def __init__(self, database: SqlClient):
         self.database = database
         self.collection = database.collection("calls")
 
@@ -88,7 +87,7 @@ class CallRepository:
         }
         reference.update(
             {
-                "messages": firestore.ArrayUnion([message]),
+                "messages": ArrayUnion([message]),
                 "updated_at": _now_iso(),
             },
         )
@@ -120,6 +119,8 @@ class CallRepository:
             updated = call.get("updated_at") or call.get("created_at") or ""
             try:
                 updated_dt = datetime.fromisoformat(updated)
+                if updated_dt.tzinfo is None:
+                    updated_dt = updated_dt.replace(tzinfo=timezone.utc)
             except (TypeError, ValueError):
                 updated_dt = datetime.now(timezone.utc)
             if updated_dt < threshold:

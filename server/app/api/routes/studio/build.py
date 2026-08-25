@@ -3,11 +3,10 @@
 import asyncio
 
 from fastapi import APIRouter, Depends
-from google.cloud.firestore_v1 import Client
+from app.db import SqlClient, get_firestore
 
 from app.api.routes.studio._shared import bad_request, not_found, require_non_serverless
 from app.core.auth import get_current_user
-from app.db import get_firestore
 from app.schemas.studio import (
     StudioBuildPlanPayload,
     StudioCommandRequest,
@@ -47,7 +46,7 @@ async def save_build_plan(
     workspace_id: str,
     body: StudioBuildPlanPayload,
     user: dict = Depends(get_current_user),
-    database: Client = Depends(get_firestore),
+    database: SqlClient = Depends(get_firestore),
 ):
     """Store a proposed build plan (Eve submits; UI shows the approval card)."""
     require_non_serverless()
@@ -65,7 +64,7 @@ async def set_plan_status(
     workspace_id: str,
     body: StudioPlanStatusRequest,
     user: dict = Depends(get_current_user),
-    database: Client = Depends(get_firestore),
+    database: SqlClient = Depends(get_firestore),
 ):
     """Approve or reject the pending plan (human-only action from the UI)."""
     require_non_serverless()
@@ -85,7 +84,7 @@ async def run_command(
     workspace_id: str,
     body: StudioCommandRequest,
     user: dict = Depends(get_current_user),
-    database: Client = Depends(get_firestore),
+    database: SqlClient = Depends(get_firestore),
 ):
     """Run an allowlisted command inside the studio workspace."""
     require_non_serverless()

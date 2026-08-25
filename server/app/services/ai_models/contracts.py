@@ -36,14 +36,14 @@ class ProviderResponse:
 
 @dataclass
 class StreamChunk:
-    """One streamed provider event: incremental text or the complete response.
+    """One streamed provider event: incremental text, incremental thinking, or the complete response.
 
-    Providers yield zero or more ``text_delta`` chunks followed by exactly one
-    ``final`` chunk carrying the same ProviderResponse shape as a non-streaming
+    Providers yield zero or more ``text_delta`` or ``thinking_delta`` chunks followed by
+    exactly one ``final`` chunk carrying the same ProviderResponse shape as a non-streaming
     call, so the shared tool loop stays provider-agnostic.
     """
 
-    kind: str  # "text_delta" | "final"
+    kind: str  # "text_delta" | "thinking_delta" | "final"
     text: str = ""
     response: ProviderResponse | None = None
 

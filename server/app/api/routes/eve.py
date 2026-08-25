@@ -3,12 +3,11 @@ import logging
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
 from fastapi.responses import Response, StreamingResponse
-from google.cloud.firestore_v1 import Client
+from app.db import SqlClient, get_firestore
 
 logger = logging.getLogger(__name__)
 
 from app.core.auth import get_current_user
-from app.db import get_firestore
 from app.repositories import eve_sessions
 from app.repositories.eve import add_memory, delete_memory, list_memories, search_memories
 from app.schemas.eve import (
@@ -54,7 +53,7 @@ _STT_TRANSCRIBERS = {
 async def transcribe(
     file: UploadFile = File(...),
     language: str | None = Form(default=None),
-    database: Client = Depends(get_firestore),
+    database: SqlClient = Depends(get_firestore),
     user: dict = Depends(get_current_user),
 ):
     engine, model = await asyncio.to_thread(resolve_stt_engine, database, user["uid"])
@@ -85,7 +84,7 @@ async def transcribe(
 @router.post("/synthesize")
 async def synthesize(
     payload: EveSynthesizeRequest,
-    database: Client = Depends(get_firestore),
+    database: SqlClient = Depends(get_firestore),
     user: dict = Depends(get_current_user),
 ):
     engine, voice = await asyncio.to_thread(resolve_tts_engine, database, user["uid"])
@@ -125,7 +124,7 @@ async def synthesize(
 @router.post("/synthesize/stream")
 async def synthesize_stream(
     payload: EveSynthesizeRequest,
-    database: Client = Depends(get_firestore),
+    database: SqlClient = Depends(get_firestore),
     user: dict = Depends(get_current_user),
 ):
     """Stream TTS audio — chunked transfer, no buffering (TTFA ~100ms for Fish).
@@ -204,7 +203,7 @@ async def synthesize_stream(
 @router.post("/chat", response_model=EveChatResponse)
 async def chat(
     payload: EveChatRequest,
-    database: Client = Depends(get_firestore),
+    database: SqlClient = Depends(get_firestore),
     user: dict = Depends(get_current_user),
 ):
     # Offload heavy LLM + tool loop to thread to keep event loop responsive; LLM calls are sync httpx
@@ -220,7 +219,7 @@ async def chat(
 
 @router.get("/sessions", response_model=EveSessionListResponse)
 async def list_sessions(
-    database: Client = Depends(get_firestore),
+    database: SqlClient = Depends(get_firestore),
     user: dict = Depends(get_current_user),
 ):
     sessions = await asyncio.to_thread(eve_sessions.list_sessions, database, user["uid"])
@@ -230,7 +229,7 @@ async def list_sessions(
 @router.post("/sessions", response_model=EveSessionResponse, status_code=status.HTTP_201_CREATED)
 async def create_session(
     payload: EveSessionCreateRequest,
-    database: Client = Depends(get_firestore),
+    database: SqlClient = Depends(get_firestore),
     user: dict = Depends(get_current_user),
 ):
     session = await asyncio.to_thread(
@@ -245,7 +244,7 @@ async def create_session(
 @router.get("/sessions/{session_id}", response_model=EveSessionResponse)
 async def get_session(
     session_id: str,
-    database: Client = Depends(get_firestore),
+    database: SqlClient = Depends(get_firestore),
     user: dict = Depends(get_current_user),
 ):
     try:
@@ -258,7 +257,7 @@ async def get_session(
 @router.delete("/sessions/{session_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_session(
     session_id: str,
-    database: Client = Depends(get_firestore),
+    database: SqlClient = Depends(get_firestore),
     user: dict = Depends(get_current_user),
 ):
     ok = await asyncio.to_thread(eve_sessions.delete_session, database, user["uid"], session_id)
@@ -268,7 +267,7 @@ async def delete_session(
 
 @router.get("/memories", response_model=EveMemoriesResponse)
 async def get_memories(
-    database: Client = Depends(get_firestore),
+    database: SqlClient = Depends(get_firestore),
     user: dict = Depends(get_current_user),
 ):
     memories = await asyncio.to_thread(list_memories, database, user["uid"])
@@ -279,7 +278,7 @@ async def get_memories(
 async def search_eve_memories_route(
     q: str,
     limit: int = 5,
-    database: Client = Depends(get_firestore),
+    database: SqlClient = Depends(get_firestore),
     user: dict = Depends(get_current_user),
 ):
     if limit < 1 or limit > 20:
@@ -291,7 +290,7 @@ async def search_eve_memories_route(
 @router.post("/memories", response_model=EveMemoriesResponse, status_code=status.HTTP_201_CREATED)
 async def create_memory(
     payload: EveMemoryCreate,
-    database: Client = Depends(get_firestore),
+    database: SqlClient = Depends(get_firestore),
     user: dict = Depends(get_current_user),
 ):
     memory = await asyncio.to_thread(add_memory, database, user["uid"], payload.content)
@@ -303,7 +302,7 @@ async def create_memory(
 @router.delete("/memories/{memory_id}", response_model=EveMemoryDeleteResponse)
 async def remove_memory(
     memory_id: str,
-    database: Client = Depends(get_firestore),
+    database: SqlClient = Depends(get_firestore),
     user: dict = Depends(get_current_user),
 ):
     ok = await asyncio.to_thread(delete_memory, database, user["uid"], memory_id)
@@ -315,7 +314,7 @@ async def remove_memory(
 @router.post("/delete", response_model=EveDeleteResponse)
 async def delete_record(
     payload: EveDeleteRequest,
-    database: Client = Depends(get_firestore),
+    database: SqlClient = Depends(get_firestore),
     user: dict = Depends(get_current_user),
 ):
     try:
@@ -334,7 +333,7 @@ async def delete_record(
 @router.post("/restore", response_model=EveRestoreResponse)
 async def restore_record(
     payload: EveRestoreRequest,
-    database: Client = Depends(get_firestore),
+    database: SqlClient = Depends(get_firestore),
     user: dict = Depends(get_current_user),
 ):
     try:

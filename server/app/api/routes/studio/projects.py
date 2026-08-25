@@ -3,11 +3,10 @@
 import asyncio
 
 from fastapi import APIRouter, Depends, status
-from google.cloud.firestore_v1 import Client
+from app.db import SqlClient, get_firestore
 
 from app.api.routes.studio._shared import bad_request, not_found, require_non_serverless
 from app.core.auth import get_current_user
-from app.db import get_firestore
 from app.schemas.studio import (
     StudioProjectCreateRequest,
     StudioProjectListResponse,
@@ -44,7 +43,7 @@ def _to_response(project: dict) -> StudioProjectResponse:
 @router.get("", response_model=StudioProjectListResponse)
 async def list_studio_projects(
     user: dict = Depends(get_current_user),
-    database: Client = Depends(get_firestore),
+    database: SqlClient = Depends(get_firestore),
 ):
     require_non_serverless()
     items = await asyncio.to_thread(studio_projects.list_projects, user["uid"])
@@ -55,7 +54,7 @@ async def list_studio_projects(
 async def create_studio_project(
     body: StudioProjectCreateRequest,
     user: dict = Depends(get_current_user),
-    database: Client = Depends(get_firestore),
+    database: SqlClient = Depends(get_firestore),
 ):
     require_non_serverless()
     try:
@@ -71,7 +70,7 @@ async def create_studio_project(
 async def get_studio_project(
     workspace_id: str,
     user: dict = Depends(get_current_user),
-    database: Client = Depends(get_firestore),
+    database: SqlClient = Depends(get_firestore),
 ):
     require_non_serverless()
     try:
@@ -91,7 +90,7 @@ async def update_studio_project(
     workspace_id: str,
     body: StudioProjectUpdateRequest,
     user: dict = Depends(get_current_user),
-    database: Client = Depends(get_firestore),
+    database: SqlClient = Depends(get_firestore),
 ):
     require_non_serverless()
     updates = {k: v for k, v in body.model_dump().items() if v is not None}
@@ -108,7 +107,7 @@ async def update_studio_project(
 async def delete_studio_project(
     workspace_id: str,
     user: dict = Depends(get_current_user),
-    database: Client = Depends(get_firestore),
+    database: SqlClient = Depends(get_firestore),
 ):
     require_non_serverless()
     deleted = await asyncio.to_thread(

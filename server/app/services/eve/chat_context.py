@@ -5,7 +5,7 @@ both the blocking and streaming chat orchestrators."""
 from dataclasses import dataclass
 from typing import Any
 
-from google.cloud.firestore_v1 import Client
+from app.db import SqlClient
 
 from app.services.ai_models import PROVIDER_CLIENTS, resolve_ai_config
 from app.services.ai_models.contracts import AiConfig, ProviderClient
@@ -22,7 +22,7 @@ def last_user_query(messages: list[dict[str, str]]) -> str | None:
 class ChatContext:
     """Everything an Eve orchestrator needs to run one tool loop."""
 
-    database: Client
+    database: SqlClient
     user_id: str
     instructions: str
     config: AiConfig
@@ -34,7 +34,7 @@ class ChatContext:
 
 
 def resolve_chat_context(
-    database: Client,
+    database: SqlClient,
     user_id: str,
     messages: list[dict[str, str]],
 ) -> ChatContext:

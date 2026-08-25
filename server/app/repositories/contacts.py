@@ -1,13 +1,12 @@
 from datetime import datetime, timezone
 from typing import Any
 
-from firebase_admin import firestore
-from google.cloud.firestore_v1 import Client
+from app.db import ArrayUnion, Query, SERVER_TIMESTAMP, SqlClient
 
 from app.schemas.contact import ContactCreate, ContactResponse, ContactUpdate
 
 
-def collection(database: Client, user_id: str):
+def collection(database: SqlClient, user_id: str):
     return database.collection("users").document(user_id).collection("contacts")
 
 
@@ -42,11 +41,11 @@ def from_snapshot(snapshot) -> ContactResponse:
     )
 
 
-def list_contacts(database: Client, user_id: str) -> list[ContactResponse]:
+def list_contacts(database: SqlClient, user_id: str) -> list[ContactResponse]:
     # Legacy capped to 100
     query = collection(database, user_id).order_by(
         "name",
-        direction=firestore.Query.ASCENDING,
+        direction=Query.ASCENDING,
     )
     results = []
     count = 0
@@ -60,7 +59,7 @@ def list_contacts(database: Client, user_id: str) -> list[ContactResponse]:
     return results
 
 
-def list_contacts_page(database: Client, user_id: str, cursor: str | None, limit: int):
+def list_contacts_page(database: SqlClient, user_id: str, cursor: str | None, limit: int):
     from app.repositories.pagination import paginate_collection
 
     # Contacts ordered by name ASC, but pagination helper uses DESC; handle via ASC query manually
@@ -82,7 +81,7 @@ def list_contacts_page(database: Client, user_id: str, cursor: str | None, limit
 
 
 def get_contact(
-    database: Client,
+    database: SqlClient,
     user_id: str,
     contact_id: str,
 ) -> ContactResponse | None:
@@ -96,7 +95,7 @@ def get_contact(
 
 
 def create_contact(
-    database: Client,
+    database: SqlClient,
     user_id: str,
     contact: ContactCreate,
 ) -> ContactResponse:
@@ -106,15 +105,15 @@ def create_contact(
     reference.set(
         {
             **data,
-            "created_at": firestore.SERVER_TIMESTAMP,
-            "updated_at": firestore.SERVER_TIMESTAMP,
+            "created_at": SERVER_TIMESTAMP,
+            "updated_at": SERVER_TIMESTAMP,
         },
     )
     return ContactResponse(id=reference.id, **data, created_at=now, updated_at=now)
 
 
 def update_contact(
-    database: Client,
+    database: SqlClient,
     user_id: str,
     contact_id: str,
     changes: ContactUpdate,
@@ -125,7 +124,7 @@ def update_contact(
         reference.update(
             {
                 **data,
-                "updated_at": firestore.SERVER_TIMESTAMP,
+                "updated_at": SERVER_TIMESTAMP,
             },
         )
     except Exception:
@@ -133,25 +132,25 @@ def update_contact(
     return from_snapshot(reference.get())
 
 
-def delete_contact(database: Client, user_id: str, contact_id: str) -> bool:
+def delete_contact(database: SqlClient, user_id: str, contact_id: str) -> bool:
     reference = collection(database, user_id).document(contact_id)
     if not reference.get().exists:
         return False
     reference.update({
         "deleted": True,
         "deleted_at": datetime.now(timezone.utc).isoformat(),
-        "updated_at": firestore.SERVER_TIMESTAMP,
+        "updated_at": SERVER_TIMESTAMP,
     })
     return True
 
 
-def restore_contact(database: Client, user_id: str, contact_id: str) -> bool:
+def restore_contact(database: SqlClient, user_id: str, contact_id: str) -> bool:
     reference = collection(database, user_id).document(contact_id)
     if not reference.get().exists:
         return False
     reference.update({
         "deleted": False,
         "deleted_at": None,
-        "updated_at": firestore.SERVER_TIMESTAMP,
+        "updated_at": SERVER_TIMESTAMP,
     })
     return True

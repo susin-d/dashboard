@@ -7,7 +7,7 @@ from typing import Any, List, Optional
 from uuid import uuid4
 
 import httpx
-from google.cloud.firestore_v1 import Client
+from app.db import SqlClient
 
 from app.core.config import settings
 from app.core.whatsapp_ws_manager import whatsapp_ws_manager
@@ -27,7 +27,7 @@ logger = logging.getLogger(__name__)
 
 class WhatsAppService:
     @staticmethod
-    async def get_status(database: Client, user_id: str) -> WhatsAppStatusResponse:
+    async def get_status(database: SqlClient, user_id: str) -> WhatsAppStatusResponse:
         # Check whatsmeow worker status first if available — non-blocking; fast-fail 1.5s
         try:
             worker_url = settings.whatsapp_gateway_url
@@ -66,7 +66,7 @@ class WhatsAppService:
 
     @staticmethod
     async def initiate_pairing(
-        database: Client, user_id: str, phone_number: Optional[str] = None
+        database: SqlClient, user_id: str, phone_number: Optional[str] = None
     ) -> WhatsAppPairResponse:
         pairing_code = None
         qr_code = None
@@ -125,7 +125,7 @@ class WhatsAppService:
 
     @staticmethod
     async def confirm_connection(
-        database: Client,
+        database: SqlClient,
         user_id: str,
         phone_number: str = "+1 (555) 019-2834",
         push_name: str = "Starwaves User",
@@ -161,7 +161,7 @@ class WhatsAppService:
         return status_resp
 
     @staticmethod
-    def _ensure_eve_chat(database: Client, user_id: str):
+    def _ensure_eve_chat(database: SqlClient, user_id: str):
         chats = whatsapp_repo.list_whatsapp_chats(database, user_id)
         eve_exists = any(c.id == "eve" or c.is_eve for c in chats)
         if not eve_exists:
@@ -192,7 +192,7 @@ class WhatsAppService:
             whatsapp_repo.save_whatsapp_message(database, user_id, "eve", welcome_msg)
 
     @staticmethod
-    async def disconnect(database: Client, user_id: str) -> dict:
+    async def disconnect(database: SqlClient, user_id: str) -> dict:
         whatsapp_repo.clear_whatsapp_session(database, user_id)
         await whatsapp_ws_manager.broadcast_to_user(
             user_id,
@@ -204,7 +204,7 @@ class WhatsAppService:
         return {"status": "disconnected"}
 
     @staticmethod
-    async def list_chats(database: Client, user_id: str) -> List[WhatsAppChatResponse]:
+    async def list_chats(database: SqlClient, user_id: str) -> List[WhatsAppChatResponse]:
         import asyncio
         # Fast query from database first — offload to thread
         chats = await asyncio.to_thread(whatsapp_repo.list_whatsapp_chats, database, user_id)
@@ -274,7 +274,7 @@ class WhatsAppService:
 
     @staticmethod
     async def get_messages(
-        database: Client, user_id: str, chat_id: str, limit: int = 50, before: Optional[str] = None
+        database: SqlClient, user_id: str, chat_id: str, limit: int = 50, before: Optional[str] = None
     ) -> List[WhatsAppMessageResponse]:
         import asyncio
         # Sync new messages from worker BEFORE paging — pagination must reflect all new messages
@@ -312,7 +312,7 @@ class WhatsAppService:
 
     @staticmethod
     async def send_message(
-        database: Client,
+        database: SqlClient,
         user_id: str,
         chat_id: str,
         content: str,
@@ -387,7 +387,7 @@ class WhatsAppService:
 
     @staticmethod
     async def _handle_eve_response(
-        database: Client, user_id: str, chat_id: str, user_prompt: str
+        database: SqlClient, user_id: str, chat_id: str, user_prompt: str
     ):
         from app.services.eve import chat_with_eve
 
@@ -471,7 +471,7 @@ class WhatsAppService:
 
     @staticmethod
     async def generate_draft(
-        database: Client, user_id: str, chat_id: str, instruction: str
+        database: SqlClient, user_id: str, chat_id: str, instruction: str
     ) -> str:
         from app.services.eve import chat_with_eve
 
@@ -501,7 +501,7 @@ class WhatsAppService:
             return ""
 
     @staticmethod
-    async def summarize_chat(database: Client, user_id: str, chat_id: str) -> str:
+    async def summarize_chat(database: SqlClient, user_id: str, chat_id: str) -> str:
         from app.services.eve import chat_with_eve
 
         recent = whatsapp_repo.list_whatsapp_messages(database, user_id, chat_id, limit=30)
@@ -528,7 +528,7 @@ class WhatsAppService:
 
     @staticmethod
     async def chat_about_summary(
-        database: Client,
+        database: SqlClient,
         user_id: str,
         chat_id: str,
         summary: Optional[str],

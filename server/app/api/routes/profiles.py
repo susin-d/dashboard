@@ -1,7 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
-from google.cloud.firestore_v1 import Client
+from app.db import SqlClient, get_firestore
 
-from app.db import get_firestore
 from app.repositories import profiles
 from app.schemas.profile import ProfileCreate, ProfileResponse, ProfileUpdate
 
@@ -15,7 +14,7 @@ router = APIRouter(prefix="/profiles")
 )
 def create_profile(
     profile: ProfileCreate,
-    database: Client = Depends(get_firestore),
+    database: SqlClient = Depends(get_firestore),
 ) -> ProfileResponse:
     return profiles.create_profile(database, profile)
 
@@ -23,7 +22,7 @@ def create_profile(
 @router.get("", response_model=list[ProfileResponse])
 def list_profiles(
     limit: int = Query(default=20, ge=1, le=100),
-    database: Client = Depends(get_firestore),
+    database: SqlClient = Depends(get_firestore),
 ) -> list[ProfileResponse]:
     return profiles.list_profiles(database, limit)
 
@@ -31,7 +30,7 @@ def list_profiles(
 @router.get("/{profile_id}", response_model=ProfileResponse)
 def get_profile(
     profile_id: str,
-    database: Client = Depends(get_firestore),
+    database: SqlClient = Depends(get_firestore),
 ) -> ProfileResponse:
     profile = profiles.get_profile(database, profile_id)
     if profile is None:
@@ -43,7 +42,7 @@ def get_profile(
 def update_profile(
     profile_id: str,
     changes: ProfileUpdate,
-    database: Client = Depends(get_firestore),
+    database: SqlClient = Depends(get_firestore),
 ) -> ProfileResponse:
     profile = profiles.update_profile(database, profile_id, changes)
     if profile is None:
@@ -54,7 +53,7 @@ def update_profile(
 @router.delete("/{profile_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_profile(
     profile_id: str,
-    database: Client = Depends(get_firestore),
+    database: SqlClient = Depends(get_firestore),
 ) -> Response:
     if not profiles.delete_profile(database, profile_id):
         raise HTTPException(status_code=404, detail="Profile not found.")

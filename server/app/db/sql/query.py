@@ -9,6 +9,22 @@ if TYPE_CHECKING:
     from app.db.sql.client import SqlClient
 
 
+class FieldFilter:
+    """Filter specification emulating Firestore's FieldFilter."""
+
+    def __init__(self, field_path: str, op_string: str, value: Any):
+        self.field_path = field_path
+        self.op_string = op_string
+        self.value = value
+
+
+class Query:
+    """Query constants for order_by directions."""
+
+    DESCENDING = "DESCENDING"
+    ASCENDING = "ASCENDING"
+
+
 class SqlSnapshot:
     """Represents an immutable snapshot of a document."""
 

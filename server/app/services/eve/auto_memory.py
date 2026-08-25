@@ -11,7 +11,7 @@ import json
 import logging
 import re
 
-from google.cloud.firestore_v1 import Client
+from app.db import SqlClient
 
 from app.repositories.eve import add_memory, list_memories
 from app.services.ai_models import PROVIDER_CLIENTS, resolve_ai_config
@@ -81,7 +81,7 @@ def _is_duplicate(fact: str, existing: list[dict]) -> bool:
 
 
 def extract_and_save_memories(
-    database: Client,
+    database: SqlClient,
     user: dict,
     messages: list[dict[str, str]],
     reply: str,

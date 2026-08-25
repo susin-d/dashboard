@@ -4,13 +4,11 @@ from urllib.parse import quote
 
 import httpx
 from fastapi import APIRouter, Depends, HTTPException, Query
-from firebase_admin import firestore
-from google.cloud.firestore_v1 import Client
+from app.db import ArrayUnion, SERVER_TIMESTAMP, SqlClient, get_firestore
 from itsdangerous import URLSafeTimedSerializer
 
 from app.core.auth import get_current_user
 from app.core.config import settings
-from app.db import get_firestore
 from app.services.google_calendar import (
     google_calendar_data,
     google_state_serializer,
@@ -56,7 +54,7 @@ def _invalidate_calendar_cache(user_id: str):
     _calendar_cache.pop(user_id, None)
 
 
-def accounts_collection(database: Client, user_id: str):
+def accounts_collection(database: SqlClient, user_id: str):
     return integration_accounts_reference(database, user_id, "google_calendar")
 
 
@@ -78,7 +76,7 @@ def authorize_google_calendar(user: dict = Depends(get_current_user)):
 async def google_calendar_callback(
     code: str = Query(),
     state: str = Query(),
-    database: Client = Depends(get_firestore),
+    database: SqlClient = Depends(get_firestore),
 ):
     try:
         user_id = google_state_serializer().loads(state, max_age=600)["uid"]
@@ -110,7 +108,7 @@ async def google_calendar_callback(
                     "picture": profile.get("picture", ""),
                     "refresh_token": encrypted_refresh_token,
                     "calendars": calendar_data["calendars"],
-                    "updated_at": firestore.SERVER_TIMESTAMP,
+                    "updated_at": SERVER_TIMESTAMP,
                 },
                 merge=True,
             ),
@@ -125,7 +123,7 @@ async def google_calendar_callback(
 
 @router.get("/data")
 async def get_google_calendar_data(
-    database: Client = Depends(get_firestore),
+    database: SqlClient = Depends(get_firestore),
     user: dict = Depends(get_current_user),
     force_refresh: bool = Query(default=False),
 ):
@@ -156,7 +154,7 @@ async def get_google_calendar_data(
                 snapshot.reference.update,
                 {
                     "calendars": data["calendars"],
-                    "updated_at": firestore.SERVER_TIMESTAMP,
+                    "updated_at": SERVER_TIMESTAMP,
                 },
             )
         except Exception:
@@ -207,7 +205,7 @@ async def get_google_calendar_data(
 @router.delete("/accounts/{account_id}", status_code=204)
 def disconnect_google_calendar(
     account_id: str,
-    database: Client = Depends(get_firestore),
+    database: SqlClient = Depends(get_firestore),
     user: dict = Depends(get_current_user),
 ):
     accounts_collection(database, user["uid"]).document(account_id).delete()

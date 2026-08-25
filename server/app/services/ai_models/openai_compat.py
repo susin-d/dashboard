@@ -71,9 +71,9 @@ class OpenAiCompatibleClient(ProviderClient):
         message = choice.message if choice else None
         tool_calls = [
             ToolCall(
-                call_id=tc.id or tc.name,
-                name=tc.name or tc.function.name,
-                arguments=_parse_arguments(getattr(tc.function, "arguments", None)) if getattr(tc, "function", None) else {},
+                call_id=getattr(tc, "id", None) or getattr(getattr(tc, "function", None), "name", None) or "tool",
+                name=getattr(getattr(tc, "function", None), "name", None) or getattr(tc, "name", ""),
+                arguments=_parse_arguments(getattr(getattr(tc, "function", None), "arguments", None)),
             )
             for tc in (message.tool_calls or [])
         ] if message else []
@@ -103,25 +103,61 @@ class OpenAiCompatibleClient(ProviderClient):
 
         content_slots: list[dict[str, Any]] = []
         text_parts: list[str] = []
+        in_think_block = False
         try:
             for chunk in stream:
                 choice = chunk.choices[0] if chunk.choices else None
                 delta = choice.delta if choice else None
                 if delta is None:
                     continue
-                if getattr(delta, "content", None):
-                    text_parts.append(delta.content)
-                    yield StreamChunk(kind="text_delta", text=delta.content)
+
+                # 1. Check for explicit reasoning / thinking field (Ollama / OpenRouter / DeepSeek)
+                reasoning = (
+                    getattr(delta, "reasoning_content", None)
+                    or getattr(delta, "reasoning", None)
+                    or getattr(delta, "thought", None)
+                )
+                if reasoning:
+                    yield StreamChunk(kind="thinking_delta", text=reasoning)
+
+                # 2. Check for content and handle inline <think> tags if present
+                raw_content = getattr(delta, "content", None)
+                if raw_content:
+                    rem = raw_content
+                    while rem:
+                        if not in_think_block:
+                            if "<think>" in rem:
+                                before, after = rem.split("<think>", 1)
+                                if before:
+                                    text_parts.append(before)
+                                    yield StreamChunk(kind="text_delta", text=before)
+                                in_think_block = True
+                                rem = after
+                            else:
+                                text_parts.append(rem)
+                                yield StreamChunk(kind="text_delta", text=rem)
+                                rem = ""
+                        else:
+                            if "</think>" in rem:
+                                think_text, after = rem.split("</think>", 1)
+                                if think_text:
+                                    yield StreamChunk(kind="thinking_delta", text=think_text)
+                                in_think_block = False
+                                rem = after
+                            else:
+                                yield StreamChunk(kind="thinking_delta", text=rem)
+                                rem = ""
+
                 for tc in (getattr(delta, "tool_calls", None) or []):
                     # Accumulate streamed tool-call argument fragments by index.
                     while len(content_slots) <= tc.index:
                         content_slots.append({"id": "", "name": "", "arguments": ""})
                     slot = content_slots[tc.index]
-                    if tc.id:
+                    if getattr(tc, "id", None):
                         slot["id"] = tc.id
-                    if tc.function and tc.function.name:
+                    if getattr(tc, "function", None) and tc.function.name:
                         slot["name"] = tc.function.name
-                    if tc.function and tc.function.arguments:
+                    if getattr(tc, "function", None) and tc.function.arguments:
                         slot["arguments"] += tc.function.arguments
         except AIServiceError:
             raise

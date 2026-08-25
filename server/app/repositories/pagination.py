@@ -3,14 +3,13 @@
 from datetime import date
 from typing import Any
 
-from firebase_admin import firestore
-from google.cloud.firestore_v1 import Client
+from app.db import ArrayUnion, Query, SERVER_TIMESTAMP, SqlClient
 
 # Re-export canonical pagination primitives from core
 from app.core.pagination import encode_cursor, decode_cursor, resolve_limit, DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE
 
 
-def user_collection(database: Client, user_id: str, collection_name: str):
+def user_collection(database: SqlClient, user_id: str, collection_name: str):
     return database.collection("users").document(user_id).collection(collection_name)
 
 
@@ -28,7 +27,7 @@ def paginate_collection(collection, order_field: str, cursor: str | None, limit:
         base_query = collection.where("deleted", "==", False)
     except Exception:
         base_query = collection
-    query = base_query.order_by(order_field, direction=firestore.Query.DESCENDING)
+    query = base_query.order_by(order_field, direction=Query.DESCENDING)
     cursor_id = decode_cursor(cursor)
     if cursor_id:
         try:

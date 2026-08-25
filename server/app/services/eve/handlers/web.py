@@ -1,9 +1,9 @@
 """Web browsing handlers — single responsibility: open web search and fetch."""
 
-from google.cloud.firestore_v1 import Client
+from app.db import SqlClient
 
 
-def handle_browse_web(database: Client, user_id: str, arguments: dict) -> tuple[dict, None, None]:
+def handle_browse_web(database: SqlClient, user_id: str, arguments: dict) -> tuple[dict, None, None]:
     from app.services.web_browsing import browse_web
 
     res = browse_web(
@@ -15,7 +15,7 @@ def handle_browse_web(database: Client, user_id: str, arguments: dict) -> tuple[
     return res, None, None
 
 
-def handle_search_web(database: Client, user_id: str, arguments: dict) -> tuple[dict, None, None]:
+def handle_search_web(database: SqlClient, user_id: str, arguments: dict) -> tuple[dict, None, None]:
     from app.services.web_browsing import search_web
 
     res = search_web(
@@ -25,7 +25,7 @@ def handle_search_web(database: Client, user_id: str, arguments: dict) -> tuple[
     return res, None, None
 
 
-def handle_fetch_web_page(database: Client, user_id: str, arguments: dict) -> tuple[dict, None, None]:
+def handle_fetch_web_page(database: SqlClient, user_id: str, arguments: dict) -> tuple[dict, None, None]:
     from app.services.web_browsing import fetch_web_page
 
     res = fetch_web_page(

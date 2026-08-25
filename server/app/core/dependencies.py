@@ -9,7 +9,7 @@ from typing import Annotated
 from fastapi import Depends
 
 from app.core.auth import get_current_user
-from app.db import get_firestore
+from app.db import SqlClient, get_db_client
 
 CurrentUser = Annotated[dict, Depends(get_current_user)]
 
@@ -20,5 +20,5 @@ def _get_current_user_id(user: CurrentUser) -> str:
 
 CurrentUserId = Annotated[str, Depends(_get_current_user_id)]
 
-# DB client alias — keeps import path stable regardless of Firestore vs SqlClient
-DbClient = Annotated[object, Depends(get_firestore)]
+# DB client alias — direct SQL database client
+DbClient = Annotated[SqlClient, Depends(get_db_client)]

@@ -4,13 +4,13 @@ Stored at Firestore-shaped doc ``users/{uid}/settings/eve-memory`` (SQL compat l
 maps it to the ``user_settings`` table). Default is ON per product decision.
 """
 
-from google.cloud.firestore_v1 import Client
+from app.db import SqlClient
 
 EVE_MEMORY_SETTINGS_DOC = "eve-memory"
 DEFAULT_AUTO_REMEMBER = True
 
 
-def _reference(database: Client, user_id: str):
+def _reference(database: SqlClient, user_id: str):
     return (
         database.collection("users")
         .document(user_id)
@@ -19,7 +19,7 @@ def _reference(database: Client, user_id: str):
     )
 
 
-def load_memory_settings(database: Client, user_id: str) -> dict:
+def load_memory_settings(database: SqlClient, user_id: str) -> dict:
     """Load raw settings dict; empty dict when unset."""
     snapshot = _reference(database, user_id).get()
     if not snapshot.exists:
@@ -27,7 +27,7 @@ def load_memory_settings(database: Client, user_id: str) -> dict:
     return snapshot.to_dict() or {}
 
 
-def resolve_auto_remember(database: Client, user_id: str) -> bool:
+def resolve_auto_remember(database: SqlClient, user_id: str) -> bool:
     """Resolve the auto-remember toggle; defaults to ON when never saved."""
     data = load_memory_settings(database, user_id)
     value = data.get("auto_remember")

@@ -4,11 +4,8 @@ import time
 from datetime import datetime, timezone
 from typing import Any
 
-from google.cloud import firestore
-from google.cloud.firestore_v1 import Client
-from google.cloud.firestore_v1.base_query import FieldFilter
+from app.db import ArrayUnion, FieldFilter, SERVER_TIMESTAMP, SqlClient, get_firestore
 
-from app.db import get_firestore
 from app.repositories.calls import CallRepository
 from app.repositories.eve_schedules import EveScheduleRepository, list_all_due_schedules
 from app.repositories.users import get_user_by_id
@@ -29,7 +26,7 @@ class EveSchedulesBackgroundJob:
     def should_run(self, current_ts: float) -> bool:
         return (current_ts - self.last_run_ts) >= self.interval_seconds
 
-    def run(self, database: Client, stop_event: threading.Event):
+    def run(self, database: SqlClient, stop_event: threading.Event):
         self.last_run_ts = time.time()
         due = list_all_due_schedules(database)
         if not due:
@@ -94,7 +91,7 @@ class StaleCallsBackgroundJob:
     def should_run(self, current_ts: float) -> bool:
         return (current_ts - self.last_run_ts) >= self.interval_seconds
 
-    def run(self, database: Client, stop_event: threading.Event):
+    def run(self, database: SqlClient, stop_event: threading.Event):
         self.last_run_ts = time.time()
         # Optional Redis lock to avoid double work when scaling to 2 workers (VM)
         try:
@@ -122,7 +119,7 @@ class StaleCallsBackgroundJob:
                 data = doc.to_dict() or {}
                 created_at = data.get("created_at")
                 if hasattr(created_at, "timestamp") and (now_ts - created_at.timestamp()) > 45:
-                    doc.reference.update({"status": "missed", "updated_at": firestore.SERVER_TIMESTAMP})
+                    doc.reference.update({"status": "missed", "updated_at": SERVER_TIMESTAMP})
                 count += 1
         except Exception as err:
             logger.warning("GCP Worker stale calls error: %s", err)
@@ -138,7 +135,7 @@ class MaintenanceBackgroundJob:
     def should_run(self, current_ts: float) -> bool:
         return (current_ts - self.last_run_ts) >= self.interval_seconds
 
-    def run(self, database: Client, stop_event: threading.Event):
+    def run(self, database: SqlClient, stop_event: threading.Event):
         self.last_run_ts = time.time()
         try:
             from app.core.config import settings as _settings
@@ -187,7 +184,7 @@ class ServerBackgroundWorker:
     ):
         self._stop_event = threading.Event()
         self._thread: threading.Thread | None = None
-        self.database: Client | None = None
+        self.database: SqlClient | None = None
         self.poll_interval = interval_seconds or poll_interval
         self.jobs = jobs or [
             EveSchedulesBackgroundJob(interval_seconds=30),

@@ -4,13 +4,11 @@ from urllib.parse import quote, unquote
 
 import httpx
 from fastapi import APIRouter, Depends, Header, HTTPException, Query, Request
-from firebase_admin import firestore
-from google.cloud.firestore_v1 import Client
+from app.db import ArrayUnion, SERVER_TIMESTAMP, SqlClient, get_firestore
 from itsdangerous import URLSafeTimedSerializer
 
 from app.core.auth import get_current_user
 from app.core.config import settings
-from app.db import get_firestore
 from app.services.oauth import (
     decrypt_google_token,
     encrypt_google_token,
@@ -34,7 +32,7 @@ GOOGLE_DRIVE_SCOPES = (
 )
 
 
-def drive_reference(database: Client, user_id: str):
+def drive_reference(database: SqlClient, user_id: str):
     return (
         database.collection("users")
         .document(user_id)
@@ -50,7 +48,7 @@ def drive_state_serializer() -> URLSafeTimedSerializer:
 _drive_token_cache: dict[str, tuple[float, str]] = {}
 _DRIVE_TOKEN_TTL = 3000
 
-async def access_token(database: Client, user_id: str) -> str:
+async def access_token(database: SqlClient, user_id: str) -> str:
     import time
     cached = _drive_token_cache.get(user_id)
     if cached and cached[0] > time.monotonic():
@@ -85,7 +83,7 @@ def authorize_google_drive(user: dict = Depends(get_current_user)):
 async def google_drive_callback(
     code: str = Query(),
     state: str = Query(),
-    database: Client = Depends(get_firestore),
+    database: SqlClient = Depends(get_firestore),
 ):
     try:
         user_id = drive_state_serializer().loads(state, max_age=600)["uid"]
@@ -111,7 +109,7 @@ async def google_drive_callback(
                     "name": profile.get("name") or profile["email"],
                     "picture": profile.get("picture", ""),
                     "refresh_token": encrypted_refresh_token,
-                    "updated_at": firestore.SERVER_TIMESTAMP,
+                    "updated_at": SERVER_TIMESTAMP,
                 },
                 merge=True,
             ),
@@ -145,7 +143,7 @@ def _drive_cache_invalidate(uid: str):
 
 @router.get("/status")
 async def google_drive_status(
-    database: Client = Depends(get_firestore),
+    database: SqlClient = Depends(get_firestore),
     user: dict = Depends(get_current_user),
 ):
     cached = _drive_cache_get(user["uid"])
@@ -171,7 +169,7 @@ async def google_drive_status(
 
 @router.get("/files")
 async def google_drive_files(
-    database: Client = Depends(get_firestore),
+    database: SqlClient = Depends(get_firestore),
     user: dict = Depends(get_current_user),
 ):
     token = await access_token(database, user["uid"])
@@ -196,7 +194,7 @@ async def google_drive_files(
 @router.get("/editor-url/{document_id}")
 async def google_drive_editor_url(
     document_id: str,
-    database: Client = Depends(get_firestore),
+    database: SqlClient = Depends(get_firestore),
     user: dict = Depends(get_current_user),
 ):
     if "/" in document_id or not document_id.strip():
@@ -247,7 +245,7 @@ async def upload_google_drive_file(
     request: Request,
     x_file_name: str = Header(),
     x_file_type: str = Header(default="application/octet-stream"),
-    database: Client = Depends(get_firestore),
+    database: SqlClient = Depends(get_firestore),
     user: dict = Depends(get_current_user),
 ):
     token = await access_token(database, user["uid"])
@@ -287,7 +285,7 @@ async def upload_google_drive_file(
 
 @router.delete("", status_code=204)
 def disconnect_google_drive(
-    database: Client = Depends(get_firestore),
+    database: SqlClient = Depends(get_firestore),
     user: dict = Depends(get_current_user),
 ):
     drive_reference(database, user["uid"]).delete()

@@ -4,7 +4,7 @@ choice into an AiConfig with working credentials and client options."""
 import time
 from typing import Any
 
-from google.cloud.firestore_v1 import Client
+from app.db import SqlClient
 
 from app.core.config import settings
 from app.services.ai_models.catalog import AI_PROVIDERS, AI_MODELS_SETTINGS_DOC, DEFAULT_PROVIDER, PROVIDER_DEFAULT_BASE_URLS
@@ -26,8 +26,8 @@ def has_server_key(provider: str) -> bool:
     if provider == "groq":
         return bool(settings.groq_api_key)
     if provider == "ollama":
-        # Ollama is local — available when a URL is configured (key optional)
-        return bool(settings.ollama_url)
+        # Ollama is local or cloud — available when URL or API key is configured
+        return bool(settings.ollama_url or settings.ollama_api_key)
     if provider == "opencode":
         return bool(settings.opencode_api_key)
     return False
@@ -123,7 +123,7 @@ def build_ai_config(
     )
 
 
-def _preference_reference(database: Client, user_uid: str):
+def _preference_reference(database: SqlClient, user_uid: str):
     return (
         database.collection("users")
         .document(user_uid)
@@ -132,7 +132,7 @@ def _preference_reference(database: Client, user_uid: str):
     )
 
 
-def load_ai_preference(database: Client, user_uid: str) -> dict[str, Any] | None:
+def load_ai_preference(database: SqlClient, user_uid: str) -> dict[str, Any] | None:
     snapshot = _preference_reference(database, user_uid).get()
     if not snapshot.exists:
         return None
@@ -154,7 +154,7 @@ def invalidate_ai_config_cache(user_uid: str) -> None:
     _ai_config_cache.pop(user_uid, None)
 
 
-def resolve_ai_config(database: Client, user_uid: str) -> AiConfig:
+def resolve_ai_config(database: SqlClient, user_uid: str) -> AiConfig:
     """Resolve a user's AI provider/model choice, falling back to the server default."""
     cached = _cache_get(user_uid)
     if cached is not None:

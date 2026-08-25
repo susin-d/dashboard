@@ -1,8 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
-from google.cloud.firestore_v1 import Client
+from app.db import SqlClient, get_firestore
 
 from app.core.auth import get_current_user
-from app.db import get_firestore
 from app.repositories.calls import CallRepository
 from app.repositories.eve_schedules import EveScheduleRepository
 from app.schemas.call import CallUser
@@ -20,7 +19,7 @@ router = APIRouter(prefix="/eve/schedules")
 
 @router.get("", response_model=EveScheduleListResponse)
 def list_schedules(
-    database: Client = Depends(get_firestore),
+    database: SqlClient = Depends(get_firestore),
     user: dict = Depends(get_current_user),
 ):
     repository = EveScheduleRepository(database, user["uid"])
@@ -30,7 +29,7 @@ def list_schedules(
 @router.post("", response_model=EveScheduleResponse, status_code=status.HTTP_201_CREATED)
 def create_schedule(
     payload: EveScheduleCreate,
-    database: Client = Depends(get_firestore),
+    database: SqlClient = Depends(get_firestore),
     user: dict = Depends(get_current_user),
 ):
     repository = EveScheduleRepository(database, user["uid"])
@@ -41,7 +40,7 @@ def create_schedule(
 def update_schedule(
     schedule_id: str,
     payload: EveScheduleUpdate,
-    database: Client = Depends(get_firestore),
+    database: SqlClient = Depends(get_firestore),
     user: dict = Depends(get_current_user),
 ):
     repository = EveScheduleRepository(database, user["uid"])
@@ -54,7 +53,7 @@ def update_schedule(
 @router.delete("/{schedule_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_schedule(
     schedule_id: str,
-    database: Client = Depends(get_firestore),
+    database: SqlClient = Depends(get_firestore),
     user: dict = Depends(get_current_user),
 ):
     repository = EveScheduleRepository(database, user["uid"])
@@ -65,7 +64,7 @@ def delete_schedule(
 @router.post("/{schedule_id}/run", response_model=EveScheduleResponse)
 def run_schedule_now(
     schedule_id: str,
-    database: Client = Depends(get_firestore),
+    database: SqlClient = Depends(get_firestore),
     user: dict = Depends(get_current_user),
 ):
     repository = EveScheduleRepository(database, user["uid"])

@@ -3,12 +3,9 @@ from datetime import datetime, timezone
 from typing import Any
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Query, status
-from google.cloud import firestore
-from google.cloud.firestore_v1 import Client
-from google.cloud.firestore_v1.base_query import FieldFilter
+from app.db import ArrayUnion, FieldFilter, SERVER_TIMESTAMP, SqlClient, get_firestore
 
 from app.core.config import settings
-from app.db import get_firestore
 from app.repositories.calls import CallRepository
 from app.repositories.eve_schedules import EveScheduleRepository, list_all_due_schedules
 from app.repositories.users import get_user_by_id
@@ -39,7 +36,7 @@ def _verify_cron_secret(
     return True
 
 
-def run_eve_schedules_job(database: Client) -> dict[str, Any]:
+def run_eve_schedules_job(database: SqlClient) -> dict[str, Any]:
     """Job 1: Execute all due Eve schedules and voice calls."""
     due = list_all_due_schedules(database)
     executed_count = 0
@@ -100,7 +97,7 @@ def run_eve_schedules_job(database: Client) -> dict[str, Any]:
     }
 
 
-def run_stale_calls_cleanup_job(database: Client) -> dict[str, Any]:
+def run_stale_calls_cleanup_job(database: SqlClient) -> dict[str, Any]:
     """Job 2: Clean up calls stuck in ringing state (> 45s)."""
     cleaned_count = 0
     errors = []
@@ -111,7 +108,7 @@ def run_stale_calls_cleanup_job(database: Client) -> dict[str, Any]:
             data = doc.to_dict() or {}
             created_at = data.get("created_at")
             if hasattr(created_at, "timestamp") and (now_ts - created_at.timestamp()) > 45:
-                doc.reference.update({"status": "missed", "updated_at": firestore.SERVER_TIMESTAMP})
+                doc.reference.update({"status": "missed", "updated_at": SERVER_TIMESTAMP})
                 cleaned_count += 1
     except Exception as err:
         logger.error("Failed to clean up stale calls: %s", err)
@@ -124,7 +121,7 @@ def run_stale_calls_cleanup_job(database: Client) -> dict[str, Any]:
     }
 
 
-def run_daily_maintenance_job(database: Client) -> dict[str, Any]:
+def run_daily_maintenance_job(database: SqlClient) -> dict[str, Any]:
     """Job 3: General daily workspace maintenance and cleanup."""
     cleaned_notifications = 0
     errors = []
@@ -154,7 +151,7 @@ def run_daily_maintenance_job(database: Client) -> dict[str, Any]:
 @router.api_route("/run-all", methods=["GET", "POST"])
 @router.api_route("/execute-schedules", methods=["GET", "POST"])
 def process_all_serverless_jobs(
-    database: Client = Depends(get_firestore),
+    database: SqlClient = Depends(get_firestore),
     authorized: bool = Depends(_verify_cron_secret),
 ):
     """Unified Vercel Serverless Cron Endpoint.

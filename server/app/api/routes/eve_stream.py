@@ -7,10 +7,9 @@ import logging
 
 from fastapi import APIRouter, Depends
 from fastapi.responses import StreamingResponse
-from google.cloud.firestore_v1 import Client
+from app.db import SqlClient, get_firestore
 
 from app.core.auth import get_current_user
-from app.db import get_firestore
 from app.schemas.eve import EveChatRequest
 from app.services.eve import stream_chat_with_eve
 from app.services.eve.voice_fast import stream_voice_reply
@@ -30,7 +29,7 @@ SSE_HEADERS = {
 @router.post("/chat/stream")
 async def chat_stream(
     payload: EveChatRequest,
-    database: Client = Depends(get_firestore),
+    database: SqlClient = Depends(get_firestore),
     user: dict = Depends(get_current_user),
 ):
     """Stream an Eve chat response as server-sent events.
@@ -60,7 +59,7 @@ async def chat_stream(
 @router.post("/voice/stream")
 async def voice_stream(
     payload: EveChatRequest,
-    database: Client = Depends(get_firestore),
+    database: SqlClient = Depends(get_firestore),
     user: dict = Depends(get_current_user),
 ):
     """Ultra low-latency Eve voice turn (<1s first audio).

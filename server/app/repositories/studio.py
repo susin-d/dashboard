@@ -10,7 +10,7 @@ in sync.
 import uuid
 from datetime import datetime, timezone
 
-from google.cloud.firestore_v1 import Client
+from app.db import SqlClient
 
 from app.repositories import workspace_files as ws_repo
 
@@ -187,6 +187,6 @@ def find_template_source(user_id: str, template_id: str) -> dict:
     raise FileNotFoundError(f"Template '{template_id}' not found.")
 
 
-def unpublish_template(database: Client, user_id: str, workspace_id: str) -> None:  # noqa: ARG001
+def unpublish_template(database: SqlClient, user_id: str, workspace_id: str) -> None:  # noqa: ARG001
     """Remove the published-template flag from a studio project."""
     update_studio_project(user_id, workspace_id, {"published_template_id": None})

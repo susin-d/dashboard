@@ -9,7 +9,7 @@ cannot be used.
 
 from typing import Any
 
-from google.cloud.firestore_v1 import Client
+from app.db import SqlClient
 
 from app.core.config import settings
 
@@ -174,7 +174,7 @@ def validate_speech_preference(
     return True
 
 
-def _preference_reference(database: Client, user_uid: str):
+def _preference_reference(database: SqlClient, user_uid: str):
     return (
         database.collection("users")
         .document(user_uid)
@@ -183,14 +183,14 @@ def _preference_reference(database: Client, user_uid: str):
     )
 
 
-def load_speech_preference(database: Client, user_uid: str) -> dict[str, Any] | None:
+def load_speech_preference(database: SqlClient, user_uid: str) -> dict[str, Any] | None:
     snapshot = _preference_reference(database, user_uid).get()
     if not snapshot.exists:
         return None
     return snapshot.to_dict() or None
 
 
-def resolve_speech_preference(database: Client, user_uid: str) -> dict[str, str]:
+def resolve_speech_preference(database: SqlClient, user_uid: str) -> dict[str, str]:
     """Resolve a user's STT/TTS provider choice, falling back to browser."""
     stt_provider = DEFAULT_STT_PROVIDER
     stt_model = ""
@@ -226,11 +226,11 @@ def resolve_speech_preference(database: Client, user_uid: str) -> dict[str, str]
     }
 
 
-def resolve_stt_engine(database: Client, user_uid: str) -> tuple[str, str]:
+def resolve_stt_engine(database: SqlClient, user_uid: str) -> tuple[str, str]:
     preference = resolve_speech_preference(database, user_uid)
     return preference["stt_provider"], preference["stt_model"]
 
 
-def resolve_tts_engine(database: Client, user_uid: str) -> tuple[str, str]:
+def resolve_tts_engine(database: SqlClient, user_uid: str) -> tuple[str, str]:
     preference = resolve_speech_preference(database, user_uid)
     return preference["tts_provider"], preference["tts_voice"]

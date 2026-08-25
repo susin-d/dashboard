@@ -1,9 +1,9 @@
 """Schedule handlers — single responsibility: Eve automated schedules."""
 
-from google.cloud.firestore_v1 import Client
+from app.db import SqlClient
 
 
-def handle_create_eve_schedule(database: Client, user_id: str, arguments: dict) -> tuple[dict, None, dict]:
+def handle_create_eve_schedule(database: SqlClient, user_id: str, arguments: dict) -> tuple[dict, None, dict]:
     from app.repositories.eve_schedules import EveScheduleRepository
     from app.schemas.eve_schedule import EveScheduleCreate
 
@@ -19,14 +19,14 @@ def handle_create_eve_schedule(database: Client, user_id: str, arguments: dict) 
     return {"schedule": created, "message": f"Automated schedule '{created['title']}' created."}, None, {"type": "refresh_eve_schedules"}
 
 
-def handle_list_eve_schedules(database: Client, user_id: str, arguments: dict) -> tuple[dict, None, None]:
+def handle_list_eve_schedules(database: SqlClient, user_id: str, arguments: dict) -> tuple[dict, None, None]:
     from app.repositories.eve_schedules import EveScheduleRepository
 
     schedules = EveScheduleRepository(database, user_id).list()
     return {"schedules": schedules, "total": len(schedules)}, None, None
 
 
-def handle_delete_eve_schedule(database: Client, user_id: str, arguments: dict) -> tuple[dict, None, dict]:
+def handle_delete_eve_schedule(database: SqlClient, user_id: str, arguments: dict) -> tuple[dict, None, dict]:
     from app.repositories.eve_schedules import EveScheduleRepository
 
     deleted = EveScheduleRepository(database, user_id).delete(arguments["schedule_id"])

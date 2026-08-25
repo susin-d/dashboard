@@ -5,14 +5,12 @@ from urllib.parse import quote
 
 import httpx
 from fastapi import APIRouter, Depends, HTTPException, Query
-from firebase_admin import firestore
-from google.cloud.firestore_v1 import Client
+from app.db import ArrayUnion, SERVER_TIMESTAMP, SqlClient, get_firestore
 from itsdangerous import URLSafeTimedSerializer
 from pydantic import BaseModel, Field
 
 from app.core.auth import get_current_user
 from app.core.config import settings
-from app.db import get_firestore
 from app.services.oauth import (
     decrypt_google_token,
     encrypt_google_token,
@@ -68,7 +66,7 @@ class GoogleChatMessageSend(BaseModel):
     account_email: str | None = None
 
 
-def chat_accounts_collection(database: Client, user_id: str):
+def chat_accounts_collection(database: SqlClient, user_id: str):
     return integration_accounts_reference(database, user_id, "google_chat")
 
 
@@ -94,7 +92,7 @@ def authorize_google_chat(user: dict = Depends(get_current_user)):
 async def google_chat_callback(
     code: str = Query(...),
     state: str = Query(...),
-    database: Client = Depends(get_firestore),
+    database: SqlClient = Depends(get_firestore),
 ):
     try:
         user_id = chat_state_serializer().loads(state, max_age=600)["uid"]
@@ -136,7 +134,7 @@ async def google_chat_callback(
                     "connected": True,
                     "access_token": token_data["access_token"],
                     "refresh_token": encrypted_refresh_token,
-                    "updated_at": firestore.SERVER_TIMESTAMP,
+                    "updated_at": SERVER_TIMESTAMP,
                 },
                 merge=True,
             ),
@@ -150,7 +148,7 @@ async def google_chat_callback(
 
 @router.get("/accounts")
 def get_google_chat_accounts(
-    database: Client = Depends(get_firestore),
+    database: SqlClient = Depends(get_firestore),
     user: dict = Depends(get_current_user),
 ):
     docs = chat_accounts_collection(database, user["uid"]).stream()
@@ -173,7 +171,7 @@ def get_google_chat_accounts(
 @router.post("/accounts")
 async def connect_google_chat_account(
     connection: GoogleChatConnection,
-    database: Client = Depends(get_firestore),
+    database: SqlClient = Depends(get_firestore),
     user: dict = Depends(get_current_user),
 ):
     async with httpx.AsyncClient(timeout=20) as client:
@@ -209,7 +207,7 @@ async def connect_google_chat_account(
                 "picture": picture,
                 "connected": True,
                 "access_token": connection.access_token,
-                "updated_at": firestore.SERVER_TIMESTAMP,
+                "updated_at": SERVER_TIMESTAMP,
             },
             merge=True,
         ),
@@ -228,7 +226,7 @@ async def connect_google_chat_account(
 @router.delete("/accounts/{account_id}")
 def disconnect_google_chat_account(
     account_id: str,
-    database: Client = Depends(get_firestore),
+    database: SqlClient = Depends(get_firestore),
     user: dict = Depends(get_current_user),
 ):
     doc_ref = chat_accounts_collection(database, user["uid"]).document(account_id)
@@ -241,7 +239,7 @@ def disconnect_google_chat_account(
 @router.get("/spaces")
 async def get_google_chat_spaces(
     account_email: str | None = None,
-    database: Client = Depends(get_firestore),
+    database: SqlClient = Depends(get_firestore),
     user: dict = Depends(get_current_user),
 ):
     docs = await asyncio.to_thread(
@@ -369,7 +367,7 @@ async def get_google_chat_spaces(
 @router.post("/messages")
 async def send_google_chat_message(
     body: GoogleChatMessageSend,
-    database: Client = Depends(get_firestore),
+    database: SqlClient = Depends(get_firestore),
     user: dict = Depends(get_current_user),
 ):
     docs = await asyncio.to_thread(

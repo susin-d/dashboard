@@ -5,7 +5,7 @@ relevant memories; otherwise fall back to recent 40 chronological. Keeps 1-10 us
 lean: no extra RAM, HNSW index on postgres, Redis cache still 60s.
 """
 
-from google.cloud.firestore_v1 import Client
+from app.db import SqlClient
 
 from app.repositories.eve import list_memories, search_memories
 from app.services.eve.instructions import EVE_INSTRUCTIONS
@@ -13,7 +13,7 @@ from app.services.eve.instructions import EVE_INSTRUCTIONS
 _memories_cache: dict[str, tuple[float, list[dict]]] = {}
 _MEM_TTL = 60  # seconds
 
-def get_cached_memories(database: Client, user_id: str) -> list[dict] | None:
+def get_cached_memories(database: SqlClient, user_id: str) -> list[dict] | None:
     import time
     entry = _memories_cache.get(user_id)
     if entry and entry[0] > time.monotonic():
@@ -28,7 +28,7 @@ def invalidate_memories_cache(user_id: str) -> None:
     _memories_cache.pop(user_id, None)
 
 
-def build_memory_instructions(database: Client, user_id: str, query: str | None = None) -> str:
+def build_memory_instructions(database: SqlClient, user_id: str, query: str | None = None) -> str:
     # RAG path: semantic search when query present and pgvector available
     if query:
         try:

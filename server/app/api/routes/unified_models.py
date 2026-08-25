@@ -7,17 +7,16 @@ Query: ?free_only=true        — only models with pricing 0 (e.g. fish-audio/s2
 """
 
 from fastapi import APIRouter, Depends, Query
-from google.cloud.firestore_v1 import Client
+from app.db import SqlClient, get_firestore
 
 from app.core.auth import get_current_user
-from app.db import get_firestore
 from app.services.ai_models.config import has_server_key
 from app.services.ai_models.unified import discover_all_models
 
 router = APIRouter(prefix="/models")
 
 
-def _user_keys_from_db(database: Client, user_uid: str) -> dict[str, str]:
+def _user_keys_from_db(database: SqlClient, user_uid: str) -> dict[str, str]:
     try:
         from app.services.ai_models.config import load_ai_preference
         pref = load_ai_preference(database, user_uid)
@@ -43,7 +42,7 @@ async def list_unified_models(
     tts: bool | None = Query(default=None),
     stt: bool | None = Query(default=None),
     provider: str | None = Query(default=None, description="Limit to one provider"),
-    database: Client = Depends(get_firestore),
+    database: SqlClient = Depends(get_firestore),
     user: dict = Depends(get_current_user),
 ):
     user_keys = _user_keys_from_db(database, user["uid"])
@@ -77,7 +76,7 @@ async def list_unified_models(
 @router.get("/{provider}")
 async def list_provider_unified(
     provider: str,
-    database: Client = Depends(get_firestore),
+    database: SqlClient = Depends(get_firestore),
     user: dict = Depends(get_current_user),
 ):
     user_keys = _user_keys_from_db(database, user["uid"])

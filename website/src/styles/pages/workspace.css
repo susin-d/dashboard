@@ -840,6 +840,29 @@
   border-radius: 999px;
 }
 
+.breadcrumb-run-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-on-primary, #ffffff);
+  background: var(--color-primary, #09090b);
+  border: 1px solid var(--color-primary, #09090b);
+  padding: 2px 9px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: opacity var(--transition-fast, 0.12s ease);
+}
+
+.breadcrumb-run-btn:hover {
+  opacity: 0.82;
+}
+
+.breadcrumb-dirty + .breadcrumb-run-btn {
+  margin-left: 6px;
+}
+
 /* Monaco container */
 .workspace-editor-monaco {
   flex: 1;
@@ -993,6 +1016,22 @@ input.workspace-browser-url {
 input.workspace-browser-url:focus-visible {
   outline: 2px solid var(--color-primary, #09090b);
   outline-offset: 1px;
+}
+
+.workspace-browser-url-label {
+  flex: 1;
+  min-width: 0;
+  padding: 5px 10px;
+  border: 1px solid var(--border-color, #e4e4e7);
+  border-radius: 8px;
+  background: var(--bg-secondary, #fafafa);
+  color: var(--text-secondary, #71717a);
+  font-size: 12px;
+  font-style: italic;
+  user-select: none;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
 .workspace-browser-btn {

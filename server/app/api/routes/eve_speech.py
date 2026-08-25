@@ -1,9 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
-from firebase_admin import firestore
-from google.cloud.firestore_v1 import Client
+from app.db import ArrayUnion, SERVER_TIMESTAMP, SqlClient, get_firestore
 
 from app.core.auth import get_current_user
-from app.db import get_firestore
 from app.schemas.eve_speech import (
     EveSpeechPreferenceUpdate,
     EveSpeechResponse,
@@ -19,7 +17,7 @@ from app.services.speech import (
 router = APIRouter(prefix="/settings/eve-speech")
 
 
-def _reference(database: Client, user_id: str):
+def _reference(database: SqlClient, user_id: str):
     return (
         database.collection("users")
         .document(user_id)
@@ -28,7 +26,7 @@ def _reference(database: Client, user_id: str):
     )
 
 
-def _preference_payload(database: Client, user_id: str) -> dict | None:
+def _preference_payload(database: SqlClient, user_id: str) -> dict | None:
     preference = load_speech_preference(database, user_id)
     if not preference:
         return None
@@ -42,7 +40,7 @@ def _preference_payload(database: Client, user_id: str) -> dict | None:
 
 @router.get("", response_model=EveSpeechResponse)
 def get_eve_speech(
-    database: Client = Depends(get_firestore),
+    database: SqlClient = Depends(get_firestore),
     user: dict = Depends(get_current_user),
 ):
     return {
@@ -55,7 +53,7 @@ def get_eve_speech(
 @router.put("", response_model=EveSpeechResponse)
 def save_eve_speech(
     payload: EveSpeechPreferenceUpdate,
-    database: Client = Depends(get_firestore),
+    database: SqlClient = Depends(get_firestore),
     user: dict = Depends(get_current_user),
 ):
     if not validate_speech_preference(
@@ -75,7 +73,7 @@ def save_eve_speech(
             "stt_model": payload.stt_model,
             "tts_provider": payload.tts_provider,
             "tts_voice": payload.tts_voice,
-            "updated_at": firestore.SERVER_TIMESTAMP,
+            "updated_at": SERVER_TIMESTAMP,
         },
         merge=True,
     )

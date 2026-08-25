@@ -2,15 +2,14 @@ import uuid
 from datetime import datetime, timezone
 from typing import Any
 
-from firebase_admin import firestore
-from google.cloud.firestore_v1 import Client
+from app.db import ArrayUnion, Query, SERVER_TIMESTAMP, SqlClient
 
 from app.repositories.pagination import paginate_collection, user_collection
 from app.schemas.workspace import NotificationUpdate
 
 
 class NotificationRepository:
-    def __init__(self, database: Client, user_id: str):
+    def __init__(self, database: SqlClient, user_id: str):
         self.database = database
         self.user_id = user_id
         self.collection = user_collection(database, user_id, "notifications")
@@ -33,8 +32,8 @@ class NotificationRepository:
             "time": time_str,
             "unread": unread,
             "deleted": False,
-            "created_at": firestore.SERVER_TIMESTAMP,
-            "updated_at": firestore.SERVER_TIMESTAMP,
+            "created_at": SERVER_TIMESTAMP,
+            "updated_at": SERVER_TIMESTAMP,
         }
         self.collection.document(notification_id).set(data)
         return {"id": notification_id, **data}
@@ -61,7 +60,7 @@ class NotificationRepository:
             reference.update(
                 {
                     **update_data.model_dump(exclude_unset=True),
-                    "updated_at": firestore.SERVER_TIMESTAMP,
+                    "updated_at": SERVER_TIMESTAMP,
                 },
             )
         except Exception:
@@ -75,7 +74,7 @@ class NotificationRepository:
         reference.update({
             "deleted": True,
             "deleted_at": datetime.now(timezone.utc).isoformat(),
-            "updated_at": firestore.SERVER_TIMESTAMP,
+            "updated_at": SERVER_TIMESTAMP,
         })
         return True
 
@@ -86,7 +85,7 @@ class NotificationRepository:
         reference.update({
             "deleted": False,
             "deleted_at": None,
-            "updated_at": firestore.SERVER_TIMESTAMP,
+            "updated_at": SERVER_TIMESTAMP,
         })
         return True
 
@@ -96,7 +95,7 @@ class NotificationRepository:
         for item in self.collection.where("unread", "==", True).stream():
             batch.update(item.reference, {
                 "unread": False,
-                "updated_at": firestore.SERVER_TIMESTAMP,
+                "updated_at": SERVER_TIMESTAMP,
             })
             count += 1
         if count:

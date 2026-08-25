@@ -1,13 +1,12 @@
 """Account combining: request, verify, list, and unlink combined accounts."""
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from google.cloud.firestore_v1 import Client
+from app.db import SqlClient, get_firestore
 from itsdangerous import BadSignature, SignatureExpired
 from pydantic import BaseModel, EmailStr
 
 from app.api.routes.auth._shared import combine_token_serializer, get_current_user_optional
 from app.core.auth import get_current_user
-from app.db import get_firestore
 from app.repositories.account_combine import (
     add_pending_combine_request,
     confirm_combine_accounts,
@@ -31,7 +30,7 @@ class VerifyCombineTokenRequest(BaseModel):
 def request_combine_account(
     payload: CombineAccountRequest,
     user: dict = Depends(get_current_user),
-    database: Client = Depends(get_firestore),
+    database: SqlClient = Depends(get_firestore),
 ):
     owner_email = user.get("email")
     if not owner_email:
@@ -77,7 +76,7 @@ def request_combine_account(
 def verify_combine_account(
     payload: VerifyCombineTokenRequest,
     user: dict | None = Depends(get_current_user_optional),
-    database: Client = Depends(get_firestore),
+    database: SqlClient = Depends(get_firestore),
 ):
     try:
         data = combine_token_serializer().loads(payload.token, max_age=86400)
@@ -113,7 +112,7 @@ def verify_combine_account(
 @router.get("/combine-account/list")
 def list_combined_accounts(
     user: dict = Depends(get_current_user),
-    database: Client = Depends(get_firestore),
+    database: SqlClient = Depends(get_firestore),
 ):
     return get_combined_accounts_info(database, user["uid"])
 
@@ -122,7 +121,7 @@ def list_combined_accounts(
 def unlink_combined_account(
     target_identifier: str = Query(...),
     user: dict = Depends(get_current_user),
-    database: Client = Depends(get_firestore),
+    database: SqlClient = Depends(get_firestore),
 ):
     try:
         remove_combined_account(database, user["uid"], target_identifier)
@@ -137,7 +136,7 @@ def unlink_combined_account(
 @router.post("/merge-accounts")
 def merge_accounts(
     user: dict = Depends(get_current_user),
-    database: Client = Depends(get_firestore),
+    database: SqlClient = Depends(get_firestore),
 ):
     from app.repositories.users import merge_duplicate_user_accounts
 

@@ -3,14 +3,14 @@
 from datetime import datetime, timezone
 from typing import Any
 
-from firebase_admin import firestore
+from app.db import ArrayUnion, Query, SERVER_TIMESTAMP
 
 
 def soft_delete_payload() -> dict[str, Any]:
     return {
         "deleted": True,
         "deleted_at": datetime.now(timezone.utc).isoformat(),
-        "updated_at": firestore.SERVER_TIMESTAMP,
+        "updated_at": SERVER_TIMESTAMP,
     }
 
 
@@ -18,7 +18,7 @@ def restore_payload() -> dict[str, Any]:
     return {
         "deleted": False,
         "deleted_at": None,
-        "updated_at": firestore.SERVER_TIMESTAMP,
+        "updated_at": SERVER_TIMESTAMP,
     }
 
 

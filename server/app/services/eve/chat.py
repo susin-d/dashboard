@@ -4,7 +4,7 @@ import logging
 from typing import Any
 
 from fastapi import HTTPException, status
-from google.cloud.firestore_v1 import Client
+from app.db import SqlClient
 
 from app.repositories import eve_sessions
 from app.services.ai_models import AIServiceError, any_provider_available, run_tool_loop
@@ -15,7 +15,7 @@ from app.services.eve.tools import EVE_TOOLS
 logger = logging.getLogger(__name__)
 
 def chat_with_eve(
-    database: Client,
+    database: SqlClient,
     user: dict,
     messages: list[dict[str, str]],
     session_id: str | None = None,

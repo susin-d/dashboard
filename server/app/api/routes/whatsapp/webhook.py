@@ -5,11 +5,10 @@ from datetime import datetime, timezone
 from uuid import uuid4
 
 from fastapi import APIRouter, Depends
-from google.cloud.firestore_v1 import Client
+from app.db import SqlClient, get_firestore
 
 from app.api.routes.whatsapp._shared import has_eve_mention, resolve_chat_name
 from app.core.whatsapp_ws_manager import whatsapp_ws_manager
-from app.db import get_firestore
 from app.repositories import whatsapp as whatsapp_repo
 from app.schemas.whatsapp import WhatsAppMediaAttachment, WhatsAppMessageResponse
 from app.services.whatsapp import WhatsAppService
@@ -26,7 +25,7 @@ async def _handle_qr(payload: dict):
     return {"status": "qr_broadcasted"}
 
 
-async def _handle_status(payload: dict, database: Client):
+async def _handle_status(payload: dict, database: SqlClient):
     user_id, connected = payload.get("userId"), bool(payload.get("connected", False))
     if user_id:
         whatsapp_repo.save_whatsapp_session(database, user_id, connected=connected, phone_number=payload.get("phoneNumber"), push_name=payload.get("pushName"))
@@ -34,7 +33,7 @@ async def _handle_status(payload: dict, database: Client):
     return {"status": "status_updated"}
 
 
-async def _handle_reaction(payload: dict, database: Client):
+async def _handle_reaction(payload: dict, database: SqlClient):
     user_id, chat_id, message_id = payload.get("userId"), payload.get("chatId"), payload.get("messageId")
     sender_id, sender_name, emoji = payload.get("senderId") or "other", payload.get("senderName") or payload.get("sender_name"), payload.get("emoji")
     if user_id and chat_id and message_id:
@@ -43,7 +42,7 @@ async def _handle_reaction(payload: dict, database: Client):
     return {"status": "reaction_updated"}
 
 
-async def _handle_receipt(payload: dict, database: Client):
+async def _handle_receipt(payload: dict, database: SqlClient):
     user_id, chat_id, mids, st, ts = payload.get("userId"), payload.get("chatId"), payload.get("messageIds") or [], payload.get("status", "delivered"), payload.get("timestamp")
     if user_id and chat_id and mids:
         for mid in mids:
@@ -52,7 +51,7 @@ async def _handle_receipt(payload: dict, database: Client):
     return {"status": "receipt_updated"}
 
 
-async def _handle_history(payload: dict, database: Client):
+async def _handle_history(payload: dict, database: SqlClient):
     user_id, chats_data, msgs_data = payload.get("userId"), payload.get("chats") or [], payload.get("messages") or []
     if user_id:
         for c in chats_data:
@@ -76,7 +75,7 @@ async def _handle_history(payload: dict, database: Client):
 
 
 @router.post("/webhook")
-async def whatsapp_incoming_webhook(payload: dict, database: Client = Depends(get_firestore)):
+async def whatsapp_incoming_webhook(payload: dict, database: SqlClient = Depends(get_firestore)):
     if payload.get("type") == "qr_update":
         return await _handle_qr(payload)
     if payload.get("type") == "status_update":

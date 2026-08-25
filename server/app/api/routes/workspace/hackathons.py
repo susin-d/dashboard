@@ -4,8 +4,7 @@ import asyncio
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
-from firebase_admin import firestore
-from google.cloud.firestore_v1 import Client
+from app.db import ArrayUnion, SERVER_TIMESTAMP, SqlClient, get_firestore
 
 from app.api.routes.workspace._shared import (
     DEFAULT_PAGE_SIZE,
@@ -14,7 +13,6 @@ from app.api.routes.workspace._shared import (
     user_collection,
 )
 from app.core.auth import get_current_user
-from app.db import get_firestore
 from app.repositories.pagination import decode_cursor, encode_cursor
 from app.schemas.workspace import (
     HackathonCreate,
@@ -33,7 +31,7 @@ router = APIRouter()
 
 @router.get("/hackathon-sources")
 async def list_hackathon_sources(
-    database: Client = Depends(get_firestore),
+    database: SqlClient = Depends(get_firestore),
     user: dict = Depends(get_current_user),
 ):
     snapshot = await asyncio.to_thread(hackathon_settings_reference(database, user["uid"]).get)
@@ -50,7 +48,7 @@ async def list_hackathon_sources(
 async def update_hackathon_source(
     source_id: str,
     enabled: bool,
-    database: Client = Depends(get_firestore),
+    database: SqlClient = Depends(get_firestore),
     user: dict = Depends(get_current_user),
 ):
     if source_id not in SOURCE_IDS:
@@ -66,7 +64,7 @@ async def update_hackathon_source(
         lambda: reference.set(
             {
                 "enabled": sorted(current),
-                "updated_at": firestore.SERVER_TIMESTAMP,
+                "updated_at": SERVER_TIMESTAMP,
             },
             merge=True,
         )
@@ -78,7 +76,7 @@ async def update_hackathon_source(
 async def list_hackathons(
     cursor: str | None = None,
     limit: int = Query(DEFAULT_PAGE_SIZE, ge=1, le=MAX_PAGE_SIZE),
-    database: Client = Depends(get_firestore),
+    database: SqlClient = Depends(get_firestore),
     user: dict = Depends(get_current_user),
 ):
     def load_saved_data():
@@ -118,7 +116,7 @@ async def list_hackathons(
 @router.post("/hackathons", response_model=HackathonResponse, status_code=201)
 async def create_hackathon(
     hackathon: HackathonCreate,
-    database: Client = Depends(get_firestore),
+    database: SqlClient = Depends(get_firestore),
     user: dict = Depends(get_current_user),
 ):
     reference = user_collection(database, user["uid"], "hackathons").document()
@@ -127,8 +125,8 @@ async def create_hackathon(
             {
                 **hackathon.model_dump(mode="python"),
                 "deleted": False,
-                "created_at": firestore.SERVER_TIMESTAMP,
-                "updated_at": firestore.SERVER_TIMESTAMP,
+                "created_at": SERVER_TIMESTAMP,
+                "updated_at": SERVER_TIMESTAMP,
             },
         )
     )
@@ -139,7 +137,7 @@ async def create_hackathon(
 @router.get("/hackathons/{hackathon_id}", response_model=HackathonResponse)
 async def get_hackathon(
     hackathon_id: str,
-    database: Client = Depends(get_firestore),
+    database: SqlClient = Depends(get_firestore),
     user: dict = Depends(get_current_user),
 ):
     reference = user_collection(database, user["uid"], "hackathons").document(hackathon_id)
@@ -156,7 +154,7 @@ async def get_hackathon(
 async def update_hackathon(
     hackathon_id: str,
     changes: HackathonUpdate,
-    database: Client = Depends(get_firestore),
+    database: SqlClient = Depends(get_firestore),
     user: dict = Depends(get_current_user),
 ):
     reference = user_collection(database, user["uid"], "hackathons").document(hackathon_id)
@@ -168,7 +166,7 @@ async def update_hackathon(
         lambda: reference.update(
             {
                 **updates,
-                "updated_at": firestore.SERVER_TIMESTAMP,
+                "updated_at": SERVER_TIMESTAMP,
             },
         )
     )
@@ -179,7 +177,7 @@ async def update_hackathon(
 @router.delete("/hackathons/{hackathon_id}", status_code=204)
 async def delete_hackathon(
     hackathon_id: str,
-    database: Client = Depends(get_firestore),
+    database: SqlClient = Depends(get_firestore),
     user: dict = Depends(get_current_user),
 ):
     reference = user_collection(database, user["uid"], "hackathons").document(hackathon_id)
@@ -192,7 +190,7 @@ async def delete_hackathon(
             {
                 "deleted": True,
                 "deleted_at": now.isoformat(),
-                "updated_at": firestore.SERVER_TIMESTAMP,
+                "updated_at": SERVER_TIMESTAMP,
             },
         )
     )
@@ -202,7 +200,7 @@ async def delete_hackathon(
 @router.post("/hackathons/{hackathon_id}/restore", response_model=HackathonResponse)
 async def restore_hackathon(
     hackathon_id: str,
-    database: Client = Depends(get_firestore),
+    database: SqlClient = Depends(get_firestore),
     user: dict = Depends(get_current_user),
 ):
     reference = user_collection(database, user["uid"], "hackathons").document(hackathon_id)
@@ -214,7 +212,7 @@ async def restore_hackathon(
             {
                 "deleted": False,
                 "deleted_at": None,
-                "updated_at": firestore.SERVER_TIMESTAMP,
+                "updated_at": SERVER_TIMESTAMP,
             },
         )
     )

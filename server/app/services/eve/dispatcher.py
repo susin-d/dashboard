@@ -2,7 +2,7 @@
 
 from typing import Any
 
-from google.cloud.firestore_v1 import Client
+from app.db import SqlClient
 
 from app.services.eve.handlers.call import handle_make_twilio_call, handle_trigger_eve_call
 from app.services.eve.handlers.memory import (
@@ -55,11 +55,20 @@ from app.services.eve.handlers.workspace import (
 )
 from app.services.eve.handlers.workspace_files import (
     handle_list_workspace_files,
+    handle_open_workspace_browser,
     handle_read_workspace_file,
     handle_run_workspace_command,
     handle_search_workspace_files,
     handle_write_workspace_file,
 )
+
+def _make_list_alias(resource: str):
+    def _handler(database: SqlClient, user_id: str, arguments: dict) -> tuple[dict, None, None]:
+        args = dict(arguments or {})
+        args["resource"] = resource
+        return handle_list_workspace_records(database, user_id, args)
+    return _handler
+
 
 # Registry maps tool name to its dedicated handler — one function per tool avoids mode-flag branching.
 _TOOL_HANDLERS: dict[str, Any] = {
@@ -76,6 +85,7 @@ _TOOL_HANDLERS: dict[str, Any] = {
     "list_workspace_files": handle_list_workspace_files,
     "search_workspace_files": handle_search_workspace_files,
     "run_workspace_command": handle_run_workspace_command,
+    "open_workspace_browser": handle_open_workspace_browser,
     "list_whatsapp_chats": handle_list_whatsapp_chats,
     "read_whatsapp_messages": handle_read_whatsapp_messages,
     "send_whatsapp_message": handle_send_whatsapp_message,
@@ -94,6 +104,14 @@ _TOOL_HANDLERS: dict[str, Any] = {
     "list_workspace_records": handle_list_workspace_records,
     "create_workspace_record": handle_create_workspace_record,
     "update_workspace_record": handle_update_workspace_record,
+    # Resource convenience aliases
+    "list_jobs": _make_list_alias("jobs"),
+    "list_todos": _make_list_alias("todos"),
+    "list_tasks": _make_list_alias("todos"),
+    "list_projects": _make_list_alias("projects"),
+    "list_documents": _make_list_alias("documents"),
+    "list_hackathons": _make_list_alias("hackathons"),
+    "list_notifications": _make_list_alias("notifications"),
     "browse_web": handle_browse_web,
     "search_web": handle_search_web,
     "web_search": handle_search_web,
@@ -110,10 +128,13 @@ _TOOL_HANDLERS: dict[str, Any] = {
 
 
 def dispatch_tool(
-    database: Client, user_id: str, name: str, arguments: dict[str, Any]
+    database: SqlClient, user_id: str, name: str, arguments: dict[str, Any]
 ) -> tuple[dict[str, Any], str | None, dict[str, Any] | None]:
     """Route a tool call to its single-responsibility handler."""
     handler = _TOOL_HANDLERS.get(name)
     if handler:
         return handler(database, user_id, arguments)
-    raise ValueError("Unsupported Eve tool.")
+    return {
+        "error": f"Unsupported Eve tool '{name}'. Available tools: {', '.join(sorted(_TOOL_HANDLERS.keys()))}."
+    }, None, None
+

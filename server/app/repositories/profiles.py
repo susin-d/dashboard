@@ -1,7 +1,6 @@
 from datetime import datetime, timezone
 
-from firebase_admin import firestore
-from google.cloud.firestore_v1 import Client
+from app.db import ArrayUnion, Query, SERVER_TIMESTAMP, SqlClient
 
 from app.schemas.profile import ProfileCreate, ProfileResponse, ProfileUpdate
 
@@ -14,32 +13,32 @@ def _profile_from_snapshot(snapshot) -> ProfileResponse:
     return ProfileResponse(**data)
 
 
-def create_profile(database: Client, profile: ProfileCreate) -> ProfileResponse:
+def create_profile(database: SqlClient, profile: ProfileCreate) -> ProfileResponse:
     document = database.collection(COLLECTION).document()
     now = datetime.now(timezone.utc).isoformat()
     data = profile.model_dump(mode="json")
     document.set(
         {
             **data,
-            "created_at": firestore.SERVER_TIMESTAMP,
-            "updated_at": firestore.SERVER_TIMESTAMP,
+            "created_at": SERVER_TIMESTAMP,
+            "updated_at": SERVER_TIMESTAMP,
         },
     )
     return ProfileResponse(id=document.id, **data, created_at=now, updated_at=now)
 
 
-def get_profile(database: Client, profile_id: str) -> ProfileResponse | None:
+def get_profile(database: SqlClient, profile_id: str) -> ProfileResponse | None:
     snapshot = database.collection(COLLECTION).document(profile_id).get()
     return _profile_from_snapshot(snapshot) if snapshot.exists else None
 
 
-def list_profiles(database: Client, limit: int) -> list[ProfileResponse]:
+def list_profiles(database: SqlClient, limit: int) -> list[ProfileResponse]:
     query = database.collection(COLLECTION).limit(limit)
     return [_profile_from_snapshot(snapshot) for snapshot in query.stream()]
 
 
 def update_profile(
-    database: Client,
+    database: SqlClient,
     profile_id: str,
     changes: ProfileUpdate,
 ) -> ProfileResponse | None:
@@ -48,7 +47,7 @@ def update_profile(
         document.update(
             {
                 **changes.model_dump(exclude_unset=True, mode="json"),
-                "updated_at": firestore.SERVER_TIMESTAMP,
+                "updated_at": SERVER_TIMESTAMP,
             },
         )
     except Exception:
@@ -56,7 +55,7 @@ def update_profile(
     return _profile_from_snapshot(document.get())
 
 
-def delete_profile(database: Client, profile_id: str) -> bool:
+def delete_profile(database: SqlClient, profile_id: str) -> bool:
     snapshot = database.collection(COLLECTION).document(profile_id).get()
     if not snapshot.exists:
         return False

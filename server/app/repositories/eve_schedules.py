@@ -2,10 +2,8 @@ import uuid
 from datetime import datetime, timedelta, timezone
 from typing import Any
 
-from firebase_admin import firestore
-from google.cloud.firestore_v1 import Client
+from app.db import ArrayUnion, FieldFilter, Query, SERVER_TIMESTAMP, SqlClient
 
-from google.cloud.firestore_v1.base_query import FieldFilter
 
 from app.schemas.eve_schedule import EveScheduleCreate, EveScheduleUpdate
 
@@ -44,7 +42,7 @@ def _compute_next_run(
 
 
 class EveScheduleRepository:
-    def __init__(self, database: Client, user_id: str):
+    def __init__(self, database: SqlClient, user_id: str):
         self.database = database
         self.user_id = user_id
         self.collection = (
@@ -81,7 +79,7 @@ class EveScheduleRepository:
         return data
 
     def list(self) -> list[dict[str, Any]]:
-        docs = self.collection.order_by("created_at", direction=firestore.Query.DESCENDING).stream()
+        docs = self.collection.order_by("created_at", direction=Query.DESCENDING).stream()
         return [{"id": doc.id, **(doc.to_dict() or {})} for doc in docs]
 
     def get(self, schedule_id: str) -> dict[str, Any] | None:
@@ -146,7 +144,7 @@ class EveScheduleRepository:
         return {"id": doc.id, **(ref.get().to_dict() or {})}
 
 
-def list_all_due_schedules(database: Client) -> list[dict[str, Any]]:
+def list_all_due_schedules(database: SqlClient) -> list[dict[str, Any]]:
     now_str = datetime.now(timezone.utc).isoformat()
     results = []
     # Stream across user subcollections for active due schedules

@@ -2,8 +2,7 @@
 
 from datetime import datetime, timezone
 
-from firebase_admin import firestore
-from google.cloud.firestore_v1 import Client
+from app.db import ArrayUnion, Query, SERVER_TIMESTAMP, SqlClient
 
 from app.repositories.users import get_user_by_email, get_users_collection
 
@@ -12,7 +11,7 @@ def _now_utc() -> datetime:
     return datetime.now(timezone.utc)
 
 
-def add_pending_combine_request(database: Client, owner_uid: str, target_email: str) -> None:
+def add_pending_combine_request(database: SqlClient, owner_uid: str, target_email: str) -> None:
     owner_ref = get_users_collection(database).document(owner_uid)
     doc = owner_ref.get()
     if not doc.exists:
@@ -26,11 +25,11 @@ def add_pending_combine_request(database: Client, owner_uid: str, target_email: 
             "email": normalized_target,
             "requested_at": _now_utc(),
         })
-        owner_ref.update({"pending_combine_requests": pending, "updated_at": firestore.SERVER_TIMESTAMP})
+        owner_ref.update({"pending_combine_requests": pending, "updated_at": SERVER_TIMESTAMP})
 
 
 def confirm_combine_accounts(
-    database: Client,
+    database: SqlClient,
     owner_uid: str,
     target_email: str,
     target_uid: str | None = None,
@@ -62,7 +61,7 @@ def confirm_combine_accounts(
     owner_ref.update({
         "combined_accounts": combined,
         "pending_combine_requests": pending,
-        "updated_at": firestore.SERVER_TIMESTAMP,
+        "updated_at": SERVER_TIMESTAMP,
     })
 
     # 2. If target user exists in DB, also update their document with owner's link
@@ -81,7 +80,7 @@ def confirm_combine_accounts(
                 })
                 target_ref.update({
                     "combined_accounts": target_combined,
-                    "updated_at": firestore.SERVER_TIMESTAMP,
+                    "updated_at": SERVER_TIMESTAMP,
                 })
 
     return {
@@ -91,7 +90,7 @@ def confirm_combine_accounts(
     }
 
 
-def remove_combined_account(database: Client, uid: str, target_identifier: str) -> None:
+def remove_combined_account(database: SqlClient, uid: str, target_identifier: str) -> None:
     doc_ref = get_users_collection(database).document(uid)
     doc = doc_ref.get()
     if not doc.exists:
@@ -115,7 +114,7 @@ def remove_combined_account(database: Client, uid: str, target_identifier: str) 
     doc_ref.update({
         "combined_accounts": new_combined,
         "pending_combine_requests": pending,
-        "updated_at": firestore.SERVER_TIMESTAMP,
+        "updated_at": SERVER_TIMESTAMP,
     })
 
     # Also remove reciprocal link from the target user doc if found
@@ -134,7 +133,7 @@ def remove_combined_account(database: Client, uid: str, target_identifier: str) 
                 ]
                 other_ref.update({
                     "combined_accounts": other_combined,
-                    "updated_at": firestore.SERVER_TIMESTAMP,
+                    "updated_at": SERVER_TIMESTAMP,
                 })
         elif other_email:
             other_user = get_user_by_email(database, other_email)
@@ -150,11 +149,11 @@ def remove_combined_account(database: Client, uid: str, target_identifier: str) 
                     ]
                     other_ref.update({
                         "combined_accounts": other_combined,
-                        "updated_at": firestore.SERVER_TIMESTAMP,
+                        "updated_at": SERVER_TIMESTAMP,
                     })
 
 
-def get_combined_accounts_info(database: Client, uid: str) -> dict:
+def get_combined_accounts_info(database: SqlClient, uid: str) -> dict:
     doc = get_users_collection(database).document(uid).get()
     if not doc.exists:
         return {"combined_accounts": [], "pending_combine_requests": []}

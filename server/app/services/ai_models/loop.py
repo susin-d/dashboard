@@ -95,6 +95,8 @@ def run_tool_loop_stream(
         for chunk in client.call_stream(config.model, instructions, conversation, tools):
             if chunk.kind == "text_delta":
                 yield {"type": "delta", "text": chunk.text}
+            elif chunk.kind == "thinking_delta":
+                yield {"type": "thinking", "text": chunk.text}
             elif chunk.kind == "final" and chunk.response is not None:
                 final_response = chunk.response
         if final_response is None:
@@ -110,8 +112,8 @@ def run_tool_loop_stream(
             return
         conversation.extend(client.continuation(response))
         for call in response.tool_calls:
-            yield {"type": "tool_start", "name": call.name}
+            yield {"type": "tool_start", "name": call.name, "arguments": call.arguments, "call_id": call.call_id}
             output = _run_tool_call(run_tool, call, changed_resources, actions)
-            yield {"type": "tool_end", "name": call.name}
+            yield {"type": "tool_end", "name": call.name, "output": output, "call_id": call.call_id}
             conversation.extend(client.tool_result_blocks(call, output))
     _raise_exceeded_rounds(config)

@@ -8,7 +8,7 @@ import shutil
 import uuid
 from datetime import datetime, timezone
 
-from google.cloud.firestore_v1 import Client
+from app.db import SqlClient
 
 from app.core.config import settings
 

@@ -6,8 +6,7 @@ from typing import Any
 from uuid import uuid4
 
 from fastapi import HTTPException, status
-from google.cloud import firestore
-from google.cloud.firestore_v1 import Client
+from app.db import ArrayUnion, SERVER_TIMESTAMP, SqlClient
 from pydantic import ValidationError
 
 from app.repositories import documents, eve_sessions, todos
@@ -21,7 +20,7 @@ from app.services.eve.constants import MAX_RECORDS_PER_READ, SUPPORTED_RESOURCES
 
 logger = logging.getLogger(__name__)
 
-def _list_records(database: Client, user_id: str, resource: str) -> list[dict[str, Any]]:
+def _list_records(database: SqlClient, user_id: str, resource: str) -> list[dict[str, Any]]:
     if resource == "todos":
         return [todo.model_dump(mode="json") for todo in todos.list_todos(database, user_id)]
     if resource == "projects":
@@ -49,7 +48,7 @@ def _list_records(database: Client, user_id: str, resource: str) -> list[dict[st
 
 
 
-def _all_records(database: Client, user_id: str) -> dict[str, list[dict[str, Any]]]:
+def _all_records(database: SqlClient, user_id: str) -> dict[str, list[dict[str, Any]]]:
     return {resource: _list_records(database, user_id, resource) for resource in SUPPORTED_RESOURCES}
 
 
@@ -66,7 +65,7 @@ def _clean_record_id(resource: str, record_id: str) -> str:
 
 
 
-def _search_records(database: Client, user_id: str, query: str, resources: list[str] | None = None) -> dict[str, Any]:
+def _search_records(database: SqlClient, user_id: str, query: str, resources: list[str] | None = None) -> dict[str, Any]:
     terms = [term for term in query.lower().split() if term]
     selected = resources or list(SUPPORTED_RESOURCES)
     results = []
@@ -81,7 +80,7 @@ def _search_records(database: Client, user_id: str, query: str, resources: list[
 
 
 
-def _explain_record(database: Client, user_id: str, resource: str, record_id: str) -> dict[str, Any]:
+def _explain_record(database: SqlClient, user_id: str, resource: str, record_id: str) -> dict[str, Any]:
     record = next((item for item in _list_records(database, user_id, resource) if item["id"] == record_id), None)
     if not record:
         raise ValueError("Record not found.")
@@ -89,7 +88,7 @@ def _explain_record(database: Client, user_id: str, resource: str, record_id: st
 
 
 
-def _create_record(database: Client, user_id: str, resource: str, data: dict[str, Any]) -> dict[str, Any]:
+def _create_record(database: SqlClient, user_id: str, resource: str, data: dict[str, Any]) -> dict[str, Any]:
     if resource == "todos":
         return todos.create_todo(database, user_id, TodoCreate.model_validate(data)).model_dump(mode="json")
     if resource == "projects":
@@ -111,7 +110,7 @@ def _create_record(database: Client, user_id: str, resource: str, data: dict[str
 
 
 def _update_record(
-    database: Client, user_id: str, resource: str, record_id: str, changes: dict[str, Any]
+    database: SqlClient, user_id: str, resource: str, record_id: str, changes: dict[str, Any]
 ) -> dict[str, Any]:
     record_id = _clean_record_id(resource, record_id)
     if resource == "todos":
@@ -155,7 +154,7 @@ def _update_record(
 
 
 def _generate_text_artifact(
-    database: Client,
+    database: SqlClient,
     user_id: str,
     kind: str,
     resource: str | None = None,
@@ -174,7 +173,7 @@ def _generate_text_artifact(
 
 
 
-def _bulk_update_records(database: Client, user_id: str, resource: str, updates: list[dict[str, Any]]) -> dict[str, Any]:
+def _bulk_update_records(database: SqlClient, user_id: str, resource: str, updates: list[dict[str, Any]]) -> dict[str, Any]:
     updated = []
     errors = []
     for item in updates:
@@ -186,7 +185,7 @@ def _bulk_update_records(database: Client, user_id: str, resource: str, updates:
 
 
 
-def delete_workspace_record(database: Client, user: dict, resource: str, record_id: str) -> tuple[str, list[str]]:
+def delete_workspace_record(database: SqlClient, user: dict, resource: str, record_id: str) -> tuple[str, list[str]]:
     user_id = user["uid"]
     record_id = _clean_record_id(resource, record_id)
     if resource == "todos":
@@ -203,7 +202,7 @@ def delete_workspace_record(database: Client, user: dict, resource: str, record_
             reference.update({
                 "deleted": True,
                 "deleted_at": datetime.now(timezone.utc).isoformat(),
-                "updated_at": firestore.SERVER_TIMESTAMP,
+                "updated_at": SERVER_TIMESTAMP,
             })
     elif resource == "documents":
         deleted = documents.delete_document(database, user_id, record_id)
@@ -218,7 +217,7 @@ def delete_workspace_record(database: Client, user: dict, resource: str, record_
 
 
 
-def restore_workspace_record(database: Client, user: dict, resource: str, record_id: str) -> tuple[str, list[str]]:
+def restore_workspace_record(database: SqlClient, user: dict, resource: str, record_id: str) -> tuple[str, list[str]]:
     user_id = user["uid"]
     record_id = _clean_record_id(resource, record_id)
     if resource == "todos":
@@ -235,7 +234,7 @@ def restore_workspace_record(database: Client, user: dict, resource: str, record
             reference.update({
                 "deleted": False,
                 "deleted_at": None,
-                "updated_at": firestore.SERVER_TIMESTAMP,
+                "updated_at": SERVER_TIMESTAMP,
             })
     elif resource == "documents":
         restored = documents.restore_document(database, user_id, record_id)

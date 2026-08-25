@@ -1,12 +1,11 @@
 from datetime import datetime, timezone
 
-from firebase_admin import firestore
-from google.cloud.firestore_v1 import Client
+from app.db import ArrayUnion, Query, SERVER_TIMESTAMP, SqlClient
 
 from app.schemas.document import DocumentResponse, DocumentUpsert
 
 
-def _collection(database: Client, user_id: str):
+def _collection(database: SqlClient, user_id: str):
     return database.collection("users").document(user_id).collection("documents")
 
 
@@ -23,11 +22,11 @@ def _from_snapshot(snapshot) -> DocumentResponse:
     return DocumentResponse(**data)
 
 
-def list_documents(database: Client, user_id: str) -> list[DocumentResponse]:
+def list_documents(database: SqlClient, user_id: str) -> list[DocumentResponse]:
     # Legacy capped to 100 for e2-micro safety
     query = _collection(database, user_id).order_by(
         "modified_at",
-        direction=firestore.Query.DESCENDING,
+        direction=Query.DESCENDING,
     )
     results = []
     count = 0
@@ -41,7 +40,7 @@ def list_documents(database: Client, user_id: str) -> list[DocumentResponse]:
     return results
 
 
-def list_documents_page(database: Client, user_id: str, cursor: str | None, limit: int):
+def list_documents_page(database: SqlClient, user_id: str, cursor: str | None, limit: int):
     from app.repositories.pagination import paginate_collection
 
     coll = _collection(database, user_id)
@@ -56,7 +55,7 @@ def list_documents_page(database: Client, user_id: str, cursor: str | None, limi
 
 
 def get_document(
-    database: Client,
+    database: SqlClient,
     user_id: str,
     document_id: str,
 ) -> DocumentResponse | None:
@@ -70,7 +69,7 @@ def get_document(
 
 
 def upsert_document(
-    database: Client,
+    database: SqlClient,
     user_id: str,
     document_id: str,
     document: DocumentUpsert,
@@ -81,10 +80,10 @@ def upsert_document(
     data = document.model_dump(mode="python")
     values = {
         **data,
-        "updated_at": firestore.SERVER_TIMESTAMP,
+        "updated_at": SERVER_TIMESTAMP,
     }
     if not existing.exists:
-        values["created_at"] = firestore.SERVER_TIMESTAMP
+        values["created_at"] = SERVER_TIMESTAMP
     reference.set(values, merge=True)
     return DocumentResponse(
         id=document_id,
@@ -94,26 +93,26 @@ def upsert_document(
     )
 
 
-def delete_document(database: Client, user_id: str, document_id: str) -> bool:
+def delete_document(database: SqlClient, user_id: str, document_id: str) -> bool:
     reference = _collection(database, user_id).document(document_id)
     if not reference.get().exists:
         return False
     reference.update({
         "deleted": True,
         "deleted_at": datetime.now(timezone.utc).isoformat(),
-        "updated_at": firestore.SERVER_TIMESTAMP,
+        "updated_at": SERVER_TIMESTAMP,
     })
     return True
 
 
-def restore_document(database: Client, user_id: str, document_id: str) -> bool:
+def restore_document(database: SqlClient, user_id: str, document_id: str) -> bool:
     reference = _collection(database, user_id).document(document_id)
     if not reference.get().exists:
         return False
     reference.update({
         "deleted": False,
         "deleted_at": None,
-        "updated_at": firestore.SERVER_TIMESTAMP,
+        "updated_at": SERVER_TIMESTAMP,
     })
     return True
 

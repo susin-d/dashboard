@@ -3,11 +3,10 @@
 import asyncio
 
 from fastapi import APIRouter, Depends
-from google.cloud.firestore_v1 import Client
+from app.db import SqlClient, get_firestore
 
 from app.api.routes.studio._shared import bad_request, not_found, require_non_serverless
 from app.core.auth import get_current_user
-from app.db import get_firestore
 from app.schemas.studio import (
     StudioGitCommitRequest,
     StudioGitConnectRequest,
@@ -20,7 +19,7 @@ from app.services.studio import projects as studio_projects
 router = APIRouter(prefix="/studio/projects/{workspace_id}/git")
 
 
-def _get_github_token(database: Client, user_id: str) -> str | None:
+def _get_github_token(database: SqlClient, user_id: str) -> str | None:
     """Best-effort lookup of the user's connected GitHub OAuth token."""
     from app.services.oauth import decrypt_token
 
@@ -47,7 +46,7 @@ def _get_github_token(database: Client, user_id: str) -> str | None:
 async def git_status(
     workspace_id: str,
     user: dict = Depends(get_current_user),
-    database: Client = Depends(get_firestore),
+    database: SqlClient = Depends(get_firestore),
 ):
     require_non_serverless()
     status = await asyncio.to_thread(git_ops.status, user["uid"], workspace_id)
@@ -59,7 +58,7 @@ async def git_commit(
     workspace_id: str,
     body: StudioGitCommitRequest,
     user: dict = Depends(get_current_user),
-    database: Client = Depends(get_firestore),
+    database: SqlClient = Depends(get_firestore),
 ):
     require_non_serverless()
     try:
@@ -76,7 +75,7 @@ async def connect_github(
     workspace_id: str,
     body: StudioGitConnectRequest,
     user: dict = Depends(get_current_user),
-    database: Client = Depends(get_firestore),
+    database: SqlClient = Depends(get_firestore),
 ):
     """Point the project's origin remote at a GitHub repository URL."""
     require_non_serverless()
@@ -96,7 +95,7 @@ async def connect_github(
 async def push_github(
     workspace_id: str,
     user: dict = Depends(get_current_user),
-    database: Client = Depends(get_firestore),
+    database: SqlClient = Depends(get_firestore),
 ):
     """Commit everything and push to the connected GitHub repo (uses stored OAuth token)."""
     require_non_serverless()

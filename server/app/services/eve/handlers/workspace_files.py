@@ -1,9 +1,9 @@
 """Workspace file handlers — single responsibility: code workspace file operations."""
 
-from google.cloud.firestore_v1 import Client
+from app.db import SqlClient
 
 
-def handle_read_workspace_file(database: Client, user_id: str, arguments: dict) -> tuple[dict, None, None]:
+def handle_read_workspace_file(database: SqlClient, user_id: str, arguments: dict) -> tuple[dict, None, None]:
     from app.repositories import workspace_files as ws_repo
 
     ws_id = arguments.get("workspace_id", "default")
@@ -14,7 +14,7 @@ def handle_read_workspace_file(database: Client, user_id: str, arguments: dict) 
     return {"path": arguments["path"], "content": content, "size": size}, None, None
 
 
-def handle_write_workspace_file(database: Client, user_id: str, arguments: dict) -> tuple[dict, str, None]:
+def handle_write_workspace_file(database: SqlClient, user_id: str, arguments: dict) -> tuple[dict, str, None]:
     from app.repositories import workspace_files as ws_repo
 
     ws_id = arguments.get("workspace_id", "default")
@@ -22,7 +22,7 @@ def handle_write_workspace_file(database: Client, user_id: str, arguments: dict)
     return {"path": arguments["path"], "size": size, "written": True}, "workspace-files", None
 
 
-def handle_list_workspace_files(database: Client, user_id: str, arguments: dict) -> tuple[dict, None, None]:
+def handle_list_workspace_files(database: SqlClient, user_id: str, arguments: dict) -> tuple[dict, None, None]:
     from app.repositories import workspace_files as ws_repo
 
     ws_id = arguments.get("workspace_id", "default")
@@ -34,7 +34,7 @@ def handle_list_workspace_files(database: Client, user_id: str, arguments: dict)
     return {"files": files, "total": len(files)}, None, None
 
 
-def handle_search_workspace_files(database: Client, user_id: str, arguments: dict) -> tuple[dict, None, None]:
+def handle_search_workspace_files(database: SqlClient, user_id: str, arguments: dict) -> tuple[dict, None, None]:
     from app.repositories import workspace_files as ws_repo
 
     ws_id = arguments.get("workspace_id", "default")
@@ -42,7 +42,7 @@ def handle_search_workspace_files(database: Client, user_id: str, arguments: dic
     return {"matches": matches, "total": len(matches)}, None, None
 
 
-def handle_run_workspace_command(database: Client, user_id: str, arguments: dict) -> tuple[dict, None, None]:
+def handle_run_workspace_command(database: SqlClient, user_id: str, arguments: dict) -> tuple[dict, None, None]:
     from app.core.config import settings
 
     if getattr(settings, "is_serverless", False):
@@ -69,3 +69,11 @@ def handle_run_workspace_command(database: Client, user_id: str, arguments: dict
         }, None, None
     except subprocess.TimeoutExpired:
         raise ValueError("Command timed out after 30 seconds.")
+
+
+def handle_open_workspace_browser(database: SqlClient, user_id: str, arguments: dict) -> tuple[dict, None, dict]:
+    """Emit a frontend action that opens the given URL in the workspace browser panel."""
+    url = arguments["url"].strip()
+    if not url:
+        raise ValueError("url must not be empty.")
+    return {"opened": True, "url": url}, None, {"type": "open_browser_url", "url": url}

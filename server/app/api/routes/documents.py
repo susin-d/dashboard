@@ -1,9 +1,8 @@
 import asyncio
 from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
-from google.cloud.firestore_v1 import Client
+from app.db import SqlClient, get_firestore
 
 from app.core.auth import get_current_user
-from app.db import get_firestore
 from app.repositories import documents
 from app.schemas.document import DocumentResponse, DocumentUpsert
 
@@ -14,7 +13,7 @@ router = APIRouter(prefix="/documents")
 async def list_documents(
     cursor: str | None = None,
     limit: int | None = Query(default=None, ge=1, le=50),
-    database: Client = Depends(get_firestore),
+    database: SqlClient = Depends(get_firestore),
     user: dict = Depends(get_current_user),
 ):
     if cursor is not None or limit is not None:
@@ -27,7 +26,7 @@ async def list_documents(
 @router.get("/{document_id}", response_model=DocumentResponse)
 async def get_document(
     document_id: str,
-    database: Client = Depends(get_firestore),
+    database: SqlClient = Depends(get_firestore),
     user: dict = Depends(get_current_user),
 ):
     document = await asyncio.to_thread(documents.get_document, database, user["uid"], document_id)
@@ -40,7 +39,7 @@ async def get_document(
 async def save_document(
     document_id: str,
     document: DocumentUpsert,
-    database: Client = Depends(get_firestore),
+    database: SqlClient = Depends(get_firestore),
     user: dict = Depends(get_current_user),
 ):
     if "/" in document_id or not document_id.strip():
@@ -51,7 +50,7 @@ async def save_document(
 @router.delete("/{document_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_document(
     document_id: str,
-    database: Client = Depends(get_firestore),
+    database: SqlClient = Depends(get_firestore),
     user: dict = Depends(get_current_user),
 ):
     ok = await asyncio.to_thread(documents.delete_document, database, user["uid"], document_id)
@@ -63,7 +62,7 @@ async def delete_document(
 @router.post("/{document_id}/restore", response_model=DocumentResponse)
 async def restore_document(
     document_id: str,
-    database: Client = Depends(get_firestore),
+    database: SqlClient = Depends(get_firestore),
     user: dict = Depends(get_current_user),
 ):
     ok = await asyncio.to_thread(documents.restore_document, database, user["uid"], document_id)

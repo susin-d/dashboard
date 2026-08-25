@@ -1,10 +1,22 @@
 """Database clients and session factories used by the application."""
 
-from app.db.session import Base, async_session_factory, engine, get_db, init_db
-from app.db.sql import SqlClient, get_db_client, get_firestore
+from app.db.session import Base, async_session_factory, engine, get_db, init_db, sync_engine
+from app.db.sql import (
+    ArrayUnion,
+    FieldFilter,
+    Query,
+    SERVER_TIMESTAMP,
+    SqlClient,
+    get_db_client,
+    get_firestore,
+)
 
 __all__ = [
+    "ArrayUnion",
     "Base",
+    "FieldFilter",
+    "Query",
+    "SERVER_TIMESTAMP",
     "SqlClient",
     "async_session_factory",
     "engine",
@@ -12,4 +24,5 @@ __all__ = [
     "get_db_client",
     "get_firestore",
     "init_db",
+    "sync_engine",
 ]
