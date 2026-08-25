@@ -42,46 +42,74 @@
 }
 
 /* ── Hero (prompt landing) ── */
+.studio-landing-page {
+  gap: 0;
+  padding-bottom: 3.5rem;
+}
+
 .studio-hero {
   display: flex;
-  flex: 1;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 0.85rem;
+  gap: 0.95rem;
   margin: 0 calc(-1 * (var(--layout-gutter, 24px) + var(--space-6, 1.5rem)));
-  padding: 4rem var(--layout-gutter, 24px) 4rem;
+  padding: 4rem var(--layout-gutter, 24px) 2.75rem;
   text-align: center;
   background: linear-gradient(180deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.studio-hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 13px;
+  border-radius: 999px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  box-shadow: var(--shadow-sm);
 }
 
 .studio-hero-title {
   margin: 0;
-  font-size: clamp(2.4rem, 5.5vw, 3.6rem);
+  font-size: clamp(2.3rem, 5vw, 3.4rem);
   font-weight: 800;
   letter-spacing: -0.035em;
-  line-height: 1.08;
+  line-height: 1.1;
   color: var(--text-primary);
 }
 
 .studio-hero-subtitle {
   margin: 0;
-  font-size: clamp(0.98rem, 1.6vw, 1.12rem);
+  max-width: 620px;
+  font-size: clamp(0.95rem, 1.4vw, 1.05rem);
+  line-height: 1.55;
   color: var(--text-secondary);
 }
 
 .studio-prompt-card {
   display: flex;
   flex-direction: column;
-  gap: 1.05rem;
-  width: min(720px, 100%);
-  margin-top: 1.5rem;
+  gap: 0.85rem;
+  width: min(740px, 100%);
+  margin-top: 0.75rem;
   padding: 1.15rem 1.25rem 0.95rem;
-  border: 1px solid var(--border-color);
-  border-radius: 26px;
+  border: 1.5px solid var(--border-heavy);
+  border-radius: 20px;
   background: var(--bg-card);
-  box-shadow: var(--shadow-lifted);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
   text-align: left;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.studio-prompt-card:focus-within {
+  border-color: var(--text-primary);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08), 0 0 0 1px var(--text-primary);
 }
 
 .studio-prompt-input {
@@ -89,11 +117,11 @@
   background: transparent;
   resize: none;
   outline: none;
-  min-height: 1.7rem;
-  max-height: 150px;
+  min-height: 2.2rem;
+  max-height: 160px;
   padding: 0;
   font-family: inherit;
-  font-size: 1rem;
+  font-size: 1.02rem;
   line-height: 1.5;
   color: var(--text-primary);
 }
@@ -106,40 +134,33 @@
   outline: none;
 }
 
-.studio-prompt-card:focus-within {
-  border-color: var(--border-strong, #71717a);
-  box-shadow: var(--shadow-lifted), var(--shadow-focus);
-}
-
 .studio-prompt-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 0.6rem;
+  padding-top: 0.4rem;
+  border-top: 1px solid var(--border-color);
 }
 
-.studio-prompt-submit {
-  width: 34px;
-  height: 34px;
-  flex-shrink: 0;
-  display: grid;
-  place-items: center;
-  border-radius: 50%;
-  cursor: pointer;
+.studio-prompt-tools {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .studio-prompt-attach {
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
-  height: 34px;
+  height: 32px;
   flex-shrink: 0;
-  padding: 0 0.8rem;
+  padding: 0 0.75rem;
   border-radius: 999px;
   border: 1px solid var(--border-color);
   background: var(--bg-card);
   color: var(--text-secondary);
-  font-size: 0.85rem;
+  font-size: 0.82rem;
   font-weight: 600;
   cursor: pointer;
   transition: all var(--transition-fast);
@@ -147,7 +168,8 @@
 
 .studio-prompt-attach:hover {
   color: var(--text-primary);
-  border-color: var(--border-strong, #71717a);
+  border-color: var(--border-heavy);
+  background: var(--bg-hover-subtle);
 }
 
 .studio-prompt-attachments {
@@ -203,40 +225,236 @@
   color: var(--text-primary);
 }
 
-.studio-prompt-tools {
-  display: flex;
-  align-items: center;
-  gap: 0.35rem;
-}
-
 .studio-prompt-mode .custom-dropdown-trigger {
-  border: none;
+  border: 1px solid transparent;
   background: transparent;
   box-shadow: none;
-  padding: 0.45rem 0.6rem;
-  font-size: 0.92rem;
+  padding: 0.35rem 0.55rem;
+  border-radius: var(--radius-sm, 8px);
+  font-size: 0.85rem;
   color: var(--text-secondary);
 }
 
 .studio-prompt-mode .custom-dropdown-trigger:hover {
-  background: var(--bg-hover);
+  background: var(--bg-hover-subtle);
+  border-color: var(--border-color);
   color: var(--text-primary);
 }
 
 .studio-prompt-submit {
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
   border: none;
   background: var(--color-primary);
   color: var(--text-inverse);
+  cursor: pointer;
+  transition: transform var(--transition-fast), opacity var(--transition-fast);
 }
 
 .studio-prompt-submit:hover:not(:disabled) {
-  opacity: 0.85;
+  opacity: 0.88;
+  transform: scale(1.06);
 }
 
 .studio-prompt-submit:disabled {
   background: var(--bg-tertiary);
   color: var(--text-muted);
   cursor: not-allowed;
+  opacity: 0.5;
+}
+
+/* Suggestions chips */
+.studio-suggestions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  max-width: 760px;
+  margin-top: 0.35rem;
+}
+
+.studio-suggestions-label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin-right: 0.25rem;
+}
+
+.studio-suggestion-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.32rem 0.72rem;
+  border-radius: 999px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.studio-suggestion-chip:hover {
+  border-color: var(--border-heavy);
+  color: var(--text-primary);
+  background: var(--bg-hover-subtle);
+  transform: translateY(-1px);
+}
+
+/* ── Studio Landing Body & Sections ── */
+.studio-landing-body {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  max-width: 1120px;
+  width: 100%;
+  margin: 0 auto;
+  padding-top: 1.5rem;
+}
+
+.studio-section {
+  width: 100%;
+}
+
+.studio-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.studio-section-title {
+  margin: 0;
+  font-size: 1.12rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.015em;
+}
+
+.studio-starters-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 1rem;
+}
+
+.studio-starter-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 1.25rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg, 12px);
+  background: var(--bg-card);
+  box-shadow: var(--shadow-xs);
+  transition: border-color var(--transition-fast), transform var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.studio-starter-card:hover {
+  border-color: var(--border-heavy);
+  box-shadow: var(--shadow-sm);
+  transform: translateY(-2px);
+}
+
+.studio-starter-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  margin-bottom: 0.6rem;
+}
+
+.studio-starter-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  display: grid;
+  place-items: center;
+  color: var(--text-primary);
+  flex-shrink: 0;
+}
+
+.studio-starter-title {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.studio-starter-desc {
+  margin: 0 0 1.1rem;
+  font-size: 0.82rem;
+  line-height: 1.45;
+  color: var(--text-muted);
+}
+
+.studio-starter-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-top: auto;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--border-color);
+}
+
+.studio-starter-btn {
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 0.32rem 0.75rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Workflow Features Grid */
+.studio-features-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1rem;
+}
+
+.studio-feature-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 1.25rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg, 12px);
+  background: var(--bg-card);
+  box-shadow: var(--shadow-xs);
+}
+
+.studio-feature-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  display: grid;
+  place-items: center;
+  color: var(--text-primary);
+  margin-bottom: 0.25rem;
+}
+
+.studio-feature-title {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.studio-feature-desc {
+  margin: 0;
+  font-size: 0.83rem;
+  line-height: 1.45;
+  color: var(--text-muted);
 }
 
 /* ── Apps sections ── */
