@@ -108,6 +108,89 @@ export async function streamEveMessage({
   }
 }
 
+/**
+ * Ultra low-latency Eve voice turn (`POST /eve/voice/stream`).
+ * Fast model, no tool loop; server synthesizes TTS per sentence and streams
+ * `delta` + `audio` frames. First audio typically arrives <1s after request.
+ *
+ * Callbacks:
+ * - onDelta(text)  — incremental assistant text
+ * - onAudio({sentence, audio_base64, mime, provider, text}) — one playable chunk;
+ *   provider 'browser' means speak `text` via SpeechSynthesis locally
+ * - onDone({message})
+ */
+export async function streamEveVoice({
+  messages,
+  sessionId,
+  signal,
+  onDelta,
+  onAudio,
+  onDone,
+}) {
+  const token = getStoredAuthToken()
+  if (!token) throw new Error(TOKEN_MESSAGE)
+
+  const response = await fetchWithTimeout(
+    `${API_URL}/eve/voice/stream`,
+    {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+        Accept: 'text/event-stream',
+      },
+      body: JSON.stringify({ messages, session_id: sessionId ?? null }),
+      signal,
+    },
+    STREAM_TIMEOUT_MS,
+  )
+
+  if (!response.ok) {
+    const failure = await response.json().catch(() => null)
+    throw new Error(failure?.detail || 'Eve voice stream could not be started.')
+  }
+  if (!response.body) throw new Error('Streaming is not supported by this browser.')
+
+  const reader = response.body.getReader()
+  const decoder = new TextDecoder()
+  let buffer = ''
+
+  const handleFrame = (frame) => {
+    const dataLine = frame.split('\n').find((line) => line.startsWith('data:'))
+    if (!dataLine) return
+    const data = dataLine.slice(5).trim()
+    if (!data || data === '[DONE]') return
+    let event
+    try {
+      event = JSON.parse(data)
+    } catch {
+      return
+    }
+    if (event.type === 'delta') {
+      if (event.text) onDelta?.(event.text)
+    } else if (event.type === 'audio') {
+      onAudio?.(event)
+    } else if (event.type === 'done') {
+      onDone?.(event)
+    } else if (event.type === 'error') {
+      throw new Error(event.detail || 'Eve voice failed mid-stream.')
+    }
+  }
+
+  for (;;) {
+    const { value, done } = await reader.read()
+    if (done) break
+    buffer += decoder.decode(value, { stream: true })
+    let separator = buffer.indexOf('\n\n')
+    while (separator !== -1) {
+      const frame = buffer.slice(0, separator)
+      buffer = buffer.slice(separator + 2)
+      handleFrame(frame)
+      separator = buffer.indexOf('\n\n')
+    }
+  }
+}
+
 export function listEveSessions() {
   return request('/eve/sessions')
 }

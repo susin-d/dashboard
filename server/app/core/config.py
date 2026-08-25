@@ -93,7 +93,8 @@ class Settings:
     groq_api_key: str | None = os.getenv("GROQ_API_KEY")
     groq_url: str | None = os.getenv("GROQ_URL") or None
     groq_model: str = os.getenv("GROQ_MODEL", "llama-3.1-70b-versatile")
-    groq_stt_model: str = os.getenv("GROQ_STT_MODEL", "whisper-large-v3")
+    groq_voice_model: str = os.getenv("GROQ_VOICE_MODEL", "llama-3.1-8b-instant")
+    groq_stt_model: str = os.getenv("GROQ_STT_MODEL", "whisper-large-v3-turbo")
     openrouter_api_key: str | None = os.getenv("OPENROUTER_API_KEY")
     openrouter_url: str | None = os.getenv("OPENROUTER_URL") or None
     openrouter_model: str = os.getenv("OPENROUTER_MODEL", "openai/gpt-4o")

@@ -45,11 +45,18 @@ async def _get_models_json(
         async with httpx.AsyncClient(timeout=httpx.Timeout(6.0, connect=3.0)) as client:
             resp = await client.get(url, headers=headers)
         if resp.status_code != 200:
-            logger.warning(f"[AI Models] {provider} list models failed {resp.status_code}: {resp.text[:200]}")
+            # Ollama local not running is expected — downgrade to debug
+            if provider == "ollama":
+                logger.info(f"[AI Models] ollama list models failed {resp.status_code} (local not running, use OLLAMA_URL for cloud)")
+            else:
+                logger.warning(f"[AI Models] {provider} list models failed {resp.status_code}: {resp.text[:200]}")
             return None
         return resp.json()
     except Exception as error:
-        logger.warning(f"[AI Models] {provider} list exception: {error}")
+        if provider == "ollama":
+            logger.info(f"[AI Models] ollama list skipped (local not running): {error} — set OLLAMA_URL for cloud")
+        else:
+            logger.warning(f"[AI Models] {provider} list exception: {error}")
         return None
 
 

@@ -30,6 +30,15 @@ PROVIDER_CLIENTS = {
     "opencode": OpenAiCompatibleClient,
 }
 
+
+def get_provider_client(config: AiConfig) -> ProviderClient:
+    """Instantiate the provider client for an AiConfig (matches chat_context pattern)."""
+    cls = PROVIDER_CLIENTS.get(config.provider)
+    if cls is None:
+        raise ValueError(f"Unsupported AI provider '{config.provider}'.")
+    return cls(config.client_options)
+
+
 __all__ = [
     "AI_MODELS_SETTINGS_DOC",
     "AI_PROVIDERS",
@@ -42,6 +51,7 @@ __all__ = [
     "any_provider_available",
     "effective_api_key",
     "fetch_provider_models",
+    "get_provider_client",
     "has_server_key",
     "invalidate_ai_config_cache",
     "load_ai_preference",

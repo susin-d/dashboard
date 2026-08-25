@@ -8,13 +8,15 @@ def _escape(text: str) -> str:
 
 
 def build_eve_twiml(message: str, voice: str = "alice", language: str = "en-US", gather: bool = True) -> str:
-    """Eve answers via <Say> then <Gather> for barge-in (speech input)."""
+    """Eve answers via <Say> then <Gather> for barge-in (speech input).
+
+    Gather posts to /gather-fast (fast model path, targets <1s reply)."""
     safe = _escape(message[:1600] or "Hello, this is Eve from StarWaves. How can I help you today?")
     if gather:
         return f"""<?xml version="1.0" encoding="UTF-8"?>
 <Response>
     <Say voice="{voice}" language="{language}">{safe}</Say>
-    <Gather input="speech" speechTimeout="auto" language="{language}" action="/api/v1/calls/twilio/gather" method="POST">
+    <Gather input="speech" speechTimeout="auto" language="{language}" action="/api/v1/calls/twilio/gather-fast" method="POST">
         <Say voice="{voice}" language="{language}">You can speak after the tone.</Say>
     </Gather>
     <Say voice="{voice}" language="{language}">I didn't catch that. Goodbye.</Say>

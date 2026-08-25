@@ -52,7 +52,15 @@ def effective_api_key(provider: str, user_keys: dict[str, str]) -> str | None:
     if provider == "groq":
         return settings.groq_api_key
     if provider == "ollama":
-        return settings.ollama_api_key or "ollama"
+        # Only return a key when Ollama is actually configured (local URL or explicit key)
+        # Otherwise return None so discovery doesn't spam local 127.0.0.1 warnings
+        if user_keys.get("ollama"):
+            return user_keys["ollama"]
+        if settings.ollama_api_key:
+            return settings.ollama_api_key
+        if settings.ollama_url:
+            return "ollama"  # placeholder for OpenAI-compatible client when URL is set
+        return None
     if provider == "opencode":
         return settings.opencode_api_key
     return None

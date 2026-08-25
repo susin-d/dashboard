@@ -71,10 +71,12 @@ AI_PROVIDERS: dict[str, dict[str, Any]] = {
         "openai_compatible": True,
         "requires_base_url": True,
         "models": [
+            {"id": "llama-3.1-8b-instant", "label": "Llama 3.1 8B Instant — ultra low latency voice"},
             {"id": "llama-3.3-70b-versatile", "label": "Llama 3.3 70B Versatile"},
             {"id": "llama-3.1-70b-versatile", "label": "Llama 3.1 70B Versatile"},
             {"id": "mixtral-8x7b-32768", "label": "Mixtral 8x7B 32k"},
             {"id": "whisper-large-v3", "label": "Whisper Large v3 (STT)"},
+            {"id": "whisper-large-v3-turbo", "label": "Whisper Large v3 Turbo (STT fast)"},
         ],
     },
     "ollama": {

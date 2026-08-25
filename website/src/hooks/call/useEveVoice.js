@@ -1,6 +1,6 @@
 /** Eve voice hook — single responsibility: STT/TTS and Eve conversation. */
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { sendEveMessage } from '../../lib/eveApi'
+import { sendEveMessage, streamEveVoice } from '../../lib/eveApi'
 import { loadEveSpeech, transcribeEveAudio } from '../../lib/eveSpeechApi'
 import { streamEveSpeech } from '../../lib/eveSpeechStream'
 import { isSpeechRecognitionSupported, loadEveVoicePrefs, selectVoice } from '../../utils/speech'
@@ -125,15 +125,93 @@ export function useEveVoice({ isEveCall, phase, muted, localStreamRef, phaseRef 
       const clean = text.trim()
       setUserTranscript(clean)
       setIsEveThinking(true)
-      try {
-        const response = await sendEveMessage([{ role: 'user', content: clean }])
-        const replyText = response?.message || "I heard you, but I couldn't process that request."
-        speakEveResponse(replyText)
-      } catch {
-        setEveTranscript('Sorry, I had trouble reaching the Eve assistant service.')
-      } finally {
-        setIsEveThinking(false)
+      setEveTranscript('')
+
+      // Fast path: streaming voice endpoint — first audio <1s.
+      // Audio chunks play sequentially; browser-provider chunks speak locally.
+      let sawAudio = false
+      let streamFailed = false
+      const audioQueueRef = []
+      const playNextChunk = () => {
+        const next = audioQueueRef.shift()
+        if (!next) {
+          isEveSpeakingRef.current = false
+          lastSpeechEndRef.current = Date.now()
+          setIsEveSpeaking(false)
+          return
+        }
+        if (next.audio_base64) {
+          try {
+            const binary = atob(next.audio_base64)
+            const bytes = new Uint8Array(binary.length)
+            for (let i = 0; i < binary.length; ++i) bytes[i] = binary.charCodeAt(i)
+            const blob = new Blob([bytes], { type: next.mime || 'audio/mpeg' })
+            const url = URL.createObjectURL(blob)
+            const audio = new Audio(url)
+            eveAudioRef.current = audio
+            audio.onended = () => {
+              URL.revokeObjectURL(url)
+              playNextChunk()
+            }
+            audio.onerror = () => {
+              URL.revokeObjectURL(url)
+              playNextChunk()
+            }
+            audio.play().catch(() => playNextChunk())
+          } catch {
+            playNextChunk()
+          }
+        } else if (next.text && typeof window !== 'undefined' && 'speechSynthesis' in window) {
+          const prefs = loadEveVoicePrefs()
+          const voices = window.speechSynthesis.getVoices() || []
+          const voice = selectVoice(prefs, voices)
+          const utterance = new SpeechSynthesisUtterance(next.text)
+          if (voice) utterance.voice = voice
+          utterance.lang = prefs.language
+          utterance.rate = prefs.rate
+          utterance.pitch = prefs.pitch
+          utterance.onend = playNextChunk
+          utterance.onerror = playNextChunk
+          window.speechSynthesis.speak(utterance)
+        } else {
+          playNextChunk()
+        }
       }
+
+      try {
+        await streamEveVoice({
+          messages: [{ role: 'user', content: clean }],
+          sessionId: null,
+          onDelta: (chunk) => {
+            setEveTranscript((current) => (current === chunk ? current : current + chunk))
+          },
+          onAudio: (event) => {
+            sawAudio = true
+            isEveSpeakingRef.current = true
+            setIsEveSpeaking(true)
+            audioQueueRef.push(event)
+            if (audioQueueRef.length === 1) playNextChunk()
+          },
+          onDone: (doneEvent) => {
+            setEveTranscript(doneEvent?.message || '')
+          },
+        })
+      } catch {
+        streamFailed = true
+      }
+
+      // Fallback to the blocking chat path when the fast path failed or
+      // produced no playable audio (e.g. server has no TTS configured).
+      if (streamFailed || (!sawAudio && !isEveSpeakingRef.current)) {
+        try {
+          const response = await sendEveMessage([{ role: 'user', content: clean }])
+          const replyText = response?.message || "I heard you, but I couldn't process that request."
+          speakEveResponse(replyText)
+        } catch {
+          setEveTranscript('Sorry, I had trouble reaching the Eve assistant service.')
+        }
+      }
+      setIsEveThinking(false)
     },
     [speakEveResponse],
   )

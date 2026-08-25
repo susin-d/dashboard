@@ -118,6 +118,7 @@
 /* Flush rows inside card body — avoid inset double-card gap (e.g. Eve memory toggle) */
 .settings-card-body .whatsapp-automation-item {
   margin: 0;
+  padding: 16px 22px; /* match the card header's horizontal rhythm */
   border: 0;
   border-top: 1px solid var(--border-color);
   border-radius: 0;

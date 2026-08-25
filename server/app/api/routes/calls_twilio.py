@@ -1,5 +1,6 @@
 """Twilio PSTN routes — dual call option (in_app WebRTC vs Twilio PSTN)."""
 
+import asyncio
 import logging
 from fastapi import APIRouter, Depends, Form, HTTPException, Query, Request
 from fastapi.responses import PlainTextResponse
@@ -214,3 +215,47 @@ async def twilio_status_callback(request: Request, database: Client = Depends(ge
         except Exception as e:
             logger.warning(f"Twilio status update failed sid={sid} status={status}: {e}")
     return PlainTextResponse('<?xml version="1.0"?><Response/>', media_type="application/xml")
+
+
+@router.post("/twilio/gather-fast", response_class=PlainTextResponse)
+async def twilio_gather_fast(request: Request, database: Client = Depends(get_firestore)):
+    """Fast gather path: fast model, no tools/RAG — targets <1s Eve TwiML reply.
+
+    Twilio posts SpeechResult here when <Gather action=.../gather-fast>. We resolve
+    the caller from CallSid → calls.external_sid, run the one-shot voice reply,
+    and return a short <Say> TwiML.
+    """
+    form = await request.form()
+    speech = form.get("SpeechResult") or form.get("speechResult") or ""
+    call_sid = form.get("CallSid") or ""
+    if not speech:
+        return PlainTextResponse(
+            '<?xml version="1.0"?><Response><Say>I didn\'t catch that. Goodbye.</Say><Hangup/></Response>',
+            media_type="application/xml",
+        )
+    uid = None
+    try:
+        for doc in database.collection("calls").where("external_sid", "==", call_sid).limit(1).stream():
+            data = doc.to_dict() or {}
+            uid = data.get("callee", {}).get("uid")
+            if uid == "eve-bot":
+                uid = data.get("caller", {}).get("uid")
+            break
+    except Exception as e:
+        logger.warning(f"gather-fast lookup failed sid={call_sid}: {e}")
+    user_rec = {"uid": uid} if uid else None
+    from app.services.eve.voice_fast import voice_reply_blocking
+
+    reply = await asyncio.to_thread(voice_reply_blocking, database, user_rec, speech) or "Sorry, I couldn't process that."
+    from html import escape
+
+    safe_reply = escape(reply[:800])
+    twiml = (
+        '<?xml version="1.0" encoding="UTF-8"?>\n<Response>\n'
+        f'    <Say voice="alice">{safe_reply}</Say>\n'
+        '    <Gather input="speech" speechTimeout="auto" action="/api/v1/calls/twilio/gather-fast" method="POST"/>\n'
+        '    <Say voice="alice">Goodbye.</Say>\n'
+        '    <Hangup/>\n'
+        '</Response>'
+    )
+    return PlainTextResponse(twiml, media_type="application/xml")
