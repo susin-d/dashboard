@@ -1,4 +1,5 @@
 import {
+  AppWindow,
   Blocks,
   Bot,
   Brain,
@@ -33,6 +34,7 @@ export const navigationItems = [
   { id: 'documents', label: 'Documents', icon: Files, group: 'Work' },
   { id: 'workspace', label: 'Workspace', icon: SquareTerminal, group: 'Work' },
   { id: 'studio', label: 'Studio', icon: Blocks, group: 'Studio' },
+  { id: 'studio-apps', label: 'Apps', icon: AppWindow, group: 'Studio' },
   { id: 'studio-templates', label: 'Templates', icon: LayoutTemplate, group: 'Studio' },
   { id: 'eve', label: 'Chat', icon: Bot, group: 'Eve AI' },
   { id: 'eve-sessions', label: 'Chat Sessions', icon: History, group: 'Eve AI' },

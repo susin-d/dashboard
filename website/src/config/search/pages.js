@@ -1,4 +1,5 @@
 import {
+  AppWindow,
   Blocks,
   BriefcaseBusiness,
   CalendarDays,
@@ -93,6 +94,18 @@ export const PAGES_ITEMS = [
     page: 'studio',
     icon: Blocks,
     keywords: ['builder', 'build app', 'website', 'generate', 'scaffold', 'eve build', 'no-code', 'fullstack'],
+  },
+  {
+    id: 'page-studio-apps',
+    type: 'page',
+    category: 'pages',
+    group: 'Pages & Views',
+    title: 'Studio Apps',
+    subtitle: 'Apps Eve finished building — reopen or run them anytime',
+    badge: 'Studio > Apps',
+    page: 'studio-apps',
+    icon: AppWindow,
+    keywords: ['apps', 'built apps', 'old apps', 'my apps', 'gallery', 'run app', 'preview', 'launch'],
   },
   {
     id: 'page-studio-templates',
