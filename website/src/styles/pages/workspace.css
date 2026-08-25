@@ -978,9 +978,10 @@
   min-width: 0;
 }
 
-.workspace-browser-url {
+input.workspace-browser-url {
   flex: 1;
   min-width: 0;
+  width: auto;
   padding: 5px 10px;
   border: 1px solid var(--border-color, #e4e4e7);
   border-radius: 8px;
@@ -989,7 +990,7 @@
   font-size: 12px;
 }
 
-.workspace-browser-url:focus-visible {
+input.workspace-browser-url:focus-visible {
   outline: 2px solid var(--color-primary, #09090b);
   outline-offset: 1px;
 }

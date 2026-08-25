@@ -64,7 +64,7 @@ body::before {
 
 .primary-button, .secondary-button, .auth-button, .danger-button,
 .card, .profile-card, .workspace-settings-card, .coding-settings-card,
-.hackathon-source-settings, .project-overview-card, input:not([type="checkbox"]):not([type="radio"]), select, textarea {
+.hackathon-source-settings, .project-overview-card {
   box-shadow: var(--shadow-inset);
 }
 
