@@ -84,6 +84,13 @@ Instructions and guidelines for AI Coding Agents working in the **Starwaves** co
      - Grayscale Accents / Borders: `#27272a`, `#3f3f46`, `#71717a`, `#e4e4e7`
    - **PROHIBITED**: Standard colors such as red, blue, green, yellow, purple, gradient fills, or rainbow themes are strictly forbidden. State indicators (e.g., status badges, active states) must use high-contrast black/white or grays.
 
+3. **Full-Page Layout — Never Cut Off Content**:
+   - Every page must render as a **complete, full-height layout** where all content is fully visible and accessible — no clipped, truncated, or cut-off sections at any viewport size.
+   - Page containers must account for the full viewport height including fixed headers/footers (e.g. `min-height: 100vh` minus chrome, or flex layouts with `flex: 1` on the main content area) so content is never hidden behind or pushed out by fixed elements.
+   - Long content must scroll naturally within its container; never use fixed heights or `overflow: hidden` on containers that would clip content invisibly.
+   - Verify pages at multiple viewport sizes (desktop, tablet, mobile) and ensure nothing is cut off horizontally (no unintended horizontal scrollbars from overflowing elements).
+   - Before declaring a UI task complete, visually confirm (screenshot/preview) that the entire page renders without sections being truncated.
+
 ---
 
 ## ⚡ 3. Serverless & Background Worker Rules
@@ -117,10 +124,21 @@ Instructions and guidelines for AI Coding Agents working in the **Starwaves** co
 2. **Preserve Comments & API Contracts**:
    - Maintain existing docstrings, API response shapes, and file structure integrity.
 
-3. **Always Push After Completion**:
+3. **Commit All Changes — No Exceptions**:
+   - Every change made during a task — code, docs, configuration, `context.md`
+     updates, new or deleted files — **MUST be committed** before the task is
+     considered complete.
+   - Never leave working-tree modifications uncommitted at the end of a task;
+     run `git status` to confirm the tree is clean (only untracked/ignored
+     files like `.env` may remain).
+   - Stage all intended files (`git add <files>`), never commit secrets,
+     `.env`, credentials, or build artifacts, and use a clear, concise commit
+     message that matches the repo style.
+
+4. **Always Push After Completion**:
    - When a task is completed (code verified, `context.md` updated, files
-     staged/committed with a clear message), **push to the remote** so the
-     repository stays in sync.
+      staged/committed with a clear message), **push to the remote** so the
+      repository stays in sync.
    - Run `git status`, `git add <intended files>`, `git commit`, then
      `git push` to the current branch's upstream. Never commit secrets or
      `.env` files, and never force-push.
