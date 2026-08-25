@@ -15,6 +15,7 @@ export function WorkspacePage() {
   const [evePanelCollapsed, setEvePanelCollapsed] = useState(true)
   const [terminalVisible, setTerminalVisible] = useState(false)
   const [browserVisible, setBrowserVisible] = useState(false)
+  const [browserUrl, setBrowserUrl] = useState('')
   const [newFilePrompt, setNewFilePrompt] = useState(false)
   const [newFileName, setNewFileName] = useState('')
   const [newFolderPrompt, setNewFolderPrompt] = useState(false)
@@ -108,6 +109,13 @@ export function WorkspacePage() {
     },
     [workspace],
   )
+
+  const handleEveAction = useCallback((action) => {
+    if (action?.type === 'open_browser_url' && action.url) {
+      setBrowserUrl(action.url)
+      setBrowserVisible(true)
+    }
+  }, [])
 
   const handleKeyboardSave = useCallback(
     (event) => {
@@ -317,6 +325,7 @@ export function WorkspacePage() {
           {browserVisible && (
             <WorkspaceBrowser
               workspaceId={workspace.activeWorkspaceId}
+              initialUrl={browserUrl}
               onClose={() => setBrowserVisible(false)}
             />
           )}
@@ -329,6 +338,7 @@ export function WorkspacePage() {
           workspaceName={workspace.activeWorkspace?.name}
           activeFilePath={workspace.activeTab}
           onFilesChanged={workspace.refreshTree}
+          onAction={handleEveAction}
         />
       </div>
 

@@ -27,69 +27,38 @@ AI_PROVIDERS: dict[str, dict[str, Any]] = {
     "openai": {
         "label": "OpenAI",
         "default_model": settings.openai_model,
-        "models": [
-            {"id": "gpt-5-mini", "label": "GPT-5 mini"},
-            {"id": "gpt-5", "label": "GPT-5"},
-            {"id": "gpt-4o", "label": "GPT-4o"},
-            {"id": "gpt-4o-mini", "label": "GPT-4o mini"},
-            {"id": "o3-mini", "label": "o3 mini"},
-        ],
+        "models": [],  # API-only — no static fallback
     },
     "anthropic": {
         "label": "Anthropic",
         "default_model": settings.anthropic_model,
-        "models": [
-            {"id": "claude-sonnet-4-5", "label": "Claude Sonnet 4.5"},
-            {"id": "claude-opus-4-1", "label": "Claude Opus 4.1"},
-            {"id": "claude-haiku-4-5", "label": "Claude Haiku 4.5"},
-        ],
+        "models": [],  # API-only — no static fallback
     },
     "gemini": {
         "label": "Google Gemini",
         "default_model": settings.gemini_model,
-        "models": [
-            {"id": "gemini-2.5-flash", "label": "Gemini 2.5 Flash"},
-            {"id": "gemini-2.5-pro", "label": "Gemini 2.5 Pro"},
-            {"id": "gemini-2.0-flash", "label": "Gemini 2.0 Flash"},
-        ],
+        "models": [],  # API-only — no static fallback
     },
     "openrouter": {
         "label": "OpenRouter",
         "default_model": settings.openrouter_model,
         "openai_compatible": True,
         "requires_base_url": True,
-        "models": [
-            {"id": "openai/gpt-4o", "label": "GPT-4o (via OpenRouter)"},
-            {"id": "anthropic/claude-sonnet-4.5", "label": "Claude Sonnet 4.5 (via OpenRouter)"},
-            {"id": "google/gemini-2.5-flash", "label": "Gemini 2.5 Flash (via OpenRouter)"},
-            {"id": "meta-llama/llama-3.1-70b-instruct", "label": "Llama 3.1 70B (via OpenRouter)"},
-        ],
+        "models": [],  # API-only — no static fallback
     },
     "groq": {
         "label": "Groq",
         "default_model": settings.groq_model,
         "openai_compatible": True,
         "requires_base_url": True,
-        "models": [
-            {"id": "llama-3.1-8b-instant", "label": "Llama 3.1 8B Instant — ultra low latency voice"},
-            {"id": "llama-3.3-70b-versatile", "label": "Llama 3.3 70B Versatile"},
-            {"id": "llama-3.1-70b-versatile", "label": "Llama 3.1 70B Versatile"},
-            {"id": "mixtral-8x7b-32768", "label": "Mixtral 8x7B 32k"},
-            {"id": "whisper-large-v3", "label": "Whisper Large v3 (STT)"},
-            {"id": "whisper-large-v3-turbo", "label": "Whisper Large v3 Turbo (STT fast)"},
-        ],
+        "models": [],  # API-only — no static fallback
     },
     "ollama": {
         "label": "Ollama (local)",
         "default_model": settings.ollama_model,
         "openai_compatible": True,
         "requires_base_url": True,
-        "models": [
-            {"id": "llama3.1", "label": "Llama 3.1"},
-            {"id": "llama3.2", "label": "Llama 3.2"},
-            {"id": "qwen2.5", "label": "Qwen 2.5"},
-            {"id": "mistral", "label": "Mistral"},
-        ],
+        "models": [],  # API-only — no static fallback
     },
     "opencode": {
         "label": "OpenCode",

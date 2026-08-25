@@ -30,16 +30,16 @@ function normalizeUrl(raw) {
   return `https://${value}`
 }
 
-export function WorkspaceBrowser({ workspaceId, onClose }) {
-  const [draft, setDraft] = useState(() => loadStoredUrl(workspaceId))
-  const [url, setUrl] = useState(() => loadStoredUrl(workspaceId))
+export function WorkspaceBrowser({ workspaceId, initialUrl, onClose }) {
+  const [draft, setDraft] = useState(() => initialUrl || loadStoredUrl(workspaceId))
+  const [url, setUrl] = useState(() => initialUrl || loadStoredUrl(workspaceId))
   const [reloadKey, setReloadKey] = useState(0)
 
   useEffect(() => {
-    const stored = loadStoredUrl(workspaceId)
+    const stored = initialUrl || loadStoredUrl(workspaceId)
     setDraft(stored)
     setUrl(stored)
-  }, [workspaceId])
+  }, [workspaceId, initialUrl])
 
   const handleNavigate = (event) => {
     event.preventDefault()
@@ -104,7 +104,7 @@ export function WorkspaceBrowser({ workspaceId, onClose }) {
           className="workspace-browser-frame"
           src={url}
           title="Workspace browser"
-          sandbox="allow-scripts allow-forms allow-popups"
+          sandbox="allow-scripts allow-forms allow-popups allow-same-origin allow-modals"
         />
       ) : (
         <div className="workspace-browser-empty">

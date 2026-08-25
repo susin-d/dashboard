@@ -66,6 +66,7 @@ async def _fetch_openai_models(api_key: str, base_url: str | None = None) -> lis
     if data is None:
         return []
     models: list[dict[str, str]] = []
+    is_official_openai = not base_url or "api.openai.com" in base_url
     for item in data.get("data") or []:
         mid = item.get("id") or ""
         if not mid:
@@ -74,7 +75,7 @@ async def _fetch_openai_models(api_key: str, base_url: str | None = None) -> lis
         # Filter to chat/completion models only
         if any(keyword in low for keyword in _NON_CHAT_MODEL_KEYWORDS):
             continue
-        if not low.startswith(_OPENAI_MODEL_PREFIXES):
+        if is_official_openai and not low.startswith(_OPENAI_MODEL_PREFIXES):
             continue
         models.append({"id": mid, "label": _format_model_label(mid)})
     return sorted(models, key=lambda entry: entry["id"])
@@ -192,8 +193,7 @@ async def provider_catalog(user_api_keys: dict[str, str] | None = None) -> list[
                 live_models = await fetch_provider_models(provider_id, effective_key, keys)
             except Exception:
                 live_models = []
-        static_models = descriptor["models"]
-        chosen_models = live_models if live_models else static_models
+        chosen_models = live_models
         default_id = descriptor["default_model"]
         models_payload = [
             {
@@ -203,15 +203,6 @@ async def provider_catalog(user_api_keys: dict[str, str] | None = None) -> list[
             }
             for item in chosen_models
         ]
-        # Ensure default still present even if live list missed it
-        if live_models and not any(model["id"] == default_id for model in models_payload):
-            static_default = next((model for model in static_models if model["id"] == default_id), None)
-            if static_default:
-                models_payload.insert(0, {
-                    "id": static_default["id"],
-                    "label": static_default["label"],
-                    "is_default": True,
-                })
         catalog.append({
             "id": provider_id,
             "label": descriptor["label"],

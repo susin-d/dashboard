@@ -12,7 +12,7 @@ function buildContextPrefix(workspaceId, workspaceName, activeFilePath) {
   return lines.join('\n')
 }
 
-export function useEveAgentChat({ workspaceId, workspaceName, activeFilePath, onFilesChanged }) {
+export function useEveAgentChat({ workspaceId, workspaceName, activeFilePath, onFilesChanged, onAction }) {
   const [messages, setMessages] = useState([])
   const [sending, setSending] = useState(false)
   const [streamText, setStreamText] = useState('')
@@ -75,7 +75,7 @@ export function useEveAgentChat({ workspaceId, workspaceName, activeFilePath, on
           })
         } catch (streamError) {
           if (controller.signal.aborted) {
-            donePayload = { message: receivedText, changed_resources: [] }
+            donePayload = { message: receivedText, changed_resources: [], actions: [] }
           } else if (!receivedText) {
             fallbackToRest = true
           } else {
@@ -97,6 +97,10 @@ export function useEveAgentChat({ workspaceId, workspaceName, activeFilePath, on
         const workspaceChanged =
           filesTouched || Boolean(donePayload?.changed_resources?.includes(WORKSPACE_CHANGED_RESOURCE))
         if (workspaceChanged) onFilesChanged?.()
+
+        for (const action of donePayload?.actions ?? []) {
+          onAction?.(action)
+        }
       } catch (turnError) {
         setError(turnError.message || 'Eve is unavailable right now.')
       } finally {
@@ -106,7 +110,7 @@ export function useEveAgentChat({ workspaceId, workspaceName, activeFilePath, on
         setActiveTool(null)
       }
     },
-    [activeFilePath, commit, onFilesChanged, sending, workspaceId, workspaceName],
+    [activeFilePath, commit, onAction, onFilesChanged, sending, workspaceId, workspaceName],
   )
 
   return { messages, sending, streamText, activeTool, error, send, stop }

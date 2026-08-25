@@ -9,12 +9,14 @@ export function WorkspaceEvePanel({
   workspaceName,
   activeFilePath,
   onFilesChanged,
+  onAction,
 }) {
   const { messages, sending, streamText, activeTool, error, send, stop } = useEveAgentChat({
     workspaceId,
     workspaceName,
     activeFilePath,
     onFilesChanged,
+    onAction,
   })
   const [draft, setDraft] = useState('')
   const chatRef = useRef(null)
