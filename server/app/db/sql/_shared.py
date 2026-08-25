@@ -34,22 +34,29 @@ def is_server_timestamp(value: Any) -> bool:
     return False
 
 
+_TIMESTAMP_KEYS = {
+    "created_at",
+    "updated_at",
+    "scheduled_time",
+    "completed_at",
+    "deadline",
+    "event_date",
+    "timestamp",
+    "email_verified_at",
+    "last_run_at",
+    "next_run_at",
+    "scheduled_time",
+    "deleted_at",
+}
+
+
 def coerce_model_value(key: str, val: Any) -> Any:
     """Coerce input values to appropriate Python/SQL types for model attributes."""
     if val is None:
         return None
     if is_server_timestamp(val):
         return datetime.now(timezone.utc)
-    if key in (
-        "created_at",
-        "updated_at",
-        "scheduled_time",
-        "completed_at",
-        "deadline",
-        "event_date",
-        "timestamp",
-        "email_verified_at",
-    ):
+    if key in _TIMESTAMP_KEYS:
         if isinstance(val, str):
             try:
                 return datetime.fromisoformat(val.replace("Z", "+00:00"))
@@ -81,19 +88,7 @@ def clean_data(data: dict[str, Any]) -> dict[str, Any]:
     now_iso = now_dt.isoformat()
     for k, v in data.items():
         if is_server_timestamp(v):
-            if k in (
-                "created_at",
-                "updated_at",
-                "scheduled_time",
-                "completed_at",
-                "deadline",
-                "event_date",
-                "timestamp",
-                "email_verified_at",
-            ):
-                cleaned[k] = now_dt
-            else:
-                cleaned[k] = now_iso
+            cleaned[k] = now_dt if k in _TIMESTAMP_KEYS else now_iso
         elif isinstance(v, ArrayUnion) or is_array_union(v):
             cleaned[k] = v.values
         else:

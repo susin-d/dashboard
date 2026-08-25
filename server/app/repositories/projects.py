@@ -6,6 +6,7 @@ from typing import Any
 from firebase_admin import firestore
 from google.cloud.firestore_v1 import Client
 
+from app.repositories.helpers import restore_payload, soft_delete_payload
 from app.repositories.pagination import paginate_collection, serialize_dates, user_collection
 from app.schemas.workspace import ProjectCreate
 
@@ -92,20 +93,12 @@ class ProjectRepository:
         reference = self.collection.document(project_id)
         if not reference.get().exists:
             return False
-        reference.update({
-            "deleted": True,
-            "deleted_at": datetime.now(timezone.utc).isoformat(),
-            "updated_at": firestore.SERVER_TIMESTAMP,
-        })
+        reference.update(soft_delete_payload())
         return True
 
     def restore(self, project_id: str) -> bool:
         reference = self.collection.document(project_id)
         if not reference.get().exists:
             return False
-        reference.update({
-            "deleted": False,
-            "deleted_at": None,
-            "updated_at": firestore.SERVER_TIMESTAMP,
-        })
+        reference.update(restore_payload())
         return True

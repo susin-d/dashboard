@@ -1,11 +1,13 @@
-"""Shared workspace repository helpers: collection access, date serialization, and pagination."""
+"""Shared workspace repository helpers — facade over core/pagination + collection helpers."""
 
 from datetime import date
 from typing import Any
-import base64
 
 from firebase_admin import firestore
 from google.cloud.firestore_v1 import Client
+
+# Re-export canonical pagination primitives from core
+from app.core.pagination import encode_cursor, decode_cursor, resolve_limit, DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE
 
 
 def user_collection(database: Client, user_id: str, collection_name: str):
@@ -19,24 +21,10 @@ def serialize_dates(values: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def encode_cursor(document_id: str) -> str:
-    return base64.urlsafe_b64encode(document_id.encode()).decode()
-
-
-def decode_cursor(cursor: str | None) -> str | None:
-    if not cursor:
-        return None
-    try:
-        return base64.urlsafe_b64decode(cursor.encode()).decode()
-    except Exception as error:
-        raise ValueError("Invalid pagination cursor.") from error
-
-
 def paginate_collection(collection, order_field: str, cursor: str | None, limit: int):
     # Use server-side deleted filter when available; fall back to Python filter for legacy stores.
     # Fetch limit+1 to detect has_more without over-fetching 3x.
     try:
-        # Try to push deleted filter to SQL layer (if supported)
         base_query = collection.where("deleted", "==", False)
     except Exception:
         base_query = collection
@@ -50,7 +38,6 @@ def paginate_collection(collection, order_field: str, cursor: str | None, limit:
         except Exception:
             pass
     raw_documents = list(query.limit(limit + 1).stream())
-    # Defensive filter if backend didn't handle deleted
     documents = [d for d in raw_documents if not (d.to_dict() or {}).get("deleted")]
     has_more = len(documents) > limit
     documents = documents[:limit]

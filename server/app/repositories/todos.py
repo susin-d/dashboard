@@ -3,6 +3,7 @@ from datetime import datetime, timezone
 from firebase_admin import firestore
 from google.cloud.firestore_v1 import Client
 
+from app.repositories.helpers import dict_to_snapshot, restore_payload, soft_delete_payload
 from app.schemas.todo import TodoCreate, TodoResponse, TodoUpdate
 
 
@@ -47,12 +48,9 @@ def list_todos_page(database: Client, user_id: str, cursor: str | None, limit: i
     raw, next_cursor, has_more = paginate_collection(coll, "created_at", cursor, limit)
     items = []
     for data in raw:
-        # paginate_collection already filtered deleted when possible; double-check
         if data.get("deleted"):
             continue
-        # Reconstruct snapshot-like dict for from_snapshot
-        fake = type("S", (), {"id": data["id"], "to_dict": lambda s, d=data: d})()
-        items.append(from_snapshot(fake))
+        items.append(from_snapshot(dict_to_snapshot(data)))
     return items, next_cursor, has_more
 
 
@@ -113,11 +111,7 @@ def delete_todo(database: Client, user_id: str, todo_id: str) -> bool:
     reference = collection(database, user_id).document(todo_id)
     if not reference.get().exists:
         return False
-    reference.update({
-        "deleted": True,
-        "deleted_at": datetime.now(timezone.utc).isoformat(),
-        "updated_at": firestore.SERVER_TIMESTAMP,
-    })
+    reference.update(soft_delete_payload())
     return True
 
 
@@ -125,10 +119,6 @@ def restore_todo(database: Client, user_id: str, todo_id: str) -> bool:
     reference = collection(database, user_id).document(todo_id)
     if not reference.get().exists:
         return False
-    reference.update({
-        "deleted": False,
-        "deleted_at": None,
-        "updated_at": firestore.SERVER_TIMESTAMP,
-    })
+    reference.update(restore_payload())
     return True
 

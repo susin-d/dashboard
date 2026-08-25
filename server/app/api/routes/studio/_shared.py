@@ -1,22 +1,13 @@
-"""Studio routes shared helpers — single responsibility: guards and lookups."""
-
-from fastapi import HTTPException, status
+"""Studio routes shared helpers — facade over core/errors."""
 
 from app.core.config import settings
+from app.core.errors import bad_request, not_found, service_unavailable
+
+# Re-export for backward compat
+__all__ = ["require_non_serverless", "not_found", "bad_request"]
 
 
 def require_non_serverless() -> None:
     """Studio builds run processes and touch disk — unavailable on serverless."""
     if getattr(settings, "is_serverless", False):
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="Studio is not available in serverless mode.",
-        )
-
-
-def not_found(detail: str) -> HTTPException:
-    return HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=detail)
-
-
-def bad_request(detail: str) -> HTTPException:
-    return HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=detail)
+        raise service_unavailable("Studio is not available in serverless mode.")
