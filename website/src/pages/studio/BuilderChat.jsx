@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { ArrowUp, Mic, Paperclip, Plus, Sparkles, X } from 'lucide-react'
+import { CustomDropdown } from '../../components/ui/CustomDropdown'
 import { Markdown } from '../../components/ui/Markdown'
 import { createEveSession, sendEveMessage } from '../../lib/eveApi'
 import { formatFileSize } from '../../utils/fileSize'
@@ -10,6 +11,14 @@ import { parseQuestionsFromMessage } from './questionUtils'
 const CHAT_SESSION_KEY_PREFIX = 'starwaves.studio.chat_session.'
 const TEXT_EXTENSION_PATTERN = /\.(txt|md|json|js|jsx|ts|tsx|html|css|py|csv|xml|yaml|yml|sql|sh|log|rs|go|java|c|cpp|h)$/i
 const ATTACHMENT_TEXT_MAX_LENGTH = 40000
+
+const MODEL_OPTIONS = [
+  { value: 'gpt-5-mini', label: 'GPT-5 mini' },
+  { value: 'gpt-oss:120b', label: 'Gpt oss:120b' },
+  { value: 'claude-3-5-sonnet', label: 'Claude 3.5 Sonnet' },
+  { value: 'gemini-1-5-flash', label: 'Gemini 1.5 Flash' },
+  { value: 'llama3.1', label: 'Llama 3.1' },
+]
 
 function loadSessionId(projectId) {
   try {
@@ -34,6 +43,7 @@ export function BuilderChat({ projectId, projectName, onActions, onAssistantRepl
   }
   const [messages, setMessages] = useState(() => [starter])
   const [draft, setDraft] = useState('')
+  const [selectedModel, setSelectedModel] = useState('gpt-5-mini')
   const [attachments, setAttachments] = useState([])
   const [isSending, setIsSending] = useState(false)
   const [error, setError] = useState('')
@@ -43,6 +53,9 @@ export function BuilderChat({ projectId, projectName, onActions, onAssistantRepl
 
   useEffect(() => {
     const brief = takeStudioBrief(projectId)
+    if (brief?.model) {
+      setSelectedModel(brief.model)
+    }
     const isBuild = brief?.mode === 'build'
     const dynamicStarter = {
       role: 'assistant',
@@ -99,18 +112,6 @@ export function BuilderChat({ projectId, projectName, onActions, onAssistantRepl
 
   const removeAttachment = (id) => {
     setAttachments((prev) => prev.filter((file) => file.id !== id))
-  }
-
-  const handleResetChat = () => {
-    try {
-      localStorage.removeItem(CHAT_SESSION_KEY_PREFIX + projectId)
-    } catch {
-      // ignore
-    }
-    setMessages([starter])
-    setDraft('')
-    setAttachments([])
-    setError('')
   }
 
   const handleSubmit = async (event) => {
@@ -180,15 +181,13 @@ export function BuilderChat({ projectId, projectName, onActions, onAssistantRepl
           <Sparkles size={14} className="builder-chat-sparkle" aria-hidden="true" />
           <span>Eve</span>
         </div>
-        <button
-          type="button"
-          className="builder-chat-new"
-          onClick={handleResetChat}
-          title="New conversation"
-          aria-label="Start new conversation"
-        >
-          <Plus size={15} />
-        </button>
+        <CustomDropdown
+          className="builder-model-dropdown"
+          value={selectedModel}
+          options={MODEL_OPTIONS}
+          onChange={setSelectedModel}
+          ariaLabel="Change AI model"
+        />
       </div>
 
       <div className="builder-chat-feed" role="log" aria-live="polite">
