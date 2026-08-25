@@ -1,10 +1,12 @@
 from app.services.speech._shared import (
     DEFAULT_STT_PROVIDER,
     DEFAULT_TTS_PROVIDER,
+    DEEPGRAM_STT_MODELS,
     GOOGLE_TTS_VOICES,
     GROQ_STT_MODELS,
     SPEECH_SETTINGS_DOC,
     SpeechServiceError,
+    deepgram_available,
     load_speech_preference,
     openrouter_tts_available,
     resolve_speech_preference,
@@ -14,6 +16,7 @@ from app.services.speech._shared import (
     tts_catalog,
     validate_speech_preference,
 )
+from app.services.speech.deepgram import transcribe_audio_deepgram
 from app.services.speech.google_tts import synthesize_speech
 from app.services.speech.groq import transcribe_audio
 from app.services.speech.openrouter_tts import (
@@ -24,10 +27,12 @@ from app.services.speech.openrouter_tts import (
 __all__ = [
     "DEFAULT_STT_PROVIDER",
     "DEFAULT_TTS_PROVIDER",
+    "DEEPGRAM_STT_MODELS",
     "GOOGLE_TTS_VOICES",
     "GROQ_STT_MODELS",
     "SPEECH_SETTINGS_DOC",
     "SpeechServiceError",
+    "deepgram_available",
     "load_speech_preference",
     "openrouter_tts_available",
     "resolve_speech_preference",
@@ -38,6 +43,7 @@ __all__ = [
     "synthesize_speech",
     "synthesize_speech_openrouter",
     "transcribe_audio",
+    "transcribe_audio_deepgram",
     "tts_catalog",
     "validate_speech_preference",
 ]

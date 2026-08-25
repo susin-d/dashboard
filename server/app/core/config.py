@@ -95,6 +95,9 @@ class Settings:
     groq_model: str = os.getenv("GROQ_MODEL", "llama-3.1-70b-versatile")
     groq_voice_model: str = os.getenv("GROQ_VOICE_MODEL", "llama-3.1-8b-instant")
     groq_stt_model: str = os.getenv("GROQ_STT_MODEL", "whisper-large-v3-turbo")
+    deepgram_api_key: str | None = os.getenv("DEEPGRAM_API_KEY")
+    deepgram_stt_url: str = os.getenv("DEEPGRAM_STT_URL", "https://api.deepgram.com/v1/listen")
+    deepgram_stt_model: str = os.getenv("DEEPGRAM_STT_MODEL", "nova-3")
     openrouter_api_key: str | None = os.getenv("OPENROUTER_API_KEY")
     openrouter_url: str | None = os.getenv("OPENROUTER_URL") or None
     openrouter_model: str = os.getenv("OPENROUTER_MODEL", "openai/gpt-4o")

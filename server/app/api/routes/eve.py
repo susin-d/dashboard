@@ -38,9 +38,16 @@ from app.services.speech import (
     synthesize_speech,
     synthesize_speech_openrouter,
     transcribe_audio,
+    transcribe_audio_deepgram,
 )
 
 router = APIRouter(prefix="/eve")
+
+# Server STT engines → transcriber. One entry per provider avoids mode-flag branching.
+_STT_TRANSCRIBERS = {
+    "groq": transcribe_audio,
+    "deepgram": transcribe_audio_deepgram,
+}
 
 
 @router.post("/transcribe", response_model=EveTranscribeResponse)
@@ -51,15 +58,16 @@ async def transcribe(
     user: dict = Depends(get_current_user),
 ):
     engine, model = await asyncio.to_thread(resolve_stt_engine, database, user["uid"])
-    if engine != "groq":
+    transcriber = _STT_TRANSCRIBERS.get(engine)
+    if transcriber is None:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail="Groq speech-to-text is not configured.",
+            detail="No server speech-to-text provider is configured. Select a server STT provider or use browser voice.",
         )
     audio_bytes = await file.read()
     try:
         text = await asyncio.to_thread(
-            transcribe_audio,
+            transcriber,
             audio_bytes,
             file.content_type,
             language,

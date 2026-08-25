@@ -24,6 +24,13 @@ GROQ_STT_MODELS: list[dict[str, str]] = [
     {"id": "distil-whisper-large-v3", "label": "Distil Whisper Large v3"},
 ]
 
+# Curated Deepgram models exposed in the STT provider catalog.
+DEEPGRAM_STT_MODELS: list[dict[str, str]] = [
+    {"id": "nova-3", "label": "Nova-3 — fastest, highest accuracy"},
+    {"id": "nova-2", "label": "Nova-2"},
+    {"id": "base", "label": "Base — lowest latency"},
+]
+
 # Google Cloud Standard TTS voices per supported language. Standard (non-Neural)
 # voices are free within the monthly character allowance.
 GOOGLE_TTS_VOICES: list[dict[str, str]] = [
@@ -74,6 +81,10 @@ def groq_available() -> bool:
     return bool(settings.groq_api_key)
 
 
+def deepgram_available() -> bool:
+    return bool(settings.deepgram_api_key)
+
+
 def google_tts_available() -> bool:
     return bool(settings.google_cloud_tts_api_key)
 
@@ -89,6 +100,12 @@ def stt_catalog() -> list[dict[str, Any]]:
             "label": "Browser (Web Speech API)",
             "available": True,
             "models": [],
+        },
+        {
+            "id": "deepgram",
+            "label": "Deepgram Nova — fastest cloud STT",
+            "available": deepgram_available(),
+            "models": DEEPGRAM_STT_MODELS,
         },
         {
             "id": "groq",
@@ -125,6 +142,8 @@ def tts_catalog() -> list[dict[str, Any]]:
 def _valid_stt_model(provider: str, model: str) -> bool:
     if provider == "browser":
         return not model
+    if provider == "deepgram":
+        return any(item["id"] == model for item in DEEPGRAM_STT_MODELS)
     if provider == "groq":
         return any(item["id"] == model for item in GROQ_STT_MODELS)
     return False
@@ -184,6 +203,9 @@ def resolve_speech_preference(database: Client, user_uid: str) -> dict[str, str]
         tts_provider = preference.get("tts_provider") or DEFAULT_TTS_PROVIDER
         tts_voice = preference.get("tts_voice") or ""
     if stt_provider == "groq" and not groq_available():
+        stt_provider = DEFAULT_STT_PROVIDER
+        stt_model = ""
+    if stt_provider == "deepgram" and not deepgram_available():
         stt_provider = DEFAULT_STT_PROVIDER
         stt_model = ""
     if tts_provider == "google" and not google_tts_available():

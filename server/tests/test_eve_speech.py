@@ -113,6 +113,48 @@ class TestEveSpeechSettings(unittest.TestCase):
         data = response.json()
         self.assertEqual(data["preference"], payload)
 
+    def test_stt_catalog_includes_deepgram(self):
+        self._mock_settings_snapshot()
+
+        response = client.get("/api/v1/settings/eve-speech")
+        self.assertEqual(response.status_code, 200)
+        provider_ids = {provider["id"] for provider in response.json()["stt_providers"]}
+        self.assertIn("deepgram", provider_ids)
+        deepgram_entry = next(
+            provider
+            for provider in response.json()["stt_providers"]
+            if provider["id"] == "deepgram"
+        )
+        model_ids = {model["id"] for model in deepgram_entry["models"]}
+        self.assertIn("nova-3", model_ids)
+
+    def test_put_eve_speech_saves_deepgram_preference(self):
+        document = self._mock_settings_snapshot()
+
+        payload = {
+            "stt_provider": "deepgram",
+            "stt_model": "nova-3",
+            "tts_provider": "browser",
+            "tts_voice": "",
+        }
+        response = client.put("/api/v1/settings/eve-speech", json=payload)
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertEqual(data["preference"], payload)
+        document.set.assert_called_once()
+
+    def test_put_eve_speech_rejects_unknown_deepgram_model(self):
+        self._mock_settings_snapshot()
+
+        payload = {
+            "stt_provider": "deepgram",
+            "stt_model": "does-not-exist",
+            "tts_provider": "browser",
+            "tts_voice": "",
+        }
+        response = client.put("/api/v1/settings/eve-speech", json=payload)
+        self.assertEqual(response.status_code, 422)
+
     def test_put_eve_speech_rejects_unknown_provider(self):
         self._mock_settings_snapshot()
 

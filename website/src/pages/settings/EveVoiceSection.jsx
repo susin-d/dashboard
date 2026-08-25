@@ -296,9 +296,10 @@ export function EveVoiceSection() {
           ) : sttProviders.length === 0 && ttsProviders.length === 0 ? (
             <p className="hackathon-source-message" role="status" style={{ padding: '18px 22px' }}>
               No server speech provider is configured. Add{' '}
-              <code>GROQ_API_KEY</code>, <code>GOOGLE_CLOUD_TTS_API_KEY</code>, or{' '}
-              <code>OPENROUTER_API_KEY</code> to the server to enable server-side
-              Eve voice. Eve falls back to this browser's built-in speech.
+              <code>DEEPGRAM_API_KEY</code>, <code>GROQ_API_KEY</code>,{' '}
+              <code>GOOGLE_CLOUD_TTS_API_KEY</code>, or <code>OPENROUTER_API_KEY</code>{' '}
+              to the server to enable server-side Eve voice. Eve falls back to this
+              browser's built-in speech.
             </p>
           ) : (
             <>
@@ -315,11 +316,11 @@ export function EveVoiceSection() {
                     ariaLabel="Speech recognition provider"
                   />
                 </label>
-                {sttProvider === 'groq' && (
+                {(sttProviderDescriptor?.models || []).length > 0 && (
                   <label>
                     <span>
                       <strong>Recognition model</strong>
-                      <small>Which Whisper model transcribes your speech.</small>
+                      <small>Which model transcribes your speech.</small>
                     </span>
                     <CustomDropdown
                       value={sttModel}
