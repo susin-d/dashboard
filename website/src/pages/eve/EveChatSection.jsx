@@ -286,9 +286,9 @@ export function EveChatSection({
 
       {/* Composer Section with Top Queued Messages */}
       <div className="eve-composer-container">
-        {/* ── Queued Messages Box (Above Composer) — ref: first image dark queue ── */}
+        {/* ── Queued Messages Box (Above Composer) ── */}
         {promptQueue.length > 0 && (
-          <div className="eve-queued-panel eve-queued-panel--dark" aria-label="Queued Messages">
+          <div className="eve-queued-panel" aria-label="Queued Messages">
             <div className="eve-queued-header">
               <div className="eve-queued-header-left">
                 <span className="eve-queued-title">Queued messages {promptQueue.length}</span>

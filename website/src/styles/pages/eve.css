@@ -540,7 +540,7 @@
   display: flex;
   flex-direction: column;
   border-radius: var(--radius-lg, 12px);
-  background: var(--bg-card, var(--bg-secondary));
+  background: var(--bg-card);
   border: 1px solid var(--border-color);
   overflow: hidden;
   box-shadow: var(--shadow-sm);
@@ -2198,53 +2198,8 @@
    Ref composer/queue styling — theme-aware (tokens for both light
    and dark; deep-black refinement only under html.dark-theme)
    ═══════════════════════════════════════════════════════════════ */
-.eve-queued-panel--dark {
-  border-radius: 10px;
-}
-
-.eve-queued-panel--dark .eve-queued-header {
-  padding: 10px 12px;
-}
-
-.eve-queued-panel--dark .eve-queued-title {
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: -0.01em;
-}
-
-.eve-queued-panel--dark .eve-queued-hint {
-  font-size: 11px;
-}
-
-.eve-queued-panel--dark .eve-queued-list {
-  padding: 6px 0;
-}
-
-.eve-queued-panel--dark .eve-queued-item-row {
-  padding: 8px 12px;
-  gap: 12px;
-}
-
-html.dark-theme .eve-queued-panel--dark {
-  background: #0a0a0a;
-  border-color: #232326;
-}
-
-html.dark-theme .eve-queued-panel--dark .eve-queued-header {
-  background: #0a0a0a;
-  border-bottom-color: #232326;
-}
-
-html.dark-theme .eve-queued-panel--dark .eve-queued-list {
-  background: #0a0a0a;
-}
-
-html.dark-theme .eve-queued-panel--dark .eve-queued-item-row:hover {
-  background: #141416;
-}
-
 .eve-queued-grip {
-  color: var(--text-tertiary, #71717a);
+  color: var(--text-muted);
   flex-shrink: 0;
 }
 
@@ -2253,45 +2208,37 @@ html.dark-theme .eve-queued-panel--dark .eve-queued-item-row:hover {
   align-items: center;
   gap: 5px;
   padding: 4px 10px;
-  border-radius: 999px;
-  background: var(--bg-tertiary, #f4f4f5);
-  border: 1px solid var(--border-color, #e4e4e7);
-  color: var(--text-secondary, #52525b);
+  border-radius: var(--radius-full, 999px);
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
   font-size: 12px;
   font-weight: 500;
   cursor: pointer;
-  transition: all 140ms ease;
+  transition: all var(--transition-fast, 140ms ease);
   line-height: 1;
 }
 
 .eve-queue-pill-btn:hover:not(:disabled) {
-  background: var(--bg-hover, #e4e4e7);
-  border-color: var(--border-heavy, #a1a1aa);
-  color: var(--text-primary, #09090b);
+  background: var(--bg-hover);
+  border-color: var(--border-heavy);
+  color: var(--text-primary);
 }
 
 .eve-queue-pill-btn.primary {
-  background: var(--bg-hover, #e4e4e7);
-  border-color: var(--border-heavy, #a1a1aa);
-  color: var(--text-primary, #09090b);
+  background: var(--bg-tertiary);
+  border-color: var(--border-heavy);
+  color: var(--text-primary);
+}
+
+.eve-queue-pill-btn.primary:hover:not(:disabled) {
+  background: var(--bg-hover);
+  color: var(--text-primary);
 }
 
 .eve-queue-pill-btn:disabled {
   opacity: 0.45;
   cursor: not-allowed;
-}
-
-html.dark-theme .eve-queue-pill-btn {
-  background: #18181b;
-  border-color: #27272a;
-  color: #d4d4d8;
-}
-
-html.dark-theme .eve-queue-pill-btn:hover:not(:disabled),
-html.dark-theme .eve-queue-pill-btn.primary {
-  background: #27272a;
-  border-color: #3f3f46;
-  color: #fafafa;
 }
 
 /* Composer refinements — colors come from the base token rules above */
