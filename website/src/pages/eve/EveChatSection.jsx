@@ -238,7 +238,6 @@ export function EveChatSection({
             {streamText ? (
               <div className="eve-bubble-text eve-bubble-markdown eve-streaming-text">
                 <Markdown content={streamText} />
-                <span className="eve-stream-caret" aria-hidden="true" />
               </div>
             ) : activeTool ? (
               <div className="eve-tool-activity" role="status">

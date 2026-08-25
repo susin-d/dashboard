@@ -4,7 +4,7 @@ export function setStudioBrief(projectId, brief) {
   try {
     sessionStorage.setItem(BRIEF_STORAGE_PREFIX + projectId, JSON.stringify(brief))
   } catch {
-    // sessionStorage unavailable — the builder simply opens without the pre-filled brief.
+    // sessionStorage unavailable
   }
 }
 
@@ -19,10 +19,15 @@ export function takeStudioBrief(projectId) {
   }
 }
 
-export function composeBriefText(prompt, attachments = []) {
-  if (!attachments.length) return prompt
-  const fileBlocks = attachments.map((file) => (
+export function composeBriefText(prompt, attachments = [], mode = 'plan') {
+  const modeInstruction =
+    mode === 'build'
+      ? `\n\n[Mode: Build] Generate the full architecture and write all project files directly in one go.`
+      : `\n\n[Mode: Plan] Propose an architecture plan, ask any needed questions, and wait for approval before building.`
+
+  const fileBlocks = (attachments || []).map((file) => (
     `\n\n--- File: ${file.name} ---\n${file.textContent || '[Binary file — content not included]'}`
   ))
-  return `${prompt}${fileBlocks.join('')}`
+
+  return `${prompt}${fileBlocks.join('')}${modeInstruction}`
 }

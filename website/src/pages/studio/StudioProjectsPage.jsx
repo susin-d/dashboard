@@ -1,43 +1,26 @@
-import { useEffect, useState } from 'react'
-import { createStudioProject, listStudioTemplates } from '../../lib/studioApi'
+import { useState } from 'react'
+import { createStudioProject } from '../../lib/studioApi'
 import { StudioHero } from './StudioHero'
 import { deriveProjectName } from './studioConstants'
 import { setStudioBrief } from './studioBrief'
 
 export function StudioProjectsPage({ onOpenProject }) {
-  const [templates, setTemplates] = useState([])
   const [isCreatingFromPrompt, setIsCreatingFromPrompt] = useState(false)
   const [promptError, setPromptError] = useState('')
 
-  useEffect(() => {
-    let cancelled = false
-    listStudioTemplates()
-      .then((list) => {
-        if (!cancelled) setTemplates(list)
-      })
-      .catch(() => {
-        // Template list is optional for creation; blank project still works.
-      })
-    return () => {
-      cancelled = true
-    }
-  }, [])
-
-  const handlePromptSubmit = async (prompt, templateId, attachments = []) => {
+  const handlePromptSubmit = async (prompt, mode = 'plan', model = 'gpt-5-mini', attachments = []) => {
     setIsCreatingFromPrompt(true)
     setPromptError('')
     try {
       const created = await createStudioProject({
         name: deriveProjectName(prompt),
         description: prompt,
-        template_id: templateId || null,
+        template_id: null,
         db_preference: 'sqlite',
         auth_enabled: false,
       })
       if (created?.id) {
-        if (attachments.length > 0) {
-          setStudioBrief(created.id, { prompt, attachments })
-        }
+        setStudioBrief(created.id, { prompt, attachments, mode, model })
         onOpenProject(created)
       }
     } catch (submitError) {
@@ -51,7 +34,6 @@ export function StudioProjectsPage({ onOpenProject }) {
   return (
     <div className="studio-page">
       <StudioHero
-        templates={templates}
         isSubmitting={isCreatingFromPrompt}
         onSubmitPrompt={handlePromptSubmit}
       />

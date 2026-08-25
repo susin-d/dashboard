@@ -40,9 +40,16 @@ export function BuilderChat({ projectId, projectName, onActions, onAssistantRepl
   const fileInputRef = useRef(null)
 
   useEffect(() => {
-    setMessages([starter])
     const brief = takeStudioBrief(projectId)
-    setDraft(brief ? composeBriefText(brief.prompt, brief.attachments) : '')
+    const isBuild = brief?.mode === 'build'
+    const dynamicStarter = {
+      role: 'assistant',
+      content: isBuild
+        ? `Hi! I'm Eve. **Build Mode** is active for **${projectName}** — I will generate the architecture and build the project files directly in one go.`
+        : `Hi! I'm Eve. **Plan Mode** is active for **${projectName}** — I will analyze requirements, ask clarifying questions, and propose an architecture plan for your approval before building.`,
+    }
+    setMessages([dynamicStarter])
+    setDraft(brief ? composeBriefText(brief.prompt, brief.attachments, brief.mode) : '')
     setError('')
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [projectId])

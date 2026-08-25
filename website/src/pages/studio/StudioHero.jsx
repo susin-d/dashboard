@@ -1,54 +1,36 @@
 import { useEffect, useRef, useState } from 'react'
 import { ArrowUp, Paperclip, Plus, Sparkles, X } from 'lucide-react'
-import { CustomDropdown } from '../../components/ui'
+import { CustomDropdown } from '../../components/ui/CustomDropdown'
 import { formatFileSize } from '../../utils/fileSize'
+import { PROMPT_SUGGESTIONS } from './studioConstants'
 
 const PROMPT_TEXTAREA_MAX_HEIGHT = 160
-const ATTACHMENT_TEXT_MAX_LENGTH = 40000
 const TEXT_EXTENSION_PATTERN = /\.(txt|md|json|js|jsx|ts|tsx|html|css|py|csv|xml|yaml|yml|sql|sh|log|rs|go|java|c|cpp|h)$/i
+const ATTACHMENT_TEXT_MAX_LENGTH = 40000
 
-const PROMPT_SUGGESTIONS = [
-  {
-    label: '📊 SaaS Dashboard',
-    prompt: 'Build a SaaS Analytics Dashboard with key metric cards, revenue line charts, user activity feed, and date range filters.',
-  },
-  {
-    label: '⚡ Kanban Board',
-    prompt: 'Build an interactive Kanban task board with drag-and-drop columns, priority tags, task search, and activity log.',
-  },
-  {
-    label: '💬 AI Chat Interface',
-    prompt: 'Build a real-time AI Chat interface with conversation history sidebar, markdown rendering, and code syntax highlighting.',
-  },
-  {
-    label: '🎯 Habit Tracker',
-    prompt: 'Build a daily habit tracker with streak counters, weekly progress heatmaps, and customizable categories.',
-  },
-  {
-    label: '🛒 E-commerce Store',
-    prompt: 'Build a modern storefront with product catalogue, filtering by category and price, cart drawer, and checkout flow.',
-  },
-  {
-    label: '📝 Notes Wiki',
-    prompt: 'Build a markdown documentation wiki with nested page tree, search bar, table of contents, and dark mode support.',
-  },
+const MODE_OPTIONS = [
+  { value: 'plan', label: 'Plan' },
+  { value: 'build', label: 'Build' },
+]
+
+const MODEL_OPTIONS = [
+  { value: 'gpt-5-mini', label: 'GPT-5 mini' },
+  { value: 'gpt-oss:120b', label: 'Gpt oss:120b' },
+  { value: 'claude-3-5-sonnet', label: 'Claude 3.5 Sonnet' },
+  { value: 'gemini-1-5-flash', label: 'Gemini 1.5 Flash' },
+  { value: 'llama3.1', label: 'Llama 3.1' },
 ]
 
 export function StudioHero({
-  templates = [],
   isSubmitting,
   onSubmitPrompt,
 }) {
   const [prompt, setPrompt] = useState('')
-  const [templateId, setTemplateId] = useState('')
+  const [mode, setMode] = useState('plan')
+  const [model, setModel] = useState('gpt-5-mini')
   const [attachments, setAttachments] = useState([])
   const textareaRef = useRef(null)
   const fileInputRef = useRef(null)
-
-  const templateOptions = [
-    { value: '', label: 'Blank Project' },
-    ...templates.map((template) => ({ value: template.id, label: template.name })),
-  ]
 
   useEffect(() => {
     const textarea = textareaRef.current
@@ -97,7 +79,7 @@ export function StudioHero({
     event?.preventDefault?.()
     if (!canSubmit) return
     try {
-      await onSubmitPrompt(prompt.trim(), templateId, attachments)
+      await onSubmitPrompt(prompt.trim(), mode, model, attachments)
       setPrompt('')
       setAttachments([])
     } catch {
@@ -154,7 +136,11 @@ export function StudioHero({
           value={prompt}
           onChange={(event) => setPrompt(event.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder="Ask Eve to build a SaaS dashboard, CRM, real-time chat, or habit tracker…"
+          placeholder={
+            mode === 'build'
+              ? 'Build directly in one go: e.g. SaaS dashboard with metrics, billing table, and dark mode…'
+              : 'Plan & interview: describe your vision, Eve will ask questions and draft architecture…'
+          }
           rows={2}
           aria-label="Describe the app you want to build"
         />
@@ -171,10 +157,17 @@ export function StudioHero({
           <div className="studio-prompt-tools">
             <CustomDropdown
               className="studio-prompt-mode"
-              value={templateId}
-              options={templateOptions}
-              onChange={setTemplateId}
-              ariaLabel="Starter template"
+              value={model}
+              options={MODEL_OPTIONS}
+              onChange={setModel}
+              ariaLabel="AI Model"
+            />
+            <CustomDropdown
+              className="studio-prompt-mode"
+              value={mode}
+              options={MODE_OPTIONS}
+              onChange={setMode}
+              ariaLabel="Plan or Build mode"
             />
             <button
               type="submit"
