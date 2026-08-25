@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import {
   Bot,
+  CircleStop,
   Loader,
   Mic,
   MicOff,
@@ -51,6 +52,7 @@ export function CallScreen({ callCenter, myUid }) {
     toggleCamera,
     toggleTts,
     sendVoiceToEve,
+    interruptEve,
   } = callCenter
 
   const remote = otherParticipant(call || incomingCall, myUid)
@@ -223,6 +225,8 @@ export function CallScreen({ callCenter, myUid }) {
               className={`call-control-button ${sttRecording ? 'active' : ''}`}
               onPointerDown={(event) => {
                 event.preventDefault()
+                // Barge-in: pressing the mic while Eve speaks cuts her off.
+                if ((isEveSpeaking || isEveThinking) && interruptEve) interruptEve()
                 startSttRecording()
               }}
               onPointerUp={stopSttRecording}
@@ -235,6 +239,17 @@ export function CallScreen({ callCenter, myUid }) {
               <Mic size={22} />
             </button>
           ) : null}
+          {(isEveCall && (isEveSpeaking || isEveThinking) && interruptEve) && (
+            <button
+              type="button"
+              className="call-control-button active"
+              onClick={interruptEve}
+              aria-label="Interrupt Eve"
+              title="Interrupt Eve — talk over her"
+            >
+              <CircleStop size={22} />
+            </button>
+          )}
           <button
             type="button"
             className={`call-control-button ${muted ? 'active' : ''}`}

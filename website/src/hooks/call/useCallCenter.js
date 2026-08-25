@@ -376,6 +376,7 @@ export function useCallCenter({ user }) {
     toggleTts: eveVoice.toggleTts,
     requestEveCall,
     sendVoiceToEve: eveVoice.sendVoiceToEve,
+    interruptEve: eveVoice.interruptEve,
     startSttRecording: eveVoice.startSttRecording,
     stopSttRecording: eveVoice.stopSttRecording,
   }

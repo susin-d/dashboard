@@ -99,13 +99,17 @@ async def _send_text_turn(websocket: WebSocket, prompt_text: str, user_record: d
 
     while True:
         kind, payload = await queue.get()
-        if kind == "token":
-            await websocket.send_json({"type": "text", "token": payload, "last": False})
-        elif kind == "done":
-            await websocket.send_json({"type": "text", "token": END_TOKEN, "last": True})
-            return
-        elif kind == "fallback":
-            await websocket.send_json({"type": "text", "token": payload, "last": True})
+        try:
+            if kind == "token":
+                await websocket.send_json({"type": "text", "token": payload, "last": False})
+            elif kind == "done":
+                await websocket.send_json({"type": "text", "token": END_TOKEN, "last": True})
+                return
+            elif kind == "fallback":
+                await websocket.send_json({"type": "text", "token": payload, "last": True})
+                return
+        except Exception:
+            # Caller hung up / socket died mid-turn — drop remaining tokens.
             return
 
 

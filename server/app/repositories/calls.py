@@ -15,6 +15,9 @@ from google.cloud.firestore_v1 import Client
 from app.schemas.call import CallUser
 
 CALL_STATUSES = {"ringing", "active", "declined", "ended", "missed"}
+# Terminal states may not transition again — prevents the missed-vs-accept
+# race where the stale-ring expirer marks missed exactly as the callee accepts.
+TERMINAL_STATUSES = {"declined", "ended", "missed"}
 SIGNAL_TYPES = {"offer", "answer", "ice-candidate"}
 MAX_SIGNAL_MESSAGES = 200
 MISSED_AFTER = timedelta(seconds=45)
@@ -148,8 +151,13 @@ class CallRepository:
         if status not in CALL_STATUSES:
             raise ValueError(f"Unknown call status '{status}'.")
         reference = self._document(call_id)
-        if not reference.get().exists:
+        snapshot = reference.get()
+        if not snapshot.exists:
             return None
+        current = (snapshot.to_dict() or {}).get("status")
+        if current in TERMINAL_STATUSES and current != status:
+            # Terminal states are final — ignore racing transitions.
+            return self.get(call_id)
         reference.update({"status": status, "updated_at": _now_iso()})
         return self.get(call_id)
 

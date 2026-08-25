@@ -26,6 +26,8 @@ export function useEveVoice({ isEveCall, phase, muted, localStreamRef, phaseRef 
   const lastSpeechEndRef = useRef(0)
   const ttsEnabledRef = useRef(ttsEnabled)
   const eveAudioRef = useRef(null)
+  const abortTurnRef = useRef(null)
+  const playQueueRef = useRef([])
   const mediaRecorderRef = useRef(null)
   const mediaChunksRef = useRef([])
   const audioStreamRef = useRef(null)
@@ -119,10 +121,37 @@ export function useEveVoice({ isEveCall, phase, muted, localStreamRef, phaseRef 
     [speakServerResponse],
   )
 
+  const stopPlayback = useCallback(() => {
+    playQueueRef.current.length = 0
+    if (eveAudioRef.current) {
+      try {
+        eveAudioRef.current.pause()
+      } catch {}
+      try {
+        eveAudioRef.current.src = ''
+      } catch {}
+      eveAudioRef.current = null
+    }
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      try {
+        window.speechSynthesis.cancel()
+      } catch {}
+    }
+  }, [])
+
   const sendVoiceToEve = useCallback(
     async (text) => {
-      if (!text || !text.trim() || isEveThinkingRef.current) return
+      if (!text || !text.trim()) return
       const clean = text.trim()
+      // Newer speech supersedes an in-flight turn (barge-in semantics):
+      // abort the previous stream/playback instead of silently dropping.
+      if (abortTurnRef.current) {
+        abortTurnRef.current.abort()
+        stopPlayback()
+        setIsEveThinking(false)
+      }
+      const controller = new AbortController()
+      abortTurnRef.current = controller
       setUserTranscript(clean)
       setIsEveThinking(true)
       setEveTranscript('')
@@ -131,7 +160,7 @@ export function useEveVoice({ isEveCall, phase, muted, localStreamRef, phaseRef 
       // Audio chunks play sequentially; browser-provider chunks speak locally.
       let sawAudio = false
       let streamFailed = false
-      const audioQueueRef = []
+      const audioQueueRef = playQueueRef.current
       const playNextChunk = () => {
         const next = audioQueueRef.shift()
         if (!next) {
@@ -182,10 +211,13 @@ export function useEveVoice({ isEveCall, phase, muted, localStreamRef, phaseRef 
         await streamEveVoice({
           messages: [{ role: 'user', content: clean }],
           sessionId: null,
+          signal: controller.signal,
           onDelta: (chunk) => {
+            if (controller.signal.aborted) return
             setEveTranscript((current) => (current === chunk ? current : current + chunk))
           },
           onAudio: (event) => {
+            if (controller.signal.aborted) return
             sawAudio = true
             isEveSpeakingRef.current = true
             setIsEveSpeaking(true)
@@ -193,28 +225,48 @@ export function useEveVoice({ isEveCall, phase, muted, localStreamRef, phaseRef 
             if (audioQueueRef.length === 1) playNextChunk()
           },
           onDone: (doneEvent) => {
+            if (controller.signal.aborted) return
             setEveTranscript(doneEvent?.message || '')
           },
         })
-      } catch {
+        if (controller.signal.aborted) return
+      } catch (error) {
+        if (controller.signal.aborted || error?.name === 'AbortError') return
         streamFailed = true
       }
 
       // Fallback to the blocking chat path when the fast path failed or
       // produced no playable audio (e.g. server has no TTS configured).
-      if (streamFailed || (!sawAudio && !isEveSpeakingRef.current)) {
+      if (!controller.signal.aborted && (streamFailed || (!sawAudio && !isEveSpeakingRef.current))) {
         try {
           const response = await sendEveMessage([{ role: 'user', content: clean }])
           const replyText = response?.message || "I heard you, but I couldn't process that request."
           speakEveResponse(replyText)
         } catch {
+          if (controller.signal.aborted) return
           setEveTranscript('Sorry, I had trouble reaching the Eve assistant service.')
         }
       }
-      setIsEveThinking(false)
+      if (!controller.signal.aborted) setIsEveThinking(false)
+      if (abortTurnRef.current === controller) abortTurnRef.current = null
     },
-    [speakEveResponse],
+    [speakEveResponse, stopPlayback],
   )
+
+  // Barge-in: stop Eve mid-sentence - aborts the in-flight stream, drains the
+  // queued audio, and cancels local SpeechSynthesis so the caller is heard.
+  const interruptEve = useCallback(() => {
+    if (abortTurnRef.current) {
+      abortTurnRef.current.abort()
+      abortTurnRef.current = null
+    }
+    stopPlayback()
+    isEveSpeakingRef.current = false
+    // Pre-age the echo timestamp so recognition resumes immediately.
+    lastSpeechEndRef.current = Date.now() - ECHO_COOLDOWN_MS
+    setIsEveSpeaking(false)
+    setIsEveThinking(false)
+  }, [stopPlayback])
 
   const transcribeServerAudio = useCallback(
     async (blob) => {
@@ -234,6 +286,8 @@ export function useEveVoice({ isEveCall, phase, muted, localStreamRef, phaseRef 
 
   const startSttRecording = useCallback(() => {
     if (speechPrefsRef.current.sttProvider !== 'groq') return
+    // Hold-to-talk doubles as barge-in: pressing while Eve speaks cuts her off.
+    if (isEveSpeakingRef.current || isEveThinkingRef.current) interruptEve()
     if (mediaRecorderRef.current) return
     const stream = localStreamRef.current
     if (!stream || typeof window === 'undefined' || !window.MediaRecorder) {
@@ -281,7 +335,7 @@ export function useEveVoice({ isEveCall, phase, muted, localStreamRef, phaseRef 
     } catch {
       setSttStatus('error')
     }
-  }, [transcribeServerAudio, localStreamRef])
+  }, [transcribeServerAudio, localStreamRef, interruptEve])
 
   const stopSttRecording = useCallback(() => {
     const recorder = mediaRecorderRef.current
@@ -419,6 +473,11 @@ export function useEveVoice({ isEveCall, phase, muted, localStreamRef, phaseRef 
   }, [])
 
   const stopEveVoice = useCallback(() => {
+    if (abortTurnRef.current) {
+      abortTurnRef.current.abort()
+      abortTurnRef.current = null
+    }
+    playQueueRef.current.length = 0
     if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
       window.speechSynthesis.cancel()
     }
@@ -482,6 +541,7 @@ export function useEveVoice({ isEveCall, phase, muted, localStreamRef, phaseRef 
     setSttStatus,
     setSpeechPrefs,
     sendVoiceToEve,
+    interruptEve,
     startSttRecording,
     stopSttRecording,
     toggleTts,
