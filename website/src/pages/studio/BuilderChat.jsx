@@ -4,6 +4,8 @@ import { Markdown } from '../../components/ui/Markdown'
 import { createEveSession, sendEveMessage } from '../../lib/eveApi'
 import { formatFileSize } from '../../utils/fileSize'
 import { composeBriefText, takeStudioBrief } from './studioBrief'
+import { QuestionCard } from './QuestionCard'
+import { parseQuestionsFromMessage } from './questionUtils'
 
 const CHAT_SESSION_KEY_PREFIX = 'starwaves.studio.chat_session.'
 const TEXT_EXTENSION_PATTERN = /\.(txt|md|json|js|jsx|ts|tsx|html|css|py|csv|xml|yaml|yml|sql|sh|log|rs|go|java|c|cpp|h)$/i
@@ -145,6 +147,32 @@ export function BuilderChat({ projectId, projectName, onActions, onAssistantRepl
     }
   }
 
+  const handleSendDirectly = async (text) => {
+    if (!text || isSending) return
+    setError('')
+    setIsSending(true)
+    const nextMessages = [...messages, { role: 'user', content: text }]
+    setMessages(nextMessages)
+
+    try {
+      let sessionId = loadSessionId(projectId)
+      if (!sessionId) {
+        const created = await createEveSession(nextMessages)
+        sessionId = created.session.id
+        storeSessionId(projectId, sessionId)
+      }
+      const apiMessages = nextMessages.map(({ role, content: msgText }) => ({ role, content: msgText }))
+      const response = await sendEveMessage(apiMessages, sessionId)
+      setMessages([...nextMessages, { role: 'assistant', content: response.message }])
+      onActions?.(response.actions)
+      onAssistantReply?.()
+    } catch (sendError) {
+      setError(sendError.message || 'Eve could not respond. Try again.')
+    } finally {
+      setIsSending(false)
+    }
+  }
+
   return (
     <section className="builder-chat" aria-label="Eve builder chat">
       <div className="builder-chat-header">
@@ -164,17 +192,29 @@ export function BuilderChat({ projectId, projectName, onActions, onAssistantRepl
       </div>
 
       <div className="builder-chat-feed" role="log" aria-live="polite">
-        {messages.map((message, index) => (
-          <div key={index} className={`eve-chat-bubble ${message.role}`}>
-            {message.role === 'assistant' ? (
-              <div className="eve-bubble-text eve-bubble-markdown">
-                <Markdown content={message.content} />
-              </div>
-            ) : (
-              message.content && <p className="eve-bubble-text">{message.content}</p>
-            )}
-          </div>
-        ))}
+        {messages.map((message, index) => {
+          const isLatestAssistant = message.role === 'assistant' && index === messages.length - 1
+          const questions = isLatestAssistant && !isSending ? parseQuestionsFromMessage(message.content) : []
+
+          return (
+            <div key={index} className={`eve-chat-bubble ${message.role}`}>
+              {message.role === 'assistant' ? (
+                <div className="eve-bubble-text eve-bubble-markdown">
+                  <Markdown content={message.content} />
+                  {questions.length > 0 && (
+                    <QuestionCard
+                      questions={questions}
+                      onAnswerSingle={(ans) => handleSendDirectly(ans)}
+                      onAnswerAll={(answersText) => handleSendDirectly(answersText)}
+                    />
+                  )}
+                </div>
+              ) : (
+                message.content && <p className="eve-bubble-text">{message.content}</p>
+              )}
+            </div>
+          )
+        })}
         {isSending && (
           <div className="eve-chat-bubble assistant sending">
             <div className="eve-typing-indicator" aria-label="Eve is thinking">
