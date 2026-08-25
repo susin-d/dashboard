@@ -270,7 +270,7 @@ export function MailsPage({ onNavigate }) {
 
         <div className="mail-connect-hero-card">
           <div className="mail-connect-badge-icon">
-            <Mail size={32} strokeWidth={2} />
+            <Mail size={24} strokeWidth={2} />
           </div>
 
           <h2>Connect Google Mail</h2>
