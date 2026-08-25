@@ -146,11 +146,12 @@ export function TodoPage({ tasks, setTasks, createIntent }) {
                 key={task.id}
               >
                 <button
+                  type="button"
                   className="todo-check"
                   onClick={() => toggleTask(task.id)}
                   aria-label={`${task.completed ? 'Mark active' : 'Complete'} ${task.title}`}
                 >
-                  {task.completed && <Check size={14} />}
+                  {task.completed && <Check size={12} strokeWidth={2.5} />}
                 </button>
                 <div className="todo-item-copy">
                   <span>{task.title}</span>

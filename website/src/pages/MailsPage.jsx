@@ -4,7 +4,7 @@ import {
   MailPlus, Megaphone, MessagesSquare, Plus, RefreshCw, Reply, Send, Star, Trash2, User, X,
 } from 'lucide-react'
 import {
-  hasGmailConnection, loadGoogleMail, loadGoogleMessage,
+  beginGmailOAuth, hasGmailConnection, loadGoogleMail, loadGoogleMessage,
   sendGoogleMessage, updateGoogleMessage,
 } from '../lib/googleMail'
 import { getGmailAccounts, getGmailStatus } from '../lib/gmailApi'
@@ -408,9 +408,12 @@ export function MailsPage({ onNavigate }) {
                 <span>{acc.email}</span>
                 </button>
               ))}
-              <button role="menuitem" onClick={() => onNavigate('setting')}>
+              <button role="menuitem" onClick={async () => {
+                setAccountMenuOpen(false)
+                await handleConnectGmail()
+              }}>
                 <Plus size={16} />
-                <span>Add account</span>
+                <span>Add Gmail account</span>
               </button>
             </div>
           )}

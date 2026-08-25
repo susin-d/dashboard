@@ -13,14 +13,6 @@ export const STUDIO_PLAN_STATUS_LABELS = {
   rejected: 'Rejected',
 }
 
-export const DB_PREFERENCE_OPTIONS = [
-  { id: 'sqlite', label: 'SQLite (default)' },
-  { id: 'postgres', label: 'PostgreSQL' },
-  { id: 'supabase', label: 'Supabase' },
-  { id: 'mongodb', label: 'MongoDB' },
-  { id: 'none', label: 'No database' },
-]
-
 export const BUILDER_CENTER_TABS = [
   { id: 'code', label: 'Code' },
   { id: 'preview', label: 'Preview' },
@@ -32,4 +24,20 @@ export function buildStatusLabel(status) {
 
 export function planStatusLabel(status) {
   return STUDIO_PLAN_STATUS_LABELS[status] ?? status
+}
+
+const PROMPT_NAME_WORD_COUNT = 6
+const PROMPT_NAME_MAX_LENGTH = 48
+
+export function deriveProjectName(prompt) {
+  const words = prompt
+    .trim()
+    .split(/\s+/)
+    .slice(0, PROMPT_NAME_WORD_COUNT)
+    .join(' ')
+    .replace(/[^\w\s-]/g, '')
+    .trim()
+  if (!words) return 'Untitled App'
+  const titled = words.replace(/\b\w/g, (char) => char.toUpperCase())
+  return titled.slice(0, PROMPT_NAME_MAX_LENGTH)
 }

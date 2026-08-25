@@ -279,6 +279,8 @@ export function AiModelsSection() {
                     onChange={handleModelChange}
                     ariaLabel="AI model"
                     disabled={isDefault || loadingModels}
+                    searchable
+                    searchPlaceholder="Search models…"
                   />
                 </label>
 

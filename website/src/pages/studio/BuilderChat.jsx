@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
-import { Bot, Send } from 'lucide-react'
+import { Send } from 'lucide-react'
 import { Markdown } from '../../components/ui/Markdown'
 import { createEveSession, sendEveMessage } from '../../lib/eveApi'
+import { composeBriefText, takeStudioBrief } from './studioBrief'
 
 const CHAT_SESSION_KEY_PREFIX = 'starwaves.studio.chat_session.'
 
@@ -34,7 +35,8 @@ export function BuilderChat({ projectId, projectName, onActions }) {
 
   useEffect(() => {
     setMessages([starter])
-    setDraft('')
+    const brief = takeStudioBrief(projectId)
+    setDraft(brief ? composeBriefText(brief.prompt, brief.attachments) : '')
     setError('')
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [projectId])
@@ -77,29 +79,19 @@ export function BuilderChat({ projectId, projectName, onActions }) {
       <div className="builder-chat-feed" role="log" aria-live="polite">
         {messages.map((message, index) => (
           <div key={index} className={`eve-chat-bubble ${message.role}`}>
-            {message.role === 'assistant' && (
-              <div className="eve-bubble-avatar"><Bot size={16} /></div>
+            {message.role === 'assistant' ? (
+              <div className="eve-bubble-text eve-bubble-markdown">
+                <Markdown content={message.content} />
+              </div>
+            ) : (
+              message.content && <p className="eve-bubble-text">{message.content}</p>
             )}
-            <div className="eve-bubble-content">
-              <span className="eve-sender-name">{message.role === 'assistant' ? 'Eve' : 'You'}</span>
-              {message.role === 'assistant' ? (
-                <div className="eve-bubble-text eve-bubble-markdown">
-                  <Markdown content={message.content} />
-                </div>
-              ) : (
-                message.content && <p className="eve-bubble-text">{message.content}</p>
-              )}
-            </div>
           </div>
         ))}
         {isSending && (
           <div className="eve-chat-bubble assistant sending">
-            <div className="eve-bubble-avatar"><Bot size={16} /></div>
-            <div className="eve-bubble-content">
-              <span className="eve-sender-name">Eve</span>
-              <div className="eve-typing-indicator" aria-label="Eve is thinking">
-                <span /><span /><span />
-              </div>
+            <div className="eve-typing-indicator" aria-label="Eve is thinking">
+              <span /><span /><span />
             </div>
           </div>
         )}

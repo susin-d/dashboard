@@ -118,7 +118,6 @@
   gap: 0.6rem;
 }
 
-.studio-prompt-attach,
 .studio-prompt-submit {
   width: 34px;
   height: 34px;
@@ -130,14 +129,78 @@
 }
 
 .studio-prompt-attach {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  height: 34px;
+  flex-shrink: 0;
+  padding: 0 0.8rem;
+  border-radius: 999px;
   border: 1px solid var(--border-color);
   background: var(--bg-card);
   color: var(--text-secondary);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-fast);
 }
 
 .studio-prompt-attach:hover {
   color: var(--text-primary);
   border-color: var(--border-strong, #71717a);
+}
+
+.studio-prompt-attachments {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.studio-prompt-attachment-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  max-width: 240px;
+  padding: 0.25rem 0.55rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-xs, 6px);
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+}
+
+.studio-prompt-attachment-name {
+  color: var(--text-primary);
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.studio-prompt-attachment-size {
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.studio-prompt-attachment-remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 0;
+  flex-shrink: 0;
+  transition: all var(--transition-fast);
+}
+
+.studio-prompt-attachment-remove:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
 }
 
 .studio-prompt-tools {

@@ -1,20 +1,13 @@
 import { useRef, useEffect, useState } from 'react'
 import {
-  Bot,
   ListPlus,
-  Play,
   Send,
   Info,
-  Trash2,
-  Pencil,
-  ArrowRight,
   ChevronDown,
-  ChevronUp,
   Plus,
   Mic,
   MicOff,
   Sparkles,
-  MessageSquare,
   Check,
   Paperclip,
   X,
@@ -22,18 +15,14 @@ import {
   Loader2,
   Square,
   Wrench,
+  GripVertical,
+  Clock,
+  Edit3,
 } from 'lucide-react'
 import { Markdown } from '../../components/ui/Markdown'
+import { formatFileSize } from '../../utils/fileSize'
 
 const MAX_CHARS = 4000
-
-function formatFileSize(bytes) {
-  if (!bytes || bytes === 0) return '0 B'
-  const k = 1024
-  const sizes = ['B', 'KB', 'MB', 'GB']
-  const i = Math.floor(Math.log(bytes) / Math.log(k))
-  return `${parseFloat((bytes / Math.pow(k, i)).toFixed(1))} ${sizes[i]}`
-}
 
 export function EveChatSection({
   messages,
@@ -47,8 +36,8 @@ export function EveChatSection({
   promptQueue,
   addToQueue,
   removeFromQueue,
-  clearQueue,
-  runQueue,
+  clearQueue: _clearQueue,
+  runQueue: _runQueue,
   handleSubmit,
   matchingTools,
   matchingPrompts,
@@ -215,71 +204,55 @@ export function EveChatSection({
       <div className="eve-messages-feed" role="log" aria-live="polite" aria-label="Eve AI conversation feed">
         {messages.map((msg, index) => (
           <div key={index} className={`eve-chat-bubble ${msg.role}`}>
-            {msg.role === 'assistant' && (
-              <div className="eve-bubble-avatar">
-                <Bot size={16} />
+            {msg.attachments && msg.attachments.length > 0 && (
+              <div className="eve-bubble-attachments">
+                {msg.attachments.map((att) => (
+                  <div key={att.id} className="eve-bubble-attachment-card">
+                    {att.isImage && att.dataUrl ? (
+                      <img src={att.dataUrl} alt={att.name} className="eve-bubble-attachment-thumb" />
+                    ) : (
+                      <div className="eve-bubble-attachment-icon-box">
+                        <FileText size={14} />
+                      </div>
+                    )}
+                    <div className="eve-bubble-attachment-meta">
+                      <span className="eve-bubble-attachment-name" title={att.name}>{att.name}</span>
+                      <span className="eve-bubble-attachment-size">{formatFileSize(att.size)}</span>
+                    </div>
+                  </div>
+                ))}
               </div>
             )}
-            <div className="eve-bubble-content">
-              <div className="eve-bubble-header">
-                <span className="eve-sender-name">{msg.role === 'assistant' ? 'Eve' : 'You'}</span>
+            {msg.role === 'assistant' ? (
+              <div className="eve-bubble-text eve-bubble-markdown">
+                <Markdown content={msg.content} />
               </div>
-              {msg.attachments && msg.attachments.length > 0 && (
-                <div className="eve-bubble-attachments">
-                  {msg.attachments.map((att) => (
-                    <div key={att.id} className="eve-bubble-attachment-card">
-                      {att.isImage && att.dataUrl ? (
-                        <img src={att.dataUrl} alt={att.name} className="eve-bubble-attachment-thumb" />
-                      ) : (
-                        <div className="eve-bubble-attachment-icon-box">
-                          <FileText size={14} />
-                        </div>
-                      )}
-                      <div className="eve-bubble-attachment-meta">
-                        <span className="eve-bubble-attachment-name" title={att.name}>{att.name}</span>
-                        <span className="eve-bubble-attachment-size">{formatFileSize(att.size)}</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-              {msg.role === 'assistant' ? (
-                <div className="eve-bubble-text eve-bubble-markdown">
-                  <Markdown content={msg.content} />
-                </div>
-              ) : (
-                msg.content && <p className="eve-bubble-text">{msg.content}</p>
-              )}
-            </div>
+            ) : (
+              msg.content && <p className="eve-bubble-text">{msg.content}</p>
+            )}
           </div>
         ))}
 
         {isSending && (
           <div className="eve-chat-bubble assistant sending">
-            <div className="eve-bubble-avatar">
-              <Bot size={16} />
-            </div>
-            <div className="eve-bubble-content">
-              <span className="eve-sender-name">Eve</span>
-              {streamText ? (
-                <div className="eve-bubble-text eve-bubble-markdown eve-streaming-text">
-                  <Markdown content={streamText} />
-                  <span className="eve-stream-caret" aria-hidden="true" />
-                </div>
-              ) : activeTool ? (
-                <div className="eve-tool-activity" role="status">
-                  <Loader2 size={13} className="spin" />
-                  <Wrench size={12} />
-                  <span>Using tool: {activeTool}…</span>
-                </div>
-              ) : (
-                <div className="eve-typing-indicator" aria-label="Eve is thinking">
-                  <span />
-                  <span />
-                  <span />
-                </div>
-              )}
-            </div>
+            {streamText ? (
+              <div className="eve-bubble-text eve-bubble-markdown eve-streaming-text">
+                <Markdown content={streamText} />
+                <span className="eve-stream-caret" aria-hidden="true" />
+              </div>
+            ) : activeTool ? (
+              <div className="eve-tool-activity" role="status">
+                <Loader2 size={13} className="spin" />
+                <Wrench size={12} />
+                <span>Using tool: {activeTool}…</span>
+              </div>
+            ) : (
+              <div className="eve-typing-indicator" aria-label="Eve is thinking">
+                <span />
+                <span />
+                <span />
+              </div>
+            )}
           </div>
         )}
 
@@ -314,41 +287,22 @@ export function EveChatSection({
 
       {/* Composer Section with Top Queued Messages */}
       <div className="eve-composer-container">
-        {/* ── Queued Messages Box (Above Composer) ── */}
+        {/* ── Queued Messages Box (Above Composer) — ref: first image dark queue ── */}
         {promptQueue.length > 0 && (
-          <div className="eve-queued-panel" aria-label="Queued Messages">
+          <div className="eve-queued-panel eve-queued-panel--dark" aria-label="Queued Messages">
             <div className="eve-queued-header">
               <div className="eve-queued-header-left">
-                <span className="eve-queued-title">Queued Messages</span>
-                <span className="eve-queued-badge">{promptQueue.length}</span>
-                <span className="eve-queued-hint">Sends after agent finishes working</span>
+                <span className="eve-queued-title">Queued messages {promptQueue.length}</span>
               </div>
               <div className="eve-queued-header-right">
-                <button
-                  type="button"
-                  className="eve-queue-btn-text"
-                  onClick={runQueue}
-                  disabled={isSending}
-                  title="Run all queued messages"
-                >
-                  <Play size={13} />
-                  <span>Run all</span>
-                </button>
-                <button
-                  type="button"
-                  className="eve-queue-btn-text"
-                  onClick={clearQueue}
-                  title="Clear entire queue"
-                >
-                  Clear queue
-                </button>
+                <span className="eve-queued-hint">Sends after agent finishes</span>
                 <button
                   type="button"
                   className="eve-queue-collapse-btn"
                   onClick={() => setQueueCollapsed((c) => !c)}
                   aria-label={queueCollapsed ? 'Expand queued messages' : 'Collapse queued messages'}
                 >
-                  {queueCollapsed ? <ChevronDown size={16} /> : <ChevronUp size={16} />}
+                  <Clock size={14} />
                 </button>
               </div>
             </div>
@@ -358,28 +312,28 @@ export function EveChatSection({
                 {promptQueue.map((queuedPrompt, index) => (
                   <div className="eve-queued-item-row" key={`${queuedPrompt}-${index}`}>
                     <div className="eve-queued-item-preview">
-                      <MessageSquare size={14} className="eve-queued-item-icon" />
+                      <GripVertical size={14} className="eve-queued-grip" />
                       <span className="eve-queued-item-text">{queuedPrompt}</span>
                     </div>
                     <div className="eve-queued-item-actions">
                       <button
                         type="button"
-                        className="eve-queued-action-btn"
-                        onClick={() => handleRunSingleQueueItem(index)}
-                        title="Send now"
-                        aria-label="Send now"
-                        disabled={isSending}
+                        className="eve-queue-pill-btn"
+                        onClick={() => handleEditQueueItem(index)}
+                        title="Edit prompt"
                       >
-                        <ArrowRight size={14} />
+                        <Edit3 size={12} />
+                        <span>edit</span>
                       </button>
                       <button
                         type="button"
-                        className="eve-queued-action-btn"
-                        onClick={() => handleEditQueueItem(index)}
-                        title="Edit prompt"
-                        aria-label="Edit prompt"
+                        className="eve-queue-pill-btn primary"
+                        onClick={() => handleRunSingleQueueItem(index)}
+                        disabled={isSending}
+                        title="Send now"
                       >
-                        <Pencil size={13} />
+                        <Send size={12} />
+                        <span>send</span>
                       </button>
                       <button
                         type="button"
@@ -388,7 +342,7 @@ export function EveChatSection({
                         title="Delete from queue"
                         aria-label="Delete from queue"
                       >
-                        <Trash2 size={13} />
+                        <X size={13} />
                       </button>
                     </div>
                   </div>
@@ -516,7 +470,7 @@ export function EveChatSection({
               placeholder={
                 attachments.length > 0
                   ? 'Add a prompt about the attached files (or press Enter to send)…'
-                  : 'Ask Eve anything… Type @ for tools, / for prompts, or + to add files'
+                  : '@ for files/agents; / for commands and skills; ! for shell; # for snippets'
               }
               rows={2}
               maxLength={MAX_CHARS}
@@ -535,7 +489,7 @@ export function EveChatSection({
               }}
             />
 
-            <div className="eve-composer-bottom-bar">
+            <div className="eve-composer-bottom-bar eve-composer-bottom-bar--dark">
               <div className="eve-composer-bottom-left">
                 <button
                   type="button"
@@ -653,19 +607,6 @@ export function EveChatSection({
               </div>
 
               <div className="eve-composer-bottom-right">
-                {isSending && (
-                  <button
-                    type="button"
-                    className="eve-stop-btn"
-                    onClick={onStop}
-                    title="Stop generating"
-                    aria-label="Stop generating"
-                  >
-                    <Square size={12} />
-                    <span>Stop</span>
-                  </button>
-                )}
-
                 <button
                   type="button"
                   className="eve-bottom-icon-btn"
@@ -687,15 +628,27 @@ export function EveChatSection({
                   {isRecording ? <MicOff size={16} /> : <Mic size={16} />}
                 </button>
 
-                <button
-                  type="submit"
-                  className="eve-bottom-send-btn"
-                  disabled={!draft.trim() && attachments.length === 0}
-                  aria-label={isSending ? 'Queue message' : 'Send message to Eve'}
-                  title={isSending ? 'Queue message' : 'Send'}
-                >
-                  <Send size={15} />
-                </button>
+                {isSending ? (
+                  <button
+                    type="button"
+                    className="eve-stop-btn eve-stop-btn--dark"
+                    onClick={onStop}
+                    title="Stop generating"
+                    aria-label="Stop generating"
+                  >
+                    <Square size={12} />
+                  </button>
+                ) : (
+                  <button
+                    type="submit"
+                    className="eve-bottom-send-btn"
+                    disabled={!draft.trim() && attachments.length === 0}
+                    aria-label="Send message to Eve"
+                    title="Send"
+                  >
+                    <Send size={15} />
+                  </button>
+                )}
               </div>
             </div>
 

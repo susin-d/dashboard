@@ -15,6 +15,11 @@
   animation: modal-fade-in 140ms ease-out;
 }
 
+/* Confirm dialogs must stack above high-z overlays (Eve panel 120, incoming call 200) */
+.confirm-dialog-backdrop {
+  z-index: 300;
+}
+
 .modal,
 .todo-modal,
 .delete-account-modal,

@@ -10,7 +10,13 @@ export function ConfirmDialog({
   onCancel,
 }) {
   return (
-    <Modal isOpen={isOpen} onClose={onCancel} title={title} subtitle="Please confirm">
+    <Modal
+      isOpen={isOpen}
+      onClose={onCancel}
+      title={title}
+      subtitle="Please confirm"
+      backdropClassName="confirm-dialog-backdrop"
+    >
       <p>{message}</p>
       <div className="modal-actions">
         <button type="button" className="secondary-button" onClick={onCancel} data-modal-initial-focus>Cancel</button>

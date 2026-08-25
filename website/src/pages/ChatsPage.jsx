@@ -13,12 +13,13 @@ import {
   AlertCircle,
 } from 'lucide-react'
 import {
+  beginGoogleChatOAuth,
   getGoogleChatSpaces,
   sendGoogleChatMessage,
 } from '../lib/googleChatApi'
 import { FilterPills, LoadingState, PageHeader, SearchBar } from '../components/ui'
 
-export function ChatsPage({ onNavigate }) {
+export function ChatsPage({ onNavigate: _onNavigate }) {
   const [accounts, setAccounts] = useState([])
   const [spaces, setSpaces] = useState([])
   const [loading, setLoading] = useState(true)
@@ -30,6 +31,7 @@ export function ChatsPage({ onNavigate }) {
   const [filterType, setFilterType] = useState('all')
   const [sending, setSending] = useState(false)
   const [sendError, setSendError] = useState('')
+  const [connectingChat, setConnectingChat] = useState(false)
 
   const fetchSpaces = useCallback((accountEmail) => {
     setLoading(true)
@@ -119,6 +121,20 @@ export function ChatsPage({ onNavigate }) {
     }
   }
 
+  const handleConnectGoogleChat = async () => {
+    if (connectingChat) return
+    setConnectingChat(true)
+    setError(null)
+    try {
+      await beginGoogleChatOAuth()
+      await fetchSpaces(selectedAccountEmail)
+    } catch (err) {
+      setError(err.message || 'Could not connect Google Chat.')
+    } finally {
+      setConnectingChat(false)
+    }
+  }
+
   const handleQuickReply = (text) => setMessageInput(text)
 
   return (
@@ -136,10 +152,11 @@ export function ChatsPage({ onNavigate }) {
             ) : !loading ? (
               <button
                 className="secondary-button icon-button-text"
-                onClick={() => onNavigate && onNavigate('setting')}
+                onClick={handleConnectGoogleChat}
+                disabled={connectingChat}
               >
-                <Settings size={16} />
-                <span>Connect Google Chat in Settings</span>
+                <Settings size={16} className={connectingChat ? 'spin' : ''} />
+                <span>{connectingChat ? 'Connecting…' : 'Connect Google Chat'}</span>
               </button>
             ) : null}
             <button
@@ -160,15 +177,16 @@ export function ChatsPage({ onNavigate }) {
           <MessageSquare size={48} />
           <h3>No Google Chat Accounts Connected</h3>
           <p>
-            Connect a Google Chat account in Settings to view your spaces and direct
-            messages here.
+            Connect a Google Chat account to view your spaces and direct messages
+            here. No need to go to Settings.
           </p>
           <button
             className="primary-button"
             style={{ marginTop: '12px', padding: '10px 20px' }}
-            onClick={() => onNavigate && onNavigate('setting')}
+            onClick={handleConnectGoogleChat}
+            disabled={connectingChat}
           >
-            <Settings size={15} /> Go to Settings
+            <Settings size={15} className={connectingChat ? 'spin' : ''} /> {connectingChat ? 'Connecting…' : 'Connect Google Chat'}
           </button>
         </div>
       )}
@@ -319,10 +337,11 @@ export function ChatsPage({ onNavigate }) {
                   <div className="chat-header-actions">
                     <button
                       className="icon-button"
-                      title="Manage accounts"
-                      onClick={() => onNavigate && onNavigate('setting')}
+                      title="Connect additional Google Chat account"
+                      onClick={handleConnectGoogleChat}
+                      disabled={connectingChat}
                     >
-                      <Settings size={18} />
+                      <Settings size={18} className={connectingChat ? 'spin' : ''} />
                     </button>
                   </div>
                 </div>

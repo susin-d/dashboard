@@ -232,12 +232,12 @@
 .eve-messages-feed {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 1.4rem;
   flex: 1 1 auto;
   min-height: 320px;
   max-height: 600px;
   overflow-y: auto;
-  padding-right: 0.5rem;
+  padding: 0.5rem 0.25rem 0.5rem 0;
 }
 
 .eve-messages-feed::-webkit-scrollbar {
@@ -249,51 +249,61 @@
   border-radius: 3px;
 }
 
+/* Claude-style: assistant replies are flat full-width text, user replies
+   are compact right-aligned chips. No avatars or sender labels. */
 .eve-chat-bubble {
   display: flex;
-  gap: 0.75rem;
-  max-width: 88%;
+  flex-direction: column;
+  max-width: 100%;
+  min-width: 0;
 }
 
 .eve-chat-bubble.user {
   align-self: flex-end;
-  flex-direction: row-reverse;
+  align-items: flex-end;
+  max-width: min(75%, 560px);
 }
 
 .eve-chat-bubble.assistant {
-  align-self: flex-start;
+  align-self: stretch;
 }
 
-.eve-bubble-avatar {
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;
-  background: var(--bg-tertiary, #18181b);
-  border: 1px solid var(--border-color, #3f3f46);
+.eve-bubble-text {
+  font-size: 0.925rem;
+  line-height: 1.6;
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.eve-chat-bubble.assistant .eve-bubble-text {
+  background: transparent;
+  border: 0;
+  padding: 0;
   color: var(--text-primary, #ffffff);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
 }
 
-.eve-bubble-content {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-  min-width: 0;
+.eve-chat-bubble.user .eve-bubble-text {
+  background: var(--bg-tertiary, #18181b);
+  border: 1px solid var(--border-color, #27272a);
+  color: var(--text-primary, #ffffff);
+  border-radius: 16px;
+  border-bottom-right-radius: 6px;
+  padding: 0.65rem 1rem;
+  font-weight: 450;
 }
 
-.eve-bubble-header {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
+.eve-bubble-text.eve-bubble-markdown {
+  white-space: normal;
 }
 
-.eve-sender-name {
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: var(--text-muted, #71717a);
+.eve-bubble-markdown .markdown-renderer {
+  font-size: 0.925rem;
+}
+
+/* User message attachments sit above the chip, right-aligned */
+.eve-chat-bubble.user .eve-bubble-attachments {
+  justify-content: flex-end;
 }
 
 /* Chat Bubble Attachments */
@@ -313,11 +323,6 @@
   background: var(--bg-secondary);
   border: 1px solid var(--border-color);
   max-width: 240px;
-}
-
-.eve-chat-bubble.user .eve-bubble-attachment-card {
-  background: rgba(255, 255, 255, 0.12);
-  border-color: rgba(255, 255, 255, 0.22);
 }
 
 .eve-bubble-attachment-thumb {
@@ -341,11 +346,6 @@
   flex-shrink: 0;
 }
 
-.eve-chat-bubble.user .eve-bubble-attachment-icon-box {
-  background: rgba(255, 255, 255, 0.18);
-  color: var(--text-inverse);
-}
-
 .eve-bubble-attachment-meta {
   display: flex;
   flex-direction: column;
@@ -363,51 +363,10 @@
   line-height: 1.25;
 }
 
-.eve-chat-bubble.user .eve-bubble-attachment-name {
-  color: var(--text-inverse);
-}
-
 .eve-bubble-attachment-size {
   font-size: 0.65rem;
   color: var(--text-muted);
   line-height: 1.2;
-}
-
-.eve-chat-bubble.user .eve-bubble-attachment-size {
-  color: rgba(255, 255, 255, 0.7);
-}
-
-.eve-bubble-text {
-  font-size: 0.9rem;
-  line-height: 1.55;
-  margin: 0;
-  padding: 0.8rem 1.1rem;
-  border-radius: 10px;
-  white-space: pre-wrap;
-  word-break: break-word;
-}
-
-.eve-chat-bubble.assistant .eve-bubble-text {
-  background: var(--bg-tertiary, #18181b);
-  border: 1px solid var(--border-color, #27272a);
-  color: var(--text-primary, #ffffff);
-  border-top-left-radius: 2px;
-}
-
-.eve-chat-bubble.user .eve-bubble-text {
-  background: var(--color-primary, #18181b);
-  color: var(--text-inverse, #ffffff);
-  border: 1px solid var(--color-primary, #18181b);
-  font-weight: 500;
-  border-top-right-radius: 2px;
-}
-
-.eve-bubble-text.eve-bubble-markdown {
-  white-space: normal;
-}
-
-.eve-bubble-markdown .markdown-renderer {
-  font-size: 0.9rem;
 }
 
 /* Typing Indicator Animation */
@@ -2240,5 +2199,124 @@
 .eve-call-start-btn.secondary:hover {
   background: var(--bg-hover);
   border-color: var(--border-heavy);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   Ref composer/queue styling — theme-aware (tokens for both light
+   and dark; deep-black refinement only under html.dark-theme)
+   ═══════════════════════════════════════════════════════════════ */
+.eve-queued-panel--dark {
+  border-radius: 10px;
+}
+
+.eve-queued-panel--dark .eve-queued-header {
+  padding: 10px 12px;
+}
+
+.eve-queued-panel--dark .eve-queued-title {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.eve-queued-panel--dark .eve-queued-hint {
+  font-size: 11px;
+}
+
+.eve-queued-panel--dark .eve-queued-list {
+  padding: 6px 0;
+}
+
+.eve-queued-panel--dark .eve-queued-item-row {
+  padding: 8px 12px;
+  gap: 12px;
+}
+
+html.dark-theme .eve-queued-panel--dark {
+  background: #0a0a0a;
+  border-color: #232326;
+}
+
+html.dark-theme .eve-queued-panel--dark .eve-queued-header {
+  background: #0a0a0a;
+  border-bottom-color: #232326;
+}
+
+html.dark-theme .eve-queued-panel--dark .eve-queued-list {
+  background: #0a0a0a;
+}
+
+html.dark-theme .eve-queued-panel--dark .eve-queued-item-row:hover {
+  background: #141416;
+}
+
+.eve-queued-grip {
+  color: var(--text-tertiary, #71717a);
+  flex-shrink: 0;
+}
+
+.eve-queue-pill-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--bg-tertiary, #f4f4f5);
+  border: 1px solid var(--border-color, #e4e4e7);
+  color: var(--text-secondary, #52525b);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 140ms ease;
+  line-height: 1;
+}
+
+.eve-queue-pill-btn:hover:not(:disabled) {
+  background: var(--bg-hover, #e4e4e7);
+  border-color: var(--border-heavy, #a1a1aa);
+  color: var(--text-primary, #09090b);
+}
+
+.eve-queue-pill-btn.primary {
+  background: var(--bg-hover, #e4e4e7);
+  border-color: var(--border-heavy, #a1a1aa);
+  color: var(--text-primary, #09090b);
+}
+
+.eve-queue-pill-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+html.dark-theme .eve-queue-pill-btn {
+  background: #18181b;
+  border-color: #27272a;
+  color: #d4d4d8;
+}
+
+html.dark-theme .eve-queue-pill-btn:hover:not(:disabled),
+html.dark-theme .eve-queue-pill-btn.primary {
+  background: #27272a;
+  border-color: #3f3f46;
+  color: #fafafa;
+}
+
+/* Composer refinements — colors come from the base token rules above */
+.eve-composer-bottom-bar--dark {
+  padding-top: 8px;
+  margin-top: 8px;
+  border-top: 1px solid var(--border-color, #e4e4e7);
+}
+
+.eve-composer-bottom-left {
+  gap: 6px;
+}
+
+.eve-stop-btn--dark {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  padding: 0;
+  justify-content: center;
 }
 
