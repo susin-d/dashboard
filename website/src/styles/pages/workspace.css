@@ -935,6 +935,129 @@
   background: var(--bg-card, #ffffff);
 }
 
+/* Browser Panel */
+.workspace-center.browser-open {
+  flex-direction: row;
+}
+
+.workspace-center-stack {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  gap: 8px;
+}
+
+.workspace-browser {
+  display: flex;
+  flex-direction: column;
+  width: clamp(320px, 40%, 640px);
+  min-width: 0;
+  border: 1px solid var(--border-color, #e4e4e7);
+  background: var(--bg-card, #ffffff);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: var(--shadow-sm, 0 1px 2px rgba(0, 0, 0, 0.05));
+}
+
+.workspace-browser-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--border-light, #e4e4e7);
+  background: var(--bg-tertiary, #fafafa);
+  color: var(--text-secondary, #71717a);
+}
+
+.workspace-browser-bar form {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  min-width: 0;
+}
+
+.workspace-browser-url {
+  flex: 1;
+  min-width: 0;
+  padding: 5px 10px;
+  border: 1px solid var(--border-color, #e4e4e7);
+  border-radius: 8px;
+  background: var(--bg-card, #ffffff);
+  color: var(--text-primary, #09090b);
+  font-size: 12px;
+}
+
+.workspace-browser-url:focus-visible {
+  outline: 2px solid var(--color-primary, #09090b);
+  outline-offset: 1px;
+}
+
+.workspace-browser-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  flex-shrink: 0;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: none;
+  color: var(--text-secondary, #71717a);
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.workspace-browser-btn:hover:not(:disabled),
+.workspace-browser-btn:focus-visible {
+  color: var(--text-primary, #09090b);
+  border-color: var(--border-color, #e4e4e7);
+  background: var(--bg-card, #ffffff);
+}
+
+.workspace-browser-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.workspace-browser-frame {
+  flex: 1;
+  width: 100%;
+  min-height: 0;
+  border: 0;
+  background: #ffffff;
+}
+
+.workspace-browser-empty {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 24px;
+  text-align: center;
+  color: var(--text-muted, #71717a);
+  font-size: 13px;
+}
+
+.workspace-browser-empty-icon {
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  background: var(--bg-tertiary, #f4f4f5);
+  border: 1px solid var(--border-color, #e4e4e7);
+}
+
+.workspace-browser-empty p {
+  margin: 0;
+  max-width: 320px;
+  line-height: 1.6;
+}
+
 /* Eve Agent Panel */
 .workspace-eve-collapsed {
   display: flex;
@@ -1202,6 +1325,16 @@
 /* Responsive */
 @media (max-width: 1100px) {
   .workspace-quick-actions { display: none; }
+
+  .workspace-center.browser-open {
+    flex-direction: column;
+  }
+
+  .workspace-browser {
+    width: 100%;
+    height: 340px;
+    flex-shrink: 0;
+  }
 }
 
 @media (max-width: 900px) {
@@ -1306,7 +1439,10 @@
   box-shadow: var(--shadow-focus, 0 0 0 3px rgba(0, 0, 0, 0.05));
 }
 
-/* Open button: avatar left, name + meta stacked right */
+/* Open button: avatar left, name + meta stacked right.
+   Right padding reserves space for the absolutely-positioned
+   hover actions (two 26px buttons + gap + 8px offset) so they
+   never overlap the workspace name. */
 .ws-card-open {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
@@ -1317,7 +1453,7 @@
   column-gap: 12px;
   row-gap: 6px;
   width: 100%;
-  padding: 16px;
+  padding: 16px 72px 16px 16px;
   background: none;
   border: 0;
   border-radius: inherit;

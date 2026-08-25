@@ -5,6 +5,7 @@ import { WorkspaceOverview } from './workspace/WorkspaceOverview'
 import { WorkspaceFileTree } from './workspace/WorkspaceFileTree'
 import { WorkspaceEditor } from './workspace/WorkspaceEditor'
 import { WorkspaceTerminal } from './workspace/WorkspaceTerminal'
+import { WorkspaceBrowser } from './workspace/WorkspaceBrowser'
 import { WorkspaceEvePanel } from './workspace/WorkspaceEvePanel'
 import { Modal, ConfirmDialog, FormField } from '../components/ui'
 
@@ -13,6 +14,7 @@ export function WorkspacePage() {
   const [view, setView] = useState('overview')
   const [evePanelCollapsed, setEvePanelCollapsed] = useState(true)
   const [terminalVisible, setTerminalVisible] = useState(false)
+  const [browserVisible, setBrowserVisible] = useState(false)
   const [newFilePrompt, setNewFilePrompt] = useState(false)
   const [newFileName, setNewFileName] = useState('')
   const [newFolderPrompt, setNewFolderPrompt] = useState(false)
@@ -273,6 +275,8 @@ export function WorkspacePage() {
         onRefresh={workspace.refreshTree}
         terminalVisible={terminalVisible}
         onToggleTerminal={() => setTerminalVisible(!terminalVisible)}
+        browserVisible={browserVisible}
+        onToggleBrowser={() => setBrowserVisible(!browserVisible)}
         onCreateFile={handleCreateFile}
         onCreateFolder={handleCreateFolder}
       />
@@ -294,19 +298,27 @@ export function WorkspacePage() {
           onCreateFolder={handleCreateFolder}
         />
 
-        <div className="workspace-center">
-          <WorkspaceEditor
-            tabs={workspace.openTabs}
-            activeTab={workspace.activeTab}
-            onTabSelect={workspace.setActiveTab}
-            onTabClose={workspace.closeTab}
-            onContentChange={workspace.updateTabContent}
-            onSave={workspace.saveFile}
-            isFileDirty={workspace.isFileDirty}
-            onCreateFile={handleCreateFile}
-          />
-          {terminalVisible && (
-            <WorkspaceTerminal isTauri={workspace.isTauri} />
+        <div className={`workspace-center${browserVisible ? ' browser-open' : ''}`}>
+          <div className="workspace-center-stack">
+            <WorkspaceEditor
+              tabs={workspace.openTabs}
+              activeTab={workspace.activeTab}
+              onTabSelect={workspace.setActiveTab}
+              onTabClose={workspace.closeTab}
+              onContentChange={workspace.updateTabContent}
+              onSave={workspace.saveFile}
+              isFileDirty={workspace.isFileDirty}
+              onCreateFile={handleCreateFile}
+            />
+            {terminalVisible && (
+              <WorkspaceTerminal isTauri={workspace.isTauri} />
+            )}
+          </div>
+          {browserVisible && (
+            <WorkspaceBrowser
+              workspaceId={workspace.activeWorkspaceId}
+              onClose={() => setBrowserVisible(false)}
+            />
           )}
         </div>
 

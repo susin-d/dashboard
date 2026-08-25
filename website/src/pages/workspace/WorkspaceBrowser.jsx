@@ -1,0 +1,122 @@
+import { useEffect, useState } from 'react'
+import { ArrowUpRight, Globe, RefreshCw, X } from 'lucide-react'
+
+const BROWSER_URL_KEY = 'starwaves.workspace.browser-url'
+
+function storageKey(workspaceId) {
+  return `${BROWSER_URL_KEY}:${workspaceId || 'default'}`
+}
+
+function loadStoredUrl(workspaceId) {
+  try {
+    return localStorage.getItem(storageKey(workspaceId)) || ''
+  } catch {
+    return ''
+  }
+}
+
+function persistUrl(workspaceId, url) {
+  try {
+    localStorage.setItem(storageKey(workspaceId), url)
+  } catch {
+    // Persistence is best-effort (private mode); navigation still works.
+  }
+}
+
+function normalizeUrl(raw) {
+  const value = raw.trim()
+  if (!value) return ''
+  if (/^[a-z][a-z0-9+.-]*:/i.test(value)) return value
+  return `https://${value}`
+}
+
+export function WorkspaceBrowser({ workspaceId, onClose }) {
+  const [draft, setDraft] = useState(() => loadStoredUrl(workspaceId))
+  const [url, setUrl] = useState(() => loadStoredUrl(workspaceId))
+  const [reloadKey, setReloadKey] = useState(0)
+
+  useEffect(() => {
+    const stored = loadStoredUrl(workspaceId)
+    setDraft(stored)
+    setUrl(stored)
+  }, [workspaceId])
+
+  const handleNavigate = (event) => {
+    event.preventDefault()
+    const next = normalizeUrl(draft)
+    if (!next) return
+    setUrl(next)
+    persistUrl(workspaceId, next)
+  }
+
+  const handleReload = () => setReloadKey((current) => current + 1)
+
+  return (
+    <section className="workspace-browser" aria-label="Workspace browser">
+      <div className="workspace-browser-bar">
+        <Globe size={13} aria-hidden="true" />
+        <form onSubmit={handleNavigate}>
+          <input
+            type="text"
+            className="workspace-browser-url"
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            placeholder="Enter URL — e.g. localhost:5173"
+            aria-label="Browser URL"
+            spellCheck="false"
+          />
+        </form>
+        <button
+          type="button"
+          className="workspace-browser-btn"
+          onClick={handleReload}
+          disabled={!url}
+          title="Reload page"
+          aria-label="Reload page"
+        >
+          <RefreshCw size={13} />
+        </button>
+        <a
+          className="workspace-browser-btn"
+          href={url || undefined}
+          target="_blank"
+          rel="noreferrer"
+          title="Open in new tab"
+          aria-label="Open in new tab"
+          onClick={(e) => !url && e.preventDefault()}
+          aria-disabled={!url}
+        >
+          <ArrowUpRight size={13} />
+        </a>
+        <button
+          type="button"
+          className="workspace-browser-btn"
+          onClick={onClose}
+          title="Close browser"
+          aria-label="Close browser"
+        >
+          <X size={13} />
+        </button>
+      </div>
+      {url ? (
+        <iframe
+          key={`${url}-${reloadKey}`}
+          className="workspace-browser-frame"
+          src={url}
+          title="Workspace browser"
+          sandbox="allow-scripts allow-forms allow-popups"
+        />
+      ) : (
+        <div className="workspace-browser-empty">
+          <span className="workspace-browser-empty-icon" aria-hidden="true">
+            <Globe size={22} />
+          </span>
+          <p>
+            Browse any URL side-by-side with your code. Some sites block
+            embedding — use <ArrowUpRight size={12} /> to open them in a new tab.
+          </p>
+        </div>
+      )}
+    </section>
+  )
+}

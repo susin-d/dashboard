@@ -4,6 +4,7 @@ import {
   Folder,
   RefreshCw,
   Cloud,
+  Globe,
   Monitor,
   Terminal,
   ChevronDown,
@@ -28,6 +29,8 @@ export function WorkspaceToolbar({
   onRefresh,
   terminalVisible,
   onToggleTerminal,
+  browserVisible,
+  onToggleBrowser,
   onCreateFile,
   onCreateFolder,
 }) {
@@ -186,8 +189,18 @@ export function WorkspaceToolbar({
           onClick={onToggleTerminal}
           title="Toggle Terminal"
           aria-label="Toggle terminal"
+          aria-pressed={terminalVisible}
         >
           <Terminal size={15} />
+        </button>
+        <button
+          className={`workspace-toolbar-btn${browserVisible ? ' active' : ''}`}
+          onClick={onToggleBrowser}
+          title="Toggle Browser"
+          aria-label="Toggle browser"
+          aria-pressed={browserVisible}
+        >
+          <Globe size={15} />
         </button>
         <button
           className="workspace-toolbar-btn"
