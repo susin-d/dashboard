@@ -51,3 +51,43 @@ def build_echo_twiml(text: str) -> str:
     <Say voice="alice">You said: {safe}</Say>
     <Hangup/>
 </Response>"""
+
+
+def build_relay_twiml(relay_url: str, greeting: str | None = None, voice: str = "en-US-Neural2-F", language: str = "en-US") -> str:
+    """ConversationRelay TwiML — WebSocket media session.
+
+    Twilio opens a WebSocket to ``relay_url`` and handles STT + TTS itself;
+    our server streams plain-text tokens over JSON. Enables ~1s turns and
+    barge-in (interrupt events) versus blocking <Gather> round-trips.
+    """
+    greeting_attr = f' greeting="{_escape(greeting[:400])}"' if greeting else ""
+    safe_url = _escape(relay_url)
+    return f"""<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+    <Connect>
+        <ConversationRelay url="{safe_url}"{greeting_attr} voice="{voice}" language="{language}" />
+    </Connect>
+</Response>"""
+
+
+def split_text_tokens(text: str, max_chars: int = 40) -> list[str]:
+    """Split reply text into small token chunks for ConversationRelay streaming.
+
+    Word-boundary chunks (<= max_chars) so Twilio TTS can start speaking the
+    first words while later chunks are still being generated/sent.
+    """
+    words = (text or "").split()
+    if not words:
+        return []
+    tokens: list[str] = []
+    current = ""
+    for word in words:
+        candidate = f"{current} {word}".strip()
+        if len(candidate) > max_chars and current:
+            tokens.append(current)
+            current = word
+        else:
+            current = candidate
+    if current:
+        tokens.append(current)
+    return tokens

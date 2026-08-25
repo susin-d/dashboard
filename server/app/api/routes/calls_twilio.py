@@ -14,7 +14,7 @@ from app.repositories.users import get_user_by_id
 from app.schemas.call import CallResponse, CallUser, EveTwilioCallRequest, TwilioCallCreate
 from app.services.notifications import send_call_notification
 from app.services.twilio.client import TwilioError, initiate_twilio_call, is_twilio_configured, map_twilio_status
-from app.services.twilio.twiml import build_eve_twiml, build_human_twiml
+from app.services.twilio.twiml import build_eve_twiml, build_human_twiml, build_relay_twiml
 
 logger = logging.getLogger(__name__)
 
@@ -26,6 +26,13 @@ def _twilio_base() -> str:
     if not base:
         base = f"http://127.0.0.1:8000"
     return base
+
+
+def _relay_ws_url(call_id: str) -> str:
+    """wss relay URL for ConversationRelay (https→wss, http→ws)."""
+    from app.api.routes.twilio_relay import relay_ws_url_for_call
+
+    return relay_ws_url_for_call(call_id)
 
 
 @router.get("/twilio/config")
@@ -47,8 +54,8 @@ async def create_twilio_call(payload: TwilioCallCreate, database: Client = Depen
     # For PSTN, callee is synthetic phone identity
     callee = CallUser(uid=f"phone:{payload.phone_number}", name=payload.phone_number, email="")
     call = repo.create(caller=caller, callee=callee, mode=payload.mode, provider="twilio", phone_number=payload.phone_number)
-    # Build TwiML URL for this call
-    twiml_url = f"{_twilio_base()}/api/v1/calls/twilio/twiml/{call['id']}"
+    # ConversationRelay: Twilio opens /ws/twilio-relay?call_id=... and we stream text tokens
+    twiml_url = f"{_twilio_base()}/api/v1/calls/twilio/relay-twiml/{call['id']}"
     status_cb = f"{_twilio_base()}/api/v1/calls/twilio/status"
     # Store message as first Say text if provided
     if payload.message:
@@ -88,11 +95,11 @@ async def trigger_eve_twilio_call(payload: EveTwilioCallRequest, database: Clien
         call["messages"] = [{"id": "eve-prompt", "from_uid": "eve-bot", "type": "say", "payload": prompt[:500], "created_at": call["created_at"]}]
     except Exception:
         pass
-    twiml_url = f"{_twilio_base()}/api/v1/calls/twilio/twiml/{call['id']}"
+    twiml_url = f"{_twilio_base()}/api/v1/calls/twilio/relay-twiml/{call['id']}"
     status_cb = f"{_twilio_base()}/api/v1/calls/twilio/status"
     try:
         tw = initiate_twilio_call(payload.phone_number, twiml_url, status_cb)
-        sid = tw.get("sid") or tw.get("sid","")
+        sid = tw.get("sid") or ""
         if sid:
             repo.set_external_sid(call["id"], sid)
             call["external_sid"] = sid
@@ -102,6 +109,26 @@ async def trigger_eve_twilio_call(payload: EveTwilioCallRequest, database: Clien
         raise HTTPException(status_code=502, detail=str(e)) from e
     send_call_notification(database=database, target_user_id=user["uid"], title="Incoming Eve Call (Twilio)", message=f"Eve is calling your phone {payload.phone_number}", notification_type="call_incoming", call_id=call["id"])
     return call
+
+
+@router.get("/twilio/relay-twiml/{call_id}", response_class=PlainTextResponse)
+async def twilio_relay_twiml(call_id: str):
+    """ConversationRelay TwiML — Twilio opens our WebSocket and streams JSON.
+
+    The greeting is spoken on answer; subsequent turns stream over
+    /ws/twilio-relay with barge-in support."""
+    # Greeting comes from the call record when present (Eve prompt / say text).
+    greeting = None
+    try:
+        call = CallRepository(get_firestore()).get(call_id)
+        for message in (call or {}).get("messages") or []:
+            if message.get("type") == "say":
+                greeting = message.get("payload")
+                break
+    except Exception as error:
+        logger.warning(f"relay-twiml lookup failed for {call_id}: {error}")
+    twiml = build_relay_twiml(_relay_ws_url(call_id), greeting=greeting)
+    return PlainTextResponse(twiml, media_type="application/xml")
 
 
 @router.get("/twilio/twiml/{call_id}", response_class=PlainTextResponse)

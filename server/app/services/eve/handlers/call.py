@@ -27,7 +27,7 @@ def handle_trigger_eve_call(database: Client, user_id: str, arguments: dict) -> 
         call = repo.create(caller=CallUser(uid="eve-bot", name="Eve AI Assistant", email="eve@starwaves.app"), callee=callee_user, mode=arguments.get("mode", "audio"), provider="twilio", phone_number=phone_number)
         prompt = arguments.get("prompt") or "Hello, this is Eve from StarWaves. How can I help you today?"
         base = (settings.twilio_callback_base_url or "").rstrip("/") or "http://127.0.0.1:8000"
-        twiml_url = f"{base}/api/v1/calls/twilio/twiml/{call['id']}"
+        twiml_url = f"{base}/api/v1/calls/twilio/relay-twiml/{call['id']}"
         status_cb = f"{base}/api/v1/calls/twilio/status"
         try:
             tw = initiate_twilio_call(phone_number, twiml_url, status_cb)
@@ -94,7 +94,7 @@ def handle_make_twilio_call(database: Client, user_id: str, arguments: dict) -> 
         except Exception:
             pass
     base = (settings.twilio_callback_base_url or "").rstrip("/") or "http://127.0.0.1:8000"
-    twiml_url = f"{base}/api/v1/calls/twilio/twiml/{call['id']}"
+    twiml_url = f"{base}/api/v1/calls/twilio/relay-twiml/{call['id']}"
     status_cb = f"{base}/api/v1/calls/twilio/status"
     try:
         tw = initiate_twilio_call(phone, twiml_url, status_cb)

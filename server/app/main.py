@@ -12,6 +12,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.api.router import api_router
 from app.api.routes.calls_ws import router as calls_ws_router
+from app.api.routes.twilio_relay import router as twilio_relay_router
 from app.api.routes.whatsapp_ws import router as whatsapp_ws_router
 from app.core.config import settings
 from app.core.worker import server_worker
@@ -137,9 +138,10 @@ def create_app() -> FastAPI:
         return response
 
     application.include_router(api_router, prefix=settings.api_v1_prefix)
-    # WebSocket endpoints mount at root path (/ws/calls, /ws/whatsapp)
+    # WebSocket endpoints mount at root path (/ws/calls, /ws/whatsapp, /ws/twilio-relay)
     application.include_router(calls_ws_router)
     application.include_router(whatsapp_ws_router)
+    application.include_router(twilio_relay_router)
 
     return application
 
