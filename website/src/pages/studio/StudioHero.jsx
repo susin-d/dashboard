@@ -38,23 +38,12 @@ export function StudioHero({
   templates = [],
   isSubmitting,
   onSubmitPrompt,
-  selectedPrompt,
-  selectedTemplateId,
 }) {
   const [prompt, setPrompt] = useState('')
   const [templateId, setTemplateId] = useState('')
   const [attachments, setAttachments] = useState([])
   const textareaRef = useRef(null)
   const fileInputRef = useRef(null)
-
-  // Listen to external selection from starter templates
-  useEffect(() => {
-    if (selectedPrompt) {
-      setPrompt(selectedPrompt)
-      if (selectedTemplateId) setTemplateId(selectedTemplateId)
-      textareaRef.current?.focus()
-    }
-  }, [selectedPrompt, selectedTemplateId])
 
   const templateOptions = [
     { value: '', label: 'Blank Project' },

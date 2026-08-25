@@ -1,8 +1,6 @@
 import { useEffect, useState } from 'react'
 import { createStudioProject, listStudioTemplates } from '../../lib/studioApi'
 import { StudioHero } from './StudioHero'
-import { StudioStarterTemplates } from './StudioStarterTemplates'
-import { StudioWorkflowFeatures } from './StudioWorkflowFeatures'
 import { deriveProjectName } from './studioConstants'
 import { setStudioBrief } from './studioBrief'
 
@@ -10,8 +8,6 @@ export function StudioProjectsPage({ onOpenProject }) {
   const [templates, setTemplates] = useState([])
   const [isCreatingFromPrompt, setIsCreatingFromPrompt] = useState(false)
   const [promptError, setPromptError] = useState('')
-  const [selectedPrompt, setSelectedPrompt] = useState('')
-  const [selectedTemplateId, setSelectedTemplateId] = useState('')
 
   useEffect(() => {
     let cancelled = false
@@ -52,20 +48,12 @@ export function StudioProjectsPage({ onOpenProject }) {
     }
   }
 
-  const handleSelectStarter = (starterPrompt, starterTemplateId) => {
-    setSelectedPrompt(starterPrompt)
-    setSelectedTemplateId(starterTemplateId)
-    window.scrollTo({ top: 0, behavior: 'smooth' })
-  }
-
   return (
-    <div className="studio-page studio-landing-page">
+    <div className="studio-page">
       <StudioHero
         templates={templates}
         isSubmitting={isCreatingFromPrompt}
         onSubmitPrompt={handlePromptSubmit}
-        selectedPrompt={selectedPrompt}
-        selectedTemplateId={selectedTemplateId}
       />
 
       {promptError && (
@@ -73,14 +61,6 @@ export function StudioProjectsPage({ onOpenProject }) {
           <span>{promptError}</span>
         </div>
       )}
-
-      <div className="studio-landing-body">
-        <StudioStarterTemplates
-          templates={templates}
-          onSelectStarter={handleSelectStarter}
-        />
-        <StudioWorkflowFeatures />
-      </div>
     </div>
   )
 }
