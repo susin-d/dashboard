@@ -61,6 +61,22 @@
   padding-bottom: 0;
 }
 
+/* Eve chat full-height viewport layout — eliminates useless bottom dead space */
+.content:has(.eve-page-container) {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 64px);
+  max-height: calc(100vh - 64px);
+  overflow: hidden;
+  padding-bottom: var(--layout-gutter);
+}
+
+.content:has(.eve-page-container) > .eve-page-container {
+  flex: 1;
+  min-height: 0;
+  height: 100%;
+}
+
 .content > .mail-page {
   width: calc(100% - 96px);
   max-width: calc(var(--layout-max-width) - 96px);
