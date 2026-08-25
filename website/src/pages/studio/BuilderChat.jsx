@@ -198,50 +198,52 @@ export function BuilderChat({ projectId, projectName, onActions }) {
             ))}
           </div>
         )}
-        <textarea
-          ref={textareaRef}
-          value={draft}
-          onChange={(e) => setDraft(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' && !e.shiftKey) {
-              e.preventDefault()
-              handleSubmit(e)
-            }
-          }}
-          placeholder="Make changes, add new features, ask for anything…"
-          rows={1}
-          aria-label="Message to Eve"
-        />
-        <input ref={fileInputRef} type="file" multiple hidden onChange={handleAddFiles} />
-        <div className="builder-composer-toolbar">
-          <div className="builder-composer-tools">
+        <div className="builder-composer-box">
+          <textarea
+            ref={textareaRef}
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault()
+                handleSubmit(e)
+              }
+            }}
+            placeholder="Make changes, add new features, ask for anything…"
+            rows={1}
+            aria-label="Message to Eve"
+          />
+          <input ref={fileInputRef} type="file" multiple hidden onChange={handleAddFiles} />
+          <div className="builder-composer-toolbar">
+            <div className="builder-composer-tools">
+              <button
+                type="button"
+                className="builder-composer-icon-btn"
+                onClick={() => fileInputRef.current?.click()}
+                title="Add files"
+                aria-label="Add files"
+              >
+                <Plus size={15} />
+              </button>
+              <button
+                type="button"
+                className="builder-composer-icon-btn"
+                onClick={() => {}}
+                title="Voice input"
+                aria-label="Voice input"
+              >
+                <Mic size={14} />
+              </button>
+            </div>
             <button
-              type="button"
-              className="builder-composer-icon-btn"
-              onClick={() => fileInputRef.current?.click()}
-              title="Add files"
-              aria-label="Add files"
+              type="submit"
+              className="builder-chat-submit"
+              disabled={(!draft.trim() && attachments.length === 0) || isSending}
+              aria-label="Send message to Eve"
             >
-              <Plus size={15} />
-            </button>
-            <button
-              type="button"
-              className="builder-composer-icon-btn"
-              onClick={() => {}}
-              title="Voice input"
-              aria-label="Voice input"
-            >
-              <Mic size={14} />
+              <ArrowUp size={16} />
             </button>
           </div>
-          <button
-            type="submit"
-            className="builder-chat-submit"
-            disabled={(!draft.trim() && attachments.length === 0) || isSending}
-            aria-label="Send message to Eve"
-          >
-            <ArrowUp size={16} />
-          </button>
         </div>
       </form>
     </section>

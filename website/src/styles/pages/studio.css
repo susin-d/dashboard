@@ -696,47 +696,66 @@
   margin-bottom: 0.2rem;
 }
 
+.builder-composer-box {
+  display: flex;
+  flex-direction: column;
+  border: 1.5px solid var(--border-heavy);
+  border-radius: 18px;
+  background: var(--bg-secondary);
+  overflow: hidden;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.builder-composer-box:focus-within {
+  border-color: var(--text-primary);
+  box-shadow: 0 0 0 1px var(--text-primary);
+}
+
 .builder-chat-composer textarea {
   width: 100%;
-  border: 1.5px solid var(--border-heavy);
-  border-radius: 16px;
-  background: var(--bg-secondary);
-  padding: 0.75rem 0.85rem 2.4rem;
+  border: none;
+  background: transparent;
+  padding: 0.75rem 0.85rem 0.25rem;
   font-size: 0.88rem;
   font-family: inherit;
   line-height: 1.45;
   color: var(--text-primary);
   resize: none;
-  min-height: 72px;
+  min-height: 52px;
   max-height: 140px;
   outline: none;
-  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+  overflow-y: auto;
+}
+
+.builder-chat-composer textarea::-webkit-scrollbar {
+  width: 4px;
+}
+
+.builder-chat-composer textarea::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.builder-chat-composer textarea::-webkit-scrollbar-thumb {
+  background: var(--border-heavy);
+  border-radius: 4px;
 }
 
 .builder-chat-composer textarea::placeholder {
   color: var(--text-muted);
 }
 
-.builder-chat-composer textarea:focus-visible {
-  border-color: var(--text-primary);
-  box-shadow: 0 0 0 1px var(--text-primary);
-}
-
 .builder-composer-toolbar {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-top: -38px;
-  padding: 0 0.65rem 0.45rem;
-  position: relative;
-  pointer-events: none;
+  padding: 0.2rem 0.65rem 0.5rem;
+  background: transparent;
 }
 
 .builder-composer-tools {
   display: flex;
   align-items: center;
   gap: 0.25rem;
-  pointer-events: auto;
 }
 
 .builder-composer-icon-btn {
@@ -767,7 +786,6 @@
   display: grid;
   place-items: center;
   cursor: pointer;
-  pointer-events: auto;
   transition: transform var(--transition-fast), opacity var(--transition-fast);
 }
 
