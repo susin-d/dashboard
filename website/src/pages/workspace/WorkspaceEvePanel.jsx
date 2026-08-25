@@ -1,27 +1,28 @@
-import { useState, useCallback } from 'react'
-import { Bot, Send, PanelRightClose, PanelRightOpen } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
+import { Bot, Send, PanelRightClose, PanelRightOpen, Square, Wrench } from 'lucide-react'
+import { useEveAgentChat } from './useEveAgentChat'
 
-export function WorkspaceEvePanel({ collapsed, onToggle }) {
-  const [message, setMessage] = useState('')
-  const [chatLog, setChatLog] = useState([])
-  const [sending, setSending] = useState(false)
+export function WorkspaceEvePanel({
+  collapsed,
+  onToggle,
+  workspaceId,
+  workspaceName,
+  activeFilePath,
+  onFilesChanged,
+}) {
+  const { messages, sending, streamText, activeTool, error, send, stop } = useEveAgentChat({
+    workspaceId,
+    workspaceName,
+    activeFilePath,
+    onFilesChanged,
+  })
+  const [draft, setDraft] = useState('')
+  const chatRef = useRef(null)
 
-  const handleSend = useCallback(async () => {
-    const text = message.trim()
-    if (!text || sending) return
-    setChatLog((log) => [...log, { role: 'user', content: text }])
-    setMessage('')
-    setSending(true)
-    try {
-      // Eve coding agent chat will be wired to the Eve API with workspace context
-      setChatLog((log) => [
-        ...log,
-        { role: 'assistant', content: 'Eve coding agent integration coming soon. Use the main Eve chat for now.' },
-      ])
-    } finally {
-      setSending(false)
-    }
-  }, [message, sending])
+  useEffect(() => {
+    const node = chatRef.current
+    if (node) node.scrollTop = node.scrollHeight
+  }, [messages, streamText, activeTool])
 
   if (collapsed) {
     return (
@@ -30,11 +31,19 @@ export function WorkspaceEvePanel({ collapsed, onToggle }) {
           className="workspace-eve-toggle"
           onClick={onToggle}
           title="Open Eve panel"
+          aria-label="Open Eve panel"
         >
           <PanelRightOpen size={16} />
         </button>
       </div>
     )
+  }
+
+  const submit = () => {
+    if (!draft.trim() || sending) return
+    const text = draft
+    setDraft('')
+    send(text)
   }
 
   return (
@@ -48,45 +57,73 @@ export function WorkspaceEvePanel({ collapsed, onToggle }) {
           className="workspace-eve-toggle"
           onClick={onToggle}
           title="Close Eve panel"
+          aria-label="Close Eve panel"
         >
           <PanelRightClose size={16} />
         </button>
       </div>
-      <div className="workspace-eve-chat">
-        {chatLog.length === 0 ? (
+      <div className="workspace-eve-chat" ref={chatRef}>
+        {messages.length === 0 && !streamText ? (
           <div className="workspace-eve-empty">
             <Bot size={24} />
             <p>Ask Eve to help with your code</p>
+            <span>Eve can read, edit, search, and run commands in this workspace.</span>
           </div>
         ) : (
-          chatLog.map((entry, index) => (
-            <div key={index} className={`workspace-eve-message ${entry.role}`}>
-              {entry.content}
-            </div>
-          ))
+          <>
+            {messages.map((entry, index) => (
+              <div key={index} className={`workspace-eve-message ${entry.role}`}>
+                {entry.content}
+              </div>
+            ))}
+            {activeTool && (
+              <div className="workspace-eve-tool">
+                <Wrench size={12} />
+                <span>Using tool: {activeTool}</span>
+              </div>
+            )}
+            {streamText && (
+              <div className="workspace-eve-message assistant streaming">{streamText}</div>
+            )}
+          </>
         )}
       </div>
+      {error && <div className="workspace-eve-error">{error}</div>}
       <div className="workspace-eve-input">
         <input
           type="text"
-          value={message}
-          onChange={(e) => setMessage(e.target.value)}
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
           onKeyDown={(e) => {
             if (e.key === 'Enter' && !e.shiftKey) {
               e.preventDefault()
-              handleSend()
+              submit()
             }
           }}
           placeholder="Ask Eve..."
+          aria-label="Ask Eve"
           disabled={sending}
         />
-        <button
-          className="workspace-eve-send"
-          onClick={handleSend}
-          disabled={!message.trim() || sending}
-        >
-          <Send size={14} />
-        </button>
+        {sending ? (
+          <button
+            className="workspace-eve-send"
+            onClick={stop}
+            title="Stop Eve"
+            aria-label="Stop Eve"
+          >
+            <Square size={14} />
+          </button>
+        ) : (
+          <button
+            className="workspace-eve-send"
+            onClick={submit}
+            disabled={!draft.trim()}
+            title="Send to Eve"
+            aria-label="Send to Eve"
+          >
+            <Send size={14} />
+          </button>
+        )}
       </div>
     </div>
   )

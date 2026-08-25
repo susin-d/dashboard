@@ -325,6 +325,10 @@ export function WorkspacePage() {
         <WorkspaceEvePanel
           collapsed={evePanelCollapsed}
           onToggle={() => setEvePanelCollapsed(!evePanelCollapsed)}
+          workspaceId={workspace.activeWorkspaceId}
+          workspaceName={workspace.activeWorkspace?.name}
+          activeFilePath={workspace.activeTab}
+          onFilesChanged={workspace.refreshTree}
         />
       </div>
 

@@ -1142,6 +1142,17 @@ input.workspace-browser-url:focus-visible {
   padding: 24px;
 }
 
+.workspace-eve-empty p {
+  margin: 0;
+  font-weight: 600;
+  color: var(--text-primary, #09090b);
+}
+
+.workspace-eve-empty span {
+  font-size: 12px;
+  line-height: 1.5;
+}
+
 .workspace-eve-message {
   padding: 8px 12px;
   border-radius: 10px;
@@ -1149,6 +1160,7 @@ input.workspace-browser-url:focus-visible {
   line-height: 1.5;
   max-width: 90%;
   word-wrap: break-word;
+  white-space: pre-wrap;
 }
 
 .workspace-eve-message.user {
@@ -1162,6 +1174,51 @@ input.workspace-browser-url:focus-visible {
   background: var(--bg-tertiary, #f4f4f5);
   color: var(--text-primary, #09090b);
   border: 1px solid var(--border-color, #e4e4e7);
+}
+
+.workspace-eve-message.assistant.streaming::after {
+  content: '▍';
+  margin-left: 2px;
+  animation: workspace-eve-caret 1s steps(2) infinite;
+}
+
+@keyframes workspace-eve-caret {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .workspace-eve-message.assistant.streaming::after {
+    animation: none;
+  }
+}
+
+.workspace-eve-tool {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  align-self: flex-start;
+  padding: 4px 10px;
+  border: 1px dashed var(--border-color, #e4e4e7);
+  border-radius: 999px;
+  font-size: 11px;
+  color: var(--text-secondary, #71717a);
+  background: var(--bg-primary, #ffffff);
+}
+
+.workspace-eve-error {
+  padding: 6px 12px;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--text-primary, #09090b);
+  background: var(--bg-tertiary, #f4f4f5);
+  border-top: 1px solid var(--border-color, #e4e4e7);
+  flex-shrink: 0;
 }
 
 .workspace-eve-input {
