@@ -2,11 +2,10 @@ import { useCallback, useEffect, useState } from 'react'
 import {
   ArrowLeft,
   Copy,
-  ExternalLink,
-  LayoutGrid,
   LayoutTemplate,
   Maximize2,
   Minimize2,
+  MonitorSmartphone,
   RefreshCw,
   Share2,
   Terminal,
@@ -17,7 +16,6 @@ import { WorkspaceFileTree } from '../workspace/WorkspaceFileTree'
 import {
   getStudioProject,
   publishStudioTemplate,
-  startPreview,
 } from '../../lib/studioApi'
 import { BuilderChat } from './BuilderChat'
 import { CommandConsole } from './CommandConsole'
@@ -35,6 +33,7 @@ export function StudioBuilderPage({ projectId, onBack }) {
   const [publishMessage, setPublishMessage] = useState('')
   const [shareCopied, setShareCopied] = useState(false)
   const [isFullscreen, setIsFullscreen] = useState(false)
+  const [deviceMode, setDeviceMode] = useState('desktop')
 
   const files = useStudioFiles(projectId)
 
@@ -111,16 +110,23 @@ export function StudioBuilderPage({ projectId, onBack }) {
     }
   }
 
-  const handleOpenExternal = async () => {
-    try {
-      const result = await startPreview(projectId)
-      if (result.preview_url) {
-        window.open(result.preview_url, '_blank', 'noopener,noreferrer')
-      }
-    } catch {
-      // ignore
+  const handleToggleFullscreen = () => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen?.().catch(() => {})
+      setIsFullscreen(true)
+    } else {
+      document.exitFullscreen?.().catch(() => {})
+      setIsFullscreen(false)
     }
   }
+
+  useEffect(() => {
+    const onFullscreenChange = () => {
+      setIsFullscreen(Boolean(document.fullscreenElement))
+    }
+    document.addEventListener('fullscreenchange', onFullscreenChange)
+    return () => document.removeEventListener('fullscreenchange', onFullscreenChange)
+  }, [])
 
   if (isLoading) return <LoadingState message="Loading Studio…" />
   if (error || !project) {
@@ -242,9 +248,17 @@ export function StudioBuilderPage({ projectId, onBack }) {
               </button>
             </div>
 
-            <div className="aistudio-route-bar" title="App Root">
-              <LayoutGrid size={13} aria-hidden="true" />
-              <span>/</span>
+            <div className="aistudio-route-bar" title="Device view & root path">
+              <button
+                type="button"
+                className={`aistudio-device-btn ${deviceMode === 'mobile' ? 'active' : ''}`}
+                onClick={() => setDeviceMode((m) => (m === 'desktop' ? 'mobile' : 'desktop'))}
+                title={deviceMode === 'desktop' ? 'Switch to mobile view' : 'Switch to desktop view'}
+                aria-label="Change mobile and web size"
+              >
+                <MonitorSmartphone size={14} aria-hidden="true" />
+              </button>
+              <span className="aistudio-route-path">/</span>
             </div>
 
             <div className="aistudio-stage-actions">
@@ -252,26 +266,17 @@ export function StudioBuilderPage({ projectId, onBack }) {
                 type="button"
                 className="aistudio-stage-icon-btn"
                 onClick={() => setPreviewRefreshKey((k) => k + 1)}
-                title="Reload preview"
-                aria-label="Reload preview"
+                title="Reload page"
+                aria-label="Reload page"
               >
                 <RefreshCw size={13} />
               </button>
               <button
                 type="button"
                 className="aistudio-stage-icon-btn"
-                onClick={handleOpenExternal}
-                title="Open in new tab"
-                aria-label="Open in new tab"
-              >
-                <ExternalLink size={13} />
-              </button>
-              <button
-                type="button"
-                className="aistudio-stage-icon-btn"
-                onClick={() => setIsFullscreen((f) => !f)}
-                title={isFullscreen ? 'Exit fullscreen' : 'Fullscreen'}
-                aria-label="Toggle fullscreen"
+                onClick={handleToggleFullscreen}
+                title={isFullscreen ? 'Exit full screen' : 'Full screen the site'}
+                aria-label="Toggle full screen"
               >
                 {isFullscreen ? <Minimize2 size={13} /> : <Maximize2 size={13} />}
               </button>
@@ -281,7 +286,11 @@ export function StudioBuilderPage({ projectId, onBack }) {
           {/* Stage Canvas */}
           <div className="aistudio-stage-canvas">
             {centerTab === 'preview' ? (
-              <PreviewPane projectId={projectId} refreshKey={previewRefreshKey} />
+              <PreviewPane
+                projectId={projectId}
+                refreshKey={previewRefreshKey}
+                deviceMode={deviceMode}
+              />
             ) : (
               <div className="aistudio-code-layout">
                 <aside className="aistudio-code-explorer">
