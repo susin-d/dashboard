@@ -89,6 +89,7 @@ async def init_db() -> None:
         await conn.run_sync(Base.metadata.create_all)
     # Run sync ALTERs off the loop so single worker stays responsive
     await asyncio.to_thread(_ensure_call_messages_column)
+    await asyncio.to_thread(_ensure_call_provider_columns)
     await asyncio.to_thread(_ensure_whatsapp_columns)
     await asyncio.to_thread(_ensure_eve_memory_embedding)
     # Composite indexes for pagination hot paths (lean, concurrent-safe)
@@ -108,6 +109,25 @@ def _ensure_call_messages_column() -> None:
                 conn.execute(text("ALTER TABLE calls ADD COLUMN messages JSON NOT NULL DEFAULT '[]'"))
         else:
             conn.execute(text("ALTER TABLE calls ADD COLUMN IF NOT EXISTS messages JSON NOT NULL DEFAULT '[]'"))
+        conn.commit()
+
+
+def _ensure_call_provider_columns() -> None:
+    """Backfill provider/external_sid/phone_number for dual call option (in_app vs twilio)."""
+    with sync_engine.connect() as conn:
+        if is_sqlite:
+            cols = {row[1] for row in conn.execute(text("PRAGMA table_info(calls)"))}
+            if "provider" not in cols:
+                conn.execute(text("ALTER TABLE calls ADD COLUMN provider TEXT DEFAULT 'in_app'"))
+                conn.execute(text("UPDATE calls SET provider='in_app' WHERE provider IS NULL"))
+            if "external_sid" not in cols:
+                conn.execute(text("ALTER TABLE calls ADD COLUMN external_sid TEXT"))
+            if "phone_number" not in cols:
+                conn.execute(text("ALTER TABLE calls ADD COLUMN phone_number TEXT"))
+        else:
+            conn.execute(text("ALTER TABLE calls ADD COLUMN IF NOT EXISTS provider VARCHAR(32) DEFAULT 'in_app'"))
+            conn.execute(text("ALTER TABLE calls ADD COLUMN IF NOT EXISTS external_sid VARCHAR(64)"))
+            conn.execute(text("ALTER TABLE calls ADD COLUMN IF NOT EXISTS phone_number VARCHAR(32)"))
         conn.commit()
 
 

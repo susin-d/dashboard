@@ -1,6 +1,6 @@
 /** Call center hook — single responsibility: orchestrate call lifecycle and signaling. */
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { createCall, sendCallSignal, triggerEveCall, updateCallStatus } from '../../lib/callsApi'
+import { createCall, createTwilioCall, sendCallSignal, triggerEveCall, triggerEveTwilioCall, updateCallStatus } from '../../lib/callsApi'
 import { callsSocket } from '../../lib/callsSocket'
 import { startRingtone, stopRingtone } from '../../utils/callWebRTC'
 import { notify, requestNotificationPermission } from '../../utils/browserNotifications'
@@ -9,6 +9,7 @@ import { useEveVoice } from './useEveVoice'
 import { useWebRTC } from './useWebRTC'
 
 export function useCallCenter({ user }) {
+  const [callProvider, setCallProvider] = useState('in_app')
   const [phase, setPhase] = useState('idle')
   const [call, setCall] = useState(null)
   const [incomingCall, setIncomingCall] = useState(null)
@@ -162,10 +163,29 @@ export function useCallCenter({ user }) {
   }, [teardown])
 
   const dial = useCallback(
-    async (calleeIdentifier, requestedMode) => {
+    async (calleeIdentifier, requestedMode, provider = 'in_app', phoneNumber = null) => {
+      // Dual provider: in_app (WebRTC) or twilio (PSTN)
+      if (provider === 'twilio' && phoneNumber) {
+        try {
+          setError('')
+          setCallProvider('twilio')
+          const tw = await createTwilioCall(phoneNumber, `Call from ${userRef.current?.displayName || 'StarWaves user'}`, requestedMode)
+          callIdRef.current = tw.id
+          setCall(tw)
+          setMode(requestedMode === 'video' ? 'video' : 'audio')
+          setPhase('dialing')
+          notify('Calling via Twilio', `Calling ${phoneNumber}…`, `twilio-${tw.id}`)
+          return
+        } catch (err) {
+          setError(err.message || 'Twilio call failed. Check TWILIO config.')
+          setPhase('error')
+          return
+        }
+      }
       requestNotificationPermission().catch(() => {})
       const requestMode = requestedMode === 'video' ? 'video' : 'audio'
       setError('')
+      setCallProvider('in_app')
       if (!navigator.mediaDevices?.getUserMedia) {
         setError('Voice and video calls are not supported in this browser.')
         setPhase('error')
@@ -240,15 +260,22 @@ export function useCallCenter({ user }) {
   }, [createPeer, flushPendingCandidates, mode, requestMedia, stopLocalMedia, call, incomingCall, pcRef, remoteOfferRef])
 
   const requestEveCall = useCallback(
-    async (requestedMode = 'audio') => {
+    async (requestedMode = 'audio', provider = 'in_app', phoneNumber = null, prompt = null) => {
       try {
         setError('')
-        const created = await triggerEveCall(requestedMode)
+        let created
+        if (provider === 'twilio' && phoneNumber) {
+          created = await triggerEveTwilioCall(phoneNumber, prompt, requestedMode)
+          setCallProvider('twilio')
+        } else {
+          created = await triggerEveCall(requestedMode)
+          setCallProvider('in_app')
+        }
         callIdRef.current = created.id
         setIncomingCall(created)
         setMode(requestedMode)
         setPhase('incoming')
-        notify('Incoming Eve Call', 'Incoming voice call from Eve AI Assistant', `call-incoming-${created.id}`)
+        notify('Incoming Eve Call', provider === 'twilio' ? `Eve calling ${phoneNumber} via phone` : 'Incoming voice call from Eve AI Assistant', `call-incoming-${created.id}`)
       } catch (err) {
         setError(err.message || 'Could not request call from Eve.')
         setPhase('error')
@@ -321,6 +348,8 @@ export function useCallCenter({ user }) {
     call,
     incomingCall,
     mode,
+    callProvider,
+    setCallProvider,
     localStream,
     remoteStream,
     muted,

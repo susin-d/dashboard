@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useState } from 'react'
 import { AlertCircle, Bot, Loader, Phone, PhoneCall, PhoneIncoming, RefreshCw, Video } from 'lucide-react'
 import { CallScreen } from '../components/calls/CallScreen'
+import { ScheduledCallsSection } from '../components/calls/ScheduledCallsSection'
 import { PageHeader } from '../components/ui'
-import { getRecentCalls } from '../lib/callsApi'
+import { getRecentCalls, getTwilioConfig } from '../lib/callsApi'
 import {
   callStatusLabel,
   callTimeAgo,
@@ -26,6 +27,10 @@ export function CallsPage({ callCenter, user }) {
   const { phase, dial, requestEveCall } = callCenter
   const [calleeIdentifier, setCalleeIdentifier] = useState('')
   const [mode, setMode] = useState('video')
+  const [provider, setProvider] = useState('in_app')
+  const [twilioPhone, setTwilioPhone] = useState('')
+  const [twilioPhoneEve, setTwilioPhoneEve] = useState('')
+  const [twilioEnabled, setTwilioEnabled] = useState(false)
   const [recent, setRecent] = useState([])
   const [loadingRecent, setLoadingRecent] = useState(true)
   const [recentError, setRecentError] = useState('')
@@ -43,24 +48,40 @@ export function CallsPage({ callCenter, user }) {
     loadRecent()
   }, [loadRecent, phase])
 
+  useEffect(() => {
+    getTwilioConfig()
+      .then((c) => setTwilioEnabled(Boolean(c?.enabled || c?.configured)))
+      .catch(() => setTwilioEnabled(false))
+  }, [])
+
   const handleStartCall = (e) => {
     e?.preventDefault()
+    if (provider === 'twilio') {
+      const phone = twilioPhone.trim()
+      if (!phone) return
+      dial(phone, mode, 'twilio', phone)
+      return
+    }
     const identifier = calleeIdentifier.trim()
     if (!identifier) return
-    dial(identifier, mode)
+    dial(identifier, mode, 'in_app')
   }
 
   const callBack = (targetIdentifier, callMode) => {
     if (!targetIdentifier) return
-    dial(targetIdentifier, callMode)
+    dial(targetIdentifier, callMode, 'in_app')
   }
 
   const handleCallEve = () => {
-    dial('eve@starwaves.app', 'audio')
+    dial('eve@starwaves.app', 'audio', 'in_app')
   }
 
   const handleRequestEveCall = () => {
-    requestEveCall?.('audio')
+    if (provider === 'twilio' && twilioPhoneEve.trim()) {
+      requestEveCall?.('audio', 'twilio', twilioPhoneEve.trim(), 'Hello from StarWaves Eve')
+    } else {
+      requestEveCall?.('audio', 'in_app')
+    }
   }
 
   const inCall = ACTIVE_CALL_PHASES.includes(phase)
@@ -120,7 +141,16 @@ export function CallsPage({ callCenter, user }) {
               <Bot size={16} />
               <span>Eve AI Assistant</span>
             </div>
-            <p className="eve-quick-call-desc">Have a real-time voice call with your StarWaves AI assistant.</p>
+            <p className="eve-quick-call-desc">Have a real-time voice call with your StarWaves AI assistant. Choose in-app (WebRTC) or real phone via Twilio.</p>
+            {twilioEnabled && (
+              <div className="calls-provider-toggle" role="group" aria-label="Eve call provider">
+                <button type="button" className={`calls-mode-option ${provider === 'in_app' ? 'active' : ''}`} onClick={() => setProvider('in_app')} aria-pressed={provider === 'in_app'}>In-App</button>
+                <button type="button" className={`calls-mode-option ${provider === 'twilio' ? 'active' : ''}`} onClick={() => setProvider('twilio')} aria-pressed={provider === 'twilio'}>Phone (Twilio)</button>
+              </div>
+            )}
+            {provider === 'twilio' && (
+              <input type="tel" className="form-input" placeholder="+14155551234" value={twilioPhoneEve} onChange={(e) => setTwilioPhoneEve(e.target.value)} aria-label="Eve Twilio phone" />
+            )}
             <div className="eve-quick-call-buttons">
               <button
                 type="button"
@@ -135,10 +165,11 @@ export function CallsPage({ callCenter, user }) {
                 type="button"
                 className="secondary-button"
                 onClick={handleRequestEveCall}
-                disabled={phase === 'dialing' || phase === 'connecting'}
+                disabled={phase === 'dialing' || phase === 'connecting' || (provider === 'twilio' && !twilioPhoneEve.trim())}
+                title={provider === 'twilio' ? 'Eve calls your phone' : 'Eve calls you in-app'}
               >
                 <PhoneIncoming size={14} />
-                <span>Receive call from Eve</span>
+                <span>{provider === 'twilio' ? 'Eve Call My Phone' : 'Eve Call Me'}</span>
               </button>
             </div>
           </div>
@@ -164,23 +195,28 @@ export function CallsPage({ callCenter, user }) {
             </button>
           </div>
 
+          {twilioEnabled && (
+            <div className="calls-provider-toggle" role="group" aria-label="Call provider" style={{ marginBottom: 12 }}>
+              <button type="button" className={`calls-mode-option ${provider === 'in_app' ? 'active' : ''}`} onClick={() => setProvider('in_app')} aria-pressed={provider === 'in_app'}>In-App</button>
+              <button type="button" className={`calls-mode-option ${provider === 'twilio' ? 'active' : ''}`} onClick={() => setProvider('twilio')} aria-pressed={provider === 'twilio'}>Phone (Twilio)</button>
+            </div>
+          )}
           <form className="calls-dialer-form" onSubmit={handleStartCall}>
-            <label className="input-label" htmlFor="caller-identifier">
-              Recipient
-            </label>
-            <input
-              id="caller-identifier"
-              type="text"
-              className="form-input"
-              placeholder="name@example.com or eve"
-              value={calleeIdentifier}
-              onChange={(e) => setCalleeIdentifier(e.target.value)}
-              autoComplete="email"
-            />
+            {provider === 'twilio' ? (
+              <>
+                <label className="input-label" htmlFor="twilio-phone">Phone (E.164)</label>
+                <input id="twilio-phone" type="tel" className="form-input" placeholder="+14155551234" value={twilioPhone} onChange={(e) => setTwilioPhone(e.target.value)} autoComplete="tel" />
+              </>
+            ) : (
+              <>
+                <label className="input-label" htmlFor="caller-identifier">Recipient</label>
+                <input id="caller-identifier" type="text" className="form-input" placeholder="name@example.com or eve" value={calleeIdentifier} onChange={(e) => setCalleeIdentifier(e.target.value)} autoComplete="email" />
+              </>
+            )}
             <button
               type="submit"
               className="primary-button calls-dial-button"
-              disabled={!calleeIdentifier.trim() || phase === 'dialing' || phase === 'connecting'}
+              disabled={(provider === 'twilio' ? !twilioPhone.trim() : !calleeIdentifier.trim()) || phase === 'dialing' || phase === 'connecting'}
             >
               {phase === 'dialing' || phase === 'connecting' ? (
                 <Loader size={16} className="calls-spin" />
@@ -189,7 +225,7 @@ export function CallsPage({ callCenter, user }) {
               ) : (
                 <Phone size={16} />
               )}
-              <span>{mode === 'video' ? 'Start video call' : 'Start voice call'}</span>
+              <span>{provider === 'twilio' ? 'Call Phone' : mode === 'video' ? 'Start video call' : 'Start voice call'}</span>
             </button>
           </form>
         </div>
@@ -263,6 +299,8 @@ export function CallsPage({ callCenter, user }) {
           )}
         </div>
       </div>
+
+      <ScheduledCallsSection />
     </section>
   )
 }

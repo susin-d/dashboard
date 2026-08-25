@@ -22,6 +22,20 @@ class SignalMessage(BaseModel):
 class CallCreate(BaseModel):
     callee_identifier: str = Field(min_length=1, max_length=320)
     mode: str = Field(default="video", pattern="^(audio|video)$")
+    provider: str = Field(default="in_app", pattern="^(in_app|twilio)$")
+    phone_number: str | None = Field(default=None, description="E.164 phone for Twilio PSTN, e.g. +14155551234")
+
+
+class TwilioCallCreate(BaseModel):
+    phone_number: str = Field(min_length=8, max_length=20, description="E.164 destination")
+    message: str | None = Field(default=None, max_length=1600)
+    mode: str = Field(default="audio", pattern="^(audio|video)$")
+
+
+class EveTwilioCallRequest(BaseModel):
+    phone_number: str = Field(min_length=8, max_length=20)
+    prompt: str | None = Field(default=None, max_length=1600)
+    mode: str = Field(default="audio", pattern="^(audio|video)$")
 
 
 class CallStatusUpdate(BaseModel):
@@ -39,6 +53,9 @@ class CallResponse(BaseModel):
     callee: CallUser
     mode: str
     status: str
+    provider: str = Field(default="in_app")
+    phone_number: str | None = None
+    external_sid: str | None = None
     messages: list[SignalMessage] = Field(default_factory=list)
     created_at: datetime | None = None
     updated_at: datetime | None = None

@@ -149,6 +149,16 @@ class Settings:
     whatsapp_my_number: str = os.getenv("WHATSAPP_MY_NUMBER", "")
     whatsapp_my_jid: str = os.getenv("WHATSAPP_MY_JID", "")
 
+    # Twilio PSTN provider (dual call option: in-app WebRTC vs PSTN)
+    twilio_account_sid: str | None = os.getenv("TWILIO_ACCOUNT_SID")
+    twilio_auth_token: str | None = os.getenv("TWILIO_AUTH_TOKEN")
+    twilio_phone_number: str | None = os.getenv("TWILIO_PHONE_NUMBER")
+    twilio_callback_base_url: str = os.getenv(
+        "TWILIO_CALLBACK_BASE_URL",
+        os.getenv("API_BASE_URL", "http://127.0.0.1:8000"),
+    )
+    twilio_enabled: bool = bool(os.getenv("TWILIO_ACCOUNT_SID") and os.getenv("TWILIO_AUTH_TOKEN") and os.getenv("TWILIO_PHONE_NUMBER"))
+
     @property
     def whatsapp_owner_aliases(self) -> list[str]:
         raw = self.whatsapp_owner_aliases_raw or ""

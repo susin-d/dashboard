@@ -4,7 +4,7 @@ from typing import Any
 
 from google.cloud.firestore_v1 import Client
 
-from app.services.eve.handlers.call import handle_trigger_eve_call
+from app.services.eve.handlers.call import handle_make_twilio_call, handle_trigger_eve_call
 from app.services.eve.handlers.memory import (
     handle_forget_memory,
     handle_recall_memories,
@@ -70,6 +70,7 @@ _TOOL_HANDLERS: dict[str, Any] = {
     "list_eve_schedules": handle_list_eve_schedules,
     "delete_eve_schedule": handle_delete_eve_schedule,
     "trigger_eve_call": handle_trigger_eve_call,
+    "make_twilio_call": handle_make_twilio_call,
     "read_workspace_file": handle_read_workspace_file,
     "write_workspace_file": handle_write_workspace_file,
     "list_workspace_files": handle_list_workspace_files,

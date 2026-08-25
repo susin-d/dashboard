@@ -4,6 +4,7 @@ from app.api.routes import (
     ai_models,
     auth,
     calls,
+    calls_twilio,
     coding_stats,
     competitive_coding_profile,
     contacts,
@@ -37,6 +38,7 @@ api_router.include_router(whatsapp.router, tags=["WhatsApp integration"])
 api_router.include_router(ai_models.router, tags=["AI models settings"])
 api_router.include_router(auth.router, tags=["auth"])
 api_router.include_router(calls.router, tags=["calls"])
+api_router.include_router(calls_twilio.router, tags=["calls"])
 api_router.include_router(contacts.router, tags=["contacts"])
 api_router.include_router(cron.router, tags=["cron serverless jobs"])
 api_router.include_router(email.router, tags=["email"])

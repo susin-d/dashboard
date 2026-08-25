@@ -51,3 +51,21 @@ export function triggerEveCall(mode = 'audio') {
     method: 'POST',
   })
 }
+
+export function triggerEveTwilioCall(phoneNumber, prompt, mode = 'audio') {
+  return request('/trigger-eve-twilio', {
+    method: 'POST',
+    body: JSON.stringify({ phone_number: phoneNumber, prompt, mode }),
+  })
+}
+
+export function createTwilioCall(phoneNumber, message, mode = 'audio') {
+  return request('/twilio', {
+    method: 'POST',
+    body: JSON.stringify({ phone_number: phoneNumber, message, mode }),
+  })
+}
+
+export function getTwilioConfig() {
+  return request('/twilio/config')
+}

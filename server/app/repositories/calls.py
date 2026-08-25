@@ -32,7 +32,7 @@ class CallRepository:
     def _document(self, call_id: str):
         return self.collection.document(call_id)
 
-    def create(self, caller: CallUser, callee: CallUser, mode: str) -> dict:
+    def create(self, caller: CallUser, callee: CallUser, mode: str, provider: str = "in_app", phone_number: str | None = None, external_sid: str | None = None) -> dict:
         call_id = uuid.uuid4().hex
         data = {
             "caller": caller.model_dump(),
@@ -40,12 +40,21 @@ class CallRepository:
             "participants": [caller.uid, callee.uid],
             "mode": mode,
             "status": "ringing",
+            "provider": provider,
+            "phone_number": phone_number,
+            "external_sid": external_sid,
             "messages": [],
             "created_at": _now_iso(),
             "updated_at": _now_iso(),
         }
         self._document(call_id).set(data)
         return {**data, "id": call_id}
+
+    def set_external_sid(self, call_id: str, sid: str) -> None:
+        self._document(call_id).update({"external_sid": sid, "updated_at": _now_iso()})
+
+    def set_phone_number(self, call_id: str, phone: str) -> None:
+        self._document(call_id).update({"phone_number": phone, "updated_at": _now_iso()})
 
     def get(self, call_id: str) -> dict | None:
         doc = self._document(call_id).get()
