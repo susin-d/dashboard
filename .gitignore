@@ -16,3 +16,4 @@ workspaces/
 server/.env
 server/.env.prod
 services/whatsapp-worker/.env
+.zcode/
