@@ -14,6 +14,7 @@ from sqlalchemy.orm import Session
 
 from app.db.sql._shared import coerce_model_value
 from app.db.sql.query import SqlQuery, SqlSnapshot
+from app.core.rls import set_rls_user
 
 
 def generic_get_doc(
@@ -23,6 +24,7 @@ def generic_get_doc(
     doc_id: str,
     to_dict: Callable[[Any], dict[str, Any]],
 ) -> SqlSnapshot:
+    set_rls_user(session, user_id)
     obj = session.get(model_cls, doc_id)
     if not obj or getattr(obj, "user_id", None) != user_id:
         return SqlSnapshot(doc_id, None, exists=False)
@@ -59,6 +61,7 @@ def generic_set_doc(
     merge: bool,
     defaults: dict[str, Any] | None = None,
 ) -> None:
+    set_rls_user(session, user_id)
     obj = session.get(model_cls, doc_id)
     if not obj:
         payload = {"id": doc_id, "user_id": user_id}
@@ -90,6 +93,8 @@ def generic_set_doc(
 
 
 def generic_delete_doc(session: Session, model_cls, doc_id: str, user_id: str | None = None) -> None:
+    if user_id:
+        set_rls_user(session, user_id)
     obj = session.get(model_cls, doc_id)
     if not obj:
         return
@@ -109,6 +114,7 @@ def generic_query(
     filter_map: dict[str, Callable] | None = None,
     order_field: str = "created_at",
 ) -> list[SqlSnapshot]:
+    set_rls_user(session, user_id)
     stmt = select(model_cls).where(model_cls.user_id == user_id)  # type: ignore[attr-defined]
     has_deleted_filter = any(f[0] == "deleted" for f in query.filters)
     if not has_deleted_filter and hasattr(model_cls, "deleted"):

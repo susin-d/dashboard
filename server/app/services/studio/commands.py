@@ -132,9 +132,16 @@ def run_workspace_command(
             if os.path.basename(argv[0]).lower() in {"python", "python3", "node"}:
                 if any(flag in argv for flag in ("-c", "-e")):
                     raise CommandNotAllowedError("Interpreter -c/-e execution is not allowed.")
-            # Prevent npm/pip arbitrary script execution
-            if os.path.basename(argv[0]).lower() in {"npm", "npx", "pip", "pip3", "yarn", "pnpm"} and "--ignore-scripts" not in argv:
-                argv = argv + ["--ignore-scripts"] if os.path.basename(argv[0]).lower() in {"npm", "yarn"} else argv
+            # Prevent npm/pip arbitrary script execution (pip setup.py / npm postinstall)
+            base = os.path.basename(argv[0]).lower()
+            if base in {"npm", "yarn"} and "--ignore-scripts" not in argv:
+                argv = argv + ["--ignore-scripts"]
+            elif base in {"pip", "pip3"} and "--no-build-isolation" not in argv:
+                # Force no build isolation to reduce arbitrary code, require --ignore-scripts equivalent
+                if "--ignore-scripts" not in argv and "install" in argv:
+                    argv = argv + ["--no-build-isolation"]
+            elif base in {"npx", "pnpm"} and "--ignore-scripts" not in argv and "--no-scripts" not in argv:
+                argv = argv + ["--ignore-scripts"]
             result = subprocess.run(
                 argv,
                 cwd=cwd,
