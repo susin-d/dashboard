@@ -44,31 +44,20 @@ def handle_search_workspace_files(database: SqlClient, user_id: str, arguments: 
 
 def handle_run_workspace_command(database: SqlClient, user_id: str, arguments: dict) -> tuple[dict, None, None]:
     from app.core.config import settings
+    from app.services.studio.commands import run_workspace_command as _run_studio_command
 
     if getattr(settings, "is_serverless", False):
         raise ValueError("Command execution is not available in serverless mode.")
-    import subprocess
-
-    from app.repositories.workspace_files import _workspace_root
-
     ws_id = arguments.get("workspace_id", "default")
-    cwd = _workspace_root(user_id, workspace_id=ws_id)
-    try:
-        result = subprocess.run(
-            arguments["command"],
-            shell=True,
-            capture_output=True,
-            text=True,
-            timeout=30,
-            cwd=cwd,
-        )
-        return {
-            "stdout": result.stdout[:5000],
-            "stderr": result.stderr[:2000],
-            "exit_code": result.returncode,
-        }, None, None
-    except subprocess.TimeoutExpired:
-        raise ValueError("Command timed out after 30 seconds.")
+    command = arguments.get("command") or ""
+    if not command.strip():
+        raise ValueError("command must not be empty.")
+    result = _run_studio_command(user_id, ws_id, command, timeout_seconds=30)
+    return {
+        "stdout": result.get("stdout", "")[:5000],
+        "stderr": result.get("stderr", "")[:2000],
+        "exit_code": result.get("exit_code", result.get("returncode", 0)),
+    }, None, None
 
 
 def handle_open_workspace_browser(database: SqlClient, user_id: str, arguments: dict) -> tuple[dict, None, dict]:

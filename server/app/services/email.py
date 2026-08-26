@@ -23,7 +23,8 @@ def render_template(template_name: str, context: dict) -> str:
         raise FileNotFoundError(f"Email template not found: {template_path}")
 
     content = template_path.read_text(encoding="utf-8")
-    template = jinja2.Template(content)
+    env = jinja2.Environment(autoescape=jinja2.select_autoescape(["html", "xml"]))
+    template = env.from_string(content)
     return template.render(**context)
 
 
@@ -182,7 +183,8 @@ def send_reminder_email(
 ) -> bool:
     subject = f"Reminder: {reminder_title} - StarWaves"
     display_name = user_name or to_email.split("@")[0]
-    description_block = f"<p><strong>Details:</strong> {description}</p>" if description else ""
+    description_escaped = jinja2.escape(description) if description else ""
+    description_block = f"<p><strong>Details:</strong> {description_escaped}</p>" if description else ""
 
     body_html = render_template(
         "reminder.html",

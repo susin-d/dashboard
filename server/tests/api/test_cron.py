@@ -33,9 +33,8 @@ class TestCronEndpoints(unittest.TestCase):
     @patch("app.api.routes.cron.list_all_due_schedules", return_value=[])
     def test_cron_authorization_failure(self, mock_schedules, mock_db):
         mock_db.return_value = MagicMock()
-        with patch("app.api.routes.cron.any_provider_available", return_value=False):
-            response = self.client.get(
-                "/api/v1/cron/process-jobs",
-                headers={"Authorization": "Bearer invalid-wrong-secret"}
-            )
-            self.assertEqual(response.status_code, 401)
+        response = self.client.get(
+            "/api/v1/cron/process-jobs",
+            headers={"Authorization": "Bearer invalid-wrong-secret"}
+        )
+        self.assertEqual(response.status_code, 401)

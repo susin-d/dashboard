@@ -51,7 +51,15 @@ export function openOAuthPopup(url, title = 'google-oauth-popup') {
       }
     }
 
+    const allowedOrigins = (() => {
+      try {
+        const apiUrl = import.meta.env.VITE_API_URL || ''
+        if (apiUrl.startsWith('http')) return [new URL(apiUrl).origin]
+      } catch {}
+      return []
+    })()
     const handleMessage = (event) => {
+      if (allowedOrigins.length && !allowedOrigins.includes(event.origin) && event.origin !== window.location.origin) return
       if (
         event.data &&
         typeof event.data === 'object' &&

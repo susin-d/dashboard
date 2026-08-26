@@ -5,6 +5,8 @@ from typing import Any
 import httpx
 from bs4 import BeautifulSoup
 
+from app.services.http_requests import HttpRequestError, _assert_public_url
+
 DEFAULT_USER_AGENT = (
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
     "AppleWebKit/537.36 (KHTML, like Gecko) "
@@ -234,6 +236,10 @@ def fetch_web_page(url: str, max_chars: int = DEFAULT_PAGE_CHARS) -> dict[str, A
     parsed = urllib.parse.urlparse(url)
     if not parsed.netloc:
         raise ValueError(f"Invalid web URL: {url}")
+    try:
+        _assert_public_url(url)
+    except HttpRequestError as exc:
+        raise ValueError(str(exc)) from exc
 
     max_chars = max(500, min(int(max_chars), MAX_PAGE_CHARS))
     cache_key = f"{url}:{max_chars}"
@@ -251,15 +257,21 @@ def fetch_web_page(url: str, max_chars: int = DEFAULT_PAGE_CHARS) -> dict[str, A
         with httpx.Client(timeout=FETCH_TIMEOUT, follow_redirects=True) as client:
             response = client.get(url, headers=headers)
             response.raise_for_status()
+            final_url = str(response.url)
+            try:
+                _assert_public_url(final_url)
+            except HttpRequestError as exc:
+                raise ValueError(f"Redirect to private address blocked: {final_url}: {exc}") from exc
     except httpx.TimeoutException:
         raise ValueError(f"Request to {url} timed out.")
     except httpx.HTTPStatusError as e:
         raise ValueError(f"HTTP error {e.response.status_code} while fetching {url}.")
+    except ValueError:
+        raise
     except Exception as e:
-        raise ValueError(f"Failed to fetch {url}: {str(e)}")
+        raise ValueError(f"Failed to fetch {url}: {str(e)}") from e
 
     content_type = response.headers.get("content-type", "").lower()
-    final_url = str(response.url)
 
     if "application/json" in content_type:
         text = response.text[:max_chars]

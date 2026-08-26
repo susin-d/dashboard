@@ -1,11 +1,16 @@
 """WhatsApp webhook — dispatches whatsmeow worker events."""
 
+import hashlib
+import hmac
+import json
 import logging
 from datetime import datetime, timezone
 from uuid import uuid4
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Header, HTTPException, Request
 from app.db import SqlClient, get_firestore
+
+from app.core.config import settings
 
 from app.api.routes.whatsapp._shared import has_eve_mention, resolve_chat_name
 from app.core.whatsapp_ws_manager import whatsapp_ws_manager
@@ -74,8 +79,26 @@ async def _handle_history(payload: dict, database: SqlClient):
     return {"status": "synced", "chats": len(chats_data), "messages": len(msgs_data)}
 
 
+def _verify_worker_signature(request: Request, raw_body: bytes):
+    secret = getattr(settings, "whatsapp_worker_secret", None)
+    if not secret:
+        return  # no secret configured → allow (dev) but warn
+    provided = request.headers.get("x-worker-signature") or request.headers.get("x-whatsapp-signature") or ""
+    expected = hmac.new(secret.encode(), raw_body, hashlib.sha256).hexdigest()
+    if not hmac.compare_digest(provided, expected):
+        raise HTTPException(status_code=401, detail="Invalid worker signature.")
+
+
 @router.post("/webhook")
-async def whatsapp_incoming_webhook(payload: dict, database: SqlClient = Depends(get_firestore)):
+async def whatsapp_incoming_webhook(request: Request, database: SqlClient = Depends(get_firestore)):
+    raw = await request.body()
+    _verify_worker_signature(request, raw)
+    try:
+        payload = json.loads(raw) if raw else {}
+    except json.JSONDecodeError:
+        raise HTTPException(status_code=400, detail="Invalid JSON payload.")
+    if not isinstance(payload, dict):
+        payload = {}
     if payload.get("type") == "qr_update":
         return await _handle_qr(payload)
     if payload.get("type") == "status_update":

@@ -18,11 +18,20 @@ async def whatsapp_websocket(
     token: str = Query(..., description="Starwaves auth token"),
 ) -> None:
     """Persistent WebSocket connection for WhatsApp live updates."""
+    origin = websocket.headers.get("origin")
+    if origin:
+        from app.core.cors import is_allowed_origin
+
+        if not is_allowed_origin(origin):
+            await websocket.close(code=4003)
+            return
+    if len(token) > 2048:
+        await websocket.close(code=4001)
+        return
     try:
         user = get_current_user_from_token(token)
     except Exception as e:
         logger.warning("WhatsApp WS auth failed: %s", e)
-        await websocket.accept()
         await websocket.close(code=4001)
         return
 
@@ -41,16 +50,21 @@ async def whatsapp_websocket(
 
     try:
         while True:
-            # Client can send actions or typing state
+            # Client can send actions or typing state — bound size
             data = await websocket.receive_json()
+            if not isinstance(data, dict) or len(str(data)) > 4096:
+                continue
             msg_type = data.get("type")
             if msg_type == "pong":
                 continue
             elif msg_type == "typing":
-                # Broadcast typing indicator
+                chat_id = str(data.get("chat_id") or "")[:128]
+                if not chat_id:
+                    continue
+                # Broadcast typing indicator (rate-limited implicitly by WS manager)
                 await whatsapp_ws_manager.broadcast_to_user(
                     uid,
-                    {"type": "user_typing", "chat_id": data.get("chat_id"), "typing": data.get("typing", True)},
+                    {"type": "user_typing", "chat_id": chat_id, "typing": bool(data.get("typing", True))},
                 )
     except WebSocketDisconnect:
         pass

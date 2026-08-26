@@ -26,7 +26,16 @@ function persistUrl(workspaceId, url) {
 function normalizeUrl(raw) {
   const value = raw.trim()
   if (!value) return ''
-  if (/^[a-z][a-z0-9+.-]*:/i.test(value)) return value
+  if (/^javascript:/i.test(value) || /^data:/i.test(value) || /^file:/i.test(value)) return ''
+  if (/^[a-z][a-z0-9+.-]*:/i.test(value)) {
+    try {
+      const parsed = new URL(value)
+      if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return ''
+      return value
+    } catch {
+      return ''
+    }
+  }
   return `https://${value}`
 }
 
@@ -123,7 +132,7 @@ export function WorkspaceBrowser({ workspaceId, initialUrl, htmlContent, onClose
           className="workspace-browser-frame"
           src={url}
           title="Workspace browser"
-          sandbox="allow-scripts allow-forms allow-popups allow-same-origin allow-modals"
+          sandbox="allow-scripts allow-forms allow-popups allow-modals"
         />
       ) : (
         <div className="workspace-browser-empty">

@@ -61,6 +61,15 @@ class ProjectRepository:
         try:
             snapshot = reference.get()
             if not snapshot.exists:
+                # Prevent PATCH from creating/overwriting foreign global PK (BOLA)
+                # Check if doc exists globally for any user — if so, don't create via attacker's collection
+                from app.db.session import sync_engine
+                from sqlalchemy.orm import Session
+                from app.models import Project
+
+                with Session(sync_engine) as session:
+                    if session.get(Project, project_id) is not None:
+                        return None
                 base_data = {
                     "name": updates.get("name") or project_id,
                     "description": updates.get("description") or "",

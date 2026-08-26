@@ -89,8 +89,9 @@ class TestWebBrowsing(unittest.TestCase):
         with self.assertRaises(ValueError):
             fetch_web_page("not a url at all ::::")
 
+    @patch("app.services.web_browsing._assert_public_url")
     @patch("httpx.Client.get")
-    def test_fetch_web_page_html(self, mock_get):
+    def test_fetch_web_page_html(self, mock_get, mock_assert):
         html_content = """
         <!DOCTYPE html>
         <html>
@@ -132,8 +133,9 @@ class TestWebBrowsing(unittest.TestCase):
         self.assertNotIn("Navigation links", data["content"])
         self.assertNotIn("Footer links", data["content"])
 
+    @patch("app.services.web_browsing._assert_public_url")
     @patch("httpx.Client.get")
-    def test_fetch_web_page_json(self, mock_get):
+    def test_fetch_web_page_json(self, mock_get, mock_assert):
         mock_response = MagicMock()
         mock_response.status_code = 200
         mock_response.text = '{"status": "ok", "items": [1, 2, 3]}'

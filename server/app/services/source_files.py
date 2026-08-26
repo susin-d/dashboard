@@ -14,6 +14,12 @@ class SourceFileError(RuntimeError):
 def fetch_source_bytes(user_id: str, source: str) -> tuple[bytes, str]:
     """Return (bytes, mime_type) for a workspace file path or HTTP(S) URL."""
     if source.startswith(("http://", "https://")):
+        from app.services.http_requests import HttpRequestError, _assert_public_url
+
+        try:
+            _assert_public_url(source)
+        except HttpRequestError as exc:
+            raise SourceFileError(str(exc)) from exc
         with create_sync_client() as http:
             response = http.get(source)
         response.raise_for_status()

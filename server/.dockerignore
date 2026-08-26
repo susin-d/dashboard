@@ -15,3 +15,8 @@ htmlcov/
 .vscode
 .idea
 serviceAccountKey.json
+.env
+.env.*
+*.db
+workspaces/
+starwaves.db

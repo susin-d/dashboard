@@ -36,10 +36,10 @@ class WhatsAppMediaAttachment(BaseModel):
 
 
 class WhatsAppMessageCreate(BaseModel):
-    chat_id: str = Field(description="WhatsApp JID or phone number (e.g. 1234567890@s.whatsapp.net)")
-    content: str = Field(default="", description="Message text content")
+    chat_id: str = Field(description="WhatsApp JID or phone number (e.g. 1234567890@s.whatsapp.net)", max_length=128, pattern=r"^[a-zA-Z0-9@._\-]+$")
+    content: str = Field(default="", description="Message text content", max_length=4000)
     media: Optional[WhatsAppMediaAttachment] = None
-    reply_to_message_id: Optional[str] = None
+    reply_to_message_id: Optional[str] = Field(default=None, max_length=128)
 
 
 class WhatsAppMessageResponse(BaseModel):

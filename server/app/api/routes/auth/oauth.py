@@ -1,6 +1,7 @@
 """Google OAuth authentication: login redirect and callback."""
 
 import asyncio
+import json
 from urllib.parse import urlencode, urlparse
 
 import httpx
@@ -12,6 +13,7 @@ from itsdangerous import BadSignature, SignatureExpired
 from app.api.routes.auth._shared import _send_welcome_email_best_effort, state_serializer
 from app.core.auth import create_user_token
 from app.core.config import settings
+from app.core.cors import is_allowed_origin as _is_allowed_origin
 from app.repositories.users import get_or_create_google_user
 
 router = APIRouter(prefix="/auth")
@@ -25,14 +27,17 @@ def google_login(request: Request, origin: str | None = None):
             detail="Google OAuth is not configured on the server.",
         )
 
-    client_origin = origin or request.headers.get("referer") or request.headers.get("origin") or settings.frontend_url
+    raw_origin = origin or request.headers.get("referer") or request.headers.get("origin") or settings.frontend_url
     try:
-        parsed = urlparse(client_origin)
+        parsed = urlparse(raw_origin)
         if parsed.scheme and parsed.netloc:
             client_origin = f"{parsed.scheme}://{parsed.netloc}"
         else:
             client_origin = settings.frontend_url
     except Exception:
+        client_origin = settings.frontend_url
+    # Validate against allowlist — prevent open-redirect token theft via evil.vercel.app
+    if not _is_allowed_origin(client_origin):
         client_origin = settings.frontend_url
 
     state = state_serializer().dumps({"action": "google-auth", "origin": client_origin})
@@ -133,6 +138,15 @@ async def google_callback(
         },
     )
 
+    # Validate target_origin again at callback time (defense-in-depth)
+    if not _is_allowed_origin(target_origin):
+        target_origin = settings.frontend_url
+    token_json = json.dumps(token)
+    uid_json = json.dumps(user_record["uid"])
+    email_json = json.dumps(user_record["email"])
+    display_json = json.dumps(user_record.get("display_name") or name)
+    origin_json = json.dumps(target_origin)
+
     html_content = f"""
     <!DOCTYPE html>
     <html>
@@ -143,21 +157,22 @@ async def google_callback(
       <body>
         <script>
           const authData = {{
-            token: "{token}",
+            token: {token_json},
             user: {{
-              uid: "{user_record['uid']}",
-              email: "{user_record['email']}",
-              displayName: "{user_record.get('display_name') or name}",
+              uid: {uid_json},
+              email: {email_json},
+              displayName: {display_json},
               emailVerified: true
             }}
           }};
+          const targetOrigin = {origin_json};
           try {{
             if (window.opener) {{
-              window.opener.postMessage({{ type: "STARWAVES_AUTH_SUCCESS", data: authData }}, "*");
+              window.opener.postMessage({{ type: "STARWAVES_AUTH_SUCCESS", data: authData }}, targetOrigin);
               setTimeout(() => {{ try {{ window.close(); }} catch(e) {{}} }}, 100);
             }}
           }} catch (e) {{}}
-          window.location.replace("{target_origin}/#token=" + encodeURIComponent("{token}"));
+          window.location.replace(targetOrigin + "/#token=" + encodeURIComponent({token_json}));
         </script>
         <p>Authentication successful. Redirecting to StarWaves...</p>
       </body>

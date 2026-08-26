@@ -58,7 +58,7 @@ export function PreviewPane({ projectId, refreshKey, deviceMode = 'desktop' }) {
           key={`${previewUrl}-${refreshKey}`}
           src={previewUrl}
           title="App preview"
-          sandbox="allow-scripts allow-forms allow-popups allow-same-origin"
+          sandbox="allow-scripts allow-forms allow-popups"
           className="studio-preview-frame"
         />
       </div>

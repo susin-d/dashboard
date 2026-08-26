@@ -43,9 +43,14 @@ def integration_accounts_reference(database: SqlClient, user_id: str, integratio
 
 def oauth_callback_html(frontend_url: str, feature: str, error_reason: str | None = None) -> HTMLResponse:
     """HTML close-and-redirect snippet used by OAuth callback routes."""
+    import json
+
     status = "error" if error_reason else "success"
-    err_str = (error_reason or "").replace('"', '\\"')
-    redirect_target = (
+    feature_js = json.dumps(feature)
+    status_js = json.dumps(status)
+    error_js = json.dumps(error_reason or "")
+    origin_js = json.dumps(frontend_url)
+    redirect_js = json.dumps(
         f"{frontend_url}/app/setting?{feature}=error&reason={error_reason}"
         if error_reason
         else f"{frontend_url}/app/setting?{feature}=connected"
@@ -58,13 +63,14 @@ def oauth_callback_html(frontend_url: str, feature: str, error_reason: str | Non
   try {{
     var payload = {{
       type: "STARWAVES_OAUTH_CALLBACK",
-      feature: "{feature}",
-      status: "{status}",
-      error: "{err_str}"
+      feature: {feature_js},
+      status: {status_js},
+      error: {error_js}
     }};
+    var targetOrigin = {origin_js};
     if (window.opener) {{
       try {{
-        window.opener.postMessage(payload, "*");
+        window.opener.postMessage(payload, targetOrigin);
       }} catch (err) {{}}
     }}
     if (window.BroadcastChannel) {{
@@ -80,7 +86,7 @@ def oauth_callback_html(frontend_url: str, feature: str, error_reason: str | Non
   }} catch (e) {{}}
   window.close();
   setTimeout(function() {{
-    window.location.href = "{redirect_target}";
+    window.location.href = {redirect_js};
   }}, 800);
 </script>
 </body>

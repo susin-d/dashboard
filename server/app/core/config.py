@@ -77,9 +77,8 @@ class Settings:
         "AUTH_GOOGLE_CALLBACK_URL",
         "http://127.0.0.1:8000/api/v1/auth/google/callback",
     )
-    auth_secret_key: str = os.getenv(
-        "AUTH_SECRET_KEY",
-        "starwaves-super-secret-auth-key-change-in-prod",
+    auth_secret_key: str = os.getenv("AUTH_SECRET_KEY") or (
+        "starwaves-super-secret-auth-key-change-in-prod" if app_env != "production" else ""
     )
     default_ai_provider: str = os.getenv("DEFAULT_AI_PROVIDER", "ollama")
     openai_api_key: str | None = os.getenv("OPENAI_API_KEY")
@@ -132,7 +131,9 @@ class Settings:
     smtp_from_email: str = os.getenv("SMTP_FROM_EMAIL", "noreply@starwaves.susindran.in")
     smtp_use_tls: bool = os.getenv("SMTP_USE_TLS", "true").lower() == "true"
     smtp_use_ssl: bool = os.getenv("SMTP_USE_SSL", "false").lower() == "true"
-    cron_secret: str | None = os.getenv("CRON_SECRET", "starwaves-cron-secret")
+    cron_secret: str | None = os.getenv("CRON_SECRET") or (
+        "starwaves-cron-secret" if app_env != "production" else None
+    )
     # Unified serverless flag: VERCEL/Lambda auto-detect + explicit IS_SERVERLESS override (see main.py lifespan)
     is_serverless: bool = bool(
         os.getenv("VERCEL") or os.getenv("AWS_LAMBDA_FUNCTION_NAME") or os.getenv("IS_SERVERLESS", "false").lower() == "true"
@@ -153,6 +154,7 @@ class Settings:
     whatsapp_owner_aliases_raw: str = os.getenv("WHATSAPP_OWNER_ALIASES", "@susindran,@susin,@susindran_d")
     whatsapp_my_number: str = os.getenv("WHATSAPP_MY_NUMBER", "")
     whatsapp_my_jid: str = os.getenv("WHATSAPP_MY_JID", "")
+    whatsapp_worker_secret: str | None = os.getenv("WHATSAPP_WORKER_SECRET")
 
     # Twilio PSTN provider (dual call option: in-app WebRTC vs PSTN)
     twilio_account_sid: str | None = os.getenv("TWILIO_ACCOUNT_SID")

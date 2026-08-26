@@ -23,17 +23,25 @@ def serialize_dates(values: dict[str, Any]) -> dict[str, Any]:
 def paginate_collection(collection, order_field: str, cursor: str | None, limit: int):
     # Use server-side deleted filter when available; fall back to Python filter for legacy stores.
     # Fetch limit+1 to detect has_more without over-fetching 3x.
+    from fastapi import HTTPException
     try:
         base_query = collection.where("deleted", "==", False)
     except Exception:
         base_query = collection
     query = base_query.order_by(order_field, direction=Query.DESCENDING)
-    cursor_id = decode_cursor(cursor)
+    try:
+        cursor_id = decode_cursor(cursor)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="Invalid pagination cursor.") from exc
     if cursor_id:
         try:
             cursor_doc = collection.document(cursor_id).get()
-            if cursor_doc.exists:
+            # Verify cursor belongs to same collection (owned) and not deleted
+            if cursor_doc.exists and not (cursor_doc.to_dict() or {}).get("deleted"):
                 query = query.start_after(cursor_doc)
+            elif cursor_doc.exists:
+                # Deleted cursor — ignore (avoid leaking)
+                pass
         except Exception:
             pass
     raw_documents = list(query.limit(limit + 1).stream())

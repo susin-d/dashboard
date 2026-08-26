@@ -28,8 +28,12 @@ def encode_cursor(document_id: str) -> str:
 def decode_cursor(cursor: str | None) -> str | None:
     if not cursor:
         return None
+    if len(cursor) > 512:
+        raise ValueError("Invalid pagination cursor.")
     try:
-        return base64.urlsafe_b64decode(cursor.encode()).decode()
+        # Pad base64 if needed
+        padded = cursor + "=" * (-len(cursor) % 4)
+        return base64.urlsafe_b64decode(padded.encode()).decode()
     except Exception as error:
         raise ValueError("Invalid pagination cursor.") from error
 

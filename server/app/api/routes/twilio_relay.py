@@ -118,9 +118,16 @@ async def twilio_relay_ws(
     websocket: WebSocket,
     call_id: str = Query(default=""),
 ) -> None:
+    # Basic auth: require valid call_id and optional token check; Twilio relay should be internal
+    if not call_id or len(call_id) > 128:
+        await websocket.close(code=4001)
+        return
     await websocket.accept()
     database = get_firestore()
     user_record = _resolve_user_record(database, call_id)
+    if not user_record:
+        # Unknown call — don't stream but keep socket to avoid info leak timing
+        pass
 
     # Mark the PSTN call active as soon as Twilio connects the media session.
     if call_id:

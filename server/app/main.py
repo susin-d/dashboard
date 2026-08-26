@@ -16,36 +16,21 @@ from app.api.routes.calls_ws import router as calls_ws_router
 from app.api.routes.twilio_relay import router as twilio_relay_router
 from app.api.routes.whatsapp_ws import router as whatsapp_ws_router
 from app.core.config import settings
+from app.core.cors import ALLOWED_ORIGIN_REGEX, is_allowed_origin as _is_allowed_origin
 from app.core.worker import server_worker
 
 from app.db.session import init_db
 
 logger = logging.getLogger(__name__)
 
-ALLOWED_ORIGIN_REGEX = (
-    r"^https?://(localhost|127\.0\.0\.1|\[::1\])(:\d+)?$"
-    r"|^capacitor://localhost$"
-    r"|^https://([a-zA-Z0-9-]+\.)*susindran\.in$"
-    r"|^https://([a-zA-Z0-9-]+\.)*vercel\.app$"
-)
-
-
-def _is_allowed_origin(origin: str | None) -> bool:
-    """Check origin against ALLOWED_ORIGIN_REGEX and explicit cors_origins.
-
-    Used to avoid echoing arbitrary Origin headers with Allow-Credentials.
-    """
-    if not origin:
-        return False
-    # Check regex first (covers localhost, susindran.in, vercel.app)
-    if re.match(ALLOWED_ORIGIN_REGEX, origin):
-        return True
-    # Fallback to explicit allowlist with exact match
-    return origin in settings.cors_origins
-
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    if settings.app_env == "production":
+        if not settings.auth_secret_key or settings.auth_secret_key.startswith("starwaves-super-secret"):
+            raise RuntimeError("AUTH_SECRET_KEY must be set to a strong random value in production")
+        if not settings.cron_secret:
+            raise RuntimeError("CRON_SECRET must be set in production")
     logger.info("Initializing %s (env=%s)...", settings.app_name, settings.app_env)
     logger.info(
         "AI runtime config: provider=openai model=%s base_url=%s",
@@ -89,11 +74,26 @@ def create_app() -> FastAPI:
         allow_origins=settings.cors_origins,
         allow_origin_regex=ALLOWED_ORIGIN_REGEX,
         allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
-        expose_headers=["*"],
+        allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+        allow_headers=["Authorization", "Content-Type", "Accept", "X-Requested-With"],
+        expose_headers=["Content-Length"],
         max_age=86400,
     )
+
+    @application.middleware("http")
+    async def security_headers_middleware(request: Request, call_next):
+        response = await call_next(request)
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        response.headers["X-Frame-Options"] = "SAMEORIGIN"
+        response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+        response.headers["Permissions-Policy"] = "geolocation=(), microphone=(self), camera=(self)"
+        if request.url.scheme == "https":
+            response.headers["Strict-Transport-Security"] = "max-age=63072000; includeSubDomains; preload"
+        response.headers["Content-Security-Policy"] = (
+            "default-src 'self'; script-src 'self' 'unsafe-inline' https://accounts.google.com; "
+            "style-src 'self' 'unsafe-inline'; frame-ancestors 'self'; object-src 'none'; base-uri 'self'"
+        )
+        return response
 
     @application.exception_handler(FastAPIHTTPException)
     @application.exception_handler(StarletteHTTPException)

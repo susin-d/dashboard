@@ -118,13 +118,30 @@ def run_workspace_command(
 
     for argv in chain:
         try:
+            # Minimal env — prevent leaking DATABASE_URL / AUTH_SECRET_KEY / etc via python -c
+            safe_env = {
+                "PATH": os.environ.get("PATH", ""),
+                "CI": "1",
+                "NO_COLOR": "1",
+                "HOME": os.environ.get("HOME", ""),
+                "TMPDIR": os.environ.get("TMPDIR", "/tmp"),
+                "LANG": os.environ.get("LANG", "C.UTF-8"),
+                "NODE_ENV": "development",
+            }
+            # Block dangerous interpreter escapes: `python -c` / `node -e`
+            if os.path.basename(argv[0]).lower() in {"python", "python3", "node"}:
+                if any(flag in argv for flag in ("-c", "-e")):
+                    raise CommandNotAllowedError("Interpreter -c/-e execution is not allowed.")
+            # Prevent npm/pip arbitrary script execution
+            if os.path.basename(argv[0]).lower() in {"npm", "npx", "pip", "pip3", "yarn", "pnpm"} and "--ignore-scripts" not in argv:
+                argv = argv + ["--ignore-scripts"] if os.path.basename(argv[0]).lower() in {"npm", "yarn"} else argv
             result = subprocess.run(
                 argv,
                 cwd=cwd,
                 capture_output=True,
                 text=True,
                 timeout=timeout,
-                env={**os.environ, "CI": "1", "NO_COLOR": "1"},
+                env=safe_env,
             )
         except subprocess.TimeoutExpired as error:
             timed_out = True

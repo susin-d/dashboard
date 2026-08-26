@@ -111,11 +111,22 @@ class TestLogin:
 
 
 class TestForgotPasswordFlow:
-    def test_forgot_password_known_email_returns_token(self, auth_client):
+    def test_forgot_password_known_email_returns_token(self, auth_client, monkeypatch):
+        # Secure: no token leak in response; email delivery mocked to capture OTP
+        captured = {}
+
+        def fake_send(to_email, token, otp_code):
+            captured["token"] = token
+            captured["otp"] = otp_code
+            return True
+
+        monkeypatch.setattr("app.api.routes.auth.password.send_password_reset_email", fake_send)
         auth_client.post("/api/v1/auth/signup", json=SIGNUP_PAYLOAD)
         res = auth_client.post("/api/v1/auth/forgot-password", json={"email": SIGNUP_PAYLOAD["email"]})
         assert res.status_code == 200
-        assert res.json()["token"]
+        assert "token" not in res.json()
+        assert captured.get("token")
+        assert captured.get("otp")
 
     def test_forgot_password_unknown_email_no_token_leak(self, auth_client):
         res = auth_client.post("/api/v1/auth/forgot-password", json={"email": "nobody@example.com"})
@@ -137,18 +148,27 @@ class TestForgotPasswordFlow:
         )
         assert res.status_code == 404
 
-    def test_full_reset_flow_changes_password(self, auth_client):
+    def test_full_reset_flow_changes_password(self, auth_client, monkeypatch):
         """forgot → verify OTP → reset → login with new password."""
+        captured = {}
+
+        def fake_send(to_email, token, otp_code):
+            captured["token"] = token
+            captured["otp"] = otp_code
+            return True
+
+        monkeypatch.setattr("app.api.routes.auth.password.send_password_reset_email", fake_send)
         auth_client.post("/api/v1/auth/signup", json=SIGNUP_PAYLOAD)
 
-        forgot = auth_client.post(
+        res = auth_client.post(
             "/api/v1/auth/forgot-password", json={"email": SIGNUP_PAYLOAD["email"]}
-        ).json()
-        otp = state_serializer().loads(forgot["token"], max_age=3600)["otp"]
+        )
+        assert res.status_code == 200
+        otp = state_serializer().loads(captured["token"], max_age=3600)["otp"]
 
         verified = auth_client.post(
             "/api/v1/auth/verify-reset-code",
-            json={"email": SIGNUP_PAYLOAD["email"], "code": otp, "token": forgot["token"]},
+            json={"email": SIGNUP_PAYLOAD["email"], "code": otp, "token": captured["token"]},
         )
         assert verified.status_code == 200
         reset_token = verified.json()["reset_token"]
@@ -165,21 +185,28 @@ class TestForgotPasswordFlow:
         )
         assert relogin.status_code == 200
 
-    def test_verify_with_wrong_otp_against_token_400(self, auth_client):
+    def test_verify_with_wrong_otp_against_token_400(self, auth_client, monkeypatch):
+        captured = {}
+
+        def fake_send(to_email, token, otp_code):
+            captured["token"] = token
+            return True
+
+        monkeypatch.setattr("app.api.routes.auth.password.send_password_reset_email", fake_send)
         auth_client.post("/api/v1/auth/signup", json=SIGNUP_PAYLOAD)
-        forgot = auth_client.post(
+        auth_client.post(
             "/api/v1/auth/forgot-password", json={"email": SIGNUP_PAYLOAD["email"]}
-        ).json()
+        )
         wrong = auth_client.post(
             "/api/v1/auth/verify-reset-code",
             json={
                 "email": SIGNUP_PAYLOAD["email"],
-                "code": "000000" if forgot["token"] else "",
-                "token": forgot["token"],
+                "code": "000000",
+                "token": captured["token"],
             },
         )
         # Unless the generated OTP really is 000000, mismatch must be rejected
-        real_otp = state_serializer().loads(forgot["token"], max_age=3600)["otp"]
+        real_otp = state_serializer().loads(captured["token"], max_age=3600)["otp"]
         if real_otp != "000000":
             assert wrong.status_code == 400
 

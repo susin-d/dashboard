@@ -57,6 +57,13 @@ def close_user_page(user_id: str) -> None:
 
 
 def browser_navigate(user_id: str, url: str) -> dict:
+    from app.services.http_requests import HttpRequestError, _assert_public_url
+
+    # Block SSRF to private ranges / metadata before navigating
+    try:
+        _assert_public_url(url)
+    except HttpRequestError as exc:
+        raise BrowserAutomationError(str(exc)) from exc
     page = _get_page(user_id)
     try:
         response = page.goto(url, timeout=NAVIGATION_TIMEOUT_MS, wait_until="domcontentloaded")

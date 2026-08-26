@@ -41,6 +41,17 @@ async def calls_websocket(
     token: str = Query(..., description="Starwaves auth token"),
 ) -> None:
     """Persistent WebSocket connection for call signaling events."""
+    # Origin check — block cross-site WebSocket hijack
+    origin = websocket.headers.get("origin")
+    if origin:
+        from app.core.cors import is_allowed_origin
+
+        if not is_allowed_origin(origin):
+            await websocket.close(code=4003)
+            return
+    if len(token) > 2048:
+        await websocket.close(code=4001)
+        return
     try:
         user = get_current_user_from_token(token)
     except Exception:
@@ -68,7 +79,10 @@ async def calls_websocket(
             # Keep the connection alive with server-side pings.
             # We also drain any client messages (pong / keep-alive) without acting on them.
             try:
-                await asyncio.wait_for(websocket.receive_text(), timeout=PING_INTERVAL_S)
+                text = await asyncio.wait_for(websocket.receive_text(), timeout=PING_INTERVAL_S)
+                if len(text) > 8192:
+                    await websocket.close(code=1009)
+                    break
             except asyncio.TimeoutError:
                 await websocket.send_json({"type": "ping"})
     except WebSocketDisconnect:

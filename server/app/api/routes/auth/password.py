@@ -1,7 +1,8 @@
 """Password recovery: forgot-password, verify-reset-code, and reset-password."""
 
+import hmac
 import logging
-import random
+import secrets
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from app.db import SqlClient, get_firestore
@@ -38,10 +39,9 @@ def forgot_password(
     database: SqlClient = Depends(get_firestore),
 ):
     user_record = get_user_by_email(database, payload.email)
-    token = None
     if user_record:
-        # Generate a 6-digit OTP code for step 2 verification
-        otp_code = str(random.randint(100000, 999999))
+        # Generate a 6-digit OTP code for step 2 verification (cryptographically secure)
+        otp_code = str(secrets.randbelow(900000) + 100000)
         token = state_serializer().dumps({
             "uid": user_record["uid"],
             "email": user_record["email"],
@@ -52,13 +52,10 @@ def forgot_password(
             send_password_reset_email(user_record["email"], token, otp_code)
         except EmailDeliveryError as exc:
             logger.warning("Password reset email to %s could not be delivered: %s", user_record["email"], exc)
-    
-    response = {
+
+    return {
         "message": "If an account exists with that email, a password reset code has been sent via email.",
     }
-    if token:
-        response["token"] = token
-    return response
 
 
 @router.post("/verify-reset-code")
@@ -80,26 +77,30 @@ def verify_reset_code(
             detail="No account found with that email address.",
         )
 
-    # Validate that the entered OTP code matches the token's embedded OTP
-    if payload.token:
-        try:
-            data = state_serializer().loads(payload.token, max_age=3600)
-            expected_otp = data.get("otp")
-            if expected_otp and clean_code != expected_otp:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="Invalid verification code. Please check your email and try again.",
-                )
-        except SignatureExpired:
+    # Validate that the entered OTP code matches the token's embedded OTP — token is now mandatory
+    if not payload.token:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Verification token is required.",
+        )
+    try:
+        data = state_serializer().loads(payload.token, max_age=3600)
+        expected_otp = data.get("otp")
+        if not expected_otp or not hmac.compare_digest(str(expected_otp), clean_code):
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Verification code has expired. Please request a new code.",
-            ) from None
-        except BadSignature:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Invalid verification session token.",
-            ) from None
+                detail="Invalid verification code. Please check your email and try again.",
+            )
+    except SignatureExpired:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Verification code has expired. Please request a new code.",
+        ) from None
+    except BadSignature:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid verification session token.",
+        ) from None
 
     verified_token = state_serializer().dumps({
         "uid": user_record["uid"],
@@ -137,7 +138,7 @@ def reset_password(
             detail="Invalid reset session token.",
         ) from None
 
-    if data.get("action") not in ("reset_password", "reset_password_verified") or not data.get("uid"):
+    if data.get("action") != "reset_password_verified" or not data.get("uid"):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Invalid reset token payload.",

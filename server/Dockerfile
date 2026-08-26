@@ -17,8 +17,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy application source code
-COPY . .
+# Copy application source code (exclude secrets via .dockerignore)
+COPY app ./app
+COPY requirements.txt ./
 
 # Create a non-root app user for security best practices.
 # /app/workspaces must pre-exist with app ownership: named volumes seeded from

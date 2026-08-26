@@ -9,6 +9,7 @@ import {
 } from '../lib/googleMail'
 import { getGmailAccounts, getGmailStatus } from '../lib/gmailApi'
 import { Alert, ConfirmDialog, EmptyState, LoadingState, MailModal, PageHeader, Pagination, SearchBar, TabNav } from '../components/ui'
+import DOMPurify from 'dompurify'
 import { usePersistentState } from '../hooks/usePersistentState'
 
 const FOLDERS = [
@@ -41,10 +42,16 @@ function emailAddress(value = '') {
 
 function sanitizeEmailHtml(html = '') {
   if (!html) return ''
-  return html
-    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
-    .replace(/\s+on[a-z]+\s*=\s*(?:'[^']*'|"[^"]*"|[^\s>]+)/gi, '')
-    .replace(/(href|src)\s*=\s*["']?\s*javascript:[^"'>\s]+/gi, '$1="#"')
+  try {
+    return DOMPurify.sanitize(html, {
+      USE_PROFILES: { html: true },
+      FORBID_TAGS: ['style', 'script', 'iframe', 'object', 'embed', 'form'],
+      FORBID_ATTR: ['style'],
+      ALLOW_URI_REGEXP: /^(?:(?:https?|mailto):|[^a-z]|[a-z+.\-]+(?:[^a-z+.\-:]|$))/i,
+    })
+  } catch {
+    return html.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+  }
 }
 
 const EMPTY_COMPOSE = { to: '', cc: '', bcc: '', subject: '', body: '', threadId: '', inReplyTo: '', references: '' }

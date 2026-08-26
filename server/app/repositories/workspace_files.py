@@ -34,11 +34,26 @@ def _workspace_root(user_id: str, workspace_id: str = "default") -> str:
 
 
 def _safe_path(user_id: str, relative_path: str, workspace_id: str = "default") -> str:
-    """Resolve a relative path inside the user workspace, rejecting traversal."""
-    root = _workspace_root(user_id, workspace_id)
-    resolved = os.path.normpath(os.path.join(root, relative_path))
-    if not resolved.startswith(root + os.sep) and resolved != root:
+    """Resolve a relative path inside the user workspace, rejecting traversal and symlinks."""
+    if "\x00" in relative_path or relative_path.startswith("/") or relative_path.startswith("\\"):
         raise ValueError("Path traversal is not allowed.")
+    # Reject absolute/parent traversal via path parts
+    parts = relative_path.replace("\\", "/").split("/")
+    for part in parts:
+        if part in (".", "..", "") and relative_path not in ("", "."):
+            if part == "..":
+                raise ValueError("Path traversal is not allowed.")
+    root = os.path.abspath(_workspace_root(user_id, workspace_id))
+    resolved = os.path.abspath(os.path.join(root, relative_path))
+    # Canonical check against symlink escape
+    real_root = os.path.realpath(root)
+    real_resolved = os.path.realpath(resolved)
+    if not (real_resolved == real_root or real_resolved.startswith(real_root + os.sep)):
+        raise ValueError("Path traversal is not allowed.")
+    # Disallow direct access to metadata / hidden files
+    filename = os.path.basename(real_resolved)
+    if filename.startswith(".workspaces") or filename == ".git":
+        raise ValueError("Access denied.")
     return resolved
 
 
@@ -251,13 +266,18 @@ def list_tree(user_id: str, workspace_id: str = "default") -> list[dict]:
 
 
 def read_file(user_id: str, relative_path: str, workspace_id: str = "default") -> tuple[str, int]:
-    """Read file content as UTF-8 text. Returns (content, size)."""
+    """Read file content as UTF-8 text. Returns (content, size). Cap 1MB read."""
     full_path = _safe_path(user_id, relative_path, workspace_id)
     if not os.path.isfile(full_path):
         raise FileNotFoundError(f"File not found: {relative_path}")
+    size = os.path.getsize(full_path)
+    if size > 1 * 1024 * 1024:
+        raise ValueError("File too large to read (max 1MB).")
     with open(full_path, "r", encoding="utf-8", errors="replace") as f:
-        content = f.read()
-    return content, os.path.getsize(full_path)
+        content = f.read(1 * 1024 * 1024 + 1)
+        if len(content) > 1 * 1024 * 1024:
+            raise ValueError("File too large.")
+    return content, size
 
 
 def write_file(
@@ -271,7 +291,12 @@ def write_file(
     full_path = _safe_path(user_id, relative_path, workspace_id)
     os.makedirs(os.path.dirname(full_path), exist_ok=True)
     if encoding == "base64":
-        data = base64.b64decode(content)
+        try:
+            data = base64.b64decode(content, validate=True)
+        except Exception:
+            raise ValueError("Invalid base64 content.")
+        if len(data) > 2 * 1024 * 1024:
+            raise ValueError("File too large (max 2MB).")
         with open(full_path, "wb") as f:
             f.write(data)
         return len(data)
