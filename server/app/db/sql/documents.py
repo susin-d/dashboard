@@ -40,8 +40,9 @@ def document_to_dict(d: Document) -> dict[str, Any]:
     }
 
 
-def _apply_document_data(d: Document, data: dict[str, Any]) -> None:
+def _apply_document_data(d: Document, data: dict[str, Any], *, is_create: bool = False) -> None:
     """Map schema-shaped and legacy Firestore-shaped keys onto model columns."""
+    # Client-controlled allowlist (exclude deleted lifecycle markers unless via internal)
     mapping = {
         "title": "title",
         "name": "title",
@@ -56,12 +57,11 @@ def _apply_document_data(d: Document, data: dict[str, Any]) -> None:
         "size": "size_label",
         "size_label": "size_label",
         "drive_file_id": "drive_file_id",
-        # lifecycle markers used by soft delete / restore payloads
-        "deleted": "deleted",
-        "deleted_at": "deleted_at",
-        "created_at": "created_at",
-        "updated_at": "updated_at",
     }
+    # Only internal helpers may set deleted markers; normal API data should not
+    if is_create:
+        # for create, mapping already limited
+        pass
     for key, value in data.items():
         column = mapping.get(key)
         if column is not None:
@@ -95,16 +95,23 @@ def set_document_doc(
             tags=[],
         )
         session.add(d)
-    _apply_document_data(d, data)
+        _apply_document_data(d, data, is_create=True)
+    else:
+        if d.user_id != user_id:
+            raise PermissionError("Not owner")
+        _apply_document_data(d, data, is_create=False)
     session.commit()
 
 
-def delete_document_doc(session: Session, doc_id: str) -> None:
+def delete_document_doc(session: Session, doc_id: str, user_id: str | None = None) -> None:
     """Delete a document record by ID."""
     d = session.get(Document, doc_id)
-    if d:
-        session.delete(d)
-        session.commit()
+    if not d:
+        return
+    if user_id is not None and d.user_id != user_id:
+        return
+    session.delete(d)
+    session.commit()
 
 
 def query_documents(session: Session, user_id: str, query: SqlQuery) -> list[SqlSnapshot]:

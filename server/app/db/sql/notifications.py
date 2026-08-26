@@ -65,19 +65,31 @@ def set_notification_doc(
             notification_time=data.get("time"),
         )
         session.add(n)
-    for key, val in data.items():
-        column = _NOTIFICATION_COLUMN_ALIASES.get(key, key)
-        if hasattr(n, column):
-            setattr(n, column, coerce_model_value(column, val))
+    else:
+        if n.user_id != user_id:
+            raise PermissionError("Not owner")
+        _ALLOWED = {"title", "body", "message", "type", "read", "unread", "data", "notification_time", "time"}
+        _IMMUTABLE = {"id", "user_id", "created_at", "deleted", "deleted_at"}
+        for key, val in data.items():
+            if key in _IMMUTABLE:
+                continue
+            column = _NOTIFICATION_COLUMN_ALIASES.get(key, key)
+            if column in _IMMUTABLE or column not in {"title", "body", "type", "read", "data", "notification_time"}:
+                continue
+            if hasattr(n, column):
+                setattr(n, column, coerce_model_value(column, val))
     session.commit()
 
 
-def delete_notification_doc(session: Session, doc_id: str) -> None:
+def delete_notification_doc(session: Session, doc_id: str, user_id: str | None = None) -> None:
     """Delete a notification document by ID."""
     n = session.get(Notification, doc_id)
-    if n:
-        session.delete(n)
-        session.commit()
+    if not n:
+        return
+    if user_id is not None and n.user_id != user_id:
+        return
+    session.delete(n)
+    session.commit()
 
 
 def query_notifications(session: Session, user_id: str, query: SqlQuery) -> list[SqlSnapshot]:

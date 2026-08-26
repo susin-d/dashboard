@@ -84,19 +84,19 @@ def set_call_doc(
         )
         session.add(c)
     else:
-        if caller_id:
-            c.caller_id = caller_id
-        if receiver_id:
-            c.receiver_id = receiver_id
+        # Calls are not user-scoped via user_id; participants are checked at route level
+        # Restrict mutable fields to prevent IDOR via caller/receiver hijack
         if "status" in data:
             c.status = data["status"]
-        if "mode" in data or "call_type" in data:
-            c.call_type = data.get("mode") or data.get("call_type")
         if "duration" in data:
             c.duration = data["duration"]
         if "messages" in data:
             c.messages = data["messages"] or []
+        # Allow only safe fields via explicit allowlist (no caller_id/receiver_id rewrite)
+        _ALLOWED_CALL = {"status", "duration", "messages", "provider", "external_sid", "phone_number"}
         for k, val in data.items():
+            if k not in _ALLOWED_CALL:
+                continue
             if hasattr(c, k):
                 setattr(c, k, coerce_model_value(k, val))
     session.commit()

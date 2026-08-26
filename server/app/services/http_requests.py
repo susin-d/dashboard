@@ -30,7 +30,15 @@ def _assert_public_url(url: str) -> None:
         raise HttpRequestError(f"Cannot resolve host '{hostname}'.") from exc
     for info in addr_infos:
         address = ipaddress.ip_address(info[4][0])
-        if address.is_private or address.is_loopback or address.is_link_local or address.is_reserved:
+        if (
+            address.is_private
+            or address.is_loopback
+            or address.is_link_local
+            or address.is_reserved
+            or address.is_unspecified
+            or address.is_multicast
+            or not address.is_global
+        ):
             raise HttpRequestError("Requests to private or reserved addresses are not allowed.")
 
 
@@ -46,7 +54,7 @@ def perform_request(
         raise HttpRequestError(f"Method must be one of {ALLOWED_METHODS}.")
     _assert_public_url(url)
     try:
-        with create_sync_client() as http:
+        with create_sync_client(follow_redirects=False) as http:
             response = http.request(
                 method,
                 url,
@@ -54,6 +62,11 @@ def perform_request(
                 headers=headers,
                 timeout=REQUEST_TIMEOUT_SECONDS,
             )
+            # Check redirect target if any
+            if 300 <= response.status_code < 400:
+                loc = response.headers.get("location")
+                if loc:
+                    _assert_public_url(loc)
     except HttpRequestError:
         raise
     except Exception as exc:

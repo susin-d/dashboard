@@ -64,18 +64,29 @@ def set_project_doc(
         )
         session.add(p)
     else:
+        if p.user_id != user_id:
+            raise PermissionError("Not owner")
+        _ALLOWED = {"name", "status", "lifecycle_phase", "progress", "start_date", "end_date", "members", "description", "technologies", "github_url", "live_url"}
+        _IMMUTABLE = {"id", "user_id", "created_at", "deleted", "deleted_at"}
         for k, val in data.items():
+            if k in _IMMUTABLE:
+                continue
+            if k not in _ALLOWED:
+                continue
             if hasattr(p, k):
                 setattr(p, k, coerce_model_value(k, val))
     session.commit()
 
 
-def delete_project_doc(session: Session, doc_id: str) -> None:
+def delete_project_doc(session: Session, doc_id: str, user_id: str | None = None) -> None:
     """Delete a project document by ID."""
     p = session.get(Project, doc_id)
-    if p:
-        session.delete(p)
-        session.commit()
+    if not p:
+        return
+    if user_id is not None and p.user_id != user_id:
+        return
+    session.delete(p)
+    session.commit()
 
 
 def query_projects(session: Session, user_id: str, query: SqlQuery) -> list[SqlSnapshot]:

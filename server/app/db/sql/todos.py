@@ -58,18 +58,29 @@ def set_todo_doc(
         )
         session.add(t)
     else:
+        if t.user_id != user_id:
+            raise PermissionError("Not owner")
+        _ALLOWED = {"title", "completed", "due_date", "priority"}
+        _IMMUTABLE = {"id", "user_id", "created_at", "deleted", "deleted_at"}
         for k, val in data.items():
+            if k in _IMMUTABLE:
+                continue
+            if k not in _ALLOWED:
+                continue
             if hasattr(t, k):
                 setattr(t, k, coerce_model_value(k, val))
     session.commit()
 
 
-def delete_todo_doc(session: Session, doc_id: str) -> None:
+def delete_todo_doc(session: Session, doc_id: str, user_id: str | None = None) -> None:
     """Delete a todo document by ID."""
     t = session.get(Todo, doc_id)
-    if t:
-        session.delete(t)
-        session.commit()
+    if not t:
+        return
+    if user_id is not None and t.user_id != user_id:
+        return
+    session.delete(t)
+    session.commit()
 
 
 def query_todos(session: Session, user_id: str, query: SqlQuery) -> list[SqlSnapshot]:

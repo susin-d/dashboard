@@ -77,19 +77,31 @@ def set_hackathon_doc(
             ends_at=coerce_model_value("ends_at", data.get("ends_at")),
         )
         session.add(h)
-    for key, val in data.items():
-        column = _HACKATHON_COLUMN_ALIASES.get(key, key)
-        if hasattr(h, column):
-            setattr(h, column, coerce_model_value(column, val))
+    else:
+        if h.user_id != user_id:
+            raise PermissionError("Not owner")
+        _ALLOWED = {"title", "organizer", "location", "dates", "prize", "status", "hackathon_url", "url", "source", "notes", "starts_at", "ends_at", "mode", "team_size", "tags"}
+        _IMMUTABLE = {"id", "user_id", "created_at", "deleted", "deleted_at"}
+        for key, val in data.items():
+            if key in _IMMUTABLE:
+                continue
+            column = _HACKATHON_COLUMN_ALIASES.get(key, key)
+            if column in _IMMUTABLE or column not in _ALLOWED:
+                continue
+            if hasattr(h, column):
+                setattr(h, column, coerce_model_value(column, val))
     session.commit()
 
 
-def delete_hackathon_doc(session: Session, doc_id: str) -> None:
+def delete_hackathon_doc(session: Session, doc_id: str, user_id: str | None = None) -> None:
     """Delete a hackathon document by ID."""
     h = session.get(Hackathon, doc_id)
-    if h:
-        session.delete(h)
-        session.commit()
+    if not h:
+        return
+    if user_id is not None and h.user_id != user_id:
+        return
+    session.delete(h)
+    session.commit()
 
 
 def query_hackathons(session: Session, user_id: str, query: SqlQuery) -> list[SqlSnapshot]:

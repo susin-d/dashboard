@@ -70,18 +70,29 @@ def set_job_doc(
         )
         session.add(j)
     else:
+        if j.user_id != user_id:
+            raise PermissionError("Not owner")
+        _ALLOWED = {"company", "role", "status", "location", "work_type", "salary", "applied_date", "resume_id", "job_url", "notes"}
+        _IMMUTABLE = {"id", "user_id", "created_at", "deleted", "deleted_at"}
         for k, val in data.items():
+            if k in _IMMUTABLE:
+                continue
+            if k not in _ALLOWED:
+                continue
             if hasattr(j, k):
                 setattr(j, k, coerce_model_value(k, val))
     session.commit()
 
 
-def delete_job_doc(session: Session, doc_id: str) -> None:
+def delete_job_doc(session: Session, doc_id: str, user_id: str | None = None) -> None:
     """Delete a job document by ID."""
     j = session.get(Job, doc_id)
-    if j:
-        session.delete(j)
-        session.commit()
+    if not j:
+        return
+    if user_id is not None and j.user_id != user_id:
+        return
+    session.delete(j)
+    session.commit()
 
 
 def query_jobs(session: Session, user_id: str, query: SqlQuery) -> list[SqlSnapshot]:

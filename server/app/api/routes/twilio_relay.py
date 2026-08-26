@@ -157,6 +157,8 @@ async def twilio_relay_ws(
     try:
         while True:
             message = await websocket.receive_json()
+            if not isinstance(message, dict) or len(str(message)) > 4096:
+                continue
             message_type = message.get("type")
 
             if message_type == "prompt":

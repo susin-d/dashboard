@@ -97,6 +97,8 @@ def set_whatsapp_chat_doc(
         )
         session.add(c)
     else:
+        if c.user_id != user_id:
+            raise PermissionError("Not owner")
         if "name" in data:
             c.name = data["name"]
         if "phone_number" in data:
@@ -124,12 +126,15 @@ def set_whatsapp_chat_doc(
     session.commit()
 
 
-def delete_whatsapp_chat_doc(session: Session, doc_id: str) -> None:
+def delete_whatsapp_chat_doc(session: Session, doc_id: str, user_id: str | None = None) -> None:
     """Delete a WhatsApp chat document by ID."""
     c = session.get(WhatsAppChat, doc_id)
-    if c:
-        session.delete(c)
-        session.commit()
+    if not c:
+        return
+    if user_id is not None and c.user_id != user_id:
+        return
+    session.delete(c)
+    session.commit()
 
 
 def query_whatsapp_chats(session: Session, user_id: str, query: SqlQuery) -> list[SqlSnapshot]:
@@ -212,6 +217,8 @@ def set_whatsapp_message_doc(
         )
         session.add(m)
     else:
+        if m.user_id != user_id:
+            raise PermissionError("Not owner")
         if "content" in data:
             m.content = data["content"]
         if "status" in data:
@@ -229,12 +236,15 @@ def set_whatsapp_message_doc(
     session.commit()
 
 
-def delete_whatsapp_message_doc(session: Session, doc_id: str) -> None:
+def delete_whatsapp_message_doc(session: Session, doc_id: str, user_id: str | None = None) -> None:
     """Delete a WhatsApp message document by ID."""
     m = session.get(WhatsAppMessage, doc_id)
-    if m:
-        session.delete(m)
-        session.commit()
+    if not m:
+        return
+    if user_id is not None and m.user_id != user_id:
+        return
+    session.delete(m)
+    session.commit()
 
 
 def query_whatsapp_messages(session: Session, user_id: str, chat_id: str, query: SqlQuery) -> list[SqlSnapshot]:

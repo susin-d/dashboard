@@ -75,18 +75,29 @@ def set_eve_session_doc(
         )
         session.add(s)
     else:
+        if s.user_id != user_id:
+            raise PermissionError("Not owner")
+        _ALLOWED = {"title", "messages"}
+        _IMMUTABLE = {"id", "user_id", "created_at"}
         for k, val in data.items():
+            if k in _IMMUTABLE:
+                continue
+            if k not in _ALLOWED:
+                continue
             if hasattr(s, k):
                 setattr(s, k, coerce_model_value(k, val))
     session.commit()
 
 
-def delete_eve_session_doc(session: Session, doc_id: str) -> None:
+def delete_eve_session_doc(session: Session, doc_id: str, user_id: str | None = None) -> None:
     """Delete an Eve chat session by ID."""
     s = session.get(EveSession, doc_id)
-    if s:
-        session.delete(s)
-        session.commit()
+    if not s:
+        return
+    if user_id is not None and s.user_id != user_id:
+        return
+    session.delete(s)
+    session.commit()
 
 
 def query_eve_sessions(session: Session, user_id: str, query: SqlQuery) -> list[SqlSnapshot]:
@@ -143,7 +154,15 @@ def set_eve_memory_doc(
         )
         session.add(m)
     else:
+        if m.user_id != user_id:
+            raise PermissionError("Not owner")
+        _ALLOWED = {"content", "embedding"}
+        _IMMUTABLE = {"id", "user_id", "created_at"}
         for k, val in data.items():
+            if k in _IMMUTABLE:
+                continue
+            if k not in _ALLOWED:
+                continue
             if hasattr(m, k):
                 if k == "embedding" and val is not None:
                     setattr(m, k, val)
@@ -154,12 +173,15 @@ def set_eve_memory_doc(
     session.commit()
 
 
-def delete_eve_memory_doc(session: Session, doc_id: str) -> None:
+def delete_eve_memory_doc(session: Session, doc_id: str, user_id: str | None = None) -> None:
     """Delete an Eve memory entry by ID."""
     m = session.get(EveMemory, doc_id)
-    if m:
-        session.delete(m)
-        session.commit()
+    if not m:
+        return
+    if user_id is not None and m.user_id != user_id:
+        return
+    session.delete(m)
+    session.commit()
 
 
 def query_eve_memories(session: Session, user_id: str, query: SqlQuery) -> list[SqlSnapshot]:
@@ -288,19 +310,31 @@ def set_eve_schedule_doc(
             cron_expression=data.get("cron_expression"),
         )
         session.add(s)
-    for key, val in data.items():
-        column = _SCHEDULE_COLUMN_ALIASES.get(key, key)
-        if hasattr(s, column):
-            setattr(s, column, coerce_model_value(column, val))
+    else:
+        if s.user_id != user_id:
+            raise PermissionError("Not owner")
+        _ALLOWED = {"title", "prompt", "schedule_type", "action_type", "cron_expression", "execute_at", "next_run_at", "enabled", "last_run_at"}
+        _IMMUTABLE = {"id", "user_id", "created_at"}
+        for key, val in data.items():
+            if key in _IMMUTABLE:
+                continue
+            column = _SCHEDULE_COLUMN_ALIASES.get(key, key)
+            if column in _IMMUTABLE or column not in _ALLOWED:
+                continue
+            if hasattr(s, column):
+                setattr(s, column, coerce_model_value(column, val))
     session.commit()
 
 
-def delete_eve_schedule_doc(session: Session, doc_id: str) -> None:
+def delete_eve_schedule_doc(session: Session, doc_id: str, user_id: str | None = None) -> None:
     """Delete a schedule document by ID."""
     s = session.get(EveSchedule, doc_id)
-    if s:
-        session.delete(s)
-        session.commit()
+    if not s:
+        return
+    if user_id is not None and s.user_id != user_id:
+        return
+    session.delete(s)
+    session.commit()
 
 
 def query_eve_schedules(session: Session, user_id: str, query: SqlQuery) -> list[SqlSnapshot]:

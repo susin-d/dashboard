@@ -62,18 +62,29 @@ def set_contact_doc(
         )
         session.add(c)
     else:
+        if c.user_id != user_id:
+            raise PermissionError("Not owner")
+        _ALLOWED = {"name", "email", "phone", "company", "role", "notes"}
+        _IMMUTABLE = {"id", "user_id", "created_at", "deleted", "deleted_at"}
         for k, val in data.items():
+            if k in _IMMUTABLE:
+                continue
+            if k not in _ALLOWED:
+                continue
             if hasattr(c, k):
                 setattr(c, k, coerce_model_value(k, val))
     session.commit()
 
 
-def delete_contact_doc(session: Session, doc_id: str) -> None:
+def delete_contact_doc(session: Session, doc_id: str, user_id: str | None = None) -> None:
     """Delete a contact document by ID."""
     c = session.get(Contact, doc_id)
-    if c:
-        session.delete(c)
-        session.commit()
+    if not c:
+        return
+    if user_id is not None and c.user_id != user_id:
+        return
+    session.delete(c)
+    session.commit()
 
 
 def query_contacts(session: Session, user_id: str, query: SqlQuery) -> list[SqlSnapshot]:
