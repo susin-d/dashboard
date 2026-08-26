@@ -38,12 +38,14 @@ def cache_get(key: str) -> Any | None:
     r = _get_redis()
     if r is not None:
         try:
-            import pickle
+            import json
 
             raw = r.get(key)
             if raw is None:
                 return None
-            return pickle.loads(raw)
+            if isinstance(raw, bytes):
+                raw = raw.decode()
+            return json.loads(raw)
         except Exception:
             pass
     # local fallback
@@ -61,9 +63,9 @@ def cache_set(key: str, value: Any, ttl: int = 60) -> None:
     r = _get_redis()
     if r is not None:
         try:
-            import pickle
+            import json
 
-            r.setex(key, ttl, pickle.dumps(value))
+            r.setex(key, ttl, json.dumps(value, default=str))
             return
         except Exception:
             pass
@@ -86,6 +88,8 @@ def cache_delete(key: str) -> None:
 
 
 def cache_invalidate_prefix(prefix: str) -> None:
+    if not prefix:
+        return
     r = _get_redis()
     if r is not None:
         try:

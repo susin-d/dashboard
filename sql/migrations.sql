@@ -77,3 +77,31 @@ ALTER TABLE eve_schedules ADD COLUMN IF NOT EXISTS title VARCHAR(255);
 ALTER TABLE eve_schedules ADD COLUMN IF NOT EXISTS schedule_type VARCHAR(32);
 ALTER TABLE eve_schedules ADD COLUMN IF NOT EXISTS execute_at TIMESTAMP WITH TIME ZONE;
 ALTER TABLE eve_schedules ADD COLUMN IF NOT EXISTS next_run_at TIMESTAMP WITH TIME ZONE;
+
+-- ---------------------------------------------------------------------------
+-- Row-Level Security (RLS) — defense-in-depth for multi-tenant isolation
+-- Requires app to SET LOCAL app.current_user_id = '<uid>' per request.
+-- See server/app/db/session.py get_session().
+-- ---------------------------------------------------------------------------
+
+-- Enable RLS on user-scoped tables (idempotent via DO block)
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'user_isolation_todos') THEN
+    ALTER TABLE todos ENABLE ROW LEVEL SECURITY;
+    CREATE POLICY user_isolation_todos ON todos USING (user_id = current_setting('app.current_user_id', true)) WITH CHECK (user_id = current_setting('app.current_user_id', true));
+  END IF;
+EXCEPTION WHEN OTHERS THEN NULL; END $$;
+
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'user_isolation_projects') THEN
+    ALTER TABLE projects ENABLE ROW LEVEL SECURITY;
+    CREATE POLICY user_isolation_projects ON projects USING (user_id = current_setting('app.current_user_id', true)) WITH CHECK (user_id = current_setting('app.current_user_id', true));
+  END IF;
+EXCEPTION WHEN OTHERS THEN NULL; END $$;
+
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'user_isolation_documents') THEN
+    ALTER TABLE documents ENABLE ROW LEVEL SECURITY;
+    CREATE POLICY user_isolation_documents ON documents USING (user_id = current_setting('app.current_user_id', true)) WITH CHECK (user_id = current_setting('app.current_user_id', true));
+  END IF;
+EXCEPTION WHEN OTHERS THEN NULL; END $$;

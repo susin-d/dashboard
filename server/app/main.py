@@ -17,6 +17,7 @@ from app.api.routes.twilio_relay import router as twilio_relay_router
 from app.api.routes.whatsapp_ws import router as whatsapp_ws_router
 from app.core.config import settings
 from app.core.cors import ALLOWED_ORIGIN_REGEX, is_allowed_origin as _is_allowed_origin
+from app.core.rate_limit import RateLimitMiddleware
 from app.core.worker import server_worker
 
 from app.db.session import init_db
@@ -69,6 +70,7 @@ def create_app() -> FastAPI:
     )
 
     # Standard ASGI CORS Middleware (pure ASGI handler for preflight and standard requests)
+    application.add_middleware(RateLimitMiddleware)
     application.add_middleware(
         CORSMiddleware,
         allow_origins=settings.cors_origins,
