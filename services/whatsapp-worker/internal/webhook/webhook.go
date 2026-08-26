@@ -2,6 +2,9 @@ package webhook
 
 import (
 	"bytes"
+	"crypto/hmac"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"net/http"
 	"os"
@@ -35,6 +38,11 @@ func SendWebhookWithTimeout(payload interface{}, timeout time.Duration) {
 			return
 		}
 		req.Header.Set("Content-Type", "application/json")
+		if secret := os.Getenv("WHATSAPP_WORKER_SECRET"); secret != "" {
+			mac := hmac.New(sha256.New, []byte(secret))
+			mac.Write(jsonBytes)
+			req.Header.Set("X-Worker-Signature", hex.EncodeToString(mac.Sum(nil)))
+		}
 		client := &http.Client{Timeout: timeout}
 		_, _ = client.Do(req)
 	}()

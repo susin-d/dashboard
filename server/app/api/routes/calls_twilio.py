@@ -131,15 +131,7 @@ async def twilio_relay_twiml(call_id: str):
 
 @router.get("/twilio/twiml/{call_id}", response_class=PlainTextResponse)
 async def twilio_twiml(call_id: str, database: SqlClient = Depends(get_firestore)):
-    # Optional verify if request came from Twilio with signature; allow direct (no sig) for dev
-    # Note: GET twiml is fetched by Twilio; enforce soft
-    pass_original = call_id
-    # verify soft
-    try:
-        from fastapi import Request
-        # verify not enforced here (GET has no form params) — rely on unguessable call_id UUID
-    except Exception:
-        pass
+    # Rely on unguessable UUID; Twilio GET has no signature body, so soft check
     # Twilio fetches this without auth — return TwiML
     repo = CallRepository(database)
     call = repo.get(call_id)
@@ -163,7 +155,7 @@ async def twilio_twiml(call_id: str, database: SqlClient = Depends(get_firestore
 @router.post("/twilio/gather", response_class=PlainTextResponse)
 async def twilio_gather(request: Request, database: SqlClient = Depends(get_firestore)):
     from app.services.twilio.verify import verify_twilio_request
-    await verify_twilio_request(request, enforce=False)
+    await verify_twilio_request(request)
     # Twilio Gather speech result — we echo and hang up for MVP; future: pipe to Eve LLM
     form = await request.form()
     speech = form.get("SpeechResult") or form.get("speechResult") or ""
@@ -214,7 +206,7 @@ async def twilio_gather(request: Request, database: SqlClient = Depends(get_fire
 @router.post("/twilio/status", response_class=PlainTextResponse)
 async def twilio_status_callback(request: Request, database: SqlClient = Depends(get_firestore)):
     from app.services.twilio.verify import verify_twilio_request
-    await verify_twilio_request(request, enforce=False)
+    await verify_twilio_request(request)
     form = await request.form()
     # Twilio sends as form-encoded
     sid = form.get("CallSid") or form.get("Sid") or ""
@@ -258,7 +250,7 @@ async def twilio_status_callback(request: Request, database: SqlClient = Depends
 @router.post("/twilio/gather-fast", response_class=PlainTextResponse)
 async def twilio_gather_fast(request: Request, database: SqlClient = Depends(get_firestore)):
     from app.services.twilio.verify import verify_twilio_request
-    await verify_twilio_request(request, enforce=False)
+    await verify_twilio_request(request)
     """Fast gather path: fast model, no tools/RAG — targets <1s Eve TwiML reply.
 
     Twilio posts SpeechResult here when <Gather action=.../gather-fast>. We resolve

@@ -105,3 +105,18 @@ DO $$ BEGIN
     CREATE POLICY user_isolation_documents ON documents USING (user_id = current_setting('app.current_user_id', true)) WITH CHECK (user_id = current_setting('app.current_user_id', true));
   END IF;
 EXCEPTION WHEN OTHERS THEN NULL; END $$;
+
+-- ---------------------------------------------------------------------------
+-- Least-privilege application role (idempotent)
+-- Run manually: CREATE USER starwaves_app WITH PASSWORD '...'; then use DATABASE_URL with starwaves_app
+-- Grants below allow the app to work without superuser.
+-- ---------------------------------------------------------------------------
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'starwaves_app') THEN
+    CREATE ROLE starwaves_app LOGIN;
+  END IF;
+EXCEPTION WHEN OTHERS THEN NULL; END $$;
+GRANT USAGE ON SCHEMA public TO starwaves_app;
+GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO starwaves_app;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO starwaves_app;
+GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO starwaves_app;
