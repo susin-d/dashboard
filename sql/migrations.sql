@@ -43,3 +43,37 @@ ALTER TABLE whatsapp_chats ADD COLUMN IF NOT EXISTS eve_auto_reply BOOLEAN DEFAU
 -- ---------------------------------------------------------------------------
 
 ALTER TABLE eve_memories ADD COLUMN IF NOT EXISTS embedding vector(1536);
+
+-- ---------------------------------------------------------------------------
+-- documents metadata backfills (persist url/type/size/drive id from schema)
+-- ---------------------------------------------------------------------------
+
+ALTER TABLE documents ADD COLUMN IF NOT EXISTS url TEXT;
+ALTER TABLE documents ADD COLUMN IF NOT EXISTS doc_type VARCHAR(80) DEFAULT 'FILE';
+ALTER TABLE documents ADD COLUMN IF NOT EXISTS size_label VARCHAR(80) DEFAULT 'Unknown';
+ALTER TABLE documents ADD COLUMN IF NOT EXISTS drive_file_id VARCHAR(255);
+
+-- ---------------------------------------------------------------------------
+-- hackathons structured schedule/details backfills
+-- ---------------------------------------------------------------------------
+
+ALTER TABLE hackathons ADD COLUMN IF NOT EXISTS starts_at TIMESTAMP WITH TIME ZONE;
+ALTER TABLE hackathons ADD COLUMN IF NOT EXISTS ends_at TIMESTAMP WITH TIME ZONE;
+ALTER TABLE hackathons ADD COLUMN IF NOT EXISTS mode VARCHAR(64);
+ALTER TABLE hackathons ADD COLUMN IF NOT EXISTS team_size VARCHAR(32);
+ALTER TABLE hackathons ADD COLUMN IF NOT EXISTS tags JSON DEFAULT '[]';
+
+-- ---------------------------------------------------------------------------
+-- notifications display-time backfill
+-- ---------------------------------------------------------------------------
+
+ALTER TABLE notifications ADD COLUMN IF NOT EXISTS notification_time VARCHAR(32);
+
+-- ---------------------------------------------------------------------------
+-- eve_schedules Firestore-shaped scheduling backfills
+-- ---------------------------------------------------------------------------
+
+ALTER TABLE eve_schedules ADD COLUMN IF NOT EXISTS title VARCHAR(255);
+ALTER TABLE eve_schedules ADD COLUMN IF NOT EXISTS schedule_type VARCHAR(32);
+ALTER TABLE eve_schedules ADD COLUMN IF NOT EXISTS execute_at TIMESTAMP WITH TIME ZONE;
+ALTER TABLE eve_schedules ADD COLUMN IF NOT EXISTS next_run_at TIMESTAMP WITH TIME ZONE;

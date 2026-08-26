@@ -59,6 +59,7 @@ def delete_profile(database: SqlClient, profile_id: str) -> bool:
     snapshot = database.collection(COLLECTION).document(profile_id).get()
     if not snapshot.exists:
         return False
-    snapshot.reference.delete()
+    # SqlSnapshot exposes no .reference (Firestore-only API); delete via doc ref.
+    database.collection(COLLECTION).document(profile_id).delete()
     return True
 

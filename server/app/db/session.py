@@ -92,6 +92,10 @@ async def init_db() -> None:
     await asyncio.to_thread(_ensure_call_provider_columns)
     await asyncio.to_thread(_ensure_whatsapp_columns)
     await asyncio.to_thread(_ensure_eve_memory_embedding)
+    await asyncio.to_thread(_ensure_documents_columns)
+    await asyncio.to_thread(_ensure_hackathon_columns)
+    await asyncio.to_thread(_ensure_notification_columns)
+    await asyncio.to_thread(_ensure_eve_schedule_columns)
     # Composite indexes for pagination hot paths (lean, concurrent-safe)
     await asyncio.to_thread(_ensure_performance_indexes)
 
@@ -224,6 +228,92 @@ def _ensure_eve_memory_embedding() -> None:
                 )
             except Exception:
                 pass
+        conn.commit()
+
+
+def _ensure_documents_columns() -> None:
+    """Backfill document metadata columns (url/type/size/drive_file_id)."""
+    with sync_engine.connect() as conn:
+        if is_sqlite:
+            cols = {row[1] for row in conn.execute(text("PRAGMA table_info(documents)"))}
+            if "documents" not in cols:
+                return
+            if "url" not in cols:
+                conn.execute(text("ALTER TABLE documents ADD COLUMN url TEXT"))
+            if "doc_type" not in cols:
+                conn.execute(text("ALTER TABLE documents ADD COLUMN doc_type VARCHAR(80) DEFAULT 'FILE'"))
+            if "size_label" not in cols:
+                conn.execute(text("ALTER TABLE documents ADD COLUMN size_label VARCHAR(80) DEFAULT 'Unknown'"))
+            if "drive_file_id" not in cols:
+                conn.execute(text("ALTER TABLE documents ADD COLUMN drive_file_id VARCHAR(255)"))
+        else:
+            conn.execute(text("ALTER TABLE documents ADD COLUMN IF NOT EXISTS url TEXT"))
+            conn.execute(text("ALTER TABLE documents ADD COLUMN IF NOT EXISTS doc_type VARCHAR(80) DEFAULT 'FILE'"))
+            conn.execute(text("ALTER TABLE documents ADD COLUMN IF NOT EXISTS size_label VARCHAR(80) DEFAULT 'Unknown'"))
+            conn.execute(text("ALTER TABLE documents ADD COLUMN IF NOT EXISTS drive_file_id VARCHAR(255)"))
+        conn.commit()
+
+
+def _ensure_hackathon_columns() -> None:
+    """Backfill structured hackathon columns (starts_at/ends_at/mode/team_size/tags)."""
+    with sync_engine.connect() as conn:
+        if is_sqlite:
+            cols = {row[1] for row in conn.execute(text("PRAGMA table_info(hackathons)"))}
+            if "hackathons" not in cols:
+                return
+            if "starts_at" not in cols:
+                conn.execute(text("ALTER TABLE hackathons ADD COLUMN starts_at TIMESTAMP WITH TIME ZONE"))
+            if "ends_at" not in cols:
+                conn.execute(text("ALTER TABLE hackathons ADD COLUMN ends_at TIMESTAMP WITH TIME ZONE"))
+            if "mode" not in cols:
+                conn.execute(text("ALTER TABLE hackathons ADD COLUMN mode VARCHAR(64)"))
+            if "team_size" not in cols:
+                conn.execute(text("ALTER TABLE hackathons ADD COLUMN team_size VARCHAR(32)"))
+            if "tags" not in cols:
+                conn.execute(text("ALTER TABLE hackathons ADD COLUMN tags JSON DEFAULT '[]'"))
+        else:
+            conn.execute(text("ALTER TABLE hackathons ADD COLUMN IF NOT EXISTS starts_at TIMESTAMP WITH TIME ZONE"))
+            conn.execute(text("ALTER TABLE hackathons ADD COLUMN IF NOT EXISTS ends_at TIMESTAMP WITH TIME ZONE"))
+            conn.execute(text("ALTER TABLE hackathons ADD COLUMN IF NOT EXISTS mode VARCHAR(64)"))
+            conn.execute(text("ALTER TABLE hackathons ADD COLUMN IF NOT EXISTS team_size VARCHAR(32)"))
+            conn.execute(text("ALTER TABLE hackathons ADD COLUMN IF NOT EXISTS tags JSON DEFAULT '[]'"))
+        conn.commit()
+
+
+def _ensure_notification_columns() -> None:
+    """Backfill the notifications.notification_time display-label column."""
+    with sync_engine.connect() as conn:
+        if is_sqlite:
+            cols = {row[1] for row in conn.execute(text("PRAGMA table_info(notifications)"))}
+            if "notifications" not in cols:
+                return
+            if "notification_time" not in cols:
+                conn.execute(text("ALTER TABLE notifications ADD COLUMN notification_time VARCHAR(32)"))
+        else:
+            conn.execute(text("ALTER TABLE notifications ADD COLUMN IF NOT EXISTS notification_time VARCHAR(32)"))
+        conn.commit()
+
+
+def _ensure_eve_schedule_columns() -> None:
+    """Backfill Firestore-shaped scheduling fields on eve_schedules."""
+    with sync_engine.connect() as conn:
+        if is_sqlite:
+            cols = {row[1] for row in conn.execute(text("PRAGMA table_info(eve_schedules)"))}
+            if "eve_schedules" not in cols:
+                return
+            if "title" not in cols:
+                conn.execute(text("ALTER TABLE eve_schedules ADD COLUMN title VARCHAR(255)"))
+            if "schedule_type" not in cols:
+                conn.execute(text("ALTER TABLE eve_schedules ADD COLUMN schedule_type VARCHAR(32)"))
+            if "execute_at" not in cols:
+                conn.execute(text("ALTER TABLE eve_schedules ADD COLUMN execute_at TIMESTAMP WITH TIME ZONE"))
+            if "next_run_at" not in cols:
+                conn.execute(text("ALTER TABLE eve_schedules ADD COLUMN next_run_at TIMESTAMP WITH TIME ZONE"))
+        else:
+            conn.execute(text("ALTER TABLE eve_schedules ADD COLUMN IF NOT EXISTS title VARCHAR(255)"))
+            conn.execute(text("ALTER TABLE eve_schedules ADD COLUMN IF NOT EXISTS schedule_type VARCHAR(32)"))
+            conn.execute(text("ALTER TABLE eve_schedules ADD COLUMN IF NOT EXISTS execute_at TIMESTAMP WITH TIME ZONE"))
+            conn.execute(text("ALTER TABLE eve_schedules ADD COLUMN IF NOT EXISTS next_run_at TIMESTAMP WITH TIME ZONE"))
         conn.commit()
 
 

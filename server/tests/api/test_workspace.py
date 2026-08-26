@@ -9,22 +9,40 @@ from app.db import get_firestore
 mock_user = {"uid": "test-user-123", "email": "test@example.com"}
 mock_db = MagicMock()
 
-
-def override_get_current_user():
-    return mock_user
-
-
-def override_get_firestore():
-    return mock_db
-
-
-app.dependency_overrides[get_current_user] = override_get_current_user
-app.dependency_overrides[get_firestore] = override_get_firestore
-
 client = TestClient(app)
 
 
-class TestWorkspaceEndpoints(unittest.TestCase):
+def _install_overrides():
+    """Apply this module's dependency overrides (restored by _remove_overrides)."""
+    app.dependency_overrides[get_current_user] = lambda: mock_user
+    app.dependency_overrides[get_firestore] = lambda: mock_db
+
+
+def _remove_overrides():
+    app.dependency_overrides.pop(get_current_user, None)
+    app.dependency_overrides.pop(get_firestore, None)
+
+
+class _OverridesMixin:
+    """Install this module's dependency overrides for the duration of each test."""
+
+    def setUp(self):
+        self._prev_user = app.dependency_overrides.get(get_current_user)
+        self._prev_db = app.dependency_overrides.get(get_firestore)
+        _install_overrides()
+
+    def tearDown(self):
+        if self._prev_user is None:
+            app.dependency_overrides.pop(get_current_user, None)
+        else:
+            app.dependency_overrides[get_current_user] = self._prev_user
+        if self._prev_db is None:
+            app.dependency_overrides.pop(get_firestore, None)
+        else:
+            app.dependency_overrides[get_firestore] = self._prev_db
+
+
+class TestWorkspaceEndpoints(_OverridesMixin, unittest.TestCase):
     def test_health_check(self):
         response = client.get("/api/v1/health")
         self.assertEqual(response.status_code, 200)
@@ -154,7 +172,7 @@ def stub_sessions_collection():
     return mock_collection
 
 
-class TestEveSessionEndpoints(unittest.TestCase):
+class TestEveSessionEndpoints(_OverridesMixin, unittest.TestCase):
     def test_create_eve_session_mocked(self):
         mock_collection = stub_sessions_collection()
         mock_collection.document.return_value.id = "sess-123"
@@ -232,7 +250,7 @@ def stub_memories_collection():
     return mock_collection
 
 
-class TestEveMemoryEndpoints(unittest.TestCase):
+class TestEveMemoryEndpoints(_OverridesMixin, unittest.TestCase):
     def test_list_eve_memories_mocked(self):
         mock_collection = stub_memories_collection()
         mock_collection.order_by.return_value.limit.return_value.stream.return_value = [

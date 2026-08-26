@@ -119,16 +119,15 @@ def update_contact(
     changes: ContactUpdate,
 ) -> ContactResponse | None:
     reference = collection(database, user_id).document(contact_id)
-    try:
-        data = changes.model_dump(exclude_unset=True, mode="python")
-        reference.update(
-            {
-                **data,
-                "updated_at": SERVER_TIMESTAMP,
-            },
-        )
-    except Exception:
+    if not reference.get().exists:
         return None
+    data = changes.model_dump(exclude_unset=True, mode="python")
+    reference.update(
+        {
+            **data,
+            "updated_at": SERVER_TIMESTAMP,
+        },
+    )
     return from_snapshot(reference.get())
 
 

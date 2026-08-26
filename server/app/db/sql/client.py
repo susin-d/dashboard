@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.db.sql._shared import clean_data
@@ -15,6 +16,7 @@ from app.db.sql.fallback import (
 )
 from app.db.sql.query import SqlBatch, SqlCollectionRef, SqlQuery, SqlSnapshot
 from app.db.sql.registry import lookup as registry_lookup
+from app.models import User
 from app.db.sql.settings import (
     delete_setting_doc,
     get_setting_doc,
@@ -123,6 +125,18 @@ class SqlClient:
     def _query_coll(self, path_parts: list[str], query: SqlQuery) -> list[SqlSnapshot]:
         """Route collection queries to the matching entity handler (registry-driven)."""
         with Session(self._sync_engine) as session:
+            # Collection-group queries (Firestore semantics): fan out to the
+            # per-user handler for every user, bounded by the users table size.
+            if len(path_parts) == 2 and path_parts[0] == "__group__":
+                coll = path_parts[1]
+                results: list[SqlSnapshot] = []
+                user_ids = session.execute(select(User.id)).scalars().all()
+                for uid in user_ids:
+                    parts = ["users", uid, coll]
+                    handler = registry_lookup(parts, "query")
+                    if handler is not None:
+                        results.extend(handler(session, uid, query))
+                return results
             handler = registry_lookup(path_parts, "query")
             if handler is not None:
                 if len(path_parts) == 1:

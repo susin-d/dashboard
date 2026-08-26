@@ -215,7 +215,7 @@ each helper to the feature that owns it.
   and dedicated hooks (`useWebRTC`, `useEveVoice`, `useProjectFilters`) over a
   catch-all `utils` file.
 - Verify after splitting: `npm run lint` / `npm run build` (frontend),
-  `python -m unittest discover tests` (backend). Update `context.md`.
+  `python -m pytest tests -q` (backend). Update `context.md`.
 
 ---
 
@@ -527,7 +527,7 @@ server/app/
 │   ├── studio/            # Studio builder services
 │   └── *.py               # Single-file service modules
 ├── templates/             # Email HTML templates
-└── tests/                 # Backend unittest suite
+└── tests/                 # Backend pytest suite (unit/api/services/e2e)
 ```
 
 ### 5.4 Route Handler Rules
@@ -709,16 +709,15 @@ Never declare success without running build/lint/test tools to verify correctnes
 | Layer | Commands |
 |-------|----------|
 | Frontend | `npm run lint` and `npm run build` in `/website` |
-| Backend | `python -m unittest discover tests` in `/server` |
+| Backend | `python -m pytest tests -q` in `/server` (unit + API + services + e2e; see §8.2) |
 | Full | Verify Python syntax, test endpoints, check for import errors |
 
 ### 8.2 Testing Expectations
 
-- **Backend**: Unit tests in `server/tests/` using Python `unittest`. New
-  features should include tests for success paths, validation errors, and edge
-  cases.
-- **Frontend**: Build verification (`npm run build`) catches import errors,
-  undefined references, and type issues.
+- **Framework**: Backend tests use **pytest** (`pytest.ini` at `server/`; `asyncio_mode = auto`). Fixtures live in `server/tests/conftest.py` and `server/tests/support/` (SQLite harness, real-token auth helpers, scripted AI providers, httpx MockTransport wiring).
+- **Layout**: `tests/unit/` (pure logic), `tests/api/` (route tests), `tests/services/`, `tests/e2e/` (`@pytest.mark.e2e` journeys). The conftest blocks `.env` loading and points `DATABASE_URL` at a throwaway SQLite file — tests never touch the dev DB or real secrets.
+- **Backend**: New features should include tests for success paths, validation errors, ownership isolation, and edge cases.
+- **Frontend**: Build verification (`npm run build`) catches import errors, undefined references, and type issues.
 
 ### 8.3 Preserve Comments & API Contracts
 
@@ -771,7 +770,7 @@ Never declare success without running build/lint/test tools to verify correctnes
 
 - [ ] `npm run lint` passes in `/website`
 - [ ] `npm run build` succeeds in `/website`
-- [ ] `python -m unittest discover tests` passes in `/server`
+- [ ] `python -m pytest tests -q` passes in `/server`
 - [ ] No dead code, unused imports, or commented-out blocks
 - [ ] No hardcoded magic values or inline styles
 - [ ] File sizes are under 400 lines (500 hard limit)
@@ -791,3 +790,4 @@ Never declare success without running build/lint/test tools to verify correctnes
 - [ ] Colors are monochrome only (black/white/gray)
 - [ ] Tests added for new backend logic
 - [ ] `context.md` updated with new routes/pages/features
+

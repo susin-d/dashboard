@@ -9,12 +9,16 @@ from app.db.sql.contacts import delete_contact_doc, get_contact_doc, query_conta
 from app.db.sql.documents import delete_document_doc, get_document_doc, query_documents, set_document_doc
 from app.db.sql.eve import (
     delete_eve_memory_doc,
+    delete_eve_schedule_doc,
     delete_eve_session_doc,
     get_eve_memory_doc,
+    get_eve_schedule_doc,
     get_eve_session_doc,
     query_eve_memories,
+    query_eve_schedules,
     query_eve_sessions,
     set_eve_memory_doc,
+    set_eve_schedule_doc,
     set_eve_session_doc,
 )
 from app.db.sql.hackathons import delete_hackathon_doc, get_hackathon_doc, query_hackathons, set_hackathon_doc
@@ -40,6 +44,7 @@ REGISTRY: dict[tuple, dict] = {
     (3, "users", "notifications"): {"get": get_notification_doc, "set": set_notification_doc, "delete": delete_notification_doc, "query": query_notifications},
     (3, "users", "eve_sessions"): {"get": get_eve_session_doc, "set": set_eve_session_doc, "delete": delete_eve_session_doc, "query": query_eve_sessions},
     (3, "users", "eve_memories"): {"get": get_eve_memory_doc, "set": set_eve_memory_doc, "delete": delete_eve_memory_doc, "query": query_eve_memories},
+    (3, "users", "eve_schedules"): {"get": get_eve_schedule_doc, "set": set_eve_schedule_doc, "delete": delete_eve_schedule_doc, "query": query_eve_schedules},
 }
 
 

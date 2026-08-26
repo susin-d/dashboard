@@ -104,7 +104,8 @@ async def list_hackathons(
         if isinstance(end, str):
             end = datetime.fromisoformat(end)
         if end and end.astimezone(timezone.utc) >= now:
-            manual.append({"id": item.id, "source": "manual", **record})
+            # Overrides after spread so the stored source cannot mask the marker
+            manual.append({"id": item.id, **record, "source": "manual"})
     connected = await fetch_enabled_hackathons(enabled)
     records = sorted([*manual, *connected], key=lambda item: item["starts_at"])
     offset = int(decode_cursor(cursor) or 0)

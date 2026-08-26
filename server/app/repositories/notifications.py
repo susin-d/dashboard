@@ -56,15 +56,14 @@ class NotificationRepository:
         update_data: NotificationUpdate,
     ) -> dict[str, Any] | None:
         reference = self.collection.document(notification_id)
-        try:
-            reference.update(
-                {
-                    **update_data.model_dump(exclude_unset=True),
-                    "updated_at": SERVER_TIMESTAMP,
-                },
-            )
-        except Exception:
+        if not reference.get().exists:
             return None
+        reference.update(
+            {
+                **update_data.model_dump(exclude_unset=True),
+                "updated_at": SERVER_TIMESTAMP,
+            },
+        )
         return {"id": reference.id, **(reference.get().to_dict() or {})}
 
     def delete(self, notification_id: str) -> bool:
@@ -93,7 +92,8 @@ class NotificationRepository:
         batch = self.database.batch()
         count = 0
         for item in self.collection.where("unread", "==", True).stream():
-            batch.update(item.reference, {
+            # SqlSnapshot exposes no .reference; address the doc via its id.
+            batch.update(self.collection.document(item.id), {
                 "unread": False,
                 "updated_at": SERVER_TIMESTAMP,
             })

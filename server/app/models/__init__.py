@@ -118,6 +118,13 @@ class Hackathon(Base):
     hackathon_url = Column(Text, nullable=True)
     source = Column(String(128), nullable=True)
     notes = Column(Text, nullable=True)
+    # Structured schedule/details persisted since the SQL migration (required by
+    # HackathonResponse; previously dropped silently on write).
+    starts_at = Column(DateTime(timezone=True), nullable=True)
+    ends_at = Column(DateTime(timezone=True), nullable=True)
+    mode = Column(String(64), nullable=True)
+    team_size = Column(String(32), nullable=True)
+    tags = Column(JSON, default=list, nullable=False)
     deleted = Column(Boolean, default=False, nullable=False)
     deleted_at = Column(DateTime(timezone=True), nullable=True)
     created_at = Column(DateTime(timezone=True), default=utc_now, nullable=False)
@@ -152,6 +159,12 @@ class Document(Base):
     content = Column(Text, default="", nullable=False)
     folder = Column(String(255), default="General", nullable=False)
     tags = Column(JSON, default=list, nullable=False)
+    # Drive/document metadata persisted since the SQL migration (previously
+    # dropped silently when coming from the schema-shaped DocumentUpsert).
+    url = Column(Text, nullable=True)
+    doc_type = Column(String(80), nullable=True)
+    size_label = Column(String(80), nullable=True)
+    drive_file_id = Column(String(255), nullable=True)
     deleted = Column(Boolean, default=False, nullable=False)
     deleted_at = Column(DateTime(timezone=True), nullable=True)
     created_at = Column(DateTime(timezone=True), default=utc_now, nullable=False)
@@ -189,6 +202,8 @@ class Notification(Base):
     type = Column(String(64), default="system", nullable=False)
     read = Column(Boolean, default=False, nullable=False)
     data = Column(JSON, default=dict, nullable=False)
+    # Display timestamp label (e.g. "3:45 PM") persisted from Firestore-shaped docs
+    notification_time = Column(String(32), name="notification_time", nullable=True)
     deleted = Column(Boolean, default=False, nullable=False)
     created_at = Column(DateTime(timezone=True), default=utc_now, nullable=False)
     updated_at = Column(DateTime(timezone=True), default=utc_now, onupdate=utc_now, nullable=False)
@@ -249,6 +264,11 @@ class EveSchedule(Base):
     cron_expression = Column(String(128), nullable=True)
     scheduled_time = Column(DateTime(timezone=True), nullable=True)
     prompt = Column(Text, nullable=True)
+    # Firestore-shaped scheduling fields persisted since the SQL migration
+    title = Column(String(255), nullable=True)
+    schedule_type = Column(String(32), nullable=True)  # one_time, recurring
+    execute_at = Column(DateTime(timezone=True), nullable=True)
+    next_run_at = Column(DateTime(timezone=True), nullable=True)
     enabled = Column(Boolean, default=True, nullable=False)
     last_run_at = Column(DateTime(timezone=True), nullable=True)
     created_at = Column(DateTime(timezone=True), default=utc_now, nullable=False)

@@ -16,7 +16,7 @@ if TYPE_CHECKING:
 
 
 def document_to_dict(d: Document) -> dict[str, Any]:
-    """Serialize Document model to snapshot dictionary."""
+    """Serialize Document model to snapshot dictionary (schema-shaped fields included)."""
     return {
         "id": d.id,
         "title": d.title,
@@ -25,9 +25,12 @@ def document_to_dict(d: Document) -> dict[str, Any]:
         "description": d.content or "",
         "folder": d.folder,
         "category": d.folder or "General",
-        "url": "",
-        "type": "FILE",
-        "size": "Unknown",
+        "url": d.url or "",
+        "doc_type": d.doc_type or "FILE",
+        "type": d.doc_type or "FILE",
+        "size_label": d.size_label or "Unknown",
+        "size": d.size_label or "Unknown",
+        "drive_file_id": d.drive_file_id,
         "tags": d.tags or [],
         "deleted": d.deleted,
         "deleted_at": d.deleted_at.isoformat() if d.deleted_at else None,
@@ -35,6 +38,34 @@ def document_to_dict(d: Document) -> dict[str, Any]:
         "updated_at": d.updated_at.isoformat() if d.updated_at else "",
         "modified_at": d.updated_at.isoformat() if d.updated_at else "",
     }
+
+
+def _apply_document_data(d: Document, data: dict[str, Any]) -> None:
+    """Map schema-shaped and legacy Firestore-shaped keys onto model columns."""
+    mapping = {
+        "title": "title",
+        "name": "title",
+        "content": "content",
+        "description": "content",
+        "folder": "folder",
+        "category": "folder",
+        "tags": "tags",
+        "url": "url",
+        "type": "doc_type",
+        "doc_type": "doc_type",
+        "size": "size_label",
+        "size_label": "size_label",
+        "drive_file_id": "drive_file_id",
+        # lifecycle markers used by soft delete / restore payloads
+        "deleted": "deleted",
+        "deleted_at": "deleted_at",
+        "created_at": "created_at",
+        "updated_at": "updated_at",
+    }
+    for key, value in data.items():
+        column = mapping.get(key)
+        if column is not None:
+            setattr(d, column, coerce_model_value(column, value))
 
 
 def get_document_doc(session: Session, user_id: str, doc_id: str) -> SqlSnapshot:
@@ -58,16 +89,13 @@ def set_document_doc(
         d = Document(
             id=doc_id,
             user_id=user_id,
-            title=data.get("title", ""),
-            content=data.get("content", ""),
-            folder=data.get("folder", "General"),
-            tags=data.get("tags") or [],
+            title="",
+            content="",
+            folder="General",
+            tags=[],
         )
         session.add(d)
-    else:
-        for k, val in data.items():
-            if hasattr(d, k):
-                setattr(d, k, coerce_model_value(k, val))
+    _apply_document_data(d, data)
     session.commit()
 
 

@@ -101,7 +101,10 @@ def handle_create_workspace_record(database: SqlClient, user_id: str, arguments:
         return {
             "error": f"Unsupported workspace resource '{raw_resource}'. Supported resources: {', '.join(SUPPORTED_RESOURCES)}."
         }, None, None
-    return {"record": _create_record(database, user_id, resource, arguments["data"])}, resource, None
+    data = arguments.get("data")
+    if not isinstance(data, dict) or not data:
+        return {"error": "'data' object is required to create a record."}, None, None
+    return {"record": _create_record(database, user_id, resource, data)}, resource, None
 
 
 def handle_update_workspace_record(database: SqlClient, user_id: str, arguments: dict) -> tuple[dict, str | None, None]:
@@ -111,7 +114,13 @@ def handle_update_workspace_record(database: SqlClient, user_id: str, arguments:
         return {
             "error": f"Unsupported workspace resource '{raw_resource}'. Supported resources: {', '.join(SUPPORTED_RESOURCES)}."
         }, None, None
+    record_id = arguments.get("record_id")
+    changes = arguments.get("changes")
+    if not record_id:
+        return {"error": "'record_id' is required to update a record."}, None, None
+    if not isinstance(changes, dict) or not changes:
+        return {"error": "'changes' object is required to update a record."}, None, None
     return {
-        "record": _update_record(database, user_id, resource, arguments["record_id"], arguments["changes"])
+        "record": _update_record(database, user_id, resource, record_id, changes)
     }, resource, None
 

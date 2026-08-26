@@ -47,6 +47,10 @@ _TIMESTAMP_KEYS = {
     "next_run_at",
     "scheduled_time",
     "deleted_at",
+    "starts_at",
+    "ends_at",
+    "execute_at",
+    "next_run_at",
 }
 
 

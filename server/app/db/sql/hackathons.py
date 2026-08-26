@@ -16,7 +16,7 @@ if TYPE_CHECKING:
 
 
 def hackathon_to_dict(h: Hackathon) -> dict[str, Any]:
-    """Serialize Hackathon model to snapshot dictionary."""
+    """Serialize Hackathon model to snapshot dictionary (schema-shaped fields included)."""
     return {
         "id": h.id,
         "title": h.title,
@@ -26,13 +26,22 @@ def hackathon_to_dict(h: Hackathon) -> dict[str, Any]:
         "prize": h.prize,
         "status": h.status,
         "hackathon_url": h.hackathon_url,
-        "source": h.source,
+        "url": h.hackathon_url or "",
+        "source": h.source or "",
         "notes": h.notes,
+        "starts_at": h.starts_at.isoformat() if h.starts_at else None,
+        "ends_at": h.ends_at.isoformat() if h.ends_at else None,
+        "mode": h.mode or "online",
+        "team_size": h.team_size or "",
+        "tags": h.tags or [],
         "deleted": h.deleted,
         "deleted_at": h.deleted_at.isoformat() if h.deleted_at else None,
         "created_at": h.created_at.isoformat() if h.created_at else "",
         "updated_at": h.updated_at.isoformat() if h.updated_at else "",
     }
+
+
+_HACKATHON_COLUMN_ALIASES = {"url": "hackathon_url"}
 
 
 def get_hackathon_doc(session: Session, user_id: str, doc_id: str) -> SqlSnapshot:
@@ -62,15 +71,16 @@ def set_hackathon_doc(
             dates=data.get("dates"),
             prize=data.get("prize"),
             status=data.get("status", "Registered"),
-            hackathon_url=data.get("hackathon_url"),
             source=data.get("source"),
             notes=data.get("notes"),
+            starts_at=coerce_model_value("starts_at", data.get("starts_at")),
+            ends_at=coerce_model_value("ends_at", data.get("ends_at")),
         )
         session.add(h)
-    else:
-        for k, val in data.items():
-            if hasattr(h, k):
-                setattr(h, k, coerce_model_value(k, val))
+    for key, val in data.items():
+        column = _HACKATHON_COLUMN_ALIASES.get(key, key)
+        if hasattr(h, column):
+            setattr(h, column, coerce_model_value(column, val))
     session.commit()
 
 

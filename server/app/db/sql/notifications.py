@@ -15,6 +15,9 @@ if TYPE_CHECKING:
     from app.db.sql.query import SqlQuery
 
 
+_NOTIFICATION_COLUMN_ALIASES = {"message": "body", "time": "notification_time"}
+
+
 def notification_to_dict(n: Notification) -> dict[str, Any]:
     """Serialize Notification model to snapshot dictionary."""
     return {
@@ -23,6 +26,7 @@ def notification_to_dict(n: Notification) -> dict[str, Any]:
         "body": n.body,
         "message": n.body,
         "type": n.type,
+        "time": n.notification_time or "",
         "unread": not n.read,
         "read": n.read,
         "data": n.data or {},
@@ -58,12 +62,13 @@ def set_notification_doc(
             type=data.get("type", "system"),
             read=data.get("read") if "read" in data else not bool(data.get("unread", True)),
             data=data.get("data") or {},
+            notification_time=data.get("time"),
         )
         session.add(n)
-    else:
-        for k, val in data.items():
-            if hasattr(n, k):
-                setattr(n, k, coerce_model_value(k, val))
+    for key, val in data.items():
+        column = _NOTIFICATION_COLUMN_ALIASES.get(key, key)
+        if hasattr(n, column):
+            setattr(n, column, coerce_model_value(column, val))
     session.commit()
 
 

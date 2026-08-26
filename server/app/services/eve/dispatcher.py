@@ -5,6 +5,11 @@ from typing import Any
 from app.db import SqlClient
 
 from app.services.eve.handlers.call import handle_make_twilio_call, handle_trigger_eve_call
+from app.services.eve.handlers.calendar import (
+    handle_create_calendar_event,
+    handle_delete_calendar_event,
+    handle_list_calendar_events,
+)
 from app.services.eve.handlers.memory import (
     handle_forget_memory,
     handle_recall_memories,
@@ -20,6 +25,25 @@ from app.services.eve.handlers.schedule import (
     handle_create_eve_schedule,
     handle_delete_eve_schedule,
     handle_list_eve_schedules,
+)
+from app.services.eve.handlers.browser import (
+    handle_browser_click,
+    handle_browser_extract_text,
+    handle_browser_navigate,
+    handle_browser_screenshot,
+    handle_browser_type,
+)
+from app.services.eve.handlers.email import (
+    handle_list_emails,
+    handle_search_emails,
+    handle_send_email,
+)
+from app.services.eve.handlers.http import handle_http_request
+from app.services.eve.handlers.media import (
+    handle_generate_image,
+    handle_generate_video,
+    handle_speech_to_text,
+    handle_text_to_speech,
 )
 from app.services.eve.handlers.studio import (
     handle_create_studio_project,
@@ -52,6 +76,12 @@ from app.services.eve.handlers.workspace import (
     handle_search_workspace,
     handle_update_workspace_record,
     handle_workspace_insight,
+)
+from app.services.eve.handlers.utility import (
+    handle_create_chart,
+    handle_extract_text_from_image,
+    handle_generate_qr_code,
+    handle_read_pdf_file,
 )
 from app.services.eve.handlers.workspace_files import (
     handle_list_workspace_files,
@@ -124,6 +154,26 @@ _TOOL_HANDLERS: dict[str, Any] = {
     "write_studio_files": handle_write_studio_files,
     "run_studio_command": handle_run_studio_command,
     "publish_studio_template": handle_publish_studio_template,
+    "generate_image": handle_generate_image,
+    "generate_video": handle_generate_video,
+    "text_to_speech": handle_text_to_speech,
+    "speech_to_text": handle_speech_to_text,
+    "browser_navigate": handle_browser_navigate,
+    "browser_click": handle_browser_click,
+    "browser_type": handle_browser_type,
+    "browser_extract_text": handle_browser_extract_text,
+    "browser_screenshot": handle_browser_screenshot,
+    "generate_qr_code": handle_generate_qr_code,
+    "create_chart": handle_create_chart,
+    "read_pdf_file": handle_read_pdf_file,
+    "extract_text_from_image": handle_extract_text_from_image,
+    "send_email": handle_send_email,
+    "list_emails": handle_list_emails,
+    "search_emails": handle_search_emails,
+    "create_calendar_event": handle_create_calendar_event,
+    "list_calendar_events": handle_list_calendar_events,
+    "delete_calendar_event": handle_delete_calendar_event,
+    "http_request": handle_http_request,
 }
 
 

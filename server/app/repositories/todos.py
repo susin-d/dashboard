@@ -92,17 +92,16 @@ def update_todo(
     changes: TodoUpdate,
 ) -> TodoResponse | None:
     reference = collection(database, user_id).document(todo_id)
-    try:
-        reference.update(
-            {
-                **values_for_firestore(
-                    changes.model_dump(exclude_unset=True, mode="python"),
-                ),
-                "updated_at": SERVER_TIMESTAMP,
-            },
-        )
-    except Exception:
+    if not reference.get().exists:
         return None
+    reference.update(
+        {
+            **values_for_firestore(
+                changes.model_dump(exclude_unset=True, mode="python"),
+            ),
+            "updated_at": SERVER_TIMESTAMP,
+        },
+    )
     return from_snapshot(reference.get())
 
 
