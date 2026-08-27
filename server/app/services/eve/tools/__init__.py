@@ -11,6 +11,7 @@ from app.services.eve.tools.navigation import NAVIGATION_TOOLS
 from app.services.eve.tools.schedule import SCHEDULE_TOOLS
 from app.services.eve.tools.search import SEARCH_TOOLS
 from app.services.eve.tools.studio import STUDIO_TOOLS
+from app.services.eve.tools.ui import UI_TOOLS
 from app.services.eve.tools.utility import UTILITY_TOOLS
 from app.services.eve.tools.web import WEB_TOOLS
 from app.services.eve.tools.whatsapp import WHATSAPP_TOOLS
@@ -32,4 +33,5 @@ EVE_TOOLS = (
     + EMAIL_TOOLS
     + CALENDAR_TOOLS
     + HTTP_TOOLS
+    + UI_TOOLS
 )

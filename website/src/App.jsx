@@ -34,6 +34,7 @@ import { OnboardingPage } from './pages/OnboardingPage'
 import { LandingPage } from './pages/LandingPage'
 import { PrivacyPolicyPage } from './pages/PrivacyPolicyPage'
 import { TermsOfServicePage } from './pages/TermsOfServicePage'
+import { CustomPage } from './pages/CustomPage'
 import { updateNotification } from './lib/workspaceApi'
 import { confirmEmailVerification } from './lib/emailApi'
 import { clearAuthSession, verifyAccountCombine } from './lib/authApi'
@@ -43,6 +44,8 @@ import { applyThemeVariables } from './themes'
 import { NetworkStatus } from './components/NetworkStatus'
 import { WaveLoader } from './components/WaveLoader'
 import { useDialogAccessibility } from './hooks/useDialogAccessibility'
+import { useCustomUI } from './hooks/useCustomUI'
+import { EveUiBanner } from './components/ui/EveUiBanner'
 
 const routeTitles = {
   '/': 'StarWaves — Developer productivity workspace',
@@ -101,6 +104,9 @@ function App() {
     selectedHackathonId,
     navigate,
   } = useRouter()
+
+  // Eve UI runtime overrides (global + per-page) — must live after useRouter
+  useCustomUI()
 
   const [notificationsOpen, setNotificationsOpen] = useState(false)
   const [workspaceRefreshKey, setWorkspaceRefreshKey] = useState(0)
@@ -625,7 +631,9 @@ function App() {
                 ? 'documents'
                 : activePage === 'studio-detail'
                   ? 'studio'
-                  : activePage
+                  : activePage.startsWith('custom-')
+                    ? activePage
+                    : activePage
         }
         onNavigate={navigateWorkspace}
         onCreate={requestCreation}
@@ -650,9 +658,17 @@ function App() {
           contestSites,
         }}
       >
-        <Suspense fallback={<WaveLoader />}>{pages[activePage] ?? pages.dashboard}</Suspense>
+        <Suspense fallback={<WaveLoader />}>
+          {activePage.startsWith('custom-')
+            ? (() => {
+                const slug = activePage.slice(7)
+                return <CustomPage slug={slug} />
+              })()
+            : (pages[activePage] ?? pages.dashboard)}
+        </Suspense>
       </AppLayout>
       <IncomingCallOverlay callCenter={callCenter} myUid={userProfile?.uid} />
+      <EveUiBanner />
     </>
   )
 }

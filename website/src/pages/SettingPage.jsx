@@ -5,6 +5,7 @@ import { AiModelsSection } from './settings/AiModelsSection'
 import { AppsSection } from './settings/AppsSection'
 import { AutoMemorySection } from './settings/AutoMemorySection'
 import { CodingSection } from './settings/CodingSection'
+import { AppearanceSection } from './settings/AppearanceSection'
 import { EveVoiceSection } from './settings/EveVoiceSection'
 import { HackathonSourcesSection } from './settings/HackathonSourcesSection'
 import { ProfileSection } from './settings/ProfileSection'
@@ -14,6 +15,7 @@ import { WhatsAppSection } from './settings/WhatsAppSection'
 const SETTINGS_SECTIONS = [
   { id: 'settings-profile', href: '#settings-profile', label: 'Profile' },
   { id: 'settings-themes', href: '#settings-themes', label: 'Themes & Appearance' },
+  { id: 'settings-appearance', href: '#settings-appearance', label: 'Eve UI Overrides' },
   { id: 'settings-apps', href: '#settings-apps', label: 'Integrations' },
   { id: 'settings-whatsapp', href: '#settings-whatsapp', label: 'WhatsApp' },
   { id: 'settings-ai-models', href: '#settings-ai-models', label: 'AI Models' },
@@ -122,6 +124,7 @@ export function SettingPage({
 
       <ProfileSection user={user} />
       <ThemeSection onNavigate={onNavigate} />
+      <AppearanceSection />
       <AppsSection
         user={user}
         onGoogleCalendarsChange={onGoogleCalendarsChange}

@@ -273,6 +273,11 @@ export function EveAssistantModal({ isOpen, onClose, onNavigate, onWorkspaceChan
         if (action.page === 'document-opener') onNavigate?.('document-opener', null, action.documentId)
       } else if (action.type === 'refresh_workspace_data') {
         onWorkspaceChanged()
+      } else if (action.type === 'apply_ui_overrides' || action.type === 'reset_ui') {
+        if (action.preferences) window.dispatchEvent(new CustomEvent('eve-ui-update', { detail: { preferences: action.preferences } }))
+      } else if (action.type === 'open_custom_page' && action.slug) {
+        if (action.preferences) window.dispatchEvent(new CustomEvent('eve-ui-update', { detail: { preferences: action.preferences } }))
+        onNavigate?.(`custom-${action.slug}`)
       }
     })
   }

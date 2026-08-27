@@ -45,6 +45,15 @@ from app.services.eve.handlers.media import (
     handle_speech_to_text,
     handle_text_to_speech,
 )
+from app.services.eve.handlers.ui import (
+    handle_create_custom_page,
+    handle_get_ui_state,
+    handle_list_ui_history,
+    handle_manage_ui_visibility,
+    handle_reset_ui,
+    handle_update_ui_styles,
+    handle_update_ui_theme,
+)
 from app.services.eve.handlers.studio import (
     handle_create_studio_project,
     handle_get_studio_project,
@@ -174,6 +183,13 @@ _TOOL_HANDLERS: dict[str, Any] = {
     "list_calendar_events": handle_list_calendar_events,
     "delete_calendar_event": handle_delete_calendar_event,
     "http_request": handle_http_request,
+    "get_ui_state": handle_get_ui_state,
+    "update_ui_theme": handle_update_ui_theme,
+    "update_ui_styles": handle_update_ui_styles,
+    "manage_ui_visibility": handle_manage_ui_visibility,
+    "reset_ui": handle_reset_ui,
+    "list_ui_history": handle_list_ui_history,
+    "create_custom_page": handle_create_custom_page,
 }
 
 

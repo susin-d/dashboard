@@ -54,5 +54,8 @@
 @import './styles/pages/landing.css';
 @import './styles/pages/missing-states.css';
 
+/* Eve UI runtime overrides */
+@import './styles/components/eve-ui.css';
+
 /* Final shared geometry pass */
 @import './styles/layout-symmetry.css';

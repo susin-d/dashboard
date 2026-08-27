@@ -33,6 +33,9 @@ const workspacePages = new Set([
 export function workspaceStateFromPath(pathname) {
   const [, root, page, detailId] = pathname.split('/')
   if (root !== 'app') return { page: 'dashboard', projectId: null, documentId: null, hackathonId: null }
+  if (page === 'custom' && detailId) {
+    return { page: `custom-${detailId}`, projectId: null, documentId: null, hackathonId: null }
+  }
   if (page === 'competitive') {
     return { page: 'competitive-coding', projectId: null, documentId: null, hackathonId: null }
   }
@@ -103,7 +106,10 @@ export function useRouter() {
   const navigate = useCallback((page, options = {}) => {
     let path = '/app/dashboard'
 
-    if (page === 'landing') path = '/'
+    if (page.startsWith('custom-')) {
+      const slug = page.slice(7)
+      path = `/app/custom/${slug}`
+    } else if (page === 'landing') path = '/'
     else if (page === 'auth') path = '/login'
     else if (page === 'privacy') path = '/privacy'
     else if (page === 'terms') path = '/terms'

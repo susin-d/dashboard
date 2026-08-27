@@ -9,18 +9,24 @@ Instructions and guidelines for AI Coding Agents working in the **Starwaves** co
 
 ## 🛑 1. Core Principles & Communication
 
-1. **Maintain `context.md` as the Living Snapshot**:
+1. **Maintain `context.md` as the Living Snapshot** (keep it < 15k / ~4k tokens):
    - `context.md` at the repository root is the authoritative **current state**
-     of the codebase. Read it before starting any task; it may be more recent
-     than stale assumptions.
+     of the codebase — read it via the tiered protocol in §1.5, not by brute force.
    - After any change that alters the implementation — new routes, pages,
      components, repositories, services, scripts, dependencies, environment
      variables, features, or architecture — **update `context.md` to match** in
-     the same change.
+     the same change (single `Last updated` one-liner; move old detail to `CHANGELOG.md`).
    - Update the **`Last updated`** date at the top of `context.md` whenever you
-     modify it.
+     modify it. Keep it to **one line** (`2026-08-27 — summary`), not a wall of `Also` blocks.
    - Remove or amend entries that are no longer true (features, routes, files,
-     scripts, limitations). Never leave `context.md` describing the old state.
+     scripts, limitations). Never leave `context.md` describing the old state and never exceed **15k chars** — compact proactively.
+
+5. **Tiered Context Loading — Never Reread All Files**:
+   - Tier 0 (preloaded, 0 tool calls): `opencode.json` `instructions` already injects `AGENTS.md` + `PROJECT_MAP.md` into the system prompt. Do not re-read them with tools unless you need a fresh copy.
+   - Tier 1 (1 read, ~3k tokens): Start with `PROJECT_MAP.md` for navigation — it is the file index (route map, client map, directory map). Use it to locate 1–2 target files.
+   - Tier 2 (conditional, ~4k tokens): Read `context.md` only when the task is cross-cutting, needs infra/architecture state, or `PROJECT_MAP.md` is insufficient.
+   - Tier 3 (targeted): Use `Grep` with `include` filters (`*.py`, `*.jsx`, `*.css`) and `Read` on specific paths from Tier 1. **Prohibited:** `Glob **/*` without `include`, full tree scans, or reading every file to orient. Prefer semantic `Grep` over enumeration.
+   - `CHANGELOG.md` holds history — never read it for orientation; `context.md` history belongs there.
 
 2. **Ask When in Doubt**:
    - Never guess user intent, business logic, API schemas, or ambiguous design

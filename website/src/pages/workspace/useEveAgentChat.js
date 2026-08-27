@@ -100,6 +100,16 @@ export function useEveAgentChat({ workspaceId, workspaceName, activeFilePath, on
 
         for (const action of donePayload?.actions ?? []) {
           onAction?.(action)
+          if (action.type === 'apply_ui_overrides' || action.type === 'reset_ui' || action.type === 'open_custom_page') {
+            if (action.preferences) window.dispatchEvent(new CustomEvent('eve-ui-update', { detail: { preferences: action.preferences } }))
+          }
+        }
+        if (donePayload?.changed_resources?.includes('ui-preferences') && donePayload?.actions?.length === 0) {
+          try {
+            const { getUiPreferences } = await import('../../lib/uiPreferencesApi')
+            const res = await getUiPreferences()
+            if (res?.preferences) window.dispatchEvent(new CustomEvent('eve-ui-update', { detail: { preferences: res.preferences } }))
+          } catch {}
         }
       } catch (turnError) {
         setError(turnError.message || 'Eve is unavailable right now.')

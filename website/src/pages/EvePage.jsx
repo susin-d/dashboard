@@ -148,6 +148,13 @@ export function EvePage({
         callCenter?.requestEveCall?.('audio')
       } else if (action.type === 'refresh_eve_schedules') {
         refreshSidebar()
+      } else if (action.type === 'apply_ui_overrides' || action.type === 'reset_ui') {
+        if (action.preferences) {
+          window.dispatchEvent(new CustomEvent('eve-ui-update', { detail: { preferences: action.preferences } }))
+        }
+      } else if (action.type === 'open_custom_page' && action.slug) {
+        window.dispatchEvent(new CustomEvent('eve-ui-update', { detail: { preferences: action.preferences } }))
+        onNavigate?.(`custom-${action.slug}`)
       }
     })
   }
