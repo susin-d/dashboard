@@ -290,7 +290,7 @@ async def get_memories(
 
 
 @router.get("/memories/search", response_model=EveMemoriesResponse)
-@cached(ttl=CACHE_TTL_SHORT, prefix=f"{_EVE_MEMORIES_PREFIX}:search")
+@cached(ttl=10, prefix=f"{_EVE_MEMORIES_PREFIX}:search")
 async def search_eve_memories_route(
     q: str,
     limit: int = 5,

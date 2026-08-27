@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends
 from app.db import ArrayUnion, SERVER_TIMESTAMP, SqlClient, get_firestore
 
 from app.core.auth import get_current_user
-from app.core.cache import CACHE_TTL_MEDIUM, cache_invalidate_prefix, cached
+from app.core.cache import CACHE_TTL_LONG, cache_invalidate_prefix, cached
 from app.schemas.competitive_coding_profile import (
     CompetitiveCodingProfileResponse,
     CompetitiveCodingProfileUpdate,
@@ -27,7 +27,7 @@ def _reference(database: SqlClient, user_id: str):
 
 
 @router.get("", response_model=CompetitiveCodingProfileResponse)
-@cached(ttl=CACHE_TTL_MEDIUM, prefix=_CC_PROFILE_PREFIX)
+@cached(ttl=CACHE_TTL_LONG, prefix=_CC_PROFILE_PREFIX)
 def get_competitive_coding_profile(
     database: SqlClient = Depends(get_firestore),
     user: dict = Depends(get_current_user),

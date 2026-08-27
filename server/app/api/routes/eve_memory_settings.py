@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends
 from app.db import ArrayUnion, SERVER_TIMESTAMP, SqlClient, get_firestore
 
 from app.core.auth import get_current_user
-from app.core.cache import CACHE_TTL_MEDIUM, cache_invalidate_prefix, cached
+from app.core.cache import CACHE_TTL_LONG, cache_invalidate_prefix, cached
 from app.schemas.eve import EveMemorySettingsResponse, EveMemorySettingsUpdate
 from app.services.eve.memory_settings import (
     EVE_MEMORY_SETTINGS_DOC,
@@ -28,7 +28,7 @@ def _reference(database: SqlClient, user_id: str):
 
 
 @router.get("", response_model=EveMemorySettingsResponse)
-@cached(ttl=CACHE_TTL_MEDIUM, prefix=_EVE_MEMORY_SETTINGS_PREFIX)
+@cached(ttl=CACHE_TTL_LONG, prefix=_EVE_MEMORY_SETTINGS_PREFIX)
 def get_eve_memory_settings(
     database: SqlClient = Depends(get_firestore),
     user: dict = Depends(get_current_user),

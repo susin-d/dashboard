@@ -2,7 +2,7 @@
 
 from fastapi import APIRouter
 
-from app.core.cache import CACHE_TTL_MEDIUM, cache_invalidate_prefix, cached
+from app.core.cache import CACHE_TTL_LONG, cache_invalidate_prefix, cached
 from app.core.dependencies import CurrentUserId, DbClient
 from app.core.errors import bad_request
 from app.schemas.ui import (
@@ -34,14 +34,14 @@ def _invalidate_ui_prefs(user_id: str) -> None:
 
 
 @router.get("", response_model=UiPreferencesResponse)
-@cached(ttl=CACHE_TTL_MEDIUM, prefix=_UI_PREFS_PREFIX)
+@cached(ttl=CACHE_TTL_LONG, prefix=_UI_PREFS_PREFIX)
 def get_preferences(db: DbClient, user_id: CurrentUserId):
     prefs = get_ui_preferences(db, user_id)
     return {"preferences": prefs, "available_pages": list(WORKSPACE_PAGES)}
 
 
 @router.get("/history", response_model=UiHistoryResponse)
-@cached(ttl=CACHE_TTL_MEDIUM, prefix=f"{_UI_PREFS_PREFIX}:history")
+@cached(ttl=CACHE_TTL_LONG, prefix=f"{_UI_PREFS_PREFIX}:history")
 def get_history(db: DbClient, user_id: CurrentUserId):
     prefs = get_ui_preferences(db, user_id)
     return {"history": prefs.get("history", []), "current_version": prefs.get("version", 1)}

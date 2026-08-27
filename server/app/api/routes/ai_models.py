@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from app.db import ArrayUnion, SERVER_TIMESTAMP, SqlClient, get_firestore
 
 from app.core.auth import get_current_user
-from app.core.cache import CACHE_TTL_MEDIUM, cache_invalidate_prefix, cached
+from app.core.cache import CACHE_TTL_LONG, cache_invalidate_prefix, cached
 from app.core.config import settings
 from app.schemas.ai_models import AiModelsResponse, AiModelPreferenceUpdate
 from app.services.ai_models import (
@@ -63,7 +63,7 @@ def _preference_payload(preference: dict | None, user_keys: dict[str, str]) -> d
 
 
 @router.get("", response_model=AiModelsResponse)
-@cached(ttl=CACHE_TTL_MEDIUM, prefix=_AI_MODELS_PREFIX)
+@cached(ttl=CACHE_TTL_LONG, prefix=_AI_MODELS_PREFIX)
 async def get_ai_models(
     database: SqlClient = Depends(get_firestore),
     user: dict = Depends(get_current_user),

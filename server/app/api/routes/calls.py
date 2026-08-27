@@ -12,7 +12,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from app.db import SqlClient, get_firestore
 
 from app.core.auth import get_current_user
-from app.core.cache import CACHE_TTL_SHORT, cache_invalidate_prefix, cached
+from app.core.cache import cache_invalidate_prefix, cached
 from app.core.ws_manager import call_ws_manager
 from app.repositories.calls import CallRepository
 from app.repositories.users import get_user_by_email, get_user_by_id
@@ -75,7 +75,7 @@ def _newest_incoming(repository: CallRepository, uid: str) -> dict | None:
 
 
 @router.get("/incoming", response_model=list[CallResponse])
-@cached(ttl=10, prefix=_CALLS_PREFIX)
+@cached(ttl=5, prefix=_CALLS_PREFIX)
 async def list_incoming_calls(
     database: SqlClient = Depends(get_firestore),
     user: dict = Depends(get_current_user),
@@ -87,7 +87,7 @@ async def list_incoming_calls(
 
 
 @router.get("/recent", response_model=list[CallResponse])
-@cached(ttl=10, prefix=_CALLS_PREFIX)
+@cached(ttl=5, prefix=_CALLS_PREFIX)
 async def list_recent_calls(
     limit: int = Query(default=20, ge=1, le=RECENT_CALL_LIMIT),
     database: SqlClient = Depends(get_firestore),
@@ -169,7 +169,7 @@ async def create_call(
 
 
 @router.get("/{call_id}", response_model=CallResponse)
-@cached(ttl=10, prefix=_CALLS_PREFIX)
+@cached(ttl=5, prefix=_CALLS_PREFIX)
 async def get_call(
     call_id: str,
     database: SqlClient = Depends(get_firestore),

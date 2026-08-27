@@ -5,7 +5,7 @@ from app.db import SqlClient, get_firestore
 from pydantic import BaseModel
 
 from app.core.auth import get_current_user
-from app.core.cache import CACHE_TTL_MEDIUM, cache_invalidate_prefix, cached
+from app.core.cache import CACHE_TTL_LONG, cache_invalidate_prefix, cached
 from app.repositories.account_deletion import delete_user_account
 from app.repositories.users import get_user_by_id, update_user_profile as update_profile_in_db
 
@@ -37,7 +37,7 @@ def delete_account(
 
 
 @router.get("/me")
-@cached(ttl=CACHE_TTL_MEDIUM, prefix=_AUTH_ME_PREFIX)
+@cached(ttl=CACHE_TTL_LONG, prefix=_AUTH_ME_PREFIX)
 def get_me(
     user: dict = Depends(get_current_user),
     database: SqlClient = Depends(get_firestore),
