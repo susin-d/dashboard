@@ -5,8 +5,8 @@ from app.core.ws.base import BaseWSManager
 
 class CallWSManager(BaseWSManager):
     def __init__(self) -> None:
-        super().__init__(policy="single")
+        super().__init__(policy="multi")
 
 
-# single connection per user (latest overwrites)
+# multi connection per user — ringing broadcasts to all devices (E)
 call_ws_manager = CallWSManager()

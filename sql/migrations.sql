@@ -79,6 +79,20 @@ ALTER TABLE eve_schedules ADD COLUMN IF NOT EXISTS execute_at TIMESTAMP WITH TIM
 ALTER TABLE eve_schedules ADD COLUMN IF NOT EXISTS next_run_at TIMESTAMP WITH TIME ZONE;
 
 -- ---------------------------------------------------------------------------
+-- user_sessions (multi-device) backfills — mirrors sql/schema.sql + models
+-- ---------------------------------------------------------------------------
+
+ALTER TABLE user_sessions ADD COLUMN IF NOT EXISTS device_id VARCHAR(64);
+ALTER TABLE user_sessions ADD COLUMN IF NOT EXISTS device_name VARCHAR(255);
+ALTER TABLE user_sessions ADD COLUMN IF NOT EXISTS user_agent TEXT;
+ALTER TABLE user_sessions ADD COLUMN IF NOT EXISTS ip_address VARCHAR(64);
+ALTER TABLE user_sessions ADD COLUMN IF NOT EXISTS token_jti VARCHAR(64);
+ALTER TABLE user_sessions ADD COLUMN IF NOT EXISTS expires_at TIMESTAMP WITH TIME ZONE;
+ALTER TABLE user_sessions ADD COLUMN IF NOT EXISTS revoked BOOLEAN DEFAULT FALSE;
+ALTER TABLE user_sessions ADD COLUMN IF NOT EXISTS revoked_at TIMESTAMP WITH TIME ZONE;
+ALTER TABLE user_sessions ADD COLUMN IF NOT EXISTS last_seen_at TIMESTAMP WITH TIME ZONE;
+
+-- ---------------------------------------------------------------------------
 -- Row-Level Security (RLS) — defense-in-depth for multi-tenant isolation
 -- Requires app to SET LOCAL app.current_user_id = '<uid>' per request.
 -- See server/app/db/session.py get_session().

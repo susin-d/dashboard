@@ -96,6 +96,7 @@ async def init_db() -> None:
     await asyncio.to_thread(_ensure_hackathon_columns)
     await asyncio.to_thread(_ensure_notification_columns)
     await asyncio.to_thread(_ensure_eve_schedule_columns)
+    await asyncio.to_thread(_ensure_user_sessions_columns)
     # Composite indexes for pagination hot paths (lean, concurrent-safe)
     await asyncio.to_thread(_ensure_performance_indexes)
 
@@ -317,6 +318,44 @@ def _ensure_eve_schedule_columns() -> None:
         conn.commit()
 
 
+def _ensure_user_sessions_columns() -> None:
+    """Backfill user_sessions columns for multi-device support."""
+    with sync_engine.connect() as conn:
+        if is_sqlite:
+            cols = {row[1] for row in conn.execute(text("PRAGMA table_info(user_sessions)"))}
+            if not cols:
+                return
+            if "device_id" not in cols:
+                conn.execute(text("ALTER TABLE user_sessions ADD COLUMN device_id VARCHAR(64)"))
+            if "device_name" not in cols:
+                conn.execute(text("ALTER TABLE user_sessions ADD COLUMN device_name VARCHAR(255)"))
+            if "user_agent" not in cols:
+                conn.execute(text("ALTER TABLE user_sessions ADD COLUMN user_agent TEXT"))
+            if "ip_address" not in cols:
+                conn.execute(text("ALTER TABLE user_sessions ADD COLUMN ip_address VARCHAR(64)"))
+            if "token_jti" not in cols:
+                conn.execute(text("ALTER TABLE user_sessions ADD COLUMN token_jti VARCHAR(64)"))
+            if "expires_at" not in cols:
+                conn.execute(text("ALTER TABLE user_sessions ADD COLUMN expires_at TIMESTAMP WITH TIME ZONE"))
+            if "revoked" not in cols:
+                conn.execute(text("ALTER TABLE user_sessions ADD COLUMN revoked BOOLEAN DEFAULT FALSE"))
+            if "revoked_at" not in cols:
+                conn.execute(text("ALTER TABLE user_sessions ADD COLUMN revoked_at TIMESTAMP WITH TIME ZONE"))
+            if "last_seen_at" not in cols:
+                conn.execute(text("ALTER TABLE user_sessions ADD COLUMN last_seen_at TIMESTAMP WITH TIME ZONE"))
+        else:
+            conn.execute(text("ALTER TABLE user_sessions ADD COLUMN IF NOT EXISTS device_id VARCHAR(64)"))
+            conn.execute(text("ALTER TABLE user_sessions ADD COLUMN IF NOT EXISTS device_name VARCHAR(255)"))
+            conn.execute(text("ALTER TABLE user_sessions ADD COLUMN IF NOT EXISTS user_agent TEXT"))
+            conn.execute(text("ALTER TABLE user_sessions ADD COLUMN IF NOT EXISTS ip_address VARCHAR(64)"))
+            conn.execute(text("ALTER TABLE user_sessions ADD COLUMN IF NOT EXISTS token_jti VARCHAR(64)"))
+            conn.execute(text("ALTER TABLE user_sessions ADD COLUMN IF NOT EXISTS expires_at TIMESTAMP WITH TIME ZONE"))
+            conn.execute(text("ALTER TABLE user_sessions ADD COLUMN IF NOT EXISTS revoked BOOLEAN DEFAULT FALSE"))
+            conn.execute(text("ALTER TABLE user_sessions ADD COLUMN IF NOT EXISTS revoked_at TIMESTAMP WITH TIME ZONE"))
+            conn.execute(text("ALTER TABLE user_sessions ADD COLUMN IF NOT EXISTS last_seen_at TIMESTAMP WITH TIME ZONE"))
+        conn.commit()
+
+
 def _ensure_performance_indexes() -> None:
     """Create composite indexes for pagination hot paths (lean, e2-micro safe).
 
@@ -336,6 +375,10 @@ def _ensure_performance_indexes() -> None:
             "CREATE INDEX IF NOT EXISTS ix_calls_status_updated ON calls(status, updated_at) WHERE status='ringing'",
             "CREATE INDEX IF NOT EXISTS ix_whatsapp_messages_user_chat_ts ON whatsapp_messages(user_id, chat_id, timestamp DESC)",
             "CREATE INDEX IF NOT EXISTS ix_calls_participants_created ON calls(caller_id, receiver_id, created_at DESC)",
+            "CREATE INDEX IF NOT EXISTS ix_user_sessions_user_created ON user_sessions(user_id, created_at DESC, id DESC)",
+            "CREATE INDEX IF NOT EXISTS ix_user_sessions_user_last_seen ON user_sessions(user_id, last_seen_at DESC)",
+            "CREATE INDEX IF NOT EXISTS ix_user_sessions_jti ON user_sessions(token_jti)",
+            "CREATE INDEX IF NOT EXISTS ix_user_sessions_user_device ON user_sessions(user_id, device_id)",
         ]
         with sync_engine.connect() as conn:
             for stmt in stmts:
@@ -357,6 +400,10 @@ def _ensure_performance_indexes() -> None:
         "CREATE INDEX IF NOT EXISTS ix_calls_status_updated ON calls(status, updated_at) WHERE status='ringing'",
         "CREATE INDEX IF NOT EXISTS ix_whatsapp_messages_user_chat_ts ON whatsapp_messages(user_id, chat_id, timestamp DESC)",
         "CREATE INDEX IF NOT EXISTS ix_calls_participants_created ON calls(caller_id, receiver_id, created_at DESC)",
+        "CREATE INDEX IF NOT EXISTS ix_user_sessions_user_created ON user_sessions(user_id, created_at DESC, id DESC)",
+        "CREATE INDEX IF NOT EXISTS ix_user_sessions_user_last_seen ON user_sessions(user_id, last_seen_at DESC)",
+        "CREATE INDEX IF NOT EXISTS ix_user_sessions_jti ON user_sessions(token_jti)",
+        "CREATE INDEX IF NOT EXISTS ix_user_sessions_user_device ON user_sessions(user_id, device_id)",
     ]
     with sync_engine.connect() as conn:
         for stmt in stmts:

@@ -1,13 +1,14 @@
 """Email/password credential authentication: signup and login."""
 
 import logging
+import uuid
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, Header, HTTPException, Request, status
 from app.db import SqlClient, get_firestore
 from pydantic import BaseModel, EmailStr
 
 from app.api.routes.auth._shared import _send_welcome_email_best_effort
-from app.core.auth import create_user_token
+from app.core.auth import create_session_token
 from app.repositories.password import verify_password
 from app.repositories.users import create_user_with_password, get_user_by_email
 
@@ -29,7 +30,10 @@ class LoginRequest(BaseModel):
 @router.post("/signup")
 def signup(
     payload: SignupRequest,
+    request: Request,
     database: SqlClient = Depends(get_firestore),
+    x_device_id: str | None = Header(default=None, alias="X-Device-Id"),
+    x_device_name: str | None = Header(default=None, alias="X-Device-Name"),
 ):
     try:
         user_record = create_user_with_password(
@@ -54,12 +58,19 @@ def signup(
         user_name=user_record["display_name"],
     )
 
-    token = create_user_token(
+    device_id = (x_device_id or uuid.uuid4().hex)[:64]
+    ua = request.headers.get("user-agent")
+    ip = request.client.host if request.client else None
+    token = create_session_token(
         {
             "uid": user_record["uid"],
             "email": user_record["email"],
             "name": user_record["display_name"],
         },
+        device_id=device_id,
+        device_name=x_device_name,
+        user_agent=ua,
+        ip_address=ip,
     )
     return {
         "token": token,
@@ -73,7 +84,13 @@ def signup(
 
 
 @router.post("/login")
-def login(payload: LoginRequest, database: SqlClient = Depends(get_firestore)):
+def login(
+    payload: LoginRequest,
+    request: Request,
+    database: SqlClient = Depends(get_firestore),
+    x_device_id: str | None = Header(default=None, alias="X-Device-Id"),
+    x_device_name: str | None = Header(default=None, alias="X-Device-Name"),
+):
     clean_email = payload.email.lower().strip()
     try:
         user_record = get_user_by_email(database, clean_email)
@@ -107,12 +124,19 @@ def login(payload: LoginRequest, database: SqlClient = Depends(get_firestore)):
         ) from None
 
     try:
-        token = create_user_token(
+        device_id = (x_device_id or uuid.uuid4().hex)[:64]
+        ua = request.headers.get("user-agent")
+        ip = request.client.host if request.client else None
+        token = create_session_token(
             {
                 "uid": user_record["uid"],
                 "email": user_record["email"],
                 "name": user_record.get("display_name"),
             },
+            device_id=device_id,
+            device_name=x_device_name,
+            user_agent=ua,
+            ip_address=ip,
         )
     except Exception as exc:
         raise HTTPException(

@@ -55,6 +55,8 @@
 @import './styles/pages/missing-states.css';
 @import './styles/pages/usage.css';
 
+@import './styles/components/device-section.css';
+
 /* Eve UI runtime overrides */
 @import './styles/components/eve-ui.css';
 

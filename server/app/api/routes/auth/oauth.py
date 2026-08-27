@@ -11,7 +11,7 @@ from app.db import SqlClient, get_firestore
 from itsdangerous import BadSignature, SignatureExpired
 
 from app.api.routes.auth._shared import _send_welcome_email_best_effort, state_serializer
-from app.core.auth import create_user_token
+from app.core.auth import create_session_token
 from app.core.config import settings
 from app.core.cors import is_allowed_origin as _is_allowed_origin
 from app.repositories.users import get_or_create_google_user
@@ -20,7 +20,7 @@ router = APIRouter(prefix="/auth")
 
 
 @router.get("/google/login")
-def google_login(request: Request, origin: str | None = None):
+def google_login(request: Request, origin: str | None = None, device_id: str | None = None, device_name: str | None = None):
     if not settings.google_oauth_client_id:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
@@ -40,7 +40,15 @@ def google_login(request: Request, origin: str | None = None):
     if not _is_allowed_origin(client_origin):
         client_origin = settings.frontend_url
 
-    state = state_serializer().dumps({"action": "google-auth", "origin": client_origin})
+    # Persist device context through OAuth state so callback can create device-bound session
+    did = (device_id or request.headers.get("X-Device-Id") or request.headers.get("x-device-id") or "")[:64]
+    dname = (device_name or request.headers.get("X-Device-Name") or request.headers.get("x-device-name") or "")[:255]
+    state_payload: dict = {"action": "google-auth", "origin": client_origin}
+    if did:
+        state_payload["did"] = did
+    if dname:
+        state_payload["dname"] = dname
+    state = state_serializer().dumps(state_payload)
     query = urlencode(
         {
             "client_id": settings.google_oauth_client_id,
@@ -130,12 +138,19 @@ async def google_callback(
             user_record.get("display_name") or name,
         )
 
-    token = create_user_token(
+    # Restore device context from state if present
+    did = state_data.get("did") if isinstance(state_data, dict) else None
+    dname = state_data.get("dname") if isinstance(state_data, dict) else None
+    token = create_session_token(
         {
             "uid": user_record["uid"],
             "email": user_record["email"],
             "name": user_record.get("display_name") or name,
         },
+        device_id=did,
+        device_name=dname,
+        user_agent=None,
+        ip_address=None,
     )
 
     # Validate target_origin again at callback time (defense-in-depth)

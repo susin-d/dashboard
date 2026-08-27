@@ -90,4 +90,4 @@ async def calls_websocket(
     except Exception as err:
         logger.debug("WS session ended for uid=%s: %s", uid, err)
     finally:
-        call_ws_manager.disconnect(uid)
+        call_ws_manager.disconnect(uid, websocket)

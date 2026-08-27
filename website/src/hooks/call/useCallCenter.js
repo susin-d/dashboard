@@ -140,6 +140,11 @@ export function useCallCenter({ user }) {
         return
       }
       if (callData.status === 'active') {
+        // E: answer on another device — incoming should stop ringing everywhere
+        if (phaseRef.current === 'incoming') {
+          teardown('active')
+          return
+        }
         setPhase((current) => (current === 'dialing' || current === 'connecting' ? 'active' : current))
       }
       if (callData.status === 'ringing' && phaseRef.current === 'incoming') {
@@ -315,22 +320,53 @@ export function useCallCenter({ user }) {
   const handleCallEventRef = useRef(handleCallEvent)
   handleCallEventRef.current = handleCallEvent
 
+  // E: cross-tab sync via BroadcastChannel for instant local propagation
+  useEffect(() => {
+    if (typeof BroadcastChannel === 'undefined') return undefined
+    let ch
+    try {
+      ch = new BroadcastChannel('starwaves-call')
+      ch.onmessage = async (msg) => {
+        const ev = msg?.data
+        if (!ev) return
+        if (ev.type === 'call_updated' && ev.call?.id === callIdRef.current) {
+          await handleCallEventRef.current(ev.call)
+        }
+      }
+    } catch { return undefined }
+    return () => { try { ch?.close() } catch {} }
+  }, [])
+
   const userUid = user?.uid
   useEffect(() => {
     if (!userUid) return undefined
     const unsubscribe = callsSocket.subscribe(async (event) => {
+      // Also rebroadcast to local tabs via BroadcastChannel for instant sync
+      try {
+        if (event.type === 'call_updated' && typeof BroadcastChannel !== 'undefined') {
+          const ch = new BroadcastChannel('starwaves-call')
+          ch.postMessage(event)
+          ch.close()
+        }
+      } catch {}
       if (event.type === 'incoming_call') {
         const ringing = event.call
-        if (!BUSY_PHASES.includes(phaseRef.current) && ringing.id !== callIdRef.current) {
-          callIdRef.current = ringing.id
-          processedIdsRef.current = new Set()
-          remoteOfferRef.current = null
-          pendingCandidatesRef.current = []
-          setCall(null)
-          setIncomingCall(ringing)
-          setMode(ringing.mode === 'video' ? 'video' : 'audio')
-          setPhase('incoming')
-          notify('Incoming Call', `Incoming ${ringing.mode || 'video'} call from ${ringing.caller?.name || 'Someone'}`, `call-incoming-${ringing.id}`)
+        // E: ring on ALL devices — even if busy, still surface if not same id
+        if (ringing.id !== callIdRef.current) {
+          if (!BUSY_PHASES.includes(phaseRef.current)) {
+            callIdRef.current = ringing.id
+            processedIdsRef.current = new Set()
+            remoteOfferRef.current = null
+            pendingCandidatesRef.current = []
+            setCall(null)
+            setIncomingCall(ringing)
+            setMode(ringing.mode === 'video' ? 'video' : 'audio')
+            setPhase('incoming')
+            notify('Incoming Call', `Incoming ${ringing.mode || 'video'} call from ${ringing.caller?.name || 'Someone'}`, `call-incoming-${ringing.id}`)
+          } else {
+            // BUSY on this device — still notify as missed-like but don't overwrite current call
+            notify('Incoming Call (busy)', `${ringing.caller?.name || 'Someone'} is calling… (busy on this device)`, `call-incoming-busy-${ringing.id}`)
+          }
         }
       } else if (event.type === 'call_signal' || event.type === 'call_updated') {
         const callData = event.call

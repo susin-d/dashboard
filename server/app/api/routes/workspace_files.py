@@ -5,6 +5,7 @@ from app.db import SqlClient, get_firestore
 
 from app.core.auth import get_current_user
 from app.core.config import settings
+from app.core.sync import broadcast_invalidate
 from app.repositories import workspace_files
 
 _tree_cache: dict[str, tuple[float, list]] = {}
@@ -207,5 +208,6 @@ async def sync_files(
     errors = [err for ok, err in results if not ok and err]
     if synced:
         _invalidate_tree_cache(user["uid"], workspace_id)
+        await broadcast_invalidate(user["uid"], "workspace_files", {"workspace_id": workspace_id})
     return WorkspaceSyncResponse(synced=synced, errors=errors)
 

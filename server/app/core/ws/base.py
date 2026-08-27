@@ -44,11 +44,12 @@ class BaseWSManager:
             logger.debug("WS disconnect single: uid=%s total=%d", uid, len(self._single))
         else:
             if uid in self._multi:
-                if websocket is not None:
-                    self._multi[uid].discard(websocket)
-                # if no websocket given, clear all? keep backward compat for broadcast cleanup
-                if not self._multi[uid]:
+                if websocket is None:
                     self._multi.pop(uid, None)
+                else:
+                    self._multi[uid].discard(websocket)
+                    if not self._multi[uid]:
+                        self._multi.pop(uid, None)
             logger.debug("WS disconnect multi: uid=%s", uid)
 
     async def send(self, uid: str, event: dict[str, Any]) -> None:

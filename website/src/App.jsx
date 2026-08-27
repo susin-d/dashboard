@@ -41,6 +41,7 @@ import { confirmEmailVerification } from './lib/emailApi'
 import { clearAuthSession, verifyAccountCombine } from './lib/authApi'
 import { CALENDAR_REMINDER_PREFIX } from './utils/calendarReminders'
 import { useAuth, useRouter, useWorkspaceData, useCallCenter } from './hooks'
+import { useSyncEvents } from './hooks/useSyncEvents'
 import { applyThemeVariables } from './themes'
 import { NetworkStatus } from './components/NetworkStatus'
 import { WaveLoader } from './components/WaveLoader'
@@ -74,6 +75,7 @@ function App() {
   const [sessionUser, setSessionUser] = useState(null)
   const activeUser = currentUser || sessionUser
   const callCenter = useCallCenter({ user: activeUser })
+  useSyncEvents({ user: activeUser, onInvalidate: () => setWorkspaceRefreshKey((k) => k + 1) })
 
   const resetToken = (() => {
     const hash = window.location.hash || ''
@@ -330,6 +332,22 @@ function App() {
     setSessionUser(null)
     navigateRoute('/login')
   }
+
+  useEffect(() => {
+    const onRevoked = () => {
+      clearAuthSession()
+      setSessionUser(null)
+      window.history.pushState({}, '', '/login')
+      window.dispatchEvent(new PopStateEvent('popstate'))
+    }
+    window.addEventListener('starwaves:session-revoked', onRevoked)
+    const onSync = () => setWorkspaceRefreshKey((k) => k + 1)
+    window.addEventListener('starwaves:sync-invalidate', onSync)
+    return () => {
+      window.removeEventListener('starwaves:session-revoked', onRevoked)
+      window.removeEventListener('starwaves:sync-invalidate', onSync)
+    }
+  }, [])
 
   const pages = {
     dashboard: (

@@ -6,6 +6,7 @@ import { AppsSection } from './settings/AppsSection'
 import { AutoMemorySection } from './settings/AutoMemorySection'
 import { CodingSection } from './settings/CodingSection'
 import { AppearanceSection } from './settings/AppearanceSection'
+import { DeviceSection } from './settings/DeviceSection'
 import { EveVoiceSection } from './settings/EveVoiceSection'
 import { HackathonSourcesSection } from './settings/HackathonSourcesSection'
 import { ProfileSection } from './settings/ProfileSection'
@@ -23,6 +24,7 @@ const SETTINGS_SECTIONS = [
   { id: 'settings-coding', href: '#settings-coding', label: 'Coding profiles' },
   { id: 'settings-hackathons', href: '#settings-hackathons', label: 'Hackathons' },
   { id: 'settings-eve-voice', href: '#settings-eve-voice', label: 'Eve voice' },
+  { id: 'settings-devices', href: '#settings-devices', label: 'Devices & sessions' },
   { id: 'settings-account', href: '#settings-account', label: 'Account & security' },
 ]
 
@@ -138,6 +140,7 @@ export function SettingPage({
       <CodingSection user={user} onContestSitesChange={onContestSitesChange} />
       <HackathonSourcesSection user={user} onHackathonsChange={onHackathonsChange} />
       <EveVoiceSection />
+      <DeviceSection />
       <AccountSection user={user} onSignOut={onSignOut} />
     </section>
   )

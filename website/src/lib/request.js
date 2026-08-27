@@ -1,4 +1,4 @@
-import { getStoredAuthToken } from './authApi'
+import { getDeviceId, getDeviceName, getStoredAuthToken } from './authApi'
 
 export const API_URL = import.meta.env.VITE_API_URL ?? 'http://127.0.0.1:8000/api/v1'
 
@@ -70,6 +70,13 @@ export async function apiRequest(
     if (!token) throw new Error(missingTokenMessage)
     headers.Authorization = `Bearer ${token}`
   }
+  // Multi-device: identify device for session creation & per-device metrics
+  try {
+    headers['X-Device-Id'] = getDeviceId()
+    headers['X-Device-Name'] = getDeviceName()
+  } catch {
+    // ignore storage access errors (private mode)
+  }
   if (fetchOptions.body) headers['Content-Type'] = 'application/json'
 
   const exec = async (attempt = 0) => {
@@ -106,7 +113,15 @@ export async function apiRequest(
       } catch {
         // response was not valid JSON (e.g. HTML error page)
       }
-      throw new Error(failure?.detail || errorMessage)
+      // Multi-device: revoked/expired token → force sign out so other device sees 401
+      if (response.status === 401 && authRequired) {
+        try {
+          const { clearAuthSession } = await import('./authApi')
+          clearAuthSession()
+          window.dispatchEvent(new CustomEvent('starwaves:session-revoked'))
+        } catch {}
+      }
+      throw Object.assign(new Error(failure?.detail || errorMessage), { status: response.status })
     }
     if (response.status === 204) return null
     try {

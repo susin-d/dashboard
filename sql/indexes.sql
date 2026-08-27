@@ -52,6 +52,11 @@ CREATE INDEX IF NOT EXISTS ix_calls_status_updated ON calls(status, updated_at) 
 CREATE INDEX IF NOT EXISTS ix_whatsapp_messages_user_chat_ts ON whatsapp_messages(user_id, chat_id, timestamp DESC);
 CREATE INDEX IF NOT EXISTS ix_calls_participants_created ON calls(caller_id, receiver_id, created_at DESC);
 
+CREATE INDEX IF NOT EXISTS ix_user_sessions_user_created ON user_sessions(user_id, created_at DESC, id DESC);
+CREATE INDEX IF NOT EXISTS ix_user_sessions_user_last_seen ON user_sessions(user_id, last_seen_at DESC);
+CREATE INDEX IF NOT EXISTS ix_user_sessions_jti ON user_sessions(token_jti);
+CREATE INDEX IF NOT EXISTS ix_user_sessions_user_device ON user_sessions(user_id, device_id);
+
 -- ---------------------------------------------------------------------------
 -- pgvector semantic recall index
 -- (server/app/db/session.py -> _ensure_eve_memory_embedding; requires the
