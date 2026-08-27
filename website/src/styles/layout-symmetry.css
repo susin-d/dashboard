@@ -2,7 +2,7 @@
   width: 100%;
   max-width: none;
   margin: 0;
-  padding: 0 !important;
+  padding: 12px !important;
 }
 
 .content > :where(
@@ -68,7 +68,7 @@
   height: calc(100vh - 64px);
   max-height: calc(100vh - 64px);
   overflow: hidden;
-  padding: 0 !important;
+  padding: 12px !important;
 }
 
 .content:has(.eve-page-container) > .eve-page-container {
@@ -264,7 +264,7 @@
   .content,
   .sidebar-expanded .content {
     width: 100%;
-    padding: 0 !important;
+    padding: 12px !important;
   }
 
   .content > .mail-page,
