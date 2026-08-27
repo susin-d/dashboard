@@ -2,8 +2,7 @@
   width: 100%;
   max-width: none;
   margin: 0;
-  padding-right: var(--layout-gutter);
-  padding-left: var(--layout-gutter);
+  padding: 0 !important;
 }
 
 .content > :where(
@@ -23,8 +22,9 @@
   .todo-page,
   .eve-page-container
 ) {
-  width: min(100%, var(--layout-max-width));
-  margin-inline: auto;
+  width: 100% !important;
+  max-width: 100% !important;
+  margin: 0 !important;
 }
 
 .content.whatsapp-fullscreen-content,
@@ -68,7 +68,7 @@
   height: calc(100vh - 64px);
   max-height: calc(100vh - 64px);
   overflow: hidden;
-  padding-bottom: var(--layout-gutter);
+  padding: 0 !important;
 }
 
 .content:has(.eve-page-container) > .eve-page-container {
@@ -183,8 +183,7 @@
 }
 
 .calendar-content {
-  padding-right: var(--layout-gutter);
-  padding-left: var(--layout-gutter);
+  padding: 0 !important;
 }
 
 .calendar-toolbar {
@@ -265,8 +264,7 @@
   .content,
   .sidebar-expanded .content {
     width: 100%;
-    padding-right: var(--layout-gutter);
-    padding-left: var(--layout-gutter);
+    padding: 0 !important;
   }
 
   .content > .mail-page,
@@ -294,8 +292,7 @@
   }
 
   .calendar-content {
-    padding-right: var(--layout-gutter);
-    padding-left: var(--layout-gutter);
+    padding: 0 !important;
   }
 }
 
