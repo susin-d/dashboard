@@ -61,9 +61,14 @@ def set_todo_doc(
         if t.user_id != user_id:
             raise PermissionError("Not owner")
         _ALLOWED = {"title", "completed", "due_date", "priority"}
-        _IMMUTABLE = {"id", "user_id", "created_at", "deleted", "deleted_at"}
+        _TIMESTAMP_FIELDS = {"created_at", "updated_at"}
+        _IMMUTABLE = {"id", "user_id", "deleted", "deleted_at"}
         for k, val in data.items():
             if k in _IMMUTABLE:
+                continue
+            if k in _TIMESTAMP_FIELDS:
+                if hasattr(t, k):
+                    setattr(t, k, coerce_model_value(k, val))
                 continue
             if k not in _ALLOWED:
                 continue
@@ -114,9 +119,10 @@ def query_todos(session: Session, user_id: str, query: SqlQuery) -> list[SqlSnap
                     )
                 )
     if query._order_by == "created_at":
-        stmt = stmt.order_by(Todo.created_at.desc() if query._direction == "DESC" else Todo.created_at.asc())
-        # tie-breaker for stable pagination
-        stmt = stmt.order_by(Todo.id.desc() if query._direction == "DESC" else Todo.id.asc())
+        if query._direction == "DESC":
+            stmt = stmt.order_by(Todo.created_at.desc(), Todo.id.desc())
+        else:
+            stmt = stmt.order_by(Todo.created_at.asc(), Todo.id.asc())
     if query._limit:
         stmt = stmt.limit(query._limit)
     todos = session.scalars(stmt).all()

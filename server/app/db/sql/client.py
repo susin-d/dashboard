@@ -113,13 +113,10 @@ class SqlClient:
         with Session(self._sync_engine) as session:
             handler = registry_lookup(path_parts, "delete")
             if handler is not None:
-                # Try user-scoped signature first (preferred for BOLA guard)
                 if len(path_parts) >= 2 and path_parts[0] == "users":
-                    try:
-                        handler(session, path_parts[1], doc_id)
-                        return
-                    except TypeError:
-                        pass
+                    # Handlers are (session, doc_id, user_id=None) — doc_id first.
+                    handler(session, doc_id, path_parts[1])
+                    return
                 handler(session, doc_id)
                 return
             if len(path_parts) == 3 and path_parts[0] == "users" and path_parts[2] in ("settings", "integrations"):
