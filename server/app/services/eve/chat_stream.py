@@ -62,6 +62,8 @@ def stream_chat_with_eve(
             context.conversation,
             EVE_TOOLS,
             context.run_tool,
+            usage_user_id=user_id,
+            usage_kind="chat",
         ):
             if event.get("type") == "done":
                 done_event = dict(event)

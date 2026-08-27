@@ -28,6 +28,7 @@ const StudioProjectsPage = lazy(() => import('./pages/studio/StudioProjectsPage'
 const StudioAppsPage = lazy(() => import('./pages/studio/StudioAppsPage').then((m) => ({ default: m.StudioAppsPage })))
 const StudioBuilderPage = lazy(() => import('./pages/studio/StudioBuilderPage').then((m) => ({ default: m.StudioBuilderPage })))
 const StudioTemplatesPage = lazy(() => import('./pages/studio/StudioTemplatesPage').then((m) => ({ default: m.StudioTemplatesPage })))
+const UsagePage = lazy(() => import('./pages/UsagePage').then((m) => ({ default: m.UsagePage })))
 import { AuthPage } from './pages/AuthPage'
 import { ForgotPasswordPage } from './pages/ForgotPasswordPage'
 import { OnboardingPage } from './pages/OnboardingPage'
@@ -540,6 +541,7 @@ function App() {
     chats: <ChatsPage onNavigate={navigateWorkspace} />,
     calls: <CallsPage callCenter={callCenter} user={userProfile} />,
     contacts: <ContactsPage callCenter={callCenter} onNavigate={navigateWorkspace} />,
+    usage: <UsagePage />,
     profile: (
       <ProfilePage
         user={userProfile}

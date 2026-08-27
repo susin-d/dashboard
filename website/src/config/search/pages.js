@@ -275,4 +275,16 @@ export const PAGES_ITEMS = [
     icon: Settings,
     keywords: ['configuration', 'preferences', 'options', 'setup', 'integrations'],
   },
+  {
+    id: 'page-usage',
+    type: 'page',
+    category: 'pages',
+    group: 'Pages & Views',
+    title: 'Usage',
+    subtitle: 'AI token usage, provider breakdown, daily history & recent requests',
+    badge: 'Account > Usage',
+    page: 'usage',
+    icon: ChartNoAxesCombined,
+    keywords: ['ai usage', 'tokens', 'openai', 'anthropic', 'gemini', 'billing', 'cost', 'model usage'],
+  },
 ]

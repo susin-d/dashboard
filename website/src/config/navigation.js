@@ -54,5 +54,6 @@ export const navigationItems = [
   { id: 'profile', label: 'Profile', icon: UserRound, group: 'Account' },
   { id: 'themes', label: 'Themes', icon: Palette, group: 'Account' },
   { id: 'setting', label: 'Settings', icon: Settings, group: 'Account' },
+  { id: 'usage', label: 'Usage', icon: ChartNoAxesCombined, group: 'Account' },
 ]
 

@@ -29,6 +29,7 @@ from app.api.routes import (
     todos,
     ui_preferences,
     unified_models,
+    usage,
     whatsapp,
     workspace,
     workspace_files,
@@ -78,4 +79,5 @@ api_router.include_router(studio.router, tags=["Studio builder"])
 api_router.include_router(workspace.router, tags=["workspace data"])
 api_router.include_router(workspace_files.router, tags=["workspace files"])
 api_router.include_router(ui_preferences.router, tags=["UI preferences"])
+api_router.include_router(usage.router, tags=["usage"])
 

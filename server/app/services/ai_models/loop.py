@@ -51,6 +51,8 @@ def run_tool_loop(
     conversation: list[dict[str, str]],
     tools: list[dict[str, Any]],
     run_tool: Callable[[str, dict[str, Any]], tuple[Any, str | None, dict[str, Any] | None]],
+    usage_user_id: str | None = None,
+    usage_kind: str = "chat",
 ) -> tuple[str, list[str], list[dict[str, Any]]]:
     """Run the provider tool-calling loop until the model stops calling tools."""
     conversation = client.normalize_messages(conversation)
@@ -58,6 +60,13 @@ def run_tool_loop(
     actions: list[dict[str, Any]] = []
     for _round_idx in range(MAX_TOOL_ROUNDS):
         response = client.call(config.model, instructions, conversation, tools)
+        if usage_user_id:
+            try:
+                from app.services.usage import log_usage
+
+                log_usage(usage_user_id, config.provider, config.model, usage_kind, response.raw, response.text)
+            except Exception:
+                pass
         if not response.tool_calls:
             return (
                 response.text or _NO_RESPONSE_FALLBACK,
@@ -78,6 +87,8 @@ def run_tool_loop_stream(
     conversation: list[dict[str, str]],
     tools: list[dict[str, Any]],
     run_tool: Callable[[str, dict[str, Any]], tuple[Any, str | None, dict[str, Any] | None]],
+    usage_user_id: str | None = None,
+    usage_kind: str = "chat",
 ) -> Iterator[dict[str, Any]]:
     """Run the provider tool-calling loop with streamed text deltas.
 
@@ -102,6 +113,13 @@ def run_tool_loop_stream(
         if final_response is None:
             raise AIServiceError("Provider stream ended without a final response.")
         response = final_response
+        if usage_user_id:
+            try:
+                from app.services.usage import log_usage
+
+                log_usage(usage_user_id, config.provider, config.model, usage_kind, response.raw, response.text)
+            except Exception:
+                pass
         if not response.tool_calls:
             yield {
                 "type": "done",

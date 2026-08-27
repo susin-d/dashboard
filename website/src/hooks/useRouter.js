@@ -28,6 +28,7 @@ const workspacePages = new Set([
   'profile',
   'themes',
   'setting',
+  'usage',
 ])
 
 export function workspaceStateFromPath(pathname) {
