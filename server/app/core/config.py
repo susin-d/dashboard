@@ -106,7 +106,7 @@ class Settings:
     ollama_api_key: str | None = os.getenv("OLLAMA_API_KEY")
     opencode_api_key: str | None = os.getenv("OPENCODE_API_KEY")
     opencode_url: str | None = os.getenv("OPENCODE_URL") or None
-    opencode_model: str = os.getenv("OPENCODE_MODEL", "opencode/gpt-5-mini")
+    opencode_model: str = os.getenv("OPENCODE_MODEL", "gpt-5.4-mini")
     google_cloud_tts_api_key: str | None = os.getenv("GOOGLE_CLOUD_TTS_API_KEY")
     google_cloud_tts_url: str | None = os.getenv(
         "GOOGLE_CLOUD_TTS_URL",

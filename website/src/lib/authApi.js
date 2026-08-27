@@ -76,6 +76,7 @@ export async function signupWithEmail(email, password) {
   const result = await request('/auth/signup', {
     method: 'POST',
     body: JSON.stringify({ email, password }),
+    authRequired: false,
   })
   setStoredAuthToken(result.token, result.user)
   return result.user
@@ -85,6 +86,7 @@ export async function loginWithEmail(email, password) {
   const result = await request('/auth/login', {
     method: 'POST',
     body: JSON.stringify({ email, password }),
+    authRequired: false,
   })
   setStoredAuthToken(result.token, result.user)
   return result.user
@@ -94,6 +96,7 @@ export function requestPasswordReset(email) {
   return request('/auth/forgot-password', {
     method: 'POST',
     body: JSON.stringify({ email }),
+    authRequired: false,
   })
 }
 
@@ -101,6 +104,7 @@ export function verifyResetCode(email, code, token = '') {
   return request('/auth/verify-reset-code', {
     method: 'POST',
     body: JSON.stringify({ email, code, token }),
+    authRequired: false,
   })
 }
 
@@ -108,6 +112,7 @@ export function resetPassword(token, password) {
   return request('/auth/reset-password', {
     method: 'POST',
     body: JSON.stringify({ token, password }),
+    authRequired: false,
   })
 }
 

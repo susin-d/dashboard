@@ -15,7 +15,7 @@ PROVIDER_DEFAULT_BASE_URLS: dict[str, str] = {
     "openrouter": "https://openrouter.ai/api/v1",
     "groq": "https://api.groq.com/openai/v1",
     "ollama": "http://127.0.0.1:11434/v1",
-    "opencode": "https://opencode.ai/api/v1",
+    "opencode": "https://opencode.ai/zen/v1",
 }
 
 # Curated catalog of AI providers and their supported models. The server must
