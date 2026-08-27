@@ -35,6 +35,7 @@ export function UsagePage() {
   const [error, setError] = useState(null)
   const [donutTip, setDonutTip] = useState(null)
   const [trendTip, setTrendTip] = useState(null)
+  const [heatmapTip, setHeatmapTip] = useState(null)
   const [activeDonut, setActiveDonut] = useState(null)
 
   const load = async () => {
@@ -226,9 +227,21 @@ export function UsagePage() {
 
         <div className="usage-heatmap-grid">
           {heatmap.map((c) => (
-            <div key={c.key} title={`${c.date}: ${formatFull(c.tokens)} tokens`} className={`usage-heatmap-cell ${c.level ? `l${c.level}` : ''}`} />
+            <div
+              key={c.key}
+              className={`usage-heatmap-cell ${c.level ? `l${c.level}` : ''}`}
+              onMouseEnter={(e) => setHeatmapTip({ date: c.date, tokens: c.tokens, x: e.clientX, y: e.clientY, level: c.level })}
+              onMouseMove={(e) => setHeatmapTip({ date: c.date, tokens: c.tokens, x: e.clientX, y: e.clientY, level: c.level })}
+              onMouseLeave={() => setHeatmapTip(null)}
+            />
           ))}
         </div>
+        {heatmapTip ? (
+          <div className="usage-tooltip" style={{ left: Math.min(window.innerWidth - 160, heatmapTip.x + 12), top: heatmapTip.y - 56, position: 'fixed' }}>
+            <div style={{ fontWeight: 700, fontSize: 12 }}>{heatmapTip.date}</div>
+            <div className="usage-tooltip-line">{formatFull(heatmapTip.tokens)} tokens {heatmapTip.level ? `· level ${heatmapTip.level}` : '· no activity'}</div>
+          </div>
+        ) : null}
         <div className="usage-heatmap-months">
           <span>Sep</span><span>Oct</span><span>Nov</span><span>Dec</span><span>Jan</span><span>Feb</span><span>Mar</span><span>Apr</span><span>May</span><span>Jun</span><span>Jul</span><span>Aug</span>
         </div>
