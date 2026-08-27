@@ -33,6 +33,9 @@ export function UsagePage() {
   const [summary, setSummary] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [donutTip, setDonutTip] = useState(null)
+  const [trendTip, setTrendTip] = useState(null)
+  const [activeDonut, setActiveDonut] = useState(null)
 
   const load = async () => {
     setLoading(true)
@@ -240,7 +243,7 @@ export function UsagePage() {
         </div>
       </div>
 
-      <div className="usage-trend-wrap">
+        <div className="usage-trend-wrap" style={{ position: 'relative' }}>
         <div className="usage-card-title" style={{ marginBottom: 10 }}>Daily token trend chart</div>
         <div className="usage-legend">
           {trend.series.map((s) => (
@@ -248,30 +251,57 @@ export function UsagePage() {
           ))}
         </div>
 
-        <svg className="usage-trend-svg" viewBox="0 0 700 160" preserveAspectRatio="none">
-          {[0, 1, 2, 3].map((i) => (
-            <line key={i} x1="0" x2="700" y1={20 + i * 35} y2={20 + i * 35} className="usage-grid-line" />
-          ))}
-          {trend.series.map((s) => {
-            const pts = s.points
-            const path = pts.map((v, i) => {
-              const x = (i / Math.max(1, pts.length - 1)) * 700
-              const y = 130 - (v / maxTrend) * 100
-              return `${i === 0 ? 'M' : 'L'} ${x} ${y}`
-            }).join(' ')
-            // smooth via cubic? keep linear for now; add bezier smoothing for visual fidelity like reference
-            const smooth = pts.map((v, i) => {
-              const x = (i / Math.max(1, pts.length - 1)) * 700
-              const y = 130 - (v / maxTrend) * 100
-              if (i === 0) return `M ${x} ${y}`
-              const prevX = ((i - 1) / Math.max(1, pts.length - 1)) * 700
-              const prevY = 130 - (pts[i - 1] / maxTrend) * 100
-              const cx = (prevX + x) / 2
-              return `C ${cx} ${prevY}, ${cx} ${y}, ${x} ${y}`
-            }).join(' ')
-            return <path key={s.name} d={pts.some((v) => v > 0) ? smooth : path} fill="none" stroke={s.color} strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" />
-          })}
-        </svg>
+        <div
+          style={{ position: 'relative' }}
+          onMouseLeave={() => setTrendTip(null)}
+          onMouseMove={(e) => {
+            const rect = e.currentTarget.getBoundingClientRect()
+            const x = e.clientX - rect.left
+            const idx = Math.round((x / rect.width) * (trend.labels.length - 1))
+            const clamped = Math.max(0, Math.min(trend.labels.length - 1, idx))
+            const label = trend.labels[clamped]
+            if (!label) return
+            const values = trend.series.map((s) => ({ name: s.name, color: s.color, value: s.points[clamped] || 0 }))
+            setTrendTip({ x: e.clientX, y: e.clientY, date: label.label, key: label.key, values })
+          }}
+        >
+          <svg className="usage-trend-svg" viewBox="0 0 700 160" preserveAspectRatio="none">
+            {[0, 1, 2, 3].map((i) => (
+              <line key={i} x1="0" x2="700" y1={20 + i * 35} y2={20 + i * 35} className="usage-grid-line" />
+            ))}
+            {trend.series.map((s) => {
+              const pts = s.points
+              const smooth = pts.map((v, i) => {
+                const x = (i / Math.max(1, pts.length - 1)) * 700
+                const y = 130 - (v / maxTrend) * 100
+                if (i === 0) return `M ${x} ${y}`
+                const prevX = ((i - 1) / Math.max(1, pts.length - 1)) * 700
+                const prevY = 130 - (pts[i - 1] / maxTrend) * 100
+                const cx = (prevX + x) / 2
+                return `C ${cx} ${prevY}, ${cx} ${y}, ${x} ${y}`
+              }).join(' ')
+              return <path key={s.name} d={smooth} fill="none" stroke={s.color} strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" />
+            })}
+            {trendTip ? (
+              <line x1={(trend.labels.findIndex((l) => l.key === trendTip.key) / Math.max(1, trend.labels.length - 1)) * 700} x2={(trend.labels.findIndex((l) => l.key === trendTip.key) / Math.max(1, trend.labels.length - 1)) * 700} y1="10" y2="140" stroke="var(--border-color)" strokeWidth="1" strokeDasharray="4 4" opacity="0.7" />
+            ) : null}
+          </svg>
+          {trendTip ? (
+            <div
+              className="usage-tooltip"
+              style={{ left: Math.min(window.innerWidth - 160, Math.max(8, trendTip.x + 12)), top: trendTip.y - 72, position: 'fixed' }}
+            >
+              <div style={{ fontWeight: 700, fontSize: 12, marginBottom: 6 }}>{trendTip.date}</div>
+              {trendTip.values.map((v) => (
+                <div key={v.name} className="usage-tooltip-title" style={{ fontWeight: 600, fontSize: 12 }}>
+                  <span className="usage-tooltip-dot" style={{ background: v.color }} />
+                  {v.name}: <span className="usage-tooltip-value">{formatFull(v.value)} tokens</span>
+                </div>
+              ))}
+              <div style={{ fontSize: 11, color: '#a1a1aa', marginTop: 4 }}>{formatFull(trendTip.values.reduce((a, b) => a + b.value, 0))} total</div>
+            </div>
+          ) : null}
+        </div>
         <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 6 }}>
           {trend.labels.filter((_, i) => i % Math.ceil(trend.labels.length / 6) === 0).map((l) => (
             <span key={l.key} className="usage-trend-axis">{l.label}</span>
@@ -282,12 +312,38 @@ export function UsagePage() {
       <div className="usage-dark-card">
         <div className="usage-card-title" style={{ marginBottom: 14 }}>Model usage</div>
         <div className="usage-donut-wrap">
-          <div style={{ position: 'relative', width: 180, height: 180, margin: '0 auto' }}>
+          <div
+            style={{ position: 'relative', width: 180, height: 180, margin: '0 auto' }}
+            onMouseLeave={() => { setDonutTip(null); setActiveDonut(null) }}
+          >
             <svg width="180" height="180" viewBox="0 0 160 160">
-              <circle cx="80" cy="80" r="60" fill="none" stroke="#262626" strokeWidth="20" />
+              <circle cx="80" cy="80" r="60" fill="none" stroke="var(--border-color)" strokeWidth="20" />
               {donut.segments.map((seg) => {
                 const len = (seg.pct / 100) * donutCirc
-                const el = <circle key={seg.name} cx="80" cy="80" r="60" fill="none" stroke={seg.color} strokeWidth="20" strokeDasharray={`${len} ${donutCirc - len}`} strokeDashoffset={-donutOffset} strokeLinecap="butt" transform="rotate(-90 80 80)" />
+                const isActive = activeDonut === seg.name
+                const isDimmed = activeDonut && !isActive
+                const el = (
+                  <circle
+                    key={seg.name}
+                    cx="80"
+                    cy="80"
+                    r="60"
+                    fill="none"
+                    stroke={seg.color}
+                    strokeWidth="20"
+                    strokeDasharray={`${len} ${donutCirc - len}`}
+                    strokeDashoffset={-donutOffset}
+                    strokeLinecap="butt"
+                    transform="rotate(-90 80 80)"
+                    className={`usage-donut-segment ${isDimmed ? 'dimmed' : ''}`}
+                    onMouseEnter={(e) => {
+                      setActiveDonut(seg.name)
+                      setDonutTip({ name: seg.name, tokens: seg.tokens, pct: seg.pct, color: seg.color, x: e.clientX, y: e.clientY })
+                    }}
+                    onMouseMove={(e) => setDonutTip({ name: seg.name, tokens: seg.tokens, pct: seg.pct, color: seg.color, x: e.clientX, y: e.clientY })}
+                    onMouseLeave={() => { setDonutTip(null); setActiveDonut(null) }}
+                  />
+                )
                 donutOffset += len
                 return el
               })}
@@ -296,6 +352,15 @@ export function UsagePage() {
               <div className="usage-donut-total">{formatTokens(donut.total)}</div>
               <div className="usage-donut-sub">tokens</div>
             </div>
+            {donutTip ? (
+              <div className="usage-tooltip" style={{ left: Math.min(window.innerWidth - 160, donutTip.x + 12), top: donutTip.y - 56, position: 'fixed' }}>
+                <div className="usage-tooltip-title">
+                  <span className="usage-tooltip-dot" style={{ background: donutTip.color }} />
+                  {donutTip.name}
+                </div>
+                <div className="usage-tooltip-line">{formatFull(donutTip.tokens)} tokens <span className="usage-tooltip-value">{donutTip.pct}%</span></div>
+              </div>
+            ) : null}
           </div>
 
           <div>

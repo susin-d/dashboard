@@ -143,6 +143,7 @@
   background: var(--bg-secondary);
   border: 1px solid var(--border-color);
   min-height: 14px;
+  position: relative;
 }
 
 .usage-heatmap-cell.l1 { background: #93c5fd; border-color: #93c5fd; }
@@ -182,6 +183,7 @@ html.dark-theme .usage-heatmap-cell.l4 { background: #60a5fa; border-color: #60a
 /* Trend chart */
 .usage-trend-wrap {
   padding: 18px 18px 10px;
+  position: relative;
 }
 
 .usage-legend {
@@ -327,4 +329,67 @@ html.dark-theme .usage-heatmap-cell.l4 { background: #60a5fa; border-color: #60a
 .usage-refresh-btn:hover {
   color: var(--text-primary);
   border-color: var(--border-heavy, var(--border-color));
+}
+
+/* Tooltips — monochrome, theme-aware, matches reference black tooltip */
+.usage-tooltip {
+  position: fixed;
+  z-index: 50;
+  pointer-events: none;
+  background: #0a0a0a;
+  color: #ffffff;
+  border: 1px solid #2a2a2a;
+  border-radius: 10px;
+  padding: 10px 12px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+  min-width: 120px;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+html:not(.dark-theme) .usage-tooltip {
+  background: #171717;
+  border-color: #262626;
+}
+
+.usage-tooltip-title {
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.usage-tooltip-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.usage-tooltip-line {
+  color: #a1a1aa;
+  font-size: 12px;
+}
+
+.usage-tooltip-value {
+  color: #ffffff;
+  font-weight: 700;
+}
+
+.usage-trend-point {
+  cursor: pointer;
+}
+
+.usage-donut-segment {
+  cursor: pointer;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+.usage-donut-segment:hover {
+  opacity: 0.9;
+}
+
+.usage-donut-segment.dimmed {
+  opacity: 0.35;
 }
