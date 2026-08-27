@@ -72,16 +72,29 @@ export function useWorkspaceBridge() {
     [isTauri],
   )
 
-  return {
-    isTauri,
-    listWorkspaces,
-    createWorkspace,
-    renameWorkspace,
-    deleteWorkspace,
-    listFiles,
-    readFile: readFileContent,
-    writeFile: writeFileContent,
-    deleteFile: removeFile,
-  }
+  return useMemo(
+    () => ({
+      isTauri,
+      listWorkspaces,
+      createWorkspace,
+      renameWorkspace,
+      deleteWorkspace,
+      listFiles,
+      readFile: readFileContent,
+      writeFile: writeFileContent,
+      deleteFile: removeFile,
+    }),
+    [
+      isTauri,
+      listWorkspaces,
+      createWorkspace,
+      renameWorkspace,
+      deleteWorkspace,
+      listFiles,
+      readFileContent,
+      writeFileContent,
+      removeFile,
+    ],
+  )
 }
 
