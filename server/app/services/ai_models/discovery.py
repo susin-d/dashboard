@@ -137,8 +137,11 @@ async def fetch_provider_models(
     provider: str, api_key: str | None = None, user_keys: dict[str, str] | None = None
 ) -> list[dict[str, str]]:
     effective = api_key or effective_api_key(provider, user_keys or {})
-    if not effective:
+    # OpenAI-compatible providers can list models with only a base_url (Ollama local, OpenCode) — don't block on missing key
+    if not effective and provider not in ("ollama", "opencode", "openrouter", "groq"):
         return []
+    # For compatible providers without a key, attempt unauthenticated fetch via base_url
+    effective = effective or ""
     cached = _live_cache_get(provider, effective)
     if cached is not None:
         return cached
@@ -185,15 +188,24 @@ async def provider_catalog(user_api_keys: dict[str, str] | None = None) -> list[
         }
     ]
     for provider_id, descriptor in AI_PROVIDERS.items():
-        # Try live API list if key available, fallback to static catalog
+        # Try live API list when possible, fallback to static catalog / default model so dropdown never empty
         live_models: list[dict[str, str]] = []
-        effective_key = effective_api_key(provider_id, keys)
-        if effective_key:
+        # Always attempt live fetch for compatible providers (may work without key), otherwise only when key exists
+        should_try_live = provider_id in ("ollama", "opencode", "openrouter", "groq") or bool(effective_api_key(provider_id, keys))
+        if should_try_live:
             try:
-                live_models = await fetch_provider_models(provider_id, effective_key, keys)
+                live_models = await fetch_provider_models(provider_id, effective_api_key(provider_id, keys), keys)
             except Exception:
                 live_models = []
-        chosen_models = live_models
+        # Fallback: if live empty, show default_model as single entry so dropdown is never blank
+        chosen_models = live_models if live_models else []
+        if not chosen_models:
+            # Use descriptor static models if defined, else default_model single entry
+            static = descriptor.get("models") or []
+            if static:
+                chosen_models = static
+            elif descriptor.get("default_model"):
+                chosen_models = [{"id": descriptor["default_model"], "label": _format_model_label(descriptor["default_model"])}]
         default_id = descriptor["default_model"]
         models_payload = [
             {
