@@ -3,13 +3,13 @@
 .dashboard-page {
   display: grid;
   align-content: start;
-  gap: var(--layout-section-gap);
+  gap: var(--section-gap);
   min-width: 0;
 }
 
 .dashboard-heading {
   align-items: center;
-  padding-bottom: 20px;
+  padding-bottom: var(--space-md);
   border-bottom: 1px solid var(--border-color);
 }
 
@@ -92,8 +92,8 @@
 .dashboard-widget-header {
   display: flex;
   align-items: center;
-  gap: 11px;
-  padding: 17px 18px 13px;
+  gap: var(--space-xs);
+  padding: var(--space-sm) var(--space-sm) var(--space-xs);
   user-select: none;
 }
 
@@ -145,16 +145,16 @@
   min-height: 0;
   flex: 1;
   overflow: auto;
-  padding: 0 18px;
+  padding: 0 var(--space-sm);
 }
 
 .dashboard-widget-action {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  width: calc(100% - 36px);
-  margin: 9px 18px 14px;
-  padding: 9px 0 0;
+  width: calc(100% - var(--space-sm) * 2);
+  margin: var(--space-2xs) var(--space-sm) var(--space-sm);
+  padding: var(--space-2xs) 0 0;
   border: 0;
   border-top: 1px solid var(--border-color);
   background: transparent;

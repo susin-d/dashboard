@@ -11,11 +11,12 @@ input[type="date"],
 select,
 textarea {
   width: 100%;
-  padding: 10px 12px;
+  padding: var(--space-2xs) var(--space-xs);
+  min-height: 40px;
   color: var(--text-primary);
   background: var(--bg-card);
   border: 1px solid var(--border-color);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   outline: 0;
   font: inherit;
   transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
@@ -37,7 +38,7 @@ textarea:focus {
 
 label {
   display: grid;
-  gap: 6px;
+  gap: var(--space-3xs);
   color: var(--text-secondary);
   font-size: 11px;
   font-weight: 700;
@@ -45,7 +46,7 @@ label {
 
 .form-field {
   display: grid;
-  gap: 6px;
+  gap: var(--space-3xs);
 }
 
 .form-field > span {

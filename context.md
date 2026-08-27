@@ -51,9 +51,9 @@ For full maps see `PROJECT_MAP.md`. Keep this section brief; expand there.
 
 ## 5. Design system
 - **Monochrome only:** `#000/#09090b/#121212/#18181b`, `#fff/#fafafa/#f4f4f5`, grays `#27272a/#3f3f46/#71717a/#e4e4e7`. No red/blue/green/yellow/purple/gradients.
-- **Tokens first:** `styles/tokens.css` CSS vars. Import order `tokens→base→utilities→responsive→components→pages→layout-symmetry` via `App.css`.
+- **Tokens first:** `styles/tokens.css` CSS vars (8pt scale `--space-3xs`→`--space-3xl`, `--content-max-width` 1440, `--content-gutter` clamp, `--section-gap` clamp, `--card-padding` clamp, `--header-height` 68/62, `--sidebar-collapsed/expanded`). Import order `tokens→base→utilities→responsive→components→pages→layout-symmetry` via `App.css`.
 - **One CSS per component/page**, `kebab-case` classes scoped (`studio-prompt-attachment-chip`), use vars (`var(--radius-lg)`), dark overrides in `styles/themes/dark.css`.
-- **Full-page, no clip:** `min-height:100vh` accounting for chrome, natural scroll. Responsive mobile-first with `clamp()`.
+- **Full-page, no clip:** `min-height:100vh` accounting for chrome, natural scroll. Responsive mobile-first with `clamp()`. Geometry now single-source in `layout-symmetry.css` (centered `max-width:1440` + symmetric `content-gutter` + `safe-area` insets; fullscreen exceptions for Workspace/WhatsApp/Studio/Eve).
 - Icons `lucide-react` only.
 
 ## 6. Current snapshot

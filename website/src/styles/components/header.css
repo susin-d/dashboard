@@ -23,12 +23,12 @@
 .topbar {
   flex: 0 0 auto;
   z-index: 30;
-  height: 68px;
+  height: var(--header-height);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
-  padding: 0 24px;
+  gap: var(--space-sm);
+  padding: 0 var(--content-gutter);
   background: var(--bg-overlay);
   border-bottom: 1px solid var(--border-color);
   backdrop-filter: blur(12px);
@@ -45,7 +45,7 @@
 }
 
 .brand {
-  gap: 10px;
+  gap: var(--space-2xs);
   min-width: 0;
   flex: 0 0 auto;
   font-size: 17px;
@@ -77,7 +77,7 @@
 }
 
 .header-actions {
-  gap: 8px;
+  gap: var(--space-2xs);
   min-width: 0;
   flex: 0 1 auto;
   flex-wrap: nowrap;
@@ -88,9 +88,9 @@
 .eve-button {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--space-3xs);
   height: 36px;
-  padding: 0 12px;
+  padding: 0 var(--space-xs);
   color: var(--text-inverse);
   background: var(--color-primary);
   border: 1px solid var(--color-primary);

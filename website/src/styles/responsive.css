@@ -1,19 +1,11 @@
-/* Shared responsive layout refinements. Keep page-specific rules in their page sheets. */
-
-.content {
-  width: auto;
-  max-width: 1600px;
-  min-width: 0;
-  margin-right: auto;
-  padding-right: clamp(16px, 3vw, 48px);
-  padding-left: clamp(16px, 3vw, 48px);
-}
+/* Shared responsive refinements — geometry is now owned by layout-symmetry.css.
+   Keep only non-geometry responsive helpers here. */
 
 .app-breadcrumbs {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin: -10px 0 18px;
+  gap: var(--space-2xs);
+  margin: calc(var(--space-2xs) * -1) 0 var(--space-sm);
   color: var(--text-muted);
   font-size: 12px;
   font-weight: 650;
@@ -31,18 +23,18 @@
   padding: 0.35rem 0.7rem;
   font-size: 12px;
   font-weight: 600;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   background: transparent;
-  border: 1px solid var(--border-color, #27272a);
-  color: var(--text-secondary, #71717a);
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: all var(--transition-fast);
 }
 
 .app-breadcrumbs .breadcrumb-action-btn:hover {
-  color: var(--text-primary, #ffffff);
-  border-color: var(--border-heavy, #3f3f46);
-  background: var(--bg-tertiary, #1a1a1a);
+  color: var(--text-primary);
+  border-color: var(--border-heavy);
+  background: var(--bg-tertiary);
 }
 
 .page-heading > *,
@@ -57,12 +49,12 @@
 
 @media (max-width: 1024px) {
   .calendar-content {
-    padding-right: 16px;
-    padding-left: 16px;
+    padding-right: var(--space-sm);
+    padding-left: var(--space-sm);
   }
 
   .calendar-toolbar {
-    gap: 14px;
+    gap: var(--space-sm);
   }
 
   .documents-layout,
@@ -72,14 +64,8 @@
 }
 
 @media (max-width: 768px) {
-  .content {
-    padding-right: 16px;
-    padding-bottom: 24px;
-    padding-left: 16px;
-  }
-
   .app-breadcrumbs {
-    margin-top: -4px;
+    margin-top: calc(var(--space-3xs) * -1);
   }
 
   .page-heading,
@@ -88,7 +74,7 @@
   .project-page-heading {
     align-items: flex-start;
     flex-direction: column;
-    gap: 14px;
+    gap: var(--space-sm);
   }
 
   .page-heading-actions,
@@ -117,7 +103,7 @@
 
   .calendar-day {
     min-width: 92px;
-    padding: 7px;
+    padding: var(--space-2xs);
   }
 
   .chats-container {
@@ -126,14 +112,14 @@
   }
 }
 
-@media (max-width: 560px) {
+@media (max-width: 640px) {
   .topbar {
-    gap: 8px;
+    gap: var(--space-2xs);
   }
 
   .header-actions {
     min-width: 0;
-    gap: 2px;
+    gap: var(--space-3xs);
   }
 
   .search-container,
@@ -145,24 +131,6 @@
     min-width: 0;
   }
 
-  .page-heading-actions,
-  .dashboard-heading-actions,
-  .calendar-actions {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .page-heading-actions > button,
-  .dashboard-heading-actions > button,
-  .dashboard-heading-actions > div,
-  .calendar-actions > button {
-    width: 100%;
-  }
-
-  .dashboard-heading-actions > div {
-    display: contents;
-  }
-
   .calendar-pagination {
     order: 3;
     grid-column: span 2;
@@ -172,8 +140,8 @@
   .calendar-date-menu {
     position: fixed;
     top: 70px;
-    right: 12px;
-    left: 12px;
+    right: var(--space-xs);
+    left: var(--space-xs);
     width: auto;
   }
 
@@ -195,14 +163,9 @@
 
 @media (max-width: 380px) {
   .topbar {
-    padding-right: 8px;
-    padding-left: 8px;
-    gap: 6px;
-  }
-
-  .content {
-    padding-right: 12px;
-    padding-left: 12px;
+    padding-right: var(--space-2xs);
+    padding-left: var(--space-2xs);
+    gap: var(--space-3xs);
   }
 }
 

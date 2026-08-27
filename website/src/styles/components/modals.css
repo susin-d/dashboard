@@ -28,7 +28,7 @@
 .project-edit-modal,
 .job-modal {
   width: min(100%, 480px);
-  padding: 24px;
+  padding: var(--space-lg);
   background: var(--bg-card);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-xl);
@@ -41,7 +41,7 @@
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 20px;
+  gap: var(--space-md);
 }
 
 .modal-heading p,
@@ -65,8 +65,8 @@
 .todo-modal-actions {
   display: flex;
   justify-content: flex-end;
-  gap: 8px;
-  margin-top: 18px;
+  gap: var(--space-2xs);
+  margin-top: var(--space-md);
 }
 
 .profile-edit-modal {

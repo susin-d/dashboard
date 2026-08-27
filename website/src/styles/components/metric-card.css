@@ -1,10 +1,12 @@
 /* ── MetricCard ──────────────────────────────────────────────────────────── */
 
 .metric-card {
-  padding: 19px;
+  padding: var(--card-padding);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-xl);
   background: var(--bg-card);
+  box-shadow: var(--shadow-surface), var(--shadow-inset);
+  transition: box-shadow var(--transition-normal), border-color var(--transition-normal);
 }
 
 /* Icon wrapper */

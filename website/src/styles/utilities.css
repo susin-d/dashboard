@@ -40,3 +40,50 @@
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
 }
+
+/* ── Symmetry helpers ── */
+.stack {
+  display: grid;
+  align-content: start;
+  gap: var(--section-gap);
+}
+
+.stack-sm {
+  display: grid;
+  gap: var(--space-sm);
+}
+
+.cluster {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.cluster-xs {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2xs);
+}
+
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 310px), 1fr));
+  gap: var(--card-gap);
+}
+
+.symmetric-card {
+  padding: var(--card-padding);
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-surface), var(--shadow-inset);
+}
+
+.section-divider {
+  height: 1px;
+  background: var(--border-color);
+  border: 0;
+  margin: 0;
+}
