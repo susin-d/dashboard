@@ -31,7 +31,7 @@ def generic_get_doc(
     return SqlSnapshot(doc_id, to_dict(obj))
 
 
-_IMMUTABLE_FIELDS = {"id", "user_id", "created_at", "deleted", "deleted_at"}
+_IMMUTABLE_FIELDS = {"id", "user_id", "created_at"}
 
 # Per-model allowlists for mass-assignment protection (explicit fields clients may write)
 _ALLOWLIST_BY_MODEL: dict[str, set[str]] = {
@@ -83,9 +83,18 @@ def generic_set_doc(
             raise PermissionError("Not owner")
         allowed = _allowed_fields(model_cls)
         for k, val in data.items():
+            if k in {"deleted", "deleted_at"}:
+                if hasattr(obj, k):
+                    setattr(obj, k, coerce_model_value(k, val))
+                continue
             if k in _IMMUTABLE_FIELDS:
                 continue
             if allowed is not None and k not in allowed:
+                # Allow deleted lifecycle markers even if not in allowlist
+                if k not in {"deleted", "deleted_at"}:
+                    continue
+                if hasattr(obj, k):
+                    setattr(obj, k, coerce_model_value(k, val))
                 continue
             if hasattr(obj, k):
                 setattr(obj, k, coerce_model_value(k, val))

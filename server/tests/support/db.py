@@ -22,6 +22,16 @@ def clean_database() -> None:
 
     Base.metadata.drop_all(sync_engine)
     Base.metadata.create_all(sync_engine)
+    # Clear the response cache so previous test data does not leak into the
+    # next test when the local in-memory fallback is used (REDIS_URL unset in
+    # conftest.py). Redis-backed runs use ephemeral prefixes but local tests
+    # share a single process-wide dict.
+    try:
+        from app.core.cache import cache_clear
+
+        cache_clear()
+    except Exception:
+        pass
 
 
 @pytest.fixture()

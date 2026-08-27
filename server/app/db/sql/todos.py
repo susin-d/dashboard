@@ -62,8 +62,12 @@ def set_todo_doc(
             raise PermissionError("Not owner")
         _ALLOWED = {"title", "completed", "due_date", "priority"}
         _TIMESTAMP_FIELDS = {"created_at", "updated_at"}
-        _IMMUTABLE = {"id", "user_id", "deleted", "deleted_at"}
+        _IMMUTABLE = {"id", "user_id"}
         for k, val in data.items():
+            if k in {"deleted", "deleted_at"}:
+                if hasattr(t, k):
+                    setattr(t, k, coerce_model_value(k, val))
+                continue
             if k in _IMMUTABLE:
                 continue
             if k in _TIMESTAMP_FIELDS:

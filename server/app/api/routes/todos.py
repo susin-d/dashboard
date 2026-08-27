@@ -3,14 +3,22 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
 from app.db import SqlClient, get_firestore
 
 from app.core.auth import get_current_user
+from app.core.cache import CACHE_TTL_MEDIUM, CACHE_TTL_SHORT, cache_invalidate_prefix, cached
 from app.repositories import todos
 
 from app.schemas.todo import TodoCreate, TodoResponse, TodoUpdate
 
 router = APIRouter(prefix="/todos")
 
+_TODOS_PREFIX = "todos"
+
+
+def _invalidate_todos(user_id: str) -> None:
+    cache_invalidate_prefix(f"{_TODOS_PREFIX}:{user_id}")
+
 
 @router.get("")
+@cached(ttl=CACHE_TTL_SHORT, prefix=_TODOS_PREFIX)
 async def list_todos(
     cursor: str | None = None,
     limit: int | None = Query(default=None, ge=1, le=50),
@@ -28,6 +36,7 @@ async def list_todos(
 
 
 @router.get("/{todo_id}", response_model=TodoResponse)
+@cached(ttl=CACHE_TTL_MEDIUM, prefix=_TODOS_PREFIX)
 async def get_todo(
     todo_id: str,
     database: SqlClient = Depends(get_firestore),
@@ -45,7 +54,9 @@ async def create_todo(
     database: SqlClient = Depends(get_firestore),
     user: dict = Depends(get_current_user),
 ):
-    return await asyncio.to_thread(todos.create_todo, database, user["uid"], todo)
+    result = await asyncio.to_thread(todos.create_todo, database, user["uid"], todo)
+    _invalidate_todos(user["uid"])
+    return result
 
 
 @router.patch("/{todo_id}", response_model=TodoResponse)
@@ -58,6 +69,7 @@ async def update_todo(
     todo = await asyncio.to_thread(todos.update_todo, database, user["uid"], todo_id, changes)
     if todo is None:
         raise HTTPException(status_code=404, detail="Todo not found.")
+    _invalidate_todos(user["uid"])
     return todo
 
 
@@ -70,6 +82,7 @@ async def delete_todo(
     ok = await asyncio.to_thread(todos.delete_todo, database, user["uid"], todo_id)
     if not ok:
         raise HTTPException(status_code=404, detail="Todo not found.")
+    _invalidate_todos(user["uid"])
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
@@ -85,4 +98,5 @@ async def restore_todo(
     todo = await asyncio.to_thread(todos.get_todo, database, user["uid"], todo_id)
     if todo is None:
         raise HTTPException(status_code=404, detail="Todo not found.")
+    _invalidate_todos(user["uid"])
     return todo

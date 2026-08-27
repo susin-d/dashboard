@@ -69,8 +69,12 @@ def set_notification_doc(
         if n.user_id != user_id:
             raise PermissionError("Not owner")
         _ALLOWED = {"title", "body", "message", "type", "read", "unread", "data", "notification_time", "time"}
-        _IMMUTABLE = {"id", "user_id", "created_at", "deleted", "deleted_at"}
+        _IMMUTABLE = {"id", "user_id", "created_at"}
         for key, val in data.items():
+            if key in {"deleted", "deleted_at"}:
+                if hasattr(n, key):
+                    setattr(n, key, coerce_model_value(key, val))
+                continue
             if key in _IMMUTABLE:
                 continue
             column = _NOTIFICATION_COLUMN_ALIASES.get(key, key)

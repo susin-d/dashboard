@@ -2,12 +2,19 @@ from fastapi import APIRouter, Depends
 from app.db import ArrayUnion, SERVER_TIMESTAMP, SqlClient, get_firestore
 
 from app.core.auth import get_current_user
+from app.core.cache import CACHE_TTL_MEDIUM, cache_invalidate_prefix, cached
 from app.schemas.competitive_coding_profile import (
     CompetitiveCodingProfileResponse,
     CompetitiveCodingProfileUpdate,
 )
 
 router = APIRouter(prefix="/settings/competitive-coding")
+
+_CC_PROFILE_PREFIX = "settings:competitive-coding"
+
+
+def _invalidate_cc_profile(user_id: str) -> None:
+    cache_invalidate_prefix(f"{_CC_PROFILE_PREFIX}:{user_id}")
 
 
 def _reference(database: SqlClient, user_id: str):
@@ -20,6 +27,7 @@ def _reference(database: SqlClient, user_id: str):
 
 
 @router.get("", response_model=CompetitiveCodingProfileResponse)
+@cached(ttl=CACHE_TTL_MEDIUM, prefix=_CC_PROFILE_PREFIX)
 def get_competitive_coding_profile(
     database: SqlClient = Depends(get_firestore),
     user: dict = Depends(get_current_user),
@@ -54,4 +62,5 @@ def save_competitive_coding_profile(
         },
         merge=True,
     )
+    _invalidate_cc_profile(user["uid"])
     return reference.get().to_dict()

@@ -8,6 +8,7 @@ from app.db import SqlClient, get_firestore
 logger = logging.getLogger(__name__)
 
 from app.core.auth import get_current_user
+from app.core.cache import CACHE_TTL_MEDIUM, CACHE_TTL_SHORT, cache_invalidate_prefix, cached
 from app.repositories import eve_sessions
 from app.repositories.eve import add_memory, delete_memory, list_memories, search_memories
 from app.schemas.eve import (
@@ -41,6 +42,15 @@ from app.services.speech import (
 )
 
 router = APIRouter(prefix="/eve")
+
+_EVE_SESSIONS_PREFIX = "eve:sessions"
+_EVE_MEMORIES_PREFIX = "eve:memories"
+
+
+def _invalidate_eve(user_id: str) -> None:
+    cache_invalidate_prefix(f"{_EVE_SESSIONS_PREFIX}:{user_id}")
+    cache_invalidate_prefix(f"{_EVE_MEMORIES_PREFIX}:{user_id}")
+
 
 # Server STT engines → transcriber. One entry per provider avoids mode-flag branching.
 _STT_TRANSCRIBERS = {
@@ -218,6 +228,7 @@ async def chat(
 
 
 @router.get("/sessions", response_model=EveSessionListResponse)
+@cached(ttl=CACHE_TTL_SHORT, prefix=_EVE_SESSIONS_PREFIX)
 async def list_sessions(
     database: SqlClient = Depends(get_firestore),
     user: dict = Depends(get_current_user),
@@ -238,10 +249,12 @@ async def create_session(
         user["uid"],
         [item.model_dump() for item in payload.messages],
     )
+    _invalidate_eve(user["uid"])
     return {"session": session}
 
 
 @router.get("/sessions/{session_id}", response_model=EveSessionResponse)
+@cached(ttl=CACHE_TTL_MEDIUM, prefix=_EVE_SESSIONS_PREFIX)
 async def get_session(
     session_id: str,
     database: SqlClient = Depends(get_firestore),
@@ -263,9 +276,11 @@ async def delete_session(
     ok = await asyncio.to_thread(eve_sessions.delete_session, database, user["uid"], session_id)
     if not ok:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Session not found.")
+    _invalidate_eve(user["uid"])
 
 
 @router.get("/memories", response_model=EveMemoriesResponse)
+@cached(ttl=CACHE_TTL_SHORT, prefix=_EVE_MEMORIES_PREFIX)
 async def get_memories(
     database: SqlClient = Depends(get_firestore),
     user: dict = Depends(get_current_user),
@@ -275,6 +290,7 @@ async def get_memories(
 
 
 @router.get("/memories/search", response_model=EveMemoriesResponse)
+@cached(ttl=CACHE_TTL_SHORT, prefix=f"{_EVE_MEMORIES_PREFIX}:search")
 async def search_eve_memories_route(
     q: str,
     limit: int = 5,
@@ -296,6 +312,7 @@ async def create_memory(
     memory = await asyncio.to_thread(add_memory, database, user["uid"], payload.content)
     # Invalidate handled inside service, but also refresh list via thread
     memories = await asyncio.to_thread(list_memories, database, user["uid"])
+    _invalidate_eve(user["uid"])
     return {"memories": [memory, *memories]}
 
 
@@ -308,6 +325,7 @@ async def remove_memory(
     ok = await asyncio.to_thread(delete_memory, database, user["uid"], memory_id)
     if not ok:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Memory not found.")
+    _invalidate_eve(user["uid"])
     return {"message": "Memory removed."}
 
 

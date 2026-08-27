@@ -67,8 +67,12 @@ def set_project_doc(
         if p.user_id != user_id:
             raise PermissionError("Not owner")
         _ALLOWED = {"name", "status", "lifecycle_phase", "progress", "start_date", "end_date", "members", "description", "technologies", "github_url", "live_url"}
-        _IMMUTABLE = {"id", "user_id", "created_at", "deleted", "deleted_at"}
+        _IMMUTABLE = {"id", "user_id", "created_at"}
         for k, val in data.items():
+            if k in {"deleted", "deleted_at"}:
+                if hasattr(p, k):
+                    setattr(p, k, coerce_model_value(k, val))
+                continue
             if k in _IMMUTABLE:
                 continue
             if k not in _ALLOWED:

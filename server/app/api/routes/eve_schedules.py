@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from app.db import SqlClient, get_firestore
 
 from app.core.auth import get_current_user
+from app.core.cache import CACHE_TTL_SHORT, cache_invalidate_prefix, cached
 from app.repositories.calls import CallRepository
 from app.repositories.eve_schedules import EveScheduleRepository
 from app.schemas.call import CallUser
@@ -16,8 +17,15 @@ from app.services.notifications import send_call_notification
 
 router = APIRouter(prefix="/eve/schedules")
 
+_EVE_SCHEDULES_PREFIX = "eve:schedules"
+
+
+def _invalidate_eve_schedules(user_id: str) -> None:
+    cache_invalidate_prefix(f"{_EVE_SCHEDULES_PREFIX}:{user_id}")
+
 
 @router.get("", response_model=EveScheduleListResponse)
+@cached(ttl=CACHE_TTL_SHORT, prefix=_EVE_SCHEDULES_PREFIX)
 def list_schedules(
     database: SqlClient = Depends(get_firestore),
     user: dict = Depends(get_current_user),
@@ -33,7 +41,9 @@ def create_schedule(
     user: dict = Depends(get_current_user),
 ):
     repository = EveScheduleRepository(database, user["uid"])
-    return repository.create(payload)
+    result = repository.create(payload)
+    _invalidate_eve_schedules(user["uid"])
+    return result
 
 
 @router.patch("/{schedule_id}", response_model=EveScheduleResponse)
@@ -47,6 +57,7 @@ def update_schedule(
     schedule = repository.update(schedule_id, payload)
     if not schedule:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Schedule not found.")
+    _invalidate_eve_schedules(user["uid"])
     return schedule
 
 
@@ -59,6 +70,7 @@ def delete_schedule(
     repository = EveScheduleRepository(database, user["uid"])
     if not repository.delete(schedule_id):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Schedule not found.")
+    _invalidate_eve_schedules(user["uid"])
 
 
 @router.post("/{schedule_id}/run", response_model=EveScheduleResponse)

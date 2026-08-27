@@ -81,8 +81,12 @@ def set_hackathon_doc(
         if h.user_id != user_id:
             raise PermissionError("Not owner")
         _ALLOWED = {"title", "organizer", "location", "dates", "prize", "status", "hackathon_url", "url", "source", "notes", "starts_at", "ends_at", "mode", "team_size", "tags"}
-        _IMMUTABLE = {"id", "user_id", "created_at", "deleted", "deleted_at"}
+        _IMMUTABLE = {"id", "user_id", "created_at"}
         for key, val in data.items():
+            if key in {"deleted", "deleted_at"}:
+                if hasattr(h, key):
+                    setattr(h, key, coerce_model_value(key, val))
+                continue
             if key in _IMMUTABLE:
                 continue
             column = _HACKATHON_COLUMN_ALIASES.get(key, key)

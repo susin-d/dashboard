@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from app.db import ArrayUnion, SERVER_TIMESTAMP, SqlClient, get_firestore
 
 from app.core.auth import get_current_user
+from app.core.cache import CACHE_TTL_MEDIUM, cache_invalidate_prefix, cached
 from app.schemas.eve_speech import (
     EveSpeechPreferenceUpdate,
     EveSpeechResponse,
@@ -15,6 +16,12 @@ from app.services.speech import (
 )
 
 router = APIRouter(prefix="/settings/eve-speech")
+
+_EVE_SPEECH_PREFIX = "settings:eve-speech"
+
+
+def _invalidate_eve_speech(user_id: str) -> None:
+    cache_invalidate_prefix(f"{_EVE_SPEECH_PREFIX}:{user_id}")
 
 
 def _reference(database: SqlClient, user_id: str):
@@ -39,6 +46,7 @@ def _preference_payload(database: SqlClient, user_id: str) -> dict | None:
 
 
 @router.get("", response_model=EveSpeechResponse)
+@cached(ttl=CACHE_TTL_MEDIUM, prefix=_EVE_SPEECH_PREFIX)
 def get_eve_speech(
     database: SqlClient = Depends(get_firestore),
     user: dict = Depends(get_current_user),
@@ -77,6 +85,7 @@ def save_eve_speech(
         },
         merge=True,
     )
+    _invalidate_eve_speech(user["uid"])
     return {
         "stt_providers": stt_catalog(),
         "tts_providers": tts_catalog(),

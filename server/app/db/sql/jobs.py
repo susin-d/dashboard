@@ -73,8 +73,12 @@ def set_job_doc(
         if j.user_id != user_id:
             raise PermissionError("Not owner")
         _ALLOWED = {"company", "role", "status", "location", "work_type", "salary", "applied_date", "resume_id", "job_url", "notes"}
-        _IMMUTABLE = {"id", "user_id", "created_at", "deleted", "deleted_at"}
+        _IMMUTABLE = {"id", "user_id", "created_at"}
         for k, val in data.items():
+            if k in {"deleted", "deleted_at"}:
+                if hasattr(j, k):
+                    setattr(j, k, coerce_model_value(k, val))
+                continue
             if k in _IMMUTABLE:
                 continue
             if k not in _ALLOWED:

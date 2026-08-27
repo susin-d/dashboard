@@ -65,8 +65,12 @@ def set_contact_doc(
         if c.user_id != user_id:
             raise PermissionError("Not owner")
         _ALLOWED = {"name", "email", "phone", "company", "role", "notes"}
-        _IMMUTABLE = {"id", "user_id", "created_at", "deleted", "deleted_at"}
+        _IMMUTABLE = {"id", "user_id", "created_at"}
         for k, val in data.items():
+            if k in {"deleted", "deleted_at"}:
+                if hasattr(c, k):
+                    setattr(c, k, coerce_model_value(k, val))
+                continue
             if k in _IMMUTABLE:
                 continue
             if k not in _ALLOWED:

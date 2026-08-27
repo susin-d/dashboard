@@ -80,3 +80,27 @@ def other_user_headers():
     from tests.support.auth import headers_for
 
     return headers_for({"uid": "user-2", "email": "user2@example.com", "name": "User Two"})
+
+
+@pytest.fixture(autouse=True)
+def _clear_cache_between_tests():
+    """Ensure the in-memory response cache never leaks between tests.
+
+    The cache is process-global (local dict when REDIS_URL is unset, which is
+    always the case in tests). Without this, a cached GET from one test would
+    be returned for the next test even though the DB has been reset or the
+    Firestore mock has been reconfigured, producing flaky stale-data assertions.
+    """
+    try:
+        from app.core.cache import cache_clear
+
+        cache_clear()
+    except Exception:
+        pass
+    yield
+    try:
+        from app.core.cache import cache_clear
+
+        cache_clear()
+    except Exception:
+        pass

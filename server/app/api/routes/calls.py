@@ -12,6 +12,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from app.db import SqlClient, get_firestore
 
 from app.core.auth import get_current_user
+from app.core.cache import CACHE_TTL_SHORT, cache_invalidate_prefix, cached
 from app.core.ws_manager import call_ws_manager
 from app.repositories.calls import CallRepository
 from app.repositories.users import get_user_by_email, get_user_by_id
@@ -26,8 +27,13 @@ from app.services.notifications import send_call_notification
 
 router = APIRouter(prefix="/calls")
 
+_CALLS_PREFIX = "calls"
 
 RECENT_CALL_LIMIT = 30
+
+
+def _invalidate_calls(user_id: str) -> None:
+    cache_invalidate_prefix(f"{_CALLS_PREFIX}:{user_id}")
 
 
 EVE_BOT_USER = {"uid": "eve-bot", "email": "eve@starwaves.app", "display_name": "Eve AI Assistant"}
@@ -69,6 +75,7 @@ def _newest_incoming(repository: CallRepository, uid: str) -> dict | None:
 
 
 @router.get("/incoming", response_model=list[CallResponse])
+@cached(ttl=10, prefix=_CALLS_PREFIX)
 async def list_incoming_calls(
     database: SqlClient = Depends(get_firestore),
     user: dict = Depends(get_current_user),
@@ -80,6 +87,7 @@ async def list_incoming_calls(
 
 
 @router.get("/recent", response_model=list[CallResponse])
+@cached(ttl=10, prefix=_CALLS_PREFIX)
 async def list_recent_calls(
     limit: int = Query(default=20, ge=1, le=RECENT_CALL_LIMIT),
     database: SqlClient = Depends(get_firestore),
@@ -116,6 +124,7 @@ async def trigger_eve_call(
     )
     serialized = _serialize(call)
     await call_ws_manager.send(user["uid"], {"type": "incoming_call", "call": serialized})
+    _invalidate_calls(user["uid"])
     return serialized
 
 
@@ -151,11 +160,16 @@ async def create_call(
         await call_ws_manager.send(
             callee_record["uid"], {"type": "incoming_call", "call": serialized}
         )
+        _invalidate_calls(user["uid"])
+        _invalidate_calls(callee_record["uid"])
         return serialized
+    _invalidate_calls(user["uid"])
+    _invalidate_calls(callee_record["uid"])
     return _serialize(call)
 
 
 @router.get("/{call_id}", response_model=CallResponse)
+@cached(ttl=10, prefix=_CALLS_PREFIX)
 async def get_call(
     call_id: str,
     database: SqlClient = Depends(get_firestore),
@@ -208,6 +222,7 @@ async def update_call_status(
     event = {"type": "call_updated", "call": serialized}
     for uid in {caller_uid, callee_uid} - {None}:
         await call_ws_manager.send(uid, event)
+        _invalidate_calls(uid)
     return serialized
 
 
@@ -229,4 +244,7 @@ async def send_call_signal(
     other_uid = callee_uid if user["uid"] == caller_uid else caller_uid
     if other_uid:
         await call_ws_manager.send(other_uid, {"type": "call_signal", "call": call})
+    _invalidate_calls(user["uid"])
+    if other_uid:
+        _invalidate_calls(other_uid)
     return call

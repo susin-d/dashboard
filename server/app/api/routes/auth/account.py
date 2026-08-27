@@ -5,10 +5,17 @@ from app.db import SqlClient, get_firestore
 from pydantic import BaseModel
 
 from app.core.auth import get_current_user
+from app.core.cache import CACHE_TTL_MEDIUM, cache_invalidate_prefix, cached
 from app.repositories.account_deletion import delete_user_account
 from app.repositories.users import get_user_by_id, update_user_profile as update_profile_in_db
 
 router = APIRouter(prefix="/auth")
+
+_AUTH_ME_PREFIX = "auth:me"
+
+
+def _invalidate_auth_me(user_id: str) -> None:
+    cache_invalidate_prefix(f"{_AUTH_ME_PREFIX}:{user_id}")
 
 
 class ProfileUpdateRequest(BaseModel):
@@ -30,6 +37,7 @@ def delete_account(
 
 
 @router.get("/me")
+@cached(ttl=CACHE_TTL_MEDIUM, prefix=_AUTH_ME_PREFIX)
 def get_me(
     user: dict = Depends(get_current_user),
     database: SqlClient = Depends(get_firestore),
@@ -64,6 +72,7 @@ def update_user_profile(
             uid=user["uid"],
             display_name=payload.displayName,
         )
+        _invalidate_auth_me(user["uid"])
         return {
             "uid": user_record["uid"],
             "email": user_record["email"],

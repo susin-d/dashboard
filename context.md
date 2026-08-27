@@ -2,6 +2,8 @@
 
 Living snapshot for AI agents. `AGENTS.md` holds permanent rules; this file holds the **current state**. See `CHANGELOG.md` for history and `PROJECT_MAP.md` for the file index.
 
+Last updated: 2026-08-27 — add cached decorator for simple GETs (todos/contacts/documents/profiles/workspace projects/jobs/notifications, eve sessions/memories, settings, usage, auth/me, calls) + fix soft-delete SQL handlers to allow deleted markers
+
 ## Contents
 1. [Overview](#1-overview) · 2. [Repository structure](#2-repository-structure) · 3. [Backend](#3-backend) · 4. [Frontend](#4-frontend) · 5. [Design system](#5-design-system) · 6. [Current snapshot](#6-current-snapshot) · 7. [Limitations](#7-limitations) · 8. [Verification](#8-verification)
 
@@ -37,8 +39,8 @@ For full maps see `PROJECT_MAP.md`. Keep this section brief; expand there.
 - **Layering:** Routes → Services/Repos → Core/Models. Never import FastAPI types in Services/Repos. Use `CurrentUser`/`CurrentUserId`/`DbClient` from `core/dependencies.py`.
 - **Route groups:** `auth/` (oauth/credentials/password/account/combine), `workspace/` (jobs/hackathons/projects/notifications/contests/calendar), `whatsapp/` (status/chats/messages/settings/webhook+`_shared`), `workspace_files`, `whatsapp_ws`+`calls_ws`+`twilio-relay`, `eve`+`eve_stream` (SSE), `calls`+`calls_twilio`, `ai_models`, `eve_speech`, `ui_preferences` (`/ui/preferences` tokens/CSS/visibility/history + `GET /history`), `cron`, `health`.
 - **Repos:** one per entity (`helpers.py` soft-delete/snapshot, `pagination.py` facade). **Services:** `eve/` (chat/stream/tools/handlers/memories/RAG + `ui` tools), `ui_preferences` (per-user `ui-preferences` doc, `users/{uid}/settings/ui-preferences` v1, sanitize CSS, allowlist tokens, history 20), `ai_models/` (contracts/catalog/config/discovery/loop + adapters), `speech/` (Groq/Deepgram STT, Google/OpenRouter TTS), `twilio/`, `oauth/`, `web_browsing/`, `embeddings` (text-embedding-3-small 1536-dim).
-- **DB:** `models/` + mixins `TimestampMixin/SoftDeleteMixin/UserOwnedMixin`. SQL in `sql/` (idempotent). `db/sql/` modular handlers + `registry.py` dispatch + `base.py` CRUD + RLS `core/rls.py` `SET LOCAL app.current_user_id`.
-- **Performance:** hot reads `async+to_thread`, composite indexes (`ix_*_user_deleted_created`, `ix_calls_status_updated`), pools `5/5 recycle 300`, Redis/LRU `core/cache.py`, workspace disk `WORKSPACE_STORAGE_PATH`.
+- **DB:** `models/` + mixins `TimestampMixin/SoftDeleteMixin/UserOwnedMixin`. SQL in `sql/` (idempotent). `db/sql/` modular handlers + `registry.py` dispatch + `base.py` CRUD + RLS `core/rls.py` `SET LOCAL app.current_user_id`. Soft-delete now correctly propagates `deleted`/`deleted_at` via SQL handlers (previously blocked by `_IMMUTABLE` allowlists).
+- **Performance:** hot reads `async+to_thread`, composite indexes (`ix_*_user_deleted_created`, `ix_calls_status_updated`), pools `5/5 recycle 300`, Redis/LRU `core/cache.py` (`CACHE_TTL_SHORT=30`/`MEDIUM=60`/`LONG=300`, `cached` decorator with per-user `prefix:user_id:hash` keys, Pydantic-aware `cache_set`, `cache_invalidate_prefix` + `cache_clear` + autouse test fixture), workspace disk `WORKSPACE_STORAGE_PATH`.
 
 ## 4. Frontend
 - **Entry:** `website/src/main.jsx` → `App.jsx` (routing + workspace state). **Layout:** `layouts/AppLayout.jsx`.
@@ -57,6 +59,7 @@ For full maps see `PROJECT_MAP.md`. Keep this section brief; expand there.
 - Icons `lucide-react` only.
 
 ## 6. Current snapshot
+- Simple GET caching: `core/cache.py` `cached(ttl,prefix)` wraps all hot-read GETs (`/todos`, `/contacts`, `/documents`, `/profiles`, `/workspace/projects|jobs|notifications`, `/eve/sessions|memories`, `/settings/*`, `/usage/*`, `/auth/me`, `/calls/*`, `/eve/schedules`, `/ui/preferences`, `/settings/eve-memory`) with `prefix:user_id:hash` keys and `cache_invalidate_prefix` on POST/PATCH/PUT/DELETE/restore; Redis SETEX when `REDIS_URL` else local LRU-1000; `tests/support/db.py` + `tests/conftest.py` autouse `cache_clear` for isolation.
 - Workspace IDE folder-first + Monaco tabs/breadcrumb + Explorer + Eve Agent SSE panel (`useEveAgentChat.js`, `workspace_id` required on file tools, now also dispatches `eve-ui-update` for UI tools) + Browser side panel (`htmlContent` srcdoc, `initialUrl`, `starwaves.workspace.browser-url:{id}`).
 - Studio: `StudioHero` (Add files picker + attachment chips + `studioBrief.js` brief) → builder fixed-viewport IDE; hero `flex:1` full-bleed; `StudioAppsPage` lists `build_status: ready` apps.
 - EVE: multi-provider (OpenAI/Anthropic/Gemini/OpenRouter/Ollama/OpenCode) with live `/v1/models` discovery; `stream_chat_with_eve` SSE (`delta/tool_start/tool_end/done/error+[DONE]`); pgvector RAG (top-5, HNSW `ix_eve_memories_embedding`, fallback 40 recent); auto-remember (capped 3, deduped, toggle `users/{uid}/settings/eve-memory`); tools: `read/write/list/search/run` workspace files (require `workspace_id`), web `browse/search/fetch`, WhatsApp, `open_workspace_browser`, schedule (`create/list/delete`), UI (`get_ui_state`/`update_ui_theme`/`update_ui_styles`/`manage_ui_visibility`/`reset_ui`/`list_ui_history`/`create_custom_page` → `ui-preferences` + `apply_ui_overrides`/`reset_ui`/`open_custom_page` actions + `eve-ui-update` event + `useCustomUI` + `EveUiBanner`), `QuestionCard` plan UI, `ModelSelectorDropdown` with key filtering; `eve/chat_context` shared resolver.

@@ -63,6 +63,10 @@ def _apply_document_data(d: Document, data: dict[str, Any], *, is_create: bool =
         # for create, mapping already limited
         pass
     for key, value in data.items():
+        if key in {"deleted", "deleted_at"}:
+            if hasattr(d, key):
+                setattr(d, key, coerce_model_value(key, value))
+            continue
         column = mapping.get(key)
         if column is not None:
             setattr(d, column, coerce_model_value(column, value))
