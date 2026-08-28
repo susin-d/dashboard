@@ -1,5 +1,9 @@
 """Workspace handlers — single responsibility: workspace records, search and generation."""
 
+from __future__ import annotations
+
+from typing import Any
+
 from app.db import SqlClient
 
 from app.services.eve.constants import SUPPORTED_RESOURCES
