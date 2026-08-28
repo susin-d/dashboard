@@ -15,3 +15,8 @@ services:
     build:
       context: ./server
       dockerfile: Dockerfile
+  whatsapp-worker:
+    image: ghcr.io/susin-d/dashboard-whatsapp-worker:${TAG:-latest}
+    build:
+      context: ./services/whatsapp-worker
+      dockerfile: Dockerfile
