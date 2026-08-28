@@ -17,7 +17,35 @@ This guide explains how to build, run, and manage the full StarWaves stack (Reac
 
 ---
 
-## 🚀 Quick Start with Docker Compose
+## 📦 GHCR Prebuilt Images (no local build)
+
+Images are auto-published to **GHCR** on every `push` to `main` via `.github/workflows/docker-ghcr.yml`:
+
+- `ghcr.io/susin-d/dashboard-server:latest`
+- `ghcr.io/susin-d/dashboard-website:latest`
+- `ghcr.io/susin-d/dashboard-whatsapp-worker:latest`
+
+Tags: `latest`, `main`, `main-<sha>`, `v*.*.*` (semver).
+
+**Pull & run without building:**
+
+```bash
+# login once (use a PAT with read:packages)
+echo $GITHUB_TOKEN | docker login ghcr.io -u susin-d --password-stdin
+
+# pull + run with prebuilt images
+docker compose -f docker-compose.yml -f docker-compose.ghcr.yml pull
+docker compose -f docker-compose.yml -f docker-compose.ghcr.yml up -d
+
+# pin to a SHA/tag
+TAG=main-abc1234 docker compose -f docker-compose.yml -f docker-compose.ghcr.yml up -d
+```
+
+GHCR images use `linux/amd64`, GHA cache, and are built with `VITE_API_URL=/api/v1` for the website.
+
+---
+
+## 🚀 Quick Start with Docker Compose (local build)
 
 ### 1. Prerequisites
 - [Docker Desktop](https://www.docker.com/products/docker-desktop/) or Docker Engine (v24.0+)
@@ -36,6 +64,7 @@ Run the docker compose stack in detached mode:
 
 ```bash
 docker compose up --build -d
+# — or with GHCR overlay: docker compose -f docker-compose.yml -f docker-compose.ghcr.yml up -d
 ```
 
 Check the status of running services:
