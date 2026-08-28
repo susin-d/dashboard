@@ -1,12 +1,10 @@
-# PC → GHCR → VM  (Windows PowerShell)
-# Build on your PC and push to GHCR, then VM pulls.
-# 1) Create PAT: GitHub → Settings → Developer settings → PAT classic → write:packages, read:packages
-# 2) Run this from repo root:  .\scripts\pc-build-push.ps1 -Tag latest
+# PC — Build and Push to GHCR (run on your Windows PC, repo root)
+# 1) GHCR PAT: GitHub → Settings → Developer settings → PAT classic → write:packages
+# 2) Run:  .\scripts\pc-build-push.ps1 -Tag latest
+# 3) Then on VM:  bash scripts/vm-pull.sh   (or .\scripts\vm-pull.ps1 from PC)
 param(
   [string]$Tag = "latest",
-  [string]$Image = "ghcr.io/susin-d/dashboard-backend",
-  [string]$VmHost = "",   # optional: e.g. "34.47.1.2" or "personal-vm" (gcloud alias)
-  [string]$VmZone = "us-central1-a"
+  [string]$Image = "ghcr.io/susin-d/dashboard-backend"
 )
 
 $ErrorActionPreference = "Stop"
@@ -30,20 +28,8 @@ if ($Tag -ne "latest") { docker push "${Image}:latest" }
 Write-Host ""
 Write-Host "Pushed ${Image}:${Tag}" -ForegroundColor Green
 Write-Host "GHCR: https://github.com/susin-d/dashboard/pkgs/container/dashboard-backend"
-
-if ($VmHost) {
-  Write-Host ""
-  Write-Host "== Pull on VM ($VmHost) ==" -ForegroundColor Cyan
-  $vmCmd = "cd ~/starwaves 2>/dev/null || git clone https://github.com/susin-d/dashboard.git ~/starwaves; cd ~/starwaves; git pull; echo 'pulling ${Image}:${Tag}'; docker pull ${Image}:${Tag}; docker tag ${Image}:${Tag} ${Image}:latest; docker compose -f docker-compose.yml -f docker-compose.backend.yml -f docker-compose.ghcr.backend.yml up -d; docker compose -f docker-compose.yml -f docker-compose.backend.yml ps; curl -fsS http://localhost:8000/api/v1/health && echo 'health ok'"
-  if ($VmHost -match "^\d+\.\d+") {
-    ssh "${VmHost}" $vmCmd
-  } else {
-    gcloud compute ssh $VmHost --zone=$VmZone --command="$vmCmd"
-  }
-}
-
 Write-Host ""
-Write-Host "On VM, run:" -ForegroundColor Yellow
-Write-Host "  docker pull ${Image}:${Tag}"
-Write-Host "  docker compose -f docker-compose.yml -f docker-compose.backend.yml -f docker-compose.ghcr.backend.yml up -d"
-Write-Host "  curl -i http://localhost:8000/api/v1/health"
+Write-Host "Next — pull on VM:" -ForegroundColor Yellow
+Write-Host "  gcloud compute ssh personal-vm --zone=us-central1-a --command='bash ~/starwaves/scripts/vm-pull.sh'"
+Write-Host "  # or inside VM:  bash scripts/vm-pull.sh"
+Write-Host "  # or from PC:    .\scripts\vm-pull.ps1"
