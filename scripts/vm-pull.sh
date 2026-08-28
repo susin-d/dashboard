@@ -5,6 +5,8 @@
 #   # or with tag: TAG=v1.0.1 bash scripts/vm-pull.sh
 set -euo pipefail
 cd "$(dirname "$0")/.."
+echo "== Git pull (compose files) =="
+git pull origin main || echo "git pull skipped (offline or no changes)"
 TAG="${TAG:-latest}"
 IMAGE="ghcr.io/susin-d/dashboard-backend"
 
