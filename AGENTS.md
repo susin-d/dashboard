@@ -358,9 +358,12 @@ website/src/
 
 1. **One File per Backend Feature**: Each API client module maps to one backend
    route group. Name it `<feature>Api.js`.
-2. **All HTTP goes through `request.js`**: Use `apiRequest()` for every call.
+2. **All HTTP goes through `request.js`**: Use `apiRequest()` for every JSON API call.
    Never use raw `fetch()` directly in API clients — `apiRequest` handles auth
-   tokens, deduplication, caching, retries, and timeouts.
+   tokens, deduplication, caching, retries, and timeouts. Exceptions require inline
+   justification: binary `MediaSource` streaming (`eveSpeechStream.js`) and
+   OAuth popup flows (`googleContacts.js` `googleMail.js`) that need `window.open`/
+   non-JSON handling.
 3. **Named Exports**: Export individual functions, not a default object.
    ```javascript
    // ✅ Good
@@ -376,19 +379,18 @@ website/src/
 
 ### 4.6 CSS & Design System
 
-#### 4.6.1 Strict Color Palette (Monochrome Only)
+#### 4.6.1 Color Palette — Monochrome + Curated Duotone
 
-**ONLY Black & White** are allowed across the entire UI.
+**Base is monochrome; curated duotones are allowed.** 22 presets exist in `src/themes/presets.js`: 10 mono (`light`, `dark`, `oled`…) + 12 duotones (`abyss`, `ember`, `aurum`…). Each duotone pairs a neutral canvas (`#000`/`#fff`/gray) with **exactly one** curated accent hue. Arbitrary red/blue/green/yellow/purple, gradients, or rainbow themes outside the preset list remain forbidden.
 
 | Role | Allowed Values |
 |------|---------------|
 | Pure/Dark Black | `#000000`, `#09090b`, `#121212`, `#18181b` |
 | Pure/Off White | `#ffffff`, `#fafafa`, `#f4f4f5` |
 | Grayscale Accents / Borders | `#27272a`, `#3f3f46`, `#71717a`, `#e4e4e7` |
+| Curated duotone accent | One accent per preset from `presets.js` (e.g. abyss teal, ember tangerine, aurum amber, coral rose, azure sky) |
 
-**PROHIBITED**: Red, blue, green, yellow, purple, gradient fills, or rainbow
-themes are strictly forbidden. State indicators (status badges, active states)
-must use high-contrast black/white or grays.
+**PROHIBITED**: Arbitrary colors, gradients, or rainbow themes outside the 22 presets. State indicators must use high-contrast black/white/gray unless the active preset's single accent is intentional.
 
 #### 4.6.2 CSS Architecture
 

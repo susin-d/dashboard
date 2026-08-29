@@ -2,7 +2,7 @@
 
 Living snapshot for AI agents. `AGENTS.md` holds permanent rules; this file holds the **current state**. See `CHANGELOG.md` for history and `PROJECT_MAP.md` for the file index.
 
-Last updated: 2026-08-27 — B+C+E multi-device: user_sessions (jti/did, per-device revoke, 10 cap) + calls WS multi (ring all devices, BroadcastChannel) + device-aware auth + sync_invalidate WS + DeviceSection settings
+Last updated: 2026-08-28 — Fix inconsistent decisions: vercel cron */15 `execute-schedules` + API rewrite `((?!api/).*)` + CORS X-Device headers + IS_SERVERLESS case-insensitive + duotone palette doc + ai_usage table
 
 ## Contents
 1. [Overview](#1-overview) · 2. [Repository structure](#2-repository-structure) · 3. [Backend](#3-backend) · 4. [Frontend](#4-frontend) · 5. [Design system](#5-design-system) · 6. [Current snapshot](#6-current-snapshot) · 7. [Limitations](#7-limitations) · 8. [Verification](#8-verification)
@@ -22,7 +22,7 @@ starwaves/
 ├── website/            React 19 + Vite (monochrome, Monaco, lucide-react, Framer Motion)
 ├── server/             FastAPI backend (app/api, app/core, app/db/sql, models, repos, schemas, services)
 ├── services/whatsapp-worker/  Go bridge
-├── sql/                extensions.sql, schema.sql (16 tables), migrations.sql, indexes.sql (incl. HNSW)
+├── sql/                extensions.sql, schema.sql (18 tables incl. user_sessions+ai_usage), migrations.sql, indexes.sql (incl. HNSW)
 ├── nginx/              reverse proxy (5r/s limit_req on /api & /ws, 20M cap, Gzip)
 ├── PROJECT_MAP.md      Compact index for agents — read first
 ├── context.md          This file — current snapshot
@@ -34,7 +34,7 @@ For full maps see `PROJECT_MAP.md`. Keep this section brief; expand there.
 
 ## 3. Backend
 - **Factory:** `server/app/main.py` `create_app()` — lifespan (CORS, `/api/v1` router, `/ws/calls`, `/ws/whatsapp`, `ServerBackgroundWorker`).
-- **Worker:** `core/worker.py` `ServerBackgroundWorker` (Docker) + Vercel Cron `vercel.json` → `/api/v1/cron/execute-schedules` every 15m (serverless). Verify `CRON_SECRET`.
+- **Worker:** `core/worker.py` `ServerBackgroundWorker` (Docker) + Vercel Cron `vercel.json` → `/api/v1/cron/execute-schedules` `*/15 * * * *` (serverless, rewrites `((?!api/).*)`). Verify `CRON_SECRET`.
 - **Prefix:** `/api/v1`. Auth via `core/auth.py`. Errors via `core/errors.py`. Pagination via `core/pagination.py` (cursor `created_at,id` + `limit+1`).
 - **Layering:** Routes → Services/Repos → Core/Models. Never import FastAPI types in Services/Repos. Use `CurrentUser`/`CurrentUserId`/`DbClient` from `core/dependencies.py`.
 - **Route groups:** `auth/` (oauth/credentials/password/account/combine/sessions), `workspace/` (jobs/hackathons/projects/notifications/contests/calendar), `whatsapp/` (status/chats/messages/settings/webhook+`_shared`), `workspace_files`, `whatsapp_ws`+`calls_ws`+`twilio-relay`, `eve`+`eve_stream` (SSE), `calls`+`calls_twilio`, `ai_models`, `eve_speech`, `ui_preferences` (`/ui/preferences` tokens/CSS/visibility/history + `GET /history`), `cron`, `health`.
@@ -52,7 +52,7 @@ For full maps see `PROJECT_MAP.md`. Keep this section brief; expand there.
 - **Performance:** lazy heavy pages, Vite `manualChunks` (vendor/firebase/monaco/grid), `request.js` dedup/cache.
 
 ## 5. Design system
-- **Monochrome only:** `#000/#09090b/#121212/#18181b`, `#fff/#fafafa/#f4f4f5`, grays `#27272a/#3f3f46/#71717a/#e4e4e7`. No red/blue/green/yellow/purple/gradients.
+- **Palette:** monochrome base (`#000`/`#09090b`/`#121212`/`#18181b`, `#fff`/`#fafafa`/`#f4f4f5`, grays `#27272a`/`#3f3f46`/`#71717a`/`#e4e4e7`) + 12 curated duotones (abyss teal, ember, aurum etc. via `presets.js` 22 total). No arbitrary colors outside presets.
 - **Tokens first:** `styles/tokens.css` CSS vars (8pt scale `--space-3xs`→`--space-3xl`, `--content-max-width` 1440, `--content-gutter` clamp, `--section-gap` clamp, `--card-padding` clamp, `--header-height` 68/62, `--sidebar-collapsed/expanded`). Import order `tokens→base→utilities→responsive→components→pages→layout-symmetry` via `App.css`.
 - **One CSS per component/page**, `kebab-case` classes scoped (`studio-prompt-attachment-chip`), use vars (`var(--radius-lg)`), dark overrides in `styles/themes/dark.css`.
 - **Full-page, no clip:** `min-height:100vh` accounting for chrome, natural scroll. Responsive mobile-first with `clamp()`. Geometry now single-source in `layout-symmetry.css` (centered `max-width:1440` + symmetric `content-gutter` + `safe-area` insets; fullscreen exceptions for Workspace/WhatsApp/Studio/Eve).

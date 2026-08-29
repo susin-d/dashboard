@@ -44,7 +44,7 @@ async def lifespan(app: FastAPI):
         logger.warning("Could not auto-init database tables: %s", err)
     # Unified serverless detection: VERCEL (Vercel), AWS_LAMBDA_FUNCTION_NAME (Lambda), or explicit IS_SERVERLESS
     is_serverless = bool(
-        os.getenv("VERCEL") or os.getenv("AWS_LAMBDA_FUNCTION_NAME") or os.getenv("IS_SERVERLESS") == "true"
+        os.getenv("VERCEL") or os.getenv("AWS_LAMBDA_FUNCTION_NAME") or (os.getenv("IS_SERVERLESS", "").lower() == "true")
     )
     if not is_serverless:
         try:
@@ -79,7 +79,7 @@ def create_app() -> FastAPI:
         allow_origin_regex=ALLOWED_ORIGIN_REGEX,
         allow_credentials=True,
         allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-        allow_headers=["Authorization", "Content-Type", "Accept", "X-Requested-With"],
+        allow_headers=["Authorization", "Content-Type", "Accept", "X-Requested-With", "X-Device-Id", "X-Device-Name"],
         expose_headers=["Content-Length"],
         max_age=86400,
     )

@@ -1,13 +1,13 @@
 {
   "crons": [
     {
-      "path": "/api/v1/cron/process-jobs",
-      "schedule": "0 0 * * *"
+      "path": "/api/v1/cron/execute-schedules",
+      "schedule": "*/15 * * * *"
     }
   ],
   "rewrites": [
     {
-      "source": "/(.*)",
+      "source": "/((?!api/).*)",
       "destination": "/index.html"
     }
   ]

@@ -207,11 +207,11 @@ Core → nothing (foundation)
 | File | Purpose |
 |------|---------|
 | `extensions.sql` | pgvector extension |
-| `schema.sql` | 16 CREATE TABLE statements |
+| `schema.sql` | 18 CREATE TABLE statements (incl. `user_sessions`, `ai_usage`) |
 | `migrations.sql` | Idempotent ALTER TABLE backfills |
 | `indexes.sql` | Performance composites + HNSW vector index |
 
-Key tables: `users`, `projects`, `jobs`, `todos`, `documents`, `contacts`, `calls`, `eve_memories`, `eve_sessions`, `whatsapp_chats`, `whatsapp_messages`, `workspace_files`, `notifications`, `hackathons`, `profiles`
+Key tables: `users`, `projects`, `jobs`, `todos`, `documents`, `contacts`, `calls`, `eve_memories`, `eve_sessions`, `whatsapp_chats`, `whatsapp_messages`, `workspace_files`, `notifications`, `hackathons`, `profiles`, `user_sessions`, `ai_usage` (+ `user_settings`/`workspace_files` etc.)
 
 ---
 
@@ -231,7 +231,7 @@ Key tables: `users`, `projects`, `jobs`, `todos`, `documents`, `contacts`, `call
 | `nginx/` | Reverse proxy: 5r/s rate limit, Gzip, 20MB cap, security headers |
 | `website/Dockerfile` | Multi-stage Node.js build + Nginx SPA |
 | `server/Dockerfile` | Python 3.12-slim + Uvicorn |
-| `vercel.json` | SPA rewrites + cron `/api/v1/cron/execute-schedules` |
+| `vercel.json` | SPA rewrites `((?!api/).*)` + cron `*/15 * * * *` → `/api/v1/cron/execute-schedules` |
 
 ---
 
