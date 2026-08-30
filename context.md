@@ -2,7 +2,7 @@
 
 Living snapshot for AI agents. `AGENTS.md` holds permanent rules; this file holds the **current state**. See `CHANGELOG.md` for history and `PROJECT_MAP.md` for the file index.
 
-Last updated: 2026-08-28 — Fix inconsistent decisions: vercel cron */15 `execute-schedules` + API rewrite `((?!api/).*)` + CORS X-Device headers + IS_SERVERLESS case-insensitive + duotone palette doc + ai_usage table
+Last updated: 2026-08-30 — Fix API spam: request.js default GET cache (30s + per-path TTLs, dedup) + useWorkspaceData consolidated & debounced (uid-stable) + CustomUI provider (single /ui/preferences fetch, 120s) + selective cache invalidation & throttled sync events
 
 ## Contents
 1. [Overview](#1-overview) · 2. [Repository structure](#2-repository-structure) · 3. [Backend](#3-backend) · 4. [Frontend](#4-frontend) · 5. [Design system](#5-design-system) · 6. [Current snapshot](#6-current-snapshot) · 7. [Limitations](#7-limitations) · 8. [Verification](#8-verification)
@@ -45,11 +45,11 @@ For full maps see `PROJECT_MAP.md`. Keep this section brief; expand there.
 ## 4. Frontend
 - **Entry:** `website/src/main.jsx` → `App.jsx` (routing + workspace state). **Layout:** `layouts/AppLayout.jsx`.
 - **UI primitives** `components/ui/` (`Modal`, `MailModal`, `ConfirmDialog`, `PageHeader`, `EmptyState`, `CustomDropdown`, `CalendarPicker`, `Markdown`, `TabNav`, `SectionHeading`, `SettingsCard`, `MetricCard`, `SearchBar`, `Pagination`, `FilterBar`, `Alert`, `LoadingState`, `Avatar`, `Badge`, `EveUiBanner`) — must reuse before creating ad-hoc.
-- **Hooks:** `hooks/` (`useAuth` + storage/BroadcastChannel sync, `useRouter`, `useThemeCustomizer`, `useWorkspaceData`, `useCustomUI`, `useDevices`, `useSyncEvents`, `call/` `useWebRTC`/`useEveVoice`/`useCallCenter` (multi-device ring, BroadcastChannel)) + `usePersistentState`.
-- **API clients** `lib/` — one per backend feature, all via `request.js` `apiRequest` (dedup + 30s cache + 429/502 retry + `X-Device-Id/Name`, 401 auto-logout). `authApi.js` now device-aware (`getDeviceId/Name`, sessions CRUD), `useDevices`, `uiPreferencesApi`, `firebase.js`.
-- **Pages:** Dashboard, Projects, ProjectDetail, Jobs, Hackathons, Todo, Documents, Workspace (IDE + Eve + Browser), Studio (hero → builder/apps/templates), Eve (chat+memory+voice+schedules), Calls (WebRTC+Twilio, E: ring all), WhatsApp, Mails, Calendar, Contacts, CompetitiveCoding, Stats, Settings (`DeviceSection` + `AppearanceSection` + `AccountSection`), `CustomPage`, Themes, Profile, Onboarding, Landing, etc.
+- **Hooks:** `hooks/` (`useAuth` + storage/BroadcastChannel sync, `useRouter`, `useThemeCustomizer`, `useWorkspaceData` (single debounced effect, uid-stable), `useCustomUI` + `CustomUIProvider` (single fetch, per-nav reuse), `useDevices`, `useSyncEvents` (debounced 300ms, selective invalidation), `call/` `useWebRTC`/`useEveVoice`/`useCallCenter` (multi-device ring, BroadcastChannel)) + `usePersistentState`.
+- **API clients** `lib/` — one per backend feature, all via `request.js` `apiRequest` (dedup + **default GET cache 30s / 60s /120s per-path TTL + `useCache:false` opt-out** + `invalidateCacheForPath` + 429/502 retry + `X-Device-Id/Name`, 401 auto-logout). `authApi.js` now device-aware (`getDeviceId/Name`, sessions CRUD), `useDevices`, `uiPreferencesApi` (selective invalidation), `firebase.js`.
+- **Pages:** Dashboard, Projects, ProjectDetail, Jobs, Hackathons, Todo, Documents, Workspace (IDE + Eve + Browser), Studio (hero → builder/apps/templates), Eve (chat+memory+voice+schedules), Calls (WebRTC+Twilio, E: ring all), WhatsApp, Mails, Calendar, Contacts, CompetitiveCoding, Stats, Settings (`DeviceSection` + `AppearanceSection` (now reads `CustomUIProvider`) + `AccountSection`), `CustomPage` (now reads provider), Themes, Profile, Onboarding, Landing, etc.
 - **Config:** `config/navigation.js`, `config/search/` (7 modules), `dashboard/dashboardConfig.js`, `themes/` 22 presets, `utils/` pure transformers, `styles/` tokens→base→utilities→responsive→components (`eve-ui.css`, `device-section.css`)→pages→`layout-symmetry.css`.
-- **Performance:** lazy heavy pages, Vite `manualChunks` (vendor/firebase/monaco/grid), `request.js` dedup/cache.
+- **Performance:** lazy heavy pages, Vite `manualChunks` (vendor/firebase/monaco/grid), `request.js` default cache + dedup (navigation is cache-hit within TTL, workspace bust only via 300ms-debounced `sync_invalidate`).
 
 ## 5. Design system
 - **Palette:** monochrome base (`#000`/`#09090b`/`#121212`/`#18181b`, `#fff`/`#fafafa`/`#f4f4f5`, grays `#27272a`/`#3f3f46`/`#71717a`/`#e4e4e7`) + 12 curated duotones (abyss teal, ember, aurum etc. via `presets.js` 22 total). No arbitrary colors outside presets.

@@ -1,35 +1,37 @@
 import { useEffect, useState } from 'react'
 import { PageHeader, LoadingState, Alert } from '../components/ui'
-import { getUiPreferences } from '../lib/uiPreferencesApi'
+import { useCustomUI } from '../hooks/useCustomUI'
 
 export function CustomPage({ slug }) {
-  const [loading, setLoading] = useState(true)
-  const [entry, setEntry] = useState(null)
+  const { prefs } = useCustomUI()
+  const [loading, setLoading] = useState(!prefs)
+  const [entry, setEntry] = useState(() => {
+    if (!prefs) return null
+    const key = `custom:${slug}`
+    return prefs?.pages?.[key] ?? null
+  })
   const [error, setError] = useState('')
 
   useEffect(() => {
     let cancelled = false
-    async function load() {
-      setLoading(true)
-      setError('')
-      try {
-        const res = await getUiPreferences()
-        const pages = res?.preferences?.pages || {}
-        const key = `custom:${slug}`
-        const found = pages[key]
-        if (!found) {
-          throw new Error(`Custom page "${slug}" not found. Ask Eve to create it.`)
-        }
-        if (!cancelled) setEntry(found)
-      } catch (err) {
-        if (!cancelled) setError(err.message || 'Could not load custom page.')
-      } finally {
-        if (!cancelled) setLoading(false)
+    function syncFromPrefs(source) {
+      const pages = source?.pages || {}
+      const key = `custom:${slug}`
+      const found = pages[key]
+      if (!found) {
+        if (!cancelled) setError(`Custom page "${slug}" not found. Ask Eve to create it.`)
+        if (!cancelled) setEntry(null)
+      } else {
+        if (!cancelled) { setEntry(found); setError('') }
       }
+      if (!cancelled) setLoading(false)
     }
-    load()
+    if (prefs) syncFromPrefs(prefs)
+    else if (!loading) setLoading(true)
+
     const onUpdate = (e) => {
-      const pages = e.detail?.preferences?.pages || {}
+      const nextPrefs = e.detail?.preferences ?? prefs
+      const pages = nextPrefs?.pages || {}
       const key = `custom:${slug}`
       if (pages[key]) setEntry(pages[key])
     }
@@ -38,7 +40,7 @@ export function CustomPage({ slug }) {
       cancelled = true
       window.removeEventListener('eve-ui-update', onUpdate)
     }
-  }, [slug])
+  }, [slug, prefs, loading])
 
   if (loading) return <LoadingState label={`Loading ${slug}…`} />
   if (error) return <Alert variant="error">{error}</Alert>

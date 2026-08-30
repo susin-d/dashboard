@@ -5,12 +5,41 @@ export const API_URL = import.meta.env.VITE_API_URL ?? 'http://127.0.0.1:8000/ap
 const DEFAULT_REQUEST_TIMEOUT_MS = 30_000
 
 // Lightweight dedup + cache for GET on e2-micro single worker (reduces thundering herd)
+// Default policy: cache GETs for 30s unless caller opts out with useCache:false or useCacheTtl:0
 const pendingRequests = new Map()
 const getCache = new Map() // key -> { expires, data }
-const GET_CACHE_TTL_MS = 30_000
+const DEFAULT_GET_CACHE_TTL_MS = 30_000
+const GET_CACHE_MAX_SIZE = 150
+
+// Per-path TTL overrides (ms) — longer for slowly changing prefs, shorter for volatile lists
+const CACHE_TTL_OVERRIDES = [
+  { match: (p) => p.includes('/ui/preferences'), ttl: 120_000 },
+  { match: (p) => p.includes('/auth/me'), ttl: 60_000 },
+  { match: (p) => p.includes('/auth/sessions'), ttl: 0 }, // always live
+  { match: (p) => p.includes('/usage/'), ttl: 0 },
+  { match: (p) => p.includes('/eve/sessions') || p.includes('/eve/memories'), ttl: 15_000 },
+]
+
+function resolveCacheTtl(path, explicitTtl) {
+  if (typeof explicitTtl === 'number') return explicitTtl
+  for (const o of CACHE_TTL_OVERRIDES) if (o.match(path)) return o.ttl
+  return DEFAULT_GET_CACHE_TTL_MS
+}
 
 function cacheKey(method, url) {
   return `${method}:${url}`
+}
+
+function shouldCacheGet(path, useCache, useCacheTtl, method) {
+  if (method !== 'GET') return false
+  if (useCache === false) return false
+  if (typeof useCacheTtl === 'number' && useCacheTtl === 0) return false
+  const ttl = resolveCacheTtl(path, useCacheTtl)
+  return ttl > 0
+}
+
+function getTtlForPath(path, useCacheTtl) {
+  return resolveCacheTtl(path, useCacheTtl)
 }
 
 export async function fetchWithTimeout(url, options = {}, timeoutMs = DEFAULT_REQUEST_TIMEOUT_MS) {
@@ -43,16 +72,18 @@ export async function apiRequest(
     notFoundMessage = null,
     onFetchError = null,
     retries = 0,
-    useCache = false,
+    useCache = undefined,
+    useCacheTtl = undefined,
     ...fetchOptions
   } = {},
 ) {
   const method = (fetchOptions.method || 'GET').toUpperCase()
   const fullUrl = `${API_URL}${basePath}${path}`
   const dedupKey = cacheKey(method, fullUrl + JSON.stringify(fetchOptions.body || ''))
+  const effectiveUseCache = shouldCacheGet(path, useCache, useCacheTtl, method)
 
-  // GET cache (30s) for idempotent reads — reduces e2-micro load
-  if (useCache && method === 'GET' && !fetchOptions.body) {
+  // GET cache for idempotent reads — reduces e2-micro load & spam
+  if (effectiveUseCache && !fetchOptions.body) {
     const cached = getCache.get(dedupKey)
     if (cached && cached.expires > Date.now()) {
       return cached.data
@@ -126,10 +157,11 @@ export async function apiRequest(
     if (response.status === 204) return null
     try {
       const data = await response.json()
-      if (useCache && method === 'GET') {
-        getCache.set(dedupKey, { data, expires: Date.now() + GET_CACHE_TTL_MS })
-        // Bound cache size
-        if (getCache.size > 100) {
+      if (effectiveUseCache) {
+        const ttl = getTtlForPath(path, useCacheTtl)
+        getCache.set(dedupKey, { data, expires: Date.now() + ttl })
+        // Bound cache size (LRU-ish: drop oldest)
+        if (getCache.size > GET_CACHE_MAX_SIZE) {
           const firstKey = getCache.keys().next().value
           getCache.delete(firstKey)
         }
@@ -151,4 +183,14 @@ export async function apiRequest(
 export function clearRequestCache() {
   getCache.clear()
   pendingRequests.clear()
+}
+
+export function invalidateRequestCache(predicate) {
+  for (const key of getCache.keys()) {
+    if (predicate(key)) getCache.delete(key)
+  }
+}
+
+export function invalidateCacheForPath(pathFragment) {
+  invalidateRequestCache((key) => key.includes(pathFragment))
 }

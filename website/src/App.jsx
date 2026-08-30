@@ -46,7 +46,7 @@ import { applyThemeVariables } from './themes'
 import { NetworkStatus } from './components/NetworkStatus'
 import { WaveLoader } from './components/WaveLoader'
 import { useDialogAccessibility } from './hooks/useDialogAccessibility'
-import { useCustomUI } from './hooks/useCustomUI'
+import { CustomUIProvider } from './hooks/useCustomUI'
 import { EveUiBanner } from './components/ui/EveUiBanner'
 
 const routeTitles = {
@@ -107,9 +107,6 @@ function App() {
     selectedHackathonId,
     navigate,
   } = useRouter()
-
-  // Eve UI runtime overrides (global + per-page) — must live after useRouter
-  useCustomUI()
 
   const [notificationsOpen, setNotificationsOpen] = useState(false)
   const [workspaceRefreshKey, setWorkspaceRefreshKey] = useState(0)
@@ -640,7 +637,7 @@ function App() {
   }
 
   return (
-    <>
+    <CustomUIProvider>
       <AppLayout
         activePage={
           activePage === 'project-detail'
@@ -689,7 +686,7 @@ function App() {
       </AppLayout>
       <IncomingCallOverlay callCenter={callCenter} myUid={userProfile?.uid} />
       <EveUiBanner />
-    </>
+    </CustomUIProvider>
   )
 }
 

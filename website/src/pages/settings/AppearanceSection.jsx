@@ -1,47 +1,72 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Palette, RotateCcw, History, Eye } from 'lucide-react'
 import { SettingsCard, SettingsSection } from '../../components/ui'
 import {
-  getUiPreferences,
   getUiHistory,
   resetUiPreferences,
   restoreUiVersion,
   clearUiPreferences,
 } from '../../lib/uiPreferencesApi'
+import { useCustomUI } from '../../hooks/useCustomUI'
 
 export function AppearanceSection() {
-  const [prefs, setPrefs] = useState(null)
-  const [history, setHistory] = useState([])
-  const [loading, setLoading] = useState(true)
+  const { prefs: ctxPrefs, refresh: refreshCtx } = useCustomUI()
+  const [prefs, setPrefs] = useState(ctxPrefs ?? null)
+  const [history, setHistory] = useState(ctxPrefs?.history ?? [])
+  const [loading, setLoading] = useState(!ctxPrefs)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const [showCss, setShowCss] = useState(false)
 
-  const load = async () => {
-    setLoading(true)
-    setError('')
+  const loadHistoryOnly = useCallback(async () => {
     try {
-      const [prefRes, histRes] = await Promise.all([getUiPreferences(), getUiHistory().catch(() => ({ history: [] }))])
-      setPrefs(prefRes?.preferences || null)
-      setHistory(histRes?.history || prefRes?.preferences?.history || [])
-    } catch (err) {
-      setError(err.message || 'Could not load UI preferences.')
-    } finally {
-      setLoading(false)
-    }
-  }
+      const histRes = await getUiHistory().catch(() => ({ history: [] }))
+      // history is also embedded in prefs.history; prefer dedicated endpoint
+      if (histRes?.history?.length) setHistory(histRes.history)
+      else if (ctxPrefs?.history) setHistory(ctxPrefs.history)
+    } catch {}
+  }, [ctxPrefs])
 
   useEffect(() => {
-    load()
+    // Sync with provider — no fetch of /ui/preferences here (provider owns it, cached 120s)
+    if (ctxPrefs) {
+      setPrefs(ctxPrefs)
+      setHistory(ctxPrefs.history ?? [])
+      setLoading(false)
+      setError('')
+    }
+    // Still ensure history is fresh if provider had no history
+    if (ctxPrefs && !ctxPrefs.history?.length) loadHistoryOnly()
+    if (!ctxPrefs) {
+      setLoading(true)
+      loadHistoryOnly().finally(() => setLoading(false))
+    }
+  }, [ctxPrefs, loadHistoryOnly])
+
+  useEffect(() => {
     const onUpdate = (e) => {
       if (e.detail?.preferences) {
         setPrefs(e.detail.preferences)
         setHistory(e.detail.preferences.history || [])
+        setLoading(false)
       }
     }
     window.addEventListener('eve-ui-update', onUpdate)
     return () => window.removeEventListener('eve-ui-update', onUpdate)
   }, [])
+
+  const load = useCallback(async () => {
+    setLoading(true)
+    setError('')
+    try {
+      await refreshCtx({ force: true })
+      await loadHistoryOnly()
+    } catch (err) {
+      setError(err.message || 'Could not load UI preferences.')
+    } finally {
+      setLoading(false)
+    }
+  }, [refreshCtx, loadHistoryOnly])
 
   const handleResetGlobal = async () => {
     setBusy(true)

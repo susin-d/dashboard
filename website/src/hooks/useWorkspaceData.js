@@ -19,7 +19,18 @@ import {
   CALENDAR_REMINDER_PREFIX,
 } from '../utils/calendarReminders'
 
+function useDebouncedValue(value, delayMs) {
+  const [debounced, setDebounced] = useState(value)
+  useEffect(() => {
+    const id = window.setTimeout(() => setDebounced(value), delayMs)
+    return () => window.clearTimeout(id)
+  }, [value, delayMs])
+  return debounced
+}
+
 export function useWorkspaceData(currentUser, activePage, refreshKey = 0) {
+  const currentUserId = currentUser?.uid ?? null
+  const debouncedRefreshKey = useDebouncedValue(refreshKey, 250)
   const [projects, setProjects] = useState([])
   const [jobs, setJobs] = useState([])
   const [documents, setDocuments] = useState([])
@@ -64,10 +75,10 @@ export function useWorkspaceData(currentUser, activePage, refreshKey = 0) {
   }, [importedIcsCalendars])
 
   useEffect(() => {
-    if (currentUser) {
+    if (currentUserId) {
       autoPromptNotificationPermission()
     }
-  }, [currentUser])
+  }, [currentUserId])
 
   useEffect(() => {
     try {
@@ -155,113 +166,74 @@ export function useWorkspaceData(currentUser, activePage, refreshKey = 0) {
     }
   }, [calendarEventIndex, firedReminderIds, setFiredReminderIds])
 
-  // Google Calendar & Documents Fetch
+  // Consolidated workspace fetch — single debounced effect for all refreshKey-gated resources
+  // Previously 3 separate effects fired 8 parallel requests; now one effect + debounced key collapses bursts
   useEffect(() => {
     let active = true
-    if (!currentUser) {
+    if (!currentUserId) {
       setDocuments([])
       setGoogleCalendarEvents([])
-      return () => {
-        active = false
-      }
-    }
-    loadGoogleCalendarData()
-      .then(({ events }) => {
-        if (active) setGoogleCalendarEvents(events)
-      })
-      .catch((error) => {
-        console.error('Could not load Google Calendar:', error)
-        if (active) setGoogleCalendarEvents([])
-      })
-    loadDocuments()
-      .then((savedDocuments) => {
-        if (active) setDocuments(savedDocuments)
-      })
-      .catch((error) => {
-        console.error('Could not load documents:', error)
-        if (active) setDocuments([])
-      })
-    return () => {
-      active = false
-    }
-  }, [currentUser, refreshKey])
-
-  // Core Workspace Data Fetch
-  useEffect(() => {
-    let active = true
-    if (!currentUser) {
       setJobs([])
       setHackathons([])
       setNotifications([])
       setContestSites([])
-      return () => {
-        active = false
-      }
+      setTasks([])
+      return () => { active = false }
     }
+
+    // Google calendar + documents (2)
+    loadGoogleCalendarData()
+      .then(({ events }) => { if (active) setGoogleCalendarEvents(events) })
+      .catch((error) => { console.error('Could not load Google Calendar:', error); if (active) setGoogleCalendarEvents([]) })
+    loadDocuments()
+      .then((savedDocuments) => { if (active) setDocuments(savedDocuments) })
+      .catch((error) => { console.error('Could not load documents:', error); if (active) setDocuments([]) })
+
+    // Todos (1)
+    loadTodos()
+      .then((savedTasks) => { if (active) setTasks(savedTasks) })
+      .catch((error) => { console.error('Could not load todos:', error); if (active) setTasks([]) })
+
+    // Core workspace batch (5) — respects request.js GET cache (30s TTL) so re-hits within TTL are free
     Promise.allSettled([
       loadJobs(),
       loadHackathons(),
       loadNotifications(),
       loadContests(),
       loadProjects(),
-    ]).then(
-      ([
-        jobsResult,
-        hackathonsResult,
-        notificationsResult,
-        contestsResult,
-        projectsResult,
-      ]) => {
-        if (!active) return
-        const jobsPage = jobsResult.status === 'fulfilled' ? jobsResult.value : { items: [] }
-        const projectsPage = projectsResult.status === 'fulfilled' ? projectsResult.value : { items: [] }
-        const hackathonsPage = hackathonsResult.status === 'fulfilled' ? hackathonsResult.value : { items: [] }
-        const notificationsPage = notificationsResult.status === 'fulfilled' ? notificationsResult.value : { items: [] }
-        setJobs(jobsPage.items)
-        setPagination({
-          jobs: jobsPage,
-          projects: projectsPage,
-          hackathons: hackathonsPage,
-          notifications: notificationsPage,
-          contests: contestsResult.status === 'fulfilled' ? contestsResult.value : {},
-        })
-        setHackathons(
-          hackathonsPage.items,
-        )
-        setNotifications(
-          notificationsPage.items,
-        )
-        const enabledPlatforms = (() => {
-          try {
-            return JSON.parse(
-              localStorage.getItem('starwaves-enabled-contest-platforms') ??
-                '["codeforces","codechef","leetcode"]',
-            )
-          } catch {
-            return ['codeforces', 'codechef', 'leetcode']
-          }
-        })()
-        const rawContestItems = contestsResult.status === 'fulfilled' ? contestsResult.value.items : []
-        const rawContestSites = rawContestItems.reduce((sites, contest) => {
-          const id = contest.platformId || 'contests'
-          const site = sites.find((item) => item.id === id)
-          if (site) site.contests.push(contest)
-          else sites.push({ id, name: id, shortName: id.slice(0, 2).toUpperCase(), description: 'Upcoming contests.', contests: [contest] })
-          return sites
-        }, [])
-        setContestSites(
-          rawContestSites.filter((site) => enabledPlatforms.includes(site.id)),
-        )
-        setProjects((current) => [
-          ...projectsPage.items,
-          ...current.filter((project) => project.source === 'github'),
-        ])
-      },
-    )
-    return () => {
-      active = false
-    }
-  }, [currentUser, refreshKey])
+    ]).then(([jobsResult, hackathonsResult, notificationsResult, contestsResult, projectsResult]) => {
+      if (!active) return
+      const jobsPage = jobsResult.status === 'fulfilled' ? jobsResult.value : { items: [] }
+      const projectsPage = projectsResult.status === 'fulfilled' ? projectsResult.value : { items: [] }
+      const hackathonsPage = hackathonsResult.status === 'fulfilled' ? hackathonsResult.value : { items: [] }
+      const notificationsPage = notificationsResult.status === 'fulfilled' ? notificationsResult.value : { items: [] }
+      setJobs(jobsPage.items)
+      setPagination({
+        jobs: jobsPage,
+        projects: projectsPage,
+        hackathons: hackathonsPage,
+        notifications: notificationsPage,
+        contests: contestsResult.status === 'fulfilled' ? contestsResult.value : {},
+      })
+      setHackathons(hackathonsPage.items)
+      setNotifications(notificationsPage.items)
+      const enabledPlatforms = (() => {
+        try { return JSON.parse(localStorage.getItem('starwaves-enabled-contest-platforms') ?? '["codeforces","codechef","leetcode"]') } catch { return ['codeforces', 'codechef', 'leetcode'] }
+      })()
+      const rawContestItems = contestsResult.status === 'fulfilled' ? contestsResult.value.items : []
+      const rawContestSites = rawContestItems.reduce((sites, contest) => {
+        const id = contest.platformId || 'contests'
+        const site = sites.find((item) => item.id === id)
+        if (site) site.contests.push(contest)
+        else sites.push({ id, name: id, shortName: id.slice(0, 2).toUpperCase(), description: 'Upcoming contests.', contests: [contest] })
+        return sites
+      }, [])
+      setContestSites(rawContestSites.filter((site) => enabledPlatforms.includes(site.id)))
+      setProjects((current) => [...projectsPage.items, ...current.filter((project) => project.source === 'github')])
+    })
+
+    return () => { active = false }
+  }, [currentUserId, debouncedRefreshKey])
 
   const loadMore = async (type) => {
     const page = pagination[type]
@@ -287,32 +259,10 @@ export function useWorkspaceData(currentUser, activePage, refreshKey = 0) {
     } finally { setLoadingMore(false) }
   }
 
-  // Todos Fetch
+  // Competitive Coding Stats Fetch — only on stats page, gated by uid (stable)
   useEffect(() => {
     let active = true
-    if (!currentUser) {
-      setTasks([])
-      return () => {
-        active = false
-      }
-    }
-    loadTodos()
-      .then((savedTasks) => {
-        if (active) setTasks(savedTasks)
-      })
-      .catch((error) => {
-        console.error('Could not load todos:', error)
-        if (active) setTasks([])
-      })
-    return () => {
-      active = false
-    }
-  }, [currentUser, refreshKey])
-
-  // Competitive Coding Stats Fetch
-  useEffect(() => {
-    let active = true
-    if (!currentUser || activePage !== 'stats') {
+    if (!currentUserId || activePage !== 'stats') {
       return () => {
         active = false
       }
@@ -338,12 +288,12 @@ export function useWorkspaceData(currentUser, activePage, refreshKey = 0) {
     return () => {
       active = false
     }
-  }, [currentUser, activePage])
+  }, [currentUserId, activePage])
 
-  // GitHub Data Fetch
+  // GitHub Data Fetch — gated by uid, not object ref
   useEffect(() => {
     let active = true
-    if (!currentUser) {
+    if (!currentUserId) {
       setProjects([])
       setCodingStats((current) => ({ ...current, github: {} }))
       return () => {
@@ -392,7 +342,7 @@ export function useWorkspaceData(currentUser, activePage, refreshKey = 0) {
     return () => {
       active = false
     }
-  }, [currentUser])
+  }, [currentUserId])
 
   return {
     projects,
