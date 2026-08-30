@@ -64,15 +64,41 @@ docker compose -f docker-compose.yml -f docker-compose.backend.yml logs -f serve
 - `GET /health`, `/api/*`, `/ws/*`, `/docs` → `server:8000`
 - `GET /` → `302` to `https://starwaves.vercel.app`
 
-Add DNS **A** `api.starwaves.susindran.in → <VM_EXTERNAL_IP>` and TLS:
+Add DNS **A** `api.susindran.in` (and `api.starwaves.susindran.in` alias) `→ <VM_EXTERNAL_IP>` and TLS:
 
 ```bash
-sudo apt install -y certbot
-sudo certbot --nginx -d api.starwaves.susindran.in
-# certbot will uncomment HTTPS server block in default.backend.conf if you copy it to 443
+# 1) Get VM external IP
+gcloud compute instances describe personal-vm --zone=us-central1-a --format='get(networkInterfaces[0].accessConfigs[0].natIP)'
+# or: gcloud compute instances describe starwaves-api --zone=us-central1-a --format='get(networkInterfaces[0].accessConfigs[0].natIP)'
+
+# 2) In Vercel Dashboard → Domains → susindran.in → Add Record:
+#    Type: A, Name: api, Value: <VM_EXTERNAL_IP>, TTL: 60
+#    Also add: Name: api.starwaves, Value: <VM_EXTERNAL_IP> (alias)
+# Verify DNS (wait 1-5 min):
+#    nslookup api.susindran.in  # should return VM IP, not NXDOMAIN
+#    curl -i http://api.susindran.in/health  # should 200 via HTTP before TLS
+
+# 3) Ensure firewall (once)
+gcloud compute firewall-rules create allow-starwaves --allow tcp:80,tcp:443 --target-tags=http-server,https-server || true
+gcloud compute instances add-tags personal-vm --tags=http-server,https-server --zone=us-central1-a || true
+
+# 4) Issue TLS (webroot, works with docker nginx — no host nginx needed)
+#    Pull latest nginx conf (has /.well-known/acme-challenge)
+git pull
+mkdir -p certbot/www certbot/certs
+docker compose -f docker-compose.yml -f docker-compose.backend.yml -f docker-compose.ghcr.backend.yml up -d nginx
+#    Run once (replace email):
+EMAIL=you@susindran.in ./scripts/init-letsencrypt.sh
+#    or: ./scripts/init-letsencrypt.sh you@susindran.in
+
+# 5) Enable HTTPS block after certs exist
+./scripts/enable-https.sh
+docker compose -f docker-compose.yml -f docker-compose.backend.yml -f docker-compose.ghcr.backend.yml up -d --force-recreate nginx
+curl -i https://api.susindran.in/health
+curl -i https://api.susindran.in/api/v1/health
 ```
 
-Then update `server/.env` / `.env.docker.example` to `VITE_API_URL=https://api.starwaves.susindran.in/api/v1` and redeploy Vercel env.
+Then update Vercel + VM env to `VITE_API_URL=https://api.susindran.in/api/v1` and redeploy.
 
 ## 3) Vercel — frontend
 

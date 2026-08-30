@@ -17,3 +17,11 @@ server/.env
 server/.env.prod
 services/whatsapp-worker/.env
 .zcode/
+certbot/certs/*
+!certbot/certs/.gitkeep
+certbot/www/* 
+!certbot/www/.gitkeep
+# letsencrypt live chain is outside repo, but keep dirs
+certbot/certs/archive/
+certbot/certs/live/
+certbot/certs/renewal/
