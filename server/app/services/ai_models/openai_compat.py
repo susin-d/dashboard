@@ -26,6 +26,33 @@ def _parse_arguments(raw: Any) -> dict[str, Any]:
         return {}
 
 
+def _convert_tool(tool: dict[str, Any]) -> dict[str, Any]:
+    """Convert Eve's flat Responses tool shape to Chat Completions nested shape.
+
+    Eve tools are authored in the flat Responses form
+    ``{type, name, description, parameters, strict}`` so the OpenAI Responses
+    adapter can pass them through. The Chat Completions surface (used by
+    OpenRouter/Ollama/Groq/OpenCode) requires the nested
+    ``{type, function: {name, description, parameters, strict}}`` shape.
+    Pass-through already-nested tools and empty placeholders unchanged so
+    unit tests that use ``[{}]`` as a dummy still pass.
+    """
+    if not isinstance(tool, dict) or not tool:
+        return tool
+    if "function" in tool and isinstance(tool["function"], dict):
+        return tool
+    if "name" not in tool:
+        return tool
+    function: dict[str, Any] = {
+        "name": tool["name"],
+        "description": tool.get("description", ""),
+        "parameters": tool.get("parameters", {"type": "object", "properties": {}}),
+    }
+    if "strict" in tool:
+        function["strict"] = tool["strict"]
+    return {"type": "function", "function": function}
+
+
 class OpenAiCompatibleClient(ProviderClient):
     """Provider adapter for OpenAI-compatible /chat/completions APIs.
 
@@ -55,10 +82,11 @@ class OpenAiCompatibleClient(ProviderClient):
         tools: list[dict[str, Any]],
     ) -> ProviderResponse:
         try:
+            converted = [_convert_tool(tool) for tool in tools] if tools else None
             response = self.client.chat.completions.create(
                 model=model,
                 messages=[{"role": "system", "content": instructions}, *conversation],
-                tools=tools or None,
+                tools=converted,
             )
         except OpenAIError as error:
             logger.error(f"[OpenAI-Compatible Provider] API call failed for model '{model}': {type(error).__name__}: {error}", exc_info=True)
@@ -88,10 +116,11 @@ class OpenAiCompatibleClient(ProviderClient):
         tools: list[dict[str, Any]],
     ) -> Iterator[StreamChunk]:
         try:
+            converted = [_convert_tool(tool) for tool in tools] if tools else None
             stream = self.client.chat.completions.create(
                 model=model,
                 messages=[{"role": "system", "content": instructions}, *conversation],
-                tools=tools or None,
+                tools=converted,
                 stream=True,
             )
         except OpenAIError as error:

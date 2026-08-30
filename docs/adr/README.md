@@ -14,6 +14,7 @@
 | ADR | Title | Status | Date |
 |-----|-------|--------|------|
 | [0001](0001-no-sub-agents-context-first-adr-required.md) | No sub-agents, context.md first, ADRs required | Accepted | 2026-08-30 |
+| [0002](0002-fix-eve-tool-calling-adapter.md) | Fix Eve tool calling for OpenAI-compatible providers and add Groq | Accepted | 2026-08-30 |
 
 ## How to add a new ADR
 
