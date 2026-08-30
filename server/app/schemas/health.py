@@ -24,4 +24,6 @@ class HealthResponse(BaseModel):
     timestamp: str | None = None
     checks: dict[str, DependencyStatus] | None = None
     endpoints: list[EndpointInfo] | None = None
+    endpoint_count: int | None = None
     summary: str | None = None
+    took_ms: int | None = None
