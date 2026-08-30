@@ -59,4 +59,9 @@ Historical implementation log extracted from `context.md`. `context.md` now hold
 - **Responsive:** `workspace.css` `@media (pointer:coarse)` `ws-card-actions`/`file-tree-action`/`todo-delete` 44px; `ws-card` radius `12px→var(--radius-lg)`.
 - **Verify:** `npm run lint` clean (1 warning) + `npm run build` 461kB css 67k gzip, 574kB index ok.
 
+## 2026-08-31 — Frontend audit fix p3
+- **ProfileCard:** 5 inline `style` → `profile-verification-actions/verified-badge/verify-btn/feedback-spaced` in `settings.css` with `var(--text-sm)` + `var(--space-*)`.
+- **WhatsApp bubble/composer:** `WhatsAppMessageBubble.jsx` `transform`→`forwarded-flip`, `cursor`→`quoted-clickable` + keyboard `role`/`onKeyDown`, `audio-time/doc-card` tokenized; `WhatsAppComposer.jsx` `eve-prompt-label/tray-label/row/file-input/recording` classes in `whatsapp.css`; add `aria-label` for emoji/attach/recording.
+- **Metrics:** `style={{` 181→159 (`-22`, -12%); WhatsApp bubble/composer/profile drop from top-5; `npm run lint` clean + `npm run build` 574kB index 154k gzip ok.
+
 *Generated: 2026-08-27 from former `context.md` history block. New changes go to `context.md` `Last updated` one-liner.*
