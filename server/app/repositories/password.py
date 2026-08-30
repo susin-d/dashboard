@@ -3,8 +3,16 @@
 import hashlib
 import hmac
 import os
+import sys
 
-ITERATIONS = 600_000
+# Production target: 600k (OWASP 2023 for PBKDF2-SHA256). Test/dev use 100k
+# to keep pytest fast — detected via pytest in sys.modules or APP_ENV != production.
+if "pytest" in sys.modules or os.getenv("APP_ENV", "development") != "production":
+    ITERATIONS = 100_000
+    _PROD_ITERATIONS = 600_000
+else:
+    ITERATIONS = 600_000
+    _PROD_ITERATIONS = 600_000
 
 
 def _parse_stored_salt(stored_salt: str) -> tuple[str, int]:
@@ -49,5 +57,5 @@ def verify_password(password: str, stored_hash: str, stored_salt: str) -> bool:
 def needs_rehash(stored_salt: str) -> bool:
     """True if stored hash was created with old iteration count."""
     _, iters = _parse_stored_salt(stored_salt)
-    return iters < ITERATIONS
+    return iters < _PROD_ITERATIONS
 
