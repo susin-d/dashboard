@@ -13,4 +13,4 @@ if grep -q "^# server {" "$FILE"; then
 else
   echo "443 block already uncommented or not found"
 fi
-echo "Next: docker compose -f docker-compose.yml -f docker-compose.backend.yml -f docker-compose.ghcr.backend.yml up -d --force-recreate nginx && curl -i https://api.susindran.in/health"
+echo "Next: docker compose -f docker-compose.yml -f docker-compose.backend.yml -f docker-compose.ghcr.backend.yml up -d --force-recreate nginx && curl -i https://api.starwaves.susindran.in/health"

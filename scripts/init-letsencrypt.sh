@@ -1,11 +1,10 @@
 #!/usr/bin/env bash
-# init-letsencrypt.sh — one-time TLS for api.susindran.in on the VM
+# init-letsencrypt.sh — one-time TLS for api.starwaves.susindran.in on the VM
 # Run on personal-vm after DNS A record propagates.
 # Requires: docker compose stack up (http), ports 80/443 open.
 set -euo pipefail
 
 DOMAIN="api.starwaves.susindran.in"
-ALT_DOMAIN="api.susindran.in"
 EMAIL="${EMAIL:-}" # export EMAIL=you@susindran.in before running, or pass as arg1
 if [ -n "${1:-}" ]; then EMAIL="$1"; fi
 if [ -z "$EMAIL" ]; then
@@ -28,7 +27,7 @@ docker run --rm \
   -v "$PWD/certbot/certs:/etc/letsencrypt" \
   certbot/certbot certonly --webroot \
   -w /var/www/certbot \
-  -d "$DOMAIN" -d "$ALT_DOMAIN" \
+  -d "$DOMAIN" \
   --email "$EMAIL" --agree-tos --no-eff-email \
   --preferred-challenges http
 
