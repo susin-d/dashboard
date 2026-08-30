@@ -4,8 +4,8 @@
 # Requires: docker compose stack up (http), ports 80/443 open.
 set -euo pipefail
 
-DOMAIN="api.susindran.in"
-ALT_DOMAIN="api.starwaves.susindran.in"
+DOMAIN="api.starwaves.susindran.in"
+ALT_DOMAIN="api.susindran.in"
 EMAIL="${EMAIL:-}" # export EMAIL=you@susindran.in before running, or pass as arg1
 if [ -n "${1:-}" ]; then EMAIL="$1"; fi
 if [ -z "$EMAIL" ]; then
@@ -32,7 +32,7 @@ docker run --rm \
   --email "$EMAIL" --agree-tos --no-eff-email \
   --preferred-challenges http
 
-echo "==> 3) Certs at certbot/certs/live/${DOMAIN}/ — wiring to nginx path /etc/nginx/certs"
+echo "==> 3) Certs at certbot/certs/live/${DOMAIN}/ — wiring to nginx path /etc/nginx/certs (primary: api.starwaves.susindran.in)"
 # nginx expects /etc/nginx/certs/live/<domain>/ — certbot writes to /etc/letsencrypt/live
 # Bind mount is certbot/certs:/etc/nginx/certs, so create the expected layout
 if [ -d "certbot/certs/live/$DOMAIN" ]; then
