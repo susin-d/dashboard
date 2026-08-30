@@ -52,4 +52,11 @@ Historical implementation log extracted from `context.md`. `context.md` now hold
 - **Responsive:** grids `min(100%, …)` prevent 320 overflow; `contacts-grid` gap token; `todo-delete` coarse fix; `layout-symmetry` unchanged (900 breakpoint kept intentionally — standardize next pass if needed).
 - **Verify:** `npm run lint` (1 no-useless-escape warning only in MailsPage) + `npm run build` 575kB index 154k gzip ok.
 
+## 2026-08-31 — Frontend audit fix p2
+- **WhatsApp:** `WhatsAppInfoDrawer.jsx` 12 inline `style` → classes (`whatsapp-drawer-header/title/profile/card/row/participant/security/media/doc/starred` + `avatar--lg/sm`), `WhatsAppChatList.jsx` spacer/pin/muted/preview-strong/empty, `WhatsAppQrModal.jsx` loading-text/copy-btn/spaced actions + `whatsapp.css` 30+ tokenized classes; context menu position kept (dynamic); add `aria-label`/`role`/`onKeyDown`.
+- **Headers:** `projects.css` `.project-page-heading h1` `clamp→var(--text-4xl)`, `p`→`var(--text-2xs)`, gap/padding tokenized.
+- **A11y:** `Sidebar.jsx` `onFocus`/`onBlur` + `aria-label` for tooltip keyboard; `WorkspaceFileTree.jsx` `aria-expanded`/`aria-current`/`aria-label`; `WhatsAppChatList.jsx` + `ChatsPage.jsx` `aria-current` + `aria-label`.
+- **Responsive:** `workspace.css` `@media (pointer:coarse)` `ws-card-actions`/`file-tree-action`/`todo-delete` 44px; `ws-card` radius `12px→var(--radius-lg)`.
+- **Verify:** `npm run lint` clean (1 warning) + `npm run build` 461kB css 67k gzip, 574kB index ok.
+
 *Generated: 2026-08-27 from former `context.md` history block. New changes go to `context.md` `Last updated` one-liner.*

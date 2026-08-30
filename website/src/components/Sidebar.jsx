@@ -34,6 +34,16 @@ export function Sidebar({
     }
   }
 
+  const handleFocus = (e, label) => {
+    if (!isExpanded && window.innerWidth > 900) {
+      const rect = e.currentTarget.getBoundingClientRect()
+      setHoveredItem({
+        label,
+        top: rect.top + rect.height / 2,
+      })
+    }
+  }
+
   return (
     <>
       <aside
@@ -56,7 +66,10 @@ export function Sidebar({
                     onClick={() => handleNavigate(id)}
                     onMouseEnter={(e) => handleMouseEnter(e, label)}
                     onMouseLeave={() => setHoveredItem(null)}
+                    onFocus={(e) => handleFocus(e, label)}
+                    onBlur={() => setHoveredItem(null)}
                     aria-current={activePage === id ? 'page' : undefined}
+                    aria-label={label}
                     title={!isExpanded ? label : undefined}
                   >
                     <Icon size={18} />

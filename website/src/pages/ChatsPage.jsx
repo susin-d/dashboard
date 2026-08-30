@@ -274,6 +274,8 @@ export function ChatsPage({ onNavigate: _onNavigate }) {
                     key={space.id}
                     className={`chat-item ${space.id === activeSpaceId ? 'active' : ''}`}
                     onClick={() => setActiveSpaceId(space.id)}
+                    aria-current={space.id === activeSpaceId ? 'true' : undefined}
+                    aria-label={`Open ${space.name}`}
                   >
                     <div className="chat-item-avatar">
                       {space.type === 'space' ? (

@@ -1515,7 +1515,7 @@ input.workspace-browser-url:focus-visible {
   flex-direction: column;
   min-width: 0;
   border: 1px solid var(--border-color, #e4e4e7);
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   background: var(--bg-card, #ffffff);
   box-shadow: var(--shadow-sm, 0 1px 3px rgba(0, 0, 0, 0.05));
   transition:
@@ -1663,6 +1663,26 @@ input.workspace-browser-url:focus-visible {
 .ws-card-actions button:focus-visible {
   outline: 2px solid var(--text-primary, #09090b);
   outline-offset: 1px;
+}
+
+@media (pointer: coarse) {
+  .ws-card-actions {
+    opacity: 1;
+  }
+
+  .ws-card-actions button {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  .file-tree-action {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  .todo-delete {
+    opacity: 1;
+  }
 }
 
 /* Active flag */
