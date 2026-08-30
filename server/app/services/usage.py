@@ -51,6 +51,13 @@ def extract_usage_from_response(raw: Any, fallback_text: str | None = None) -> t
             u = raw.get("usage") or raw.get("usageMetadata")
             if u:
                 return extract_usage_from_response(u, fallback_text)
+            # Direct dict containing token counts (e.g. {"prompt_tokens":100,...})
+            if any(k in raw for k in ("prompt_tokens", "input_tokens", "inputTokens", "completion_tokens", "output_tokens", "outputTokens", "total_tokens", "totalTokens")):
+                p = raw.get("prompt_tokens") or raw.get("input_tokens") or raw.get("inputTokens") or 0
+                c = raw.get("completion_tokens") or raw.get("output_tokens") or raw.get("outputTokens") or 0
+                t = raw.get("total_tokens") or raw.get("totalTokens") or (p + c)
+                if t or p or c:
+                    return int(p or 0), int(c or 0), int(t or (p + c))
     except Exception:
         pass
     est = _estimate_tokens(fallback_text)

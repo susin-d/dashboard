@@ -14,10 +14,12 @@ from app.core.config import settings
 # Route-group limits: (window_s, max_requests)
 LIMITS: dict[str, tuple[int, int]] = {
     "/api/v1/auth": (60, 10),       # 10/min per IP for signup/login/forgot
+    "/api/v1/auth/google": (60, 5),  # tighter for OAuth
     "/api/v1/eve": (60, 20),         # 20/min for eve chat/stream/voice
     "/api/v1/cron": (60, 10),
     "/api/v1/calls/twilio": (60, 30),
     "/api/v1/workspace": (60, 100),
+    "/api/v1/workspace-files": (60, 30),
 }
 
 # In-memory fallback buckets: key -> deque[timestamps]
@@ -69,7 +71,8 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
             return await call_next(request)
         path = request.url.path
         lim = _group_for_path(path)
-        if lim and not getattr(settings, "is_serverless", False):
+        # Rate-limit even in serverless — Vercel has no nginx limit_req
+        if lim:
             window, limit = lim
             ip = request.client.host if request.client else "unknown"
             key = f"{path.split('/')[3] if len(path.split('/'))>3 else path}:{ip}:{window}"

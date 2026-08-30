@@ -4,10 +4,10 @@ import asyncio
 import json
 from urllib.parse import urlencode, urlparse
 
-import httpx
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from fastapi.responses import HTMLResponse
 from app.db import SqlClient, get_firestore
+from app.core.http import create_async_client
 from itsdangerous import BadSignature, SignatureExpired
 
 from app.api.routes.auth._shared import _send_welcome_email_best_effort, state_serializer
@@ -85,7 +85,7 @@ async def google_callback(
             detail="Google OAuth is not properly configured.",
         )
 
-    async with httpx.AsyncClient() as client:
+    async with create_async_client() as client:
         token_response = await client.post(
             "https://oauth2.googleapis.com/token",
             data={
@@ -162,12 +162,16 @@ async def google_callback(
     display_json = json.dumps(user_record.get("display_name") or name)
     origin_json = json.dumps(target_origin)
 
+    # Token is delivered ONLY via postMessage to the validated targetOrigin.
+    # No token in URL, meta refresh, or location fragment to avoid history/
+    # Referer / log leakage. The opener (popup flow) receives the token;
+    # the same-tab fallback posts to BroadcastChannel / localStorage via
+    # the frontend's auth listener without exposing the token in the address bar.
     html_content = f"""
     <!DOCTYPE html>
     <html>
       <head>
         <title>Authentication Successful</title>
-        <meta http-equiv="refresh" content="0; url={target_origin}/#token={token}" />
       </head>
       <body>
         <script>
@@ -181,13 +185,24 @@ async def google_callback(
             }}
           }};
           const targetOrigin = {origin_json};
+          let delivered = false;
           try {{
             if (window.opener) {{
               window.opener.postMessage({{ type: "STARWAVES_AUTH_SUCCESS", data: authData }}, targetOrigin);
-              setTimeout(() => {{ try {{ window.close(); }} catch(e) {{}} }}, 100);
+              delivered = true;
+              setTimeout(() => {{ try {{ window.close(); }} catch(e) {{}} }}, 150);
             }}
           }} catch (e) {{}}
-          window.location.replace(targetOrigin + "/#token=" + encodeURIComponent({token_json}));
+          // Same-tab fallback: store in sessionStorage under a one-time key so the
+          // frontend can pick it up on next load without the token ever appearing
+          // in the URL. The key is origin-bound and cleared after read.
+          try {{
+            if (!delivered) {{
+              sessionStorage.setItem("starwaves:oauth:pending", JSON.stringify(authData));
+            }}
+          }} catch (e) {{}}
+          // Navigate to the app root WITHOUT token in fragment/query.
+          setTimeout(() => {{ window.location.replace(targetOrigin + "/"); }}, delivered ? 200 : 50);
         </script>
         <p>Authentication successful. Redirecting to StarWaves...</p>
       </body>

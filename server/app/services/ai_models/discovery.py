@@ -6,6 +6,7 @@ import logging
 import time
 from typing import Any
 
+from app.core.http import create_async_client
 import httpx
 
 from app.services.ai_models.catalog import AI_PROVIDERS, PROVIDER_DEFAULT_BASE_URLS, _format_model_label
@@ -42,7 +43,7 @@ async def _get_models_json(
 ) -> dict[str, Any] | None:
     """GET a provider's models endpoint and return parsed JSON, or None on failure."""
     try:
-        async with httpx.AsyncClient(timeout=httpx.Timeout(6.0, connect=3.0)) as client:
+        async with create_async_client(timeout=httpx.Timeout(6.0, connect=3.0)) as client:
             resp = await client.get(url, headers=headers)
         if resp.status_code != 200:
             # Ollama local not running is expected — downgrade to debug

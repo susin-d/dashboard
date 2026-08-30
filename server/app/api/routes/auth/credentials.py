@@ -9,7 +9,7 @@ from pydantic import BaseModel, EmailStr
 
 from app.api.routes.auth._shared import _send_welcome_email_best_effort
 from app.core.auth import create_session_token
-from app.repositories.password import verify_password
+from app.repositories.password import hash_password, needs_rehash, verify_password
 from app.repositories.users import create_user_with_password, get_user_by_email
 
 router = APIRouter(prefix="/auth")
@@ -122,6 +122,21 @@ def login(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="The email or password is incorrect.",
         ) from None
+
+    # Transparent rehash: upgrade legacy 100k hashes to 600k on successful login
+    try:
+        if needs_rehash(user_record.get("password_salt", "")):
+            new_hash, new_salt = hash_password(payload.password)
+            from app.db import SqlClient as _SC  # local to avoid cycle
+            try:
+                database.collection("users").document(user_record["uid"]).update({
+                    "password_hash": new_hash,
+                    "password_salt": new_salt,
+                })
+            except Exception:
+                pass
+    except Exception:
+        pass
 
     try:
         device_id = (x_device_id or uuid.uuid4().hex)[:64]
