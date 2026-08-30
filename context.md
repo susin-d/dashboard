@@ -2,7 +2,7 @@
 
 Living snapshot for AI agents. `AGENTS.md` holds permanent rules; this file holds the **current state**. See `CHANGELOG.md` for history and `PROJECT_MAP.md` for the file index.
 
-Last updated: 2026-08-30 — Fix Eve tool calling for OpenAI-compatible providers: flat→nested tool conversion in openai_compat + add groq to PROVIDER_CLIENTS (ADR 0002)
+Last updated: 2026-08-30 — Add AGENTS.md §§1.8–1.9: no demo/mock values in UI + no temp/easy fixes or shortcuts (real data + root-cause fixes only)
 
 ## Contents
 1. [Overview](#1-overview) · 2. [Repository structure](#2-repository-structure) · 3. [Backend](#3-backend) · 4. [Frontend](#4-frontend) · 5. [Design system](#5-design-system) · 6. [Current snapshot](#6-current-snapshot) · 7. [Limitations](#7-limitations) · 8. [Verification](#8-verification)
@@ -28,7 +28,7 @@ starwaves/
 ├── PROJECT_MAP.md      Compact index for agents — read first (Tier 1)
 ├── context.md          This file — current snapshot (Tier 2, <15k)
 ├── CHANGELOG.md        History log
-├── AGENTS.md           Permanent agent rules (incl. §1.6 no-sub-agents, §1.7 ADRs)
+├── AGENTS.md           Permanent agent rules (incl. §1.6 no-sub-agents, §1.7 ADRs, §1.8 no-demo-data, §1.9 no-temp-fixes)
 └── opencode.json       Preloads AGENTS.md + PROJECT_MAP.md via instructions
 ```
 For full maps see `PROJECT_MAP.md`. Keep this section brief; expand there.
@@ -71,7 +71,7 @@ For full maps see `PROJECT_MAP.md`. Keep this section brief; expand there.
 - Landing: sharp Linear cinema (`LandingPage.jsx` 87L + 8 Framer Motion sections + `cinema.css` scoped 373L, fixed dark #000).
 - Security: RLS `SET LOCAL` via `set_rls_user` in `sql/base` generic handlers, `starwaves_app` role, `SECURITY.md`, rate-limit 5r/s, `pickle→json`, CORS allowlist, `realpath`, `DOMPurify`, pip `no-build-isolation` + npm `--ignore-scripts`, UI CSS sanitized (blocks `@import`/`javascript:`/external `url`/`< >`) + allowlisted tokens + history-capped 20.
  - Infra: compose lean e2-micro (pgvector 128M, redis 96M, server 512M), Nginx 5r/s + Gzip, Vercel cron `/cron/execute-schedules`.
- - Process: no sub-agents — direct execution only (`AGENTS.md` §1.6, `PROJECT_MAP.md` fast-path) + tiered context (`context.md` <15k as living snapshot, `CHANGELOG.md` for history) + ADRs required (`docs/adr/0001` + `_template.md` + `README.md` index, `NNNN-kebab-case` numbering).
+  - Process: no sub-agents — direct execution only (`AGENTS.md` §1.6, `PROJECT_MAP.md` fast-path) + tiered context (`context.md` <15k as living snapshot, `CHANGELOG.md` for history) + ADRs required (`docs/adr/0001` + `_template.md` + `README.md` index, `NNNN-kebab-case` numbering) + no demo/mock UI data (§1.8) + no temp/easy fixes (§1.9).
 
 ## 7. Limitations
 - Calendar create/edit not implemented. Mail attachments/forwarding/rich-text/drafts not implemented. Calls use STUN only — TURN needed for strict NAT. Frontend bundle emits size advisory.

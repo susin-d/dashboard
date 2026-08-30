@@ -65,6 +65,18 @@ Instructions and guidelines for AI Coding Agents working in the **Starwaves** co
    - Never introduce a new framework, ORM, CSS preprocessor, or bundler
      without explicit user approval.
 
+8. **No Demo / Mock / Placeholder Values in UI — Real Data Only**:
+   - **PROHIBITED in UI:** hardcoded demo arrays/objects (`const data = [{ name: "Demo Project" }]`), `lorem ipsum`, fake stats/counters, placeholder images/text left in shipped components, or `TODO: replace with real data` shipped to main.
+   - Every UI component must be wired to **real data**: API client (`lib/*Api.js` via `apiRequest`), props from a data hook, or an explicit `EmptyState`/`LoadingState` for zero-data. If the API has no data, show the empty state — never invent data to fill the screen.
+   - Mock/demo data is allowed **only** inside `tests/`, `__mocks__/`, Storybook, or isolated dev fixtures that are never imported by production pages/components. Any fixture file must be named `*.mock.*`, `*.fixture.*`, or live under `tests/`.
+   - Validation: `Grep` for `demo|mockData|placeholder|fakeData|lorem` in `website/src/pages` and `website/src/components` must return zero hits in production code before commit.
+
+9. **No Easy Fixes / Temp Fixes / Shortcuts — Fix the Root Cause**:
+   - **PROHIBITED:** `// temp fix`, `// quick fix`, `// hack`, `// workaround`, `// FIXME later`, `setTimeout` hacks to paper over race conditions, suppressing errors (`try { } catch {}` with empty catch, `// @ts-ignore`, `eslint-disable` without justification), commenting out failing code/tests to make CI pass, hardcoding values to bypass validation, or adding `!important` / inline styles to override layout bugs.
+   - Every fix must address the **root cause** at the correct layer (Routes → Services → Repositories → Core per §5.2; or tokens → base → components → pages per §4.6.2). If the proper fix is larger, split it correctly, add an ADR if architectural (§1.7), and fix it — do not ship a shortcut.
+   - If a temporary mitigation is unavoidable (e.g. upstream outage), it must be: (a) behind an explicit flag/env, (b) tracked with a TODO that links to an issue, and (c) approved by the user — never silent.
+   - Review checklist before commit: `Grep` for `temp fix|easy fix|quick fix|hack|workaround|TODO.*temp` must be clean; failing tests must be fixed, not skipped or commented out.
+
 ---
 
 ## 🏗 2. Clean Code Principles
@@ -797,6 +809,8 @@ Never declare success without running build/lint/test tools to verify correctnes
 - [ ] `python -m pytest tests -q` passes in `/server`
 - [ ] No dead code, unused imports, or commented-out blocks
 - [ ] No hardcoded magic values or inline styles
+- [ ] No demo/mock/placeholder values in UI — `Grep` for `demo|mockData|placeholder|fakeData|lorem` in `website/src/pages` + `components` is clean (§1.8)
+- [ ] No temp/easy fixes, hacks, or workarounds — `Grep` for `temp fix|easy fix|quick fix|hack|workaround` is clean; failing tests fixed not skipped (§1.9)
 - [ ] File sizes are under 400 lines (500 hard limit)
 - [ ] `context.md` updated if implementation changed (single `Last updated` one-liner; old detail → `CHANGELOG.md`; keep <15k)
 - [ ] ADR added/updated in `docs/adr/` if architectural (and listed in `docs/adr/README.md`)
