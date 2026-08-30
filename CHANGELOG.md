@@ -35,4 +35,21 @@ Historical implementation log extracted from `context.md`. `context.md` now hold
 *(Prior entries before 2026-08-25 are in git history: `git log --oneline`.)*
 
 ---
+## 2026-08-30 — Usage page fix + Eve tool calling + Cache tuning + CORS 429
+- **Eve tool calling (ADR 0002):** `openai_compat` flat→nested `function` conversion fixes OpenRouter/Ollama/OpenCode/Groq; add `groq` to `PROVIDER_CLIENTS`.
+- **Cache tuning:** `core/cache.py` presets `SHORT 30/MEDIUM 60/LONG 300` with per-user `prefix:user_id:hash`; `request.js` default 30s + dedup + `CACHE_TTL_OVERRIDES` (`/ui/preferences` 120s, `/auth/me` 60s, `/usage/` 15s, `/eve/sessions` 15s).
+- **CORS 429:** Nginx `$cors_allow_origin` map + `proxy_hide_header` + `RateLimitMiddleware` adds `Retry-After`+CORS on 429; `aiModelsApi` retries 2 + 60s cache; `AiModelsSection` dep fix.
+
+## 2026-08-30 — Usage page: honest empty state, column-major heatmap, cache invalidation
+- **Backend:** `usage.py` routes `CACHE_TTL_LONG→SHORT`, remove dead `_sync_session` + unused `DbClient`; `services/usage.log_usage` invalidates `usage:summary|logs:{user_id}` + dict-direct token extraction for `prompt/completion/total`; `schemas/usage.UsageSummary` expanded with `daily_by_model/peak/longest/current_streak/longest_streak/model_list`.
+- **Frontend:** `UsagePage.jsx` remove 4.9M/GLM demo spikes, use `EmptyState` when empty, `topMetrics.longestLabel` now `formatTokens`, unified `getHeatLevel` (0/<100k/<800k/<2M), `Weekly`/`Cumulative` modes, `clampTooltipX`, dynamic `heatmapMonths`, `trend`/`donut` honest; `usage.css` heatmap `grid-auto-flow:column` + `7 rows`; `request.js` `/usage/` TTL `0→15s` + `usageApi` respects cache.
+
+## 2026-08-31 — Frontend audit fix
+- **Tokens:** `tokens.css` add type scale `--text-2xs→4xl`, `--leading-*`, `--font-weight-*`.
+- **Hierarchy:** `base.css` PageHeader/dashboard/contacts `.page-heading h1` unified via `var(--text-4xl)`; `contacts/index.jsx` migrate to `PageHeader` primitive; `contacts.css` padding/gap/radius/shadow tokenized; `projects.css` grids `min(100%,310px)`, gaps `var(--card-gap)`, radii `var(--radius-md)`, add `.project-detail-grid--compact`, `.project-page-error`, `.project-progress-actions-detail`.
+- **Consistency:** `TodoPage.jsx` EmptyState + `.todo-item-actions`, focus-within + coarse pointer touch; `WorkspacePage.jsx` new file/folder → `Modal`+`FormField`; `ChatsPage.jsx` + `chats.css` extract `no-active-chat--large/compact`, `chat-cta-button`, `chat-empty-messages`, `chat-send-error` (monochrome); `CustomPage.jsx` card/code/hint classes.
+- **Polish:** `calendar.css` monochrome `#444→color-primary`, `#6a6a6a→text-secondary`; `workspace.css` error `#fef2f2→bg-secondary`, `#22c55e→color-primary`, `#f59e0b→text-secondary`, `#d97706/#fffbeb→bg-tertiary/border`, footer; `buttons.css` focus/disabled; `utilities.css` avatar helpers; `Header.jsx` avatar class cleanup; `CalendarPage.jsx` meta spaced class.
+- **Responsive:** grids `min(100%, …)` prevent 320 overflow; `contacts-grid` gap token; `todo-delete` coarse fix; `layout-symmetry` unchanged (900 breakpoint kept intentionally — standardize next pass if needed).
+- **Verify:** `npm run lint` (1 no-useless-escape warning only in MailsPage) + `npm run build` 575kB index 154k gzip ok.
+
 *Generated: 2026-08-27 from former `context.md` history block. New changes go to `context.md` `Last updated` one-liner.*

@@ -417,7 +417,7 @@
 
 .calendar-event.hackathon {
   color: var(--text-inverse);
-  background: #444;
+  background: var(--color-primary);
 }
 
 .calendar-event.project {
@@ -426,8 +426,8 @@
 }
 
 .calendar-event.job {
-  color: #fff;
-  background: #6a6a6a;
+  color: var(--text-inverse);
+  background: var(--text-secondary);
 }
 
 .calendar-event.google-calendar {
@@ -723,11 +723,15 @@
   width: 34px;
   height: 34px;
   flex: 0 0 34px;
-  border-radius: 9px;
+  border-radius: var(--radius-md);
   background: var(--bg-tertiary, #f4f4f5);
   color: var(--text-primary, #09090b);
   font-size: 11px;
   font-weight: 800;
+  margin-top: 2px;
+}
+
+.calendar-detail-meta--spaced {
   margin-top: 2px;
 }
 

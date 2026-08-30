@@ -154,6 +154,12 @@
   border-color: var(--color-primary-hover);
 }
 
+.todo-item-actions {
+  display: flex;
+  gap: var(--space-3xs);
+  align-items: center;
+}
+
 .todo-delete {
   width: 34px;
   height: 34px;
@@ -162,40 +168,34 @@
   color: var(--text-muted);
   background: transparent;
   border: 0;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   opacity: 0;
   transition: opacity var(--transition-fast), color var(--transition-fast), background var(--transition-fast);
 }
 
 .todo-item:hover .todo-delete,
+.todo-item:focus-within .todo-delete,
 .todo-delete:focus-visible {
   opacity: 1;
 }
 
 .todo-delete:hover {
-  color: var(--color-danger);
+  color: var(--text-primary);
   background: var(--bg-tertiary);
 }
 
-.todo-empty {
-  min-height: 180px;
-  display: grid;
-  place-content: center;
-  justify-items: center;
-  gap: 8px;
-  color: var(--text-muted);
+.todo-delete:focus-visible {
+  outline: 2px solid var(--text-primary);
+  outline-offset: 2px;
 }
 
-.todo-empty p {
-  margin: 0;
-  font-size: 13px;
-}
-
-@media (max-width: 640px) {
+@media (max-width: 768px), (pointer: coarse) {
   .todo-delete {
     opacity: 1;
   }
+}
 
+@media (max-width: 640px) {
   .todo-filters {
     overflow-x: auto;
     flex-wrap: nowrap;

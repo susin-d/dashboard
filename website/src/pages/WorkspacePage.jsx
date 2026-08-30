@@ -357,71 +357,45 @@ export function WorkspacePage() {
         />
       </div>
 
-      {newFilePrompt && (
-        <div className="workspace-new-file-overlay" onClick={() => setNewFilePrompt(false)}>
-          <div
-            className="workspace-new-file-dialog"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <h3>New File</h3>
-            <p className="dialog-subtitle">Creates inside the current workspace folder. Use <code>folder/file.ext</code> to nest.</p>
-            <input
-              type="text"
-              value={newFileName}
-              onChange={(e) => setNewFileName(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') handleConfirmCreate()
-                if (e.key === 'Escape') setNewFilePrompt(false)
-              }}
-              placeholder="path/to/filename.ext  e.g. src/app.js"
-              autoFocus
-            />
-            <div className="workspace-new-file-actions">
-              <button onClick={() => setNewFilePrompt(false)}>Cancel</button>
-              <button
-                className="primary"
-                onClick={handleConfirmCreate}
-                disabled={!newFileName.trim()}
-              >
-                Create
-              </button>
-            </div>
-          </div>
+      <Modal isOpen={newFilePrompt} onClose={() => setNewFilePrompt(false)} title="New File" subtitle="Creates inside the current workspace folder. Use folder/file.ext to nest.">
+        <FormField label="File name" id="workspace-new-file-name">
+          <input
+            id="workspace-new-file-name"
+            type="text"
+            value={newFileName}
+            onChange={(e) => setNewFileName(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') handleConfirmCreate()
+            }}
+            placeholder="path/to/filename.ext  e.g. src/app.js"
+            data-modal-initial-focus
+          />
+        </FormField>
+        <div className="modal-actions">
+          <button type="button" className="secondary-button" onClick={() => setNewFilePrompt(false)}>Cancel</button>
+          <button type="button" className="primary-button" onClick={handleConfirmCreate} disabled={!newFileName.trim()}>Create</button>
         </div>
-      )}
+      </Modal>
 
-      {newFolderPrompt && (
-        <div className="workspace-new-file-overlay" onClick={() => setNewFolderPrompt(false)}>
-          <div
-            className="workspace-new-file-dialog"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <h3>New Folder</h3>
-            <p className="dialog-subtitle">Creates a folder inside the workspace. You can then add files inside it.</p>
-            <input
-              type="text"
-              value={newFolderName}
-              onChange={(e) => setNewFolderName(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') handleConfirmCreateFolder()
-                if (e.key === 'Escape') setNewFolderPrompt(false)
-              }}
-              placeholder="folder name  e.g. src/components"
-              autoFocus
-            />
-            <div className="workspace-new-file-actions">
-              <button onClick={() => setNewFolderPrompt(false)}>Cancel</button>
-              <button
-                className="primary"
-                onClick={handleConfirmCreateFolder}
-                disabled={!newFolderName.trim()}
-              >
-                Create Folder
-              </button>
-            </div>
-          </div>
+      <Modal isOpen={newFolderPrompt} onClose={() => setNewFolderPrompt(false)} title="New Folder" subtitle="Creates a folder inside the workspace. You can then add files inside it.">
+        <FormField label="Folder name" id="workspace-new-folder-name">
+          <input
+            id="workspace-new-folder-name"
+            type="text"
+            value={newFolderName}
+            onChange={(e) => setNewFolderName(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') handleConfirmCreateFolder()
+            }}
+            placeholder="folder name  e.g. src/components"
+            data-modal-initial-focus
+          />
+        </FormField>
+        <div className="modal-actions">
+          <button type="button" className="secondary-button" onClick={() => setNewFolderPrompt(false)}>Cancel</button>
+          <button type="button" className="primary-button" onClick={handleConfirmCreateFolder} disabled={!newFolderName.trim()}>Create Folder</button>
         </div>
-      )}
+      </Modal>
 
       {/* Create Workspace Modal */}
       <Modal

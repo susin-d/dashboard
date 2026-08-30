@@ -105,7 +105,6 @@ export function ProjectsPage({ projects, setProjects, onOpenProject, canLoadMore
               </span>
             </div>
             <button className="primary-button" onClick={() => setFormOpen(true)}>
-              <Search size={16} style={{ display: 'none' }} />
               Add project
             </button>
           </>

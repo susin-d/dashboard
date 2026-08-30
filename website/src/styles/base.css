@@ -151,6 +151,29 @@ textarea:disabled {
   }
 }
 
+/* Type scale helpers */
+.page-heading h1,
+.dashboard-heading h1,
+.project-page-heading h1,
+.calendar-toolbar h1,
+.contacts-header h1 {
+  font-size: var(--text-4xl);
+  line-height: var(--leading-tight);
+  font-weight: var(--font-weight-bold);
+  letter-spacing: -0.03em;
+}
+
+.page-heading p,
+.dashboard-heading p,
+.contacts-header-kicker,
+.calendar-eyebrow {
+  font-size: var(--text-xs);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
 /* Custom Scrollbars */
 *::-webkit-scrollbar {
   width: 10px;

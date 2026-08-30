@@ -4,6 +4,23 @@
 :root {
   /* Typography */
   --font-family: 'Inter', sans-serif;
+  --text-2xs: 10px;
+  --text-xs: 11px;
+  --text-sm: 12px;
+  --text-base: 13px;
+  --text-md: 14px;
+  --text-lg: 16px;
+  --text-xl: 18px;
+  --text-2xl: 20px;
+  --text-3xl: 24px;
+  --text-4xl: clamp(26px, 3vw, 32px);
+  --leading-tight: 1.15;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.65;
+  --font-weight-regular: 500;
+  --font-weight-medium: 600;
+  --font-weight-semibold: 700;
+  --font-weight-bold: 800;
 
   /* 8pt spacing scale — use these instead of hard-coded px */
   --space-3xs: 4px;

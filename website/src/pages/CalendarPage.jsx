@@ -669,7 +669,7 @@ export function CalendarPage({ eventsByDate, onNavigate }) {
                             )}
                           </div>
                           {event.location && (
-                            <div className="calendar-detail-meta" style={{ marginTop: '2px' }}>
+                            <div className="calendar-detail-meta calendar-detail-meta--spaced">
                               <MapPin size={11} />
                               <span>{event.location}</span>
                             </div>

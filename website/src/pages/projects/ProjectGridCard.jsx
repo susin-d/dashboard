@@ -62,7 +62,7 @@ export function ProjectGridCard({ project, onOpenProject, onDelete, onQuickProgr
           </div>
         </div>
 
-        <div className="project-detail-grid" style={{ marginTop: 0 }}>
+        <div className="project-detail-grid project-detail-grid--compact">
           <div className="project-detail-item">
             <Users size={15} />
             <div>

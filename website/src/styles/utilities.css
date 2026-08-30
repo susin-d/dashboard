@@ -87,3 +87,26 @@
   border: 0;
   margin: 0;
 }
+
+/* Dynamic inline-style allowance: progress widths & char-progress */
+.dashboard-project-bar-fill,
+.project-progress span,
+.project-grid-card [style*="width:"],
+.ws-card-open [style] {
+  /* allow dynamic width via --progress or inline width */
+}
+
+.avatar-sm {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  object-fit: cover;
+}
+
+.avatar-fallback {
+  display: none;
+}
+
+.text-muted { color: var(--text-muted); }
+
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }

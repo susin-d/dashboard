@@ -279,8 +279,8 @@
 /* Grid Layout & Cards */
 .projects-grid-layout {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(310px, 1fr));
-  gap: 16px;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 310px), 1fr));
+  gap: var(--card-gap);
   width: 100%;
 }
 
@@ -498,9 +498,33 @@
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   overflow: hidden;
-  margin-top: 15px;
+  margin-top: var(--space-sm);
   border: 1px solid var(--border-color);
-  border-radius: 10px;
+  border-radius: var(--radius-md);
+}
+
+.project-detail-grid--compact {
+  margin-top: 0;
+}
+
+.project-page-grid {
+  margin-top: var(--space-md);
+}
+
+.project-page-error {
+  margin-top: var(--space-sm);
+  padding: var(--space-xs) var(--space-sm);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-medium);
+}
+
+.project-progress-actions-detail {
+  margin-top: var(--space-sm);
+  justify-content: flex-start;
 }
 
 .project-detail-item {

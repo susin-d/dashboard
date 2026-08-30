@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { CalendarDays, Check, Pencil, Plus, Trash2 } from 'lucide-react'
 import { createTodo, deleteTodo, updateTodo } from '../lib/todosApi'
-import { Alert, ConfirmDialog, FilterPills, Modal, PageHeader } from '../components/ui'
+import { Alert, ConfirmDialog, EmptyState, FilterPills, Modal, PageHeader } from '../components/ui'
 import { usePersistentState } from '../hooks/usePersistentState'
 
 export function TodoPage({ tasks, setTasks, createIntent }) {
@@ -165,9 +165,10 @@ export function TodoPage({ tasks, setTasks, createIntent }) {
                     </small>
                   )}
                 </div>
-                <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
+                <div className="todo-item-actions">
                   <button
                     className="todo-delete"
+                    type="button"
                     onClick={() => openEditModal(task)}
                     aria-label={`Edit ${task.title}`}
                   >
@@ -175,6 +176,7 @@ export function TodoPage({ tasks, setTasks, createIntent }) {
                   </button>
                   <button
                     className="todo-delete"
+                    type="button"
                     onClick={() => setDeleteRequested(task)}
                     aria-label={`Delete ${task.title}`}
                   >
@@ -184,10 +186,7 @@ export function TodoPage({ tasks, setTasks, createIntent }) {
               </div>
             ))
           ) : (
-            <div className="todo-empty">
-              <Check size={21} />
-              <p>No tasks here.</p>
-            </div>
+            <EmptyState icon={Check} title="No tasks here" description={filter === 'all' ? 'Create your first task to get started.' : `No ${filter} tasks. Try a different filter.`} />
           )}
         </div>
       </div>

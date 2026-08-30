@@ -48,26 +48,15 @@ export function CustomPage({ slug }) {
 
   return (
     <section className="custom-page" data-eve-target={`custom:${slug}`}>
-      <PageHeader title={entry.title || slug} subtitle={entry.description || ''} />
-      <div className="card" style={{ padding: 'var(--layout-card-padding)' }}>
-        <p style={{ color: 'var(--text-secondary)', marginBottom: 12 }}>{entry.description}</p>
+      <PageHeader title={entry.title || slug} description={entry.description || ''} />
+      <div className="card custom-page-card">
+        <p className="custom-page-desc">{entry.description}</p>
         {entry.code && (
-          <pre
-            style={{
-              background: 'var(--bg-tertiary)',
-              border: '1px solid var(--border-color)',
-              borderRadius: 'var(--radius-md)',
-              padding: 12,
-              overflow: 'auto',
-              fontSize: 12,
-              whiteSpace: 'pre-wrap',
-              wordBreak: 'break-word',
-            }}
-          >
+          <pre className="custom-page-code">
             {entry.code}
           </pre>
         )}
-        <p style={{ marginTop: 12, fontSize: 12, color: 'var(--text-muted)' }}>
+        <p className="custom-page-hint">
           This page was created by Eve. Say “edit my {slug} page to …” to change it.
         </p>
       </div>

@@ -211,12 +211,12 @@ export function ProjectDetailPage({ project, onBack, onSave }) {
       </div>
 
       {error && (
-        <div className="todo-api-error" role="alert" style={{ marginTop: 14 }}>
+        <div className="project-page-error" role="alert">
           {error}
         </div>
       )}
 
-      <div className="project-page-grid" style={{ marginTop: 20 }}>
+      <div className="project-page-grid">
         <article className="project-overview-card">
           <div className="project-overview-heading">
             <div>
@@ -237,8 +237,7 @@ export function ProjectDetailPage({ project, onBack, onSave }) {
           </div>
 
           <div
-            className="project-progress-actions"
-            style={{ marginTop: 14, justifyContent: 'flex-start' }}
+            className="project-progress-actions project-progress-actions-detail"
           >
             <button
               type="button"

@@ -259,8 +259,7 @@ export function Header({
               <img
                 src={user.photoURL}
                 alt={user.fullName}
-                className="avatar"
-                style={{ width: 30, height: 30, borderRadius: 8, objectFit: 'cover' }}
+                className="avatar avatar-sm"
                 loading="eager"
                 decoding="async"
                 referrerPolicy="no-referrer"
@@ -271,7 +270,7 @@ export function Header({
                 }}
               />
             ) : null}
-            <span className="avatar" style={user.photoURL ? { display: 'none' } : {}}>
+            <span className={`avatar ${user.photoURL ? 'avatar-fallback' : ''}`}>
               {user.initials}
             </span>
             <span className="profile-name">{user.firstName}</span>

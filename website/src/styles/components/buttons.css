@@ -23,9 +23,21 @@
   border-color: var(--color-primary-hover);
 }
 
+.primary-button:focus-visible {
+  outline: 2px solid var(--text-primary);
+  outline-offset: 2px;
+}
+
 .primary-button:active {
   transform: translateY(2px);
   box-shadow: 0 1px 0 rgba(0, 0, 0, 0.2), var(--shadow-inset);
+}
+
+.primary-button:disabled {
+  opacity: 0.56;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: var(--shadow-inset);
 }
 
 .secondary-button {
@@ -50,6 +62,22 @@
   background: var(--bg-hover);
   transform: translateY(-1px);
   box-shadow: var(--shadow-md), var(--shadow-inset);
+}
+
+.secondary-button:focus-visible {
+  outline: 2px solid var(--text-primary);
+  outline-offset: 2px;
+}
+
+.secondary-button:disabled {
+  opacity: 0.56;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.danger-button:focus-visible {
+  outline: 2px solid var(--text-primary);
+  outline-offset: 2px;
 }
 
 .danger-button {

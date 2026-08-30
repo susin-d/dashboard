@@ -173,7 +173,7 @@ export function ChatsPage({ onNavigate: _onNavigate }) {
 
       {/* No accounts connected empty state */}
       {!loading && accounts.length === 0 && (
-        <div className="no-active-chat" style={{ height: '60vh' }}>
+        <div className="no-active-chat no-active-chat--large">
           <MessageSquare size={48} />
           <h3>No Google Chat Accounts Connected</h3>
           <p>
@@ -181,8 +181,7 @@ export function ChatsPage({ onNavigate: _onNavigate }) {
             here. No need to go to Settings.
           </p>
           <button
-            className="primary-button"
-            style={{ marginTop: '12px', padding: '10px 20px' }}
+            className="primary-button chat-cta-button"
             onClick={handleConnectGoogleChat}
             disabled={connectingChat}
           >
@@ -193,13 +192,12 @@ export function ChatsPage({ onNavigate: _onNavigate }) {
 
       {/* Error state */}
       {error && accounts.length === 0 && (
-        <div className="no-active-chat" style={{ height: '40vh' }}>
+        <div className="no-active-chat no-active-chat--compact">
           <AlertCircle size={40} />
           <h3>Could Not Load Chats</h3>
           <p>{error}</p>
           <button
-            className="secondary-button"
-            style={{ marginTop: '12px' }}
+            className="secondary-button chat-retry-button"
             onClick={() => fetchSpaces(selectedAccountEmail)}
           >
             <RefreshCw size={15} /> Retry
@@ -349,7 +347,7 @@ export function ChatsPage({ onNavigate: _onNavigate }) {
                 {/* Messages */}
                 <div className="chat-messages-container">
                   {(activeSpace.messages || []).length === 0 ? (
-                    <div style={{ textAlign: 'center', color: 'var(--text-tertiary)', padding: '40px 20px', fontSize: '14px' }}>
+                    <div className="chat-empty-messages">
                       No messages yet. Say something!
                     </div>
                   ) : (
@@ -402,15 +400,7 @@ export function ChatsPage({ onNavigate: _onNavigate }) {
                 </div>
 
                 {sendError && (
-                  <p
-                    role="alert"
-                    style={{
-                      color: '#ffffff',
-                      fontSize: '12px',
-                      padding: '6px 24px',
-                      background: '#27272a',
-                    }}
-                  >
+                  <p role="alert" className="chat-send-error">
                     {sendError}
                   </p>
                 )}
