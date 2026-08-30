@@ -16,8 +16,9 @@ const CACHE_TTL_OVERRIDES = [
   { match: (p) => p.includes('/ui/preferences'), ttl: 120_000 },
   { match: (p) => p.includes('/auth/me'), ttl: 60_000 },
   { match: (p) => p.includes('/auth/sessions'), ttl: 0 }, // always live
-  { match: (p) => p.includes('/usage/'), ttl: 0 },
+  { match: (p) => p.includes('/usage/'), ttl: 15_000 },
   { match: (p) => p.includes('/eve/sessions') || p.includes('/eve/memories'), ttl: 15_000 },
+  { match: (p) => p.includes('/settings/ai-models'), ttl: 60_000 },
 ]
 
 function resolveCacheTtl(path, explicitTtl) {

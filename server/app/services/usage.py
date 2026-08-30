@@ -33,7 +33,7 @@ def extract_usage_from_response(raw: Any, fallback_text: str | None = None) -> t
             else:
                 p = getattr(usage, "prompt_tokens", None) or getattr(usage, "input_tokens", None) or 0
                 c = getattr(usage, "completion_tokens", None) or getattr(usage, "output_tokens", None) or 0
-                t = getattr(usage, "total_tokens", None) or getattr(usage, "total_tokens", None) or (p + c)
+                t = getattr(usage, "total_tokens", None) or getattr(usage, "totalTokens", None) or (p + c)
                 # Some SDKs use input_tokens/output_tokens
                 if not p and hasattr(usage, "input_tokens"):
                     p = usage.input_tokens
@@ -72,5 +72,13 @@ def log_usage(
 
         with Session(sync_engine) as session:
             usage_repo.create_usage(session, user_id, provider, model, kind, prompt, completion, total)
+        # Invalidate per-user usage caches so next summary/logs GET reflects fresh tokens
+        try:
+            from app.core.cache import cache_invalidate_prefix
+
+            cache_invalidate_prefix(f"usage:summary:{user_id}")
+            cache_invalidate_prefix(f"usage:logs:{user_id}")
+        except Exception:
+            pass
     except Exception:
         pass

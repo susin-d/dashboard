@@ -74,5 +74,22 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
             ip = request.client.host if request.client else "unknown"
             key = f"{path.split('/')[3] if len(path.split('/'))>3 else path}:{ip}:{window}"
             if not _is_allowed(key, window, limit):
-                return Response(content='{"detail":"Rate limit exceeded. Try again shortly."}', status_code=429, media_type="application/json")
+                # 429 must include CORS headers — otherwise browser blocks the response
+                # (Nginx limit_req 429 never reaches FastAPI; this handles the FastAPI path).
+                # CORSMiddleware is outer, but explicit headers guarantee correctness even
+                # if middleware order changes and for non-simple CORS requests.
+                from app.core.cors import is_allowed_origin  # local import to avoid cycle
+
+                origin = request.headers.get("origin")
+                headers = {"Retry-After": str(window)}
+                if is_allowed_origin(origin):
+                    headers["Access-Control-Allow-Origin"] = origin
+                    headers["Access-Control-Allow-Credentials"] = "true"
+                    headers["Vary"] = "Origin"
+                return Response(
+                    content='{"detail":"Rate limit exceeded. Try again shortly."}',
+                    status_code=429,
+                    media_type="application/json",
+                    headers=headers,
+                )
         return await call_next(request)
