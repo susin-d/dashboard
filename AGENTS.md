@@ -28,6 +28,20 @@ Instructions and guidelines for AI Coding Agents working in the **Starwaves** co
    - Tier 3 (targeted): Use `Grep` with `include` filters (`*.py`, `*.jsx`, `*.css`) and `Read` on specific paths from Tier 1. **Prohibited:** `Glob **/*` without `include`, full tree scans, or reading every file to orient. Prefer semantic `Grep` over enumeration.
    - `CHANGELOG.md` holds history — never read it for orientation; `context.md` history belongs there.
 
+6. **No Sub-Agents — Direct Execution Only**:
+   - **Prohibited:** Delegating work to sub-agents via the `Task` tool (or any `explore`/`general`/custom sub-agent), spawning background agents, or wrapping work in delegated sessions. All reasoning, searching, reading, editing, verification, and commits must be performed **directly by the primary agent** in the current session.
+   - **Why:** Sub-agents break the tiered context protocol, duplicate reads, hide file-level decisions, and bypass `context.md` as the single living snapshot. Direct execution keeps the audit trail in one session and one commit history.
+   - **How to work instead:** Use `Grep` (with `include`), `Read` on the 1–2 files located via `PROJECT_MAP.md`, and `Bash`/`Edit`/`Write` directly. Break large work into a local `TodoWrite` list — never into sub-agent dispatches.
+   - **Exception:** Only when the user explicitly writes "use sub-agents" or "delegate to sub-agents" may delegation be used, and the reason must be noted in the commit/ADR.
+
+7. **Architecture Decision Records (ADRs) — Required**:
+   - Every non-trivial architectural decision **must** be recorded as an ADR file under `docs/adr/`. If you skip it, the task is incomplete.
+   - **When to create an ADR:** new patterns, layering changes, DB schema choices, auth/cache strategies, frontend architecture (state, styling, routing), infra/deployment changes, dependency additions, or any alternative that was considered and rejected. Trivial bug fixes and copy changes do not need ADRs.
+   - **Location & naming:** `docs/adr/NNNN-kebab-case-title.md` (zero-padded 4 digits, sequential). Never reuse numbers. Start from `0001`.
+   - **Template:** Use `docs/adr/_template.md` (Status, Context, Decision, Consequences, Alternatives). Keep it to ~300–500 words; link code/files, not prose walls.
+   - **Lifecycle:** `Proposed → Accepted → Superseded/Deprecated`. Update `Status` in-place when superseded and cross-link the replacement ADR. Add a one-line summary to `docs/adr/README.md` index.
+   - **Commit rule:** ADR file(s) must be committed in the **same commit** as the code they justify (or immediately before, if the decision precedons code). Never leave an architectural change without its ADR.
+
 2. **Ask When in Doubt**:
    - Never guess user intent, business logic, API schemas, or ambiguous design
      decisions.
@@ -769,10 +783,12 @@ Never declare success without running build/lint/test tools to verify correctnes
 
 ### Before Writing Code
 
-- [ ] Read `context.md` for current state
+- [ ] Follow tiered loading: `PROJECT_MAP.md` to locate 1–2 files → `context.md` if cross-cutting → `Grep` (with `include`) + `Read` targeted (no `Glob **/*`, no full-tree scans)
+- [ ] Read `context.md` for current state (never use sub-agents — execute directly in the primary session)
 - [ ] Check `components/ui/` for existing primitives
 - [ ] Check existing hooks, API clients, and services for reusable logic
 - [ ] Confirm the feature doesn't already exist elsewhere
+- [ ] If architectural, prepare ADR via `docs/adr/_template.md` (`NNNN-kebab-case`)
 
 ### Before Committing
 
@@ -782,9 +798,11 @@ Never declare success without running build/lint/test tools to verify correctnes
 - [ ] No dead code, unused imports, or commented-out blocks
 - [ ] No hardcoded magic values or inline styles
 - [ ] File sizes are under 400 lines (500 hard limit)
-- [ ] `context.md` updated if implementation changed
+- [ ] `context.md` updated if implementation changed (single `Last updated` one-liner; old detail → `CHANGELOG.md`; keep <15k)
+- [ ] ADR added/updated in `docs/adr/` if architectural (and listed in `docs/adr/README.md`)
+- [ ] No sub-agent delegation used (or explicitly justified)
 - [ ] No secrets, `.env`, or build artifacts staged
-- [ ] Commit message is clear and imperative
+- [ ] Commit message is clear and imperative (ADR and code in same commit)
 
 ### When Adding a New Feature
 
@@ -798,4 +816,5 @@ Never declare success without running build/lint/test tools to verify correctnes
 - [ ] Colors are monochrome only (black/white/gray)
 - [ ] Tests added for new backend logic
 - [ ] `context.md` updated with new routes/pages/features
+- [ ] ADR created if architecture/pattern/schema/auth/cache decision (commit with code)
 

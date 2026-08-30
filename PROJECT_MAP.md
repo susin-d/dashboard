@@ -14,8 +14,13 @@ starwaves/
 │   └── whatsapp-worker/   Go (WhatsMeow) WhatsApp bridge
 ├── nginx/            Reverse proxy config
 ├── sql/              Canonical DB schema + migrations + indexes
-├── docker-compose.yml
-└── context.md        Living project snapshot
+├── docs/adr/         Architecture Decision Records (0001, _template, README)
+├── AGENTS.md         Permanent agent rules (no sub-agents, context.md, ADRs)
+├── context.md        Living project snapshot (current state only)
+├── CHANGELOG.md      History log (moved from context.md)
+├── PROJECT_MAP.md    This file — agent fast-path index
+├── opencode.json     Preloads AGENTS.md + PROJECT_MAP.md via instructions
+└── docker-compose.yml
 ```
 
 ---
@@ -261,6 +266,23 @@ curl -i http://localhost/health
 ```
 
 ---
+
+## Docs & ADRs (`docs/`)
+
+| Path | Purpose |
+|------|---------|
+| `docs/adr/README.md` | ADR index + rules (numbering, lifecycle, commit gate) |
+| `docs/adr/_template.md` | ADR template (Status, Context, Decision, Consequences, Alternatives) |
+| `docs/adr/0001-*.md` | ADR 0001 — No sub-agents, context.md first, ADRs required |
+
+ADRs: `docs/adr/NNNN-kebab-case-title.md` (zero-padded, sequential). Create via `_template.md`; commit with code; update `context.md` `Last updated`.
+
+## Agent Rules (`AGENTS.md` §1)
+
+- **No sub-agents** (§1.6): Direct execution only — never delegate via `Task`/sub-agents. Use `Grep` (with `include`) + `Read` on 1–2 files from `PROJECT_MAP.md`, `Bash`/`Edit`/`Write` directly; `TodoWrite` for large work.
+- **Tiered loading** (§1.5): Tier 0 `AGENTS.md`+`PROJECT_MAP.md` (preloaded) → Tier 1 `PROJECT_MAP.md` → Tier 2 `context.md` (conditional) → Tier 3 targeted `Grep`/`Read`. No `Glob **/*` scans.
+- **context.md** (§1.1): Living snapshot <15k, updated in same commit as code (single `Last updated` one-liner; old detail → `CHANGELOG.md`).
+- **ADRs required** (§1.7): Non-trivial architecture → ADR in `docs/adr/` with lifecycle `Proposed→Accepted→Superseded`.
 
 ## Files to Ignore
 
