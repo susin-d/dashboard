@@ -81,4 +81,11 @@ Historical implementation log extracted from `context.md`. `context.md` now hold
 - **Adapters:** `openai` streams `reasoning` deltas; `anthropic` `MAX_TOKENS 4096→8192` + base_url forwarding; `gemini` thought/thinking handling for 2.5+ (`thought_signature`); `openai_compat` OpenRouter default_headers injection.
 - **Docs:** `docs/adr/0005-ai-provider-hardening-universal-openai.md` + `README` index; `context.md` last-updated.
 
+## 2026-08-31 — Differentiated AI errors (ADR 0007) — rate_limit vs other
+
+- **Contracts:** `ai_models/contracts` `AIServiceError(kind/status/retry_after)` + `classify_provider_error` (429 rate_limit/quota, 401 auth, 404 model, 422 context, 503 server) with Retry-After parsing.
+- **Adapters:** `openai/anthropic/gemini/openai_compat` now `classify_provider_error` instead of generic 502; streaming iteration also classified.
+- **Orchestrators:** `eve/chat` + `chat_stream` map `error.status_code` to HTTP 429/401/404/422/503 with Retry-After header; SSE error frames include `code/status/retry_after`.
+- **Frontend:** `eveApi` propagates `code/status/retryAfter`; `EvePage`/`useEveAgentChat` no REST fallback on 429, show rate-limit banner; `EveChatSection` `eve-error-banner--rate/--auth` variants with Clock/Info + hints; `eve.css` monochrome left-accent.
+
 *Generated: 2026-08-27 from former `context.md` history block. New changes go to `context.md` `Last updated` one-liner.*
