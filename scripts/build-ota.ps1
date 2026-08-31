@@ -22,7 +22,7 @@ Write-Step "OTA bundle build v$Version"
 if (-not (Test-Path -LiteralPath "website/dist/index.html")) {
   Write-Step "Web build (vite)"
   Push-Location -LiteralPath "website"
-  if (Test-Path -LiteralPath "package-lock.json") { & npm ci } else { & npm install }
+  & npm install
   & npm run build
   Pop-Location
 }

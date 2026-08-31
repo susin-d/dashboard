@@ -45,7 +45,7 @@ green "package.json version $PKG_VER"
 if [[ "$SKIP_WEB" != "1" ]]; then
   cyan "Web build (vite)"
   pushd website >/dev/null
-  if [[ -f package-lock.json ]]; then npm ci; else npm install; fi
+  npm install
   npm run build
   popd >/dev/null
   [[ -f website/dist/index.html ]] || { echo "No dist/index.html"; exit 1; }

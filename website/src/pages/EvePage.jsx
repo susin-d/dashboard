@@ -302,6 +302,12 @@ export function EvePage({
           // User pressed Stop — keep whatever was generated.
           donePayload = { message: receivedText, changed_resources: [], actions: [], session_id: activeSessionId }
         } else if (!receivedText && !currentThinking) {
+          // Stream never produced tokens — check if it's a rate-limit that shouldn't fallback to REST (would just 429 again)
+          if (streamError.code === 'rate_limit' || streamError.status === 429) {
+            const msg = streamError.message || 'Rate limit exceeded. Please wait a moment and retry.'
+            setError(msg)
+            return commitTurn(nextMessages, '', [], [], currentThinking, currentToolCalls)
+          }
           // Stream never produced tokens — fall back once to the classic endpoint.
           fallbackToRest = true
         } else {
@@ -312,9 +318,24 @@ export function EvePage({
       }
 
       if (fallbackToRest) {
-        const { response, sessionId } = await runNonStreamedTurn(apiMessages, nextMessages)
-        if (!activeSessionId && sessionId) setActiveSessionId(sessionId)
-        return commitTurn(nextMessages, response.message, response.changed_resources, response.actions)
+        try {
+          const { response, sessionId } = await runNonStreamedTurn(apiMessages, nextMessages)
+          if (!activeSessionId && sessionId) setActiveSessionId(sessionId)
+          return commitTurn(nextMessages, response.message, response.changed_resources, response.actions)
+        } catch (restError) {
+          // Map HTTP status to distinct user-facing messages (rate limit vs other)
+          const status = restError?.status || 502
+          const code = restError?.code
+          const isRate = status === 429 || code === 'rate_limit' || /rate limit/i.test(restError.message || '')
+          const isAuth = status === 401 || code === 'auth' || /authentication|api key/i.test(restError.message || '')
+          const isNotFound = status === 404 || code === 'model_not_found'
+          let friendly = restError.message || 'Eve request failed.'
+          if (isRate) friendly = restError.message || 'Rate limit exceeded. Please wait a moment and retry.'
+          else if (isAuth) friendly = restError.message || 'Authentication failed. Please check your API key in Settings > AI Models.'
+          else if (isNotFound) friendly = restError.message || 'Model not found. Please pick an available model in Settings > AI Models.'
+          setError(friendly)
+          return commitTurn(nextMessages, '', [], [], currentThinking, currentToolCalls)
+        }
       }
 
       const finalSessionId = donePayload?.session_id ?? activeSessionId

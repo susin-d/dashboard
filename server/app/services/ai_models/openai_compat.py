@@ -12,6 +12,7 @@ from app.services.ai_models.contracts import (
     ProviderResponse,
     StreamChunk,
     ToolCall,
+    classify_provider_error,
 )
 
 logger = logging.getLogger(__name__)
@@ -62,8 +63,21 @@ class OpenAiCompatibleClient(ProviderClient):
     """
 
     def build_client(self, client_options: dict[str, Any]) -> OpenAI:
+        # Inject OpenRouter Referer/Title if not already present (client_options may carry default_headers)
         try:
-            return OpenAI(**client_options)
+            options = dict(client_options)
+            # Ensure OpenRouter default_headers are propagated even when built via get_provider_client
+            # (config._client_options already sets them, but direct AiConfig may bypass)
+            if options.get("base_url") and "openrouter.ai" in options["base_url"]:
+                hdrs = options.get("default_headers") or {}
+                if "HTTP-Referer" not in hdrs and "Referer" not in hdrs:
+                    from app.core.config import settings as _settings
+
+                    hdrs["HTTP-Referer"] = _settings.frontend_url
+                if "X-Title" not in hdrs:
+                    hdrs["X-Title"] = "Starwaves"
+                options["default_headers"] = hdrs
+            return OpenAI(**options)
         except Exception as error:
             logger.error(f"[OpenAI-Compatible Provider] Failed to initialize client: {type(error).__name__}: {error}", exc_info=True)
             raise AIServiceError(f"Provider client initialization failed: {type(error).__name__}: {error}") from error
@@ -90,10 +104,13 @@ class OpenAiCompatibleClient(ProviderClient):
             )
         except OpenAIError as error:
             logger.error(f"[OpenAI-Compatible Provider] API call failed for model '{model}': {type(error).__name__}: {error}", exc_info=True)
-            raise AIServiceError(f"Provider API error ({type(error).__name__}): {error}") from error
+            # Heuristic provider label from base_url for better UX (openrouter/groq/ollama/opencode)
+            label = getattr(getattr(self.client, "_base_url", ""), "__str__", lambda: "")() or ""
+            prov = "openrouter" if "openrouter" in str(label) else "groq" if "groq" in str(label) else "provider"
+            raise classify_provider_error(error, prov, model) from error
         except Exception as error:
             logger.error(f"[OpenAI-Compatible Provider] Unexpected failure calling model '{model}': {type(error).__name__}: {error}", exc_info=True)
-            raise AIServiceError(f"Provider client error ({type(error).__name__}): {error}") from error
+            raise classify_provider_error(error, "provider", model) from error
 
         choice = response.choices[0] if response.choices else None
         message = choice.message if choice else None
@@ -125,10 +142,12 @@ class OpenAiCompatibleClient(ProviderClient):
             )
         except OpenAIError as error:
             logger.error(f"[OpenAI-Compatible Provider] Streaming call failed for model '{model}': {type(error).__name__}: {error}", exc_info=True)
-            raise AIServiceError(f"Provider API error ({type(error).__name__}): {error}") from error
+            label = getattr(getattr(self.client, "_base_url", ""), "__str__", lambda: "")() or ""
+            prov = "openrouter" if "openrouter" in str(label) else "groq" if "groq" in str(label) else "provider"
+            raise classify_provider_error(error, prov, model) from error
         except Exception as error:
             logger.error(f"[OpenAI-Compatible Provider] Unexpected streaming failure for model '{model}': {type(error).__name__}: {error}", exc_info=True)
-            raise AIServiceError(f"Provider client error ({type(error).__name__}): {error}") from error
+            raise classify_provider_error(error, "provider", model) from error
 
         content_slots: list[dict[str, Any]] = []
         text_parts: list[str] = []
@@ -192,7 +211,7 @@ class OpenAiCompatibleClient(ProviderClient):
             raise
         except Exception as error:
             logger.error(f"[OpenAI-Compatible Provider] Streaming iteration failed for model '{model}': {type(error).__name__}: {error}", exc_info=True)
-            raise AIServiceError(f"Provider client error ({type(error).__name__}): {error}") from error
+            raise classify_provider_error(error, "provider", model) from error
 
         # Synthesize a raw response shaped like the non-streaming one so
         # continuation() can read choices[0].message unchanged.

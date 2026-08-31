@@ -63,7 +63,14 @@ export async function streamEveMessage({
 
   if (!response.ok) {
     const failure = await response.json().catch(() => null)
-    throw new Error(failure?.detail || 'Eve stream could not be started.')
+    const err = new Error(failure?.detail || 'Eve stream could not be started.')
+    err.status = response.status
+    err.detail = failure?.detail
+    // Heuristic: detect rate limit from status or message for better UX
+    if (response.status === 429) err.code = 'rate_limit'
+    else if (response.status === 401) err.code = 'auth'
+    else if (response.status === 404) err.code = 'model_not_found'
+    throw err
   }
   if (!response.body) throw new Error('Streaming is not supported by this browser.')
 
@@ -93,7 +100,11 @@ export async function streamEveMessage({
     } else if (event.type === 'done') {
       onDone?.(event)
     } else if (event.type === 'error') {
-      throw new Error(event.detail || 'Eve response failed mid-stream.')
+      const err = new Error(event.detail || 'Eve response failed mid-stream.')
+      err.code = event.code || 'provider_error'
+      err.status = event.status || 502
+      err.retryAfter = event.retry_after
+      throw err
     }
   }
 
@@ -150,7 +161,11 @@ export async function streamEveVoice({
 
   if (!response.ok) {
     const failure = await response.json().catch(() => null)
-    throw new Error(failure?.detail || 'Eve voice stream could not be started.')
+    const err = new Error(failure?.detail || 'Eve voice stream could not be started.')
+    err.status = response.status
+    if (response.status === 429) err.code = 'rate_limit'
+    else if (response.status === 401) err.code = 'auth'
+    throw err
   }
   if (!response.body) throw new Error('Streaming is not supported by this browser.')
 
@@ -176,7 +191,10 @@ export async function streamEveVoice({
     } else if (event.type === 'done') {
       onDone?.(event)
     } else if (event.type === 'error') {
-      throw new Error(event.detail || 'Eve voice failed mid-stream.')
+      const err = new Error(event.detail || 'Eve voice failed mid-stream.')
+      err.code = event.code || 'provider_error'
+      err.status = event.status || 502
+      throw err
     }
   }
 

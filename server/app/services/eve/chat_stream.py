@@ -51,7 +51,21 @@ def stream_chat_with_eve(
             yield {"type": "error", "detail": str(error)}
             return
 
-    context = resolve_chat_context(database, user_id, messages)
+    try:
+        context = resolve_chat_context(database, user_id, messages)
+    except Exception as error:
+        logger.error(f"[Eve Chat Stream] AI config error for user {user_id}: {type(error).__name__}: {error}", exc_info=True)
+        # Surface kind/status so frontend can differentiate rate limit vs auth etc.
+        kind = getattr(error, "kind", "provider_error")
+        code = getattr(error, "status_code", 502)
+        yield {
+            "type": "error",
+            "detail": f"Eve AI service error: {error}",
+            "code": kind,
+            "status": code,
+            "retry_after": getattr(error, "retry_after", None),
+        }
+        return
 
     done_event: dict[str, Any] | None = None
     try:
@@ -74,9 +88,14 @@ def stream_chat_with_eve(
             f"[Eve Chat Stream] Stream failed with provider='{context.config.provider}', model='{context.config.model}' for user {user_id}: {type(error).__name__}: {error}",
             exc_info=True,
         )
+        kind = getattr(error, "kind", "provider_error")
+        code = getattr(error, "status_code", 502)
         yield {
             "type": "error",
             "detail": f"Eve AI service error ({context.config.provider}/{context.config.model}): {error}",
+            "code": kind,
+            "status": code,
+            "retry_after": getattr(error, "retry_after", None),
         }
         return
 

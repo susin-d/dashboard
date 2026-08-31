@@ -43,7 +43,7 @@ fi
 if [[ "$SKIP_WEB" != "1" ]]; then
   cyan "Web build + cap sync"
   pushd website >/dev/null
-  if [[ -f package-lock.json ]]; then npm ci; else npm install; fi
+  npm install
   npm run build
   npx cap sync android
   popd >/dev/null

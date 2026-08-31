@@ -232,12 +232,25 @@ export function EveChatSection({
           </div>
         )}
 
-        {error && (
-          <div className="eve-error-banner" role="alert">
-            <Info size={16} />
-            <span>{error}</span>
-          </div>
-        )}
+        {error && (() => {
+          const isRate = /rate limit/i.test(error)
+          const isAuth = /authentication|api key/i.test(error)
+          const isModel = /model.*not found/i.test(error)
+          const Icon = isRate ? Clock : Info
+          const hint = isRate
+            ? ' — please wait a moment, then retry or try a different model.'
+            : isAuth
+              ? ' — check Settings → AI Models.'
+              : isModel
+                ? ' — pick an available model in Settings.'
+                : ''
+          return (
+            <div className={`eve-error-banner ${isRate ? 'eve-error-banner--rate' : isAuth ? 'eve-error-banner--auth' : ''}`} role="alert">
+              <Icon size={16} />
+              <span>{error}{hint}</span>
+            </div>
+          )
+        })()}
 
         {messages.length <= 1 && (
           <div className="eve-starter-prompts">

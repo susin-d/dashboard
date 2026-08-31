@@ -73,4 +73,12 @@ Historical implementation log extracted from `context.md`. `context.md` now hold
 - **Android:** `cap sync + gradle` with `REQUEST_INSTALL_PACKAGES` deferred (Phase 1 browser `window.open(url)`), versionCode monotonic, OTA via self-host `bundles/latest.json` capable (Capgo plugin optional).
 - **Docs:** `docs/BUILD.md` (prereqs, debug/release/publish, troubleshooting), `docs/adr/0003-build-scripts-android-tauri.md`, `0004-backend-hosted-auto-update.md`, `README` index, `context.md` last-updated, `.gitignore` keys/binaries, `nginx` CORS maps, verify `npm run lint && npm run build` ok.
 
+## 2026-08-31 — AI provider hardening (ADR 0005) — universal OpenAI + adapter fixes
+
+- **Core:** `core/config.py` `DEFAULT_AI_PROVIDER ollama→openai`, `OPENAI_MODEL gpt-5-mini→gpt-4o-mini`, `GROQ_MODEL llama-3.1-70b→llama-3.3-70b-versatile`, `OPENROUTER_MODEL gpt-4o→gpt-4o-mini`.
+- **Config fallback:** `ai_models/config.py` now `_first_available_provider()` priority `openai→anthropic→gemini→groq→openrouter→ollama→opencode`; `build_ai_config("default")` resolves to first available, not hard-coded ollama; `_client_options` injects OpenRouter `HTTP-Referer`/`X-Title` + suppresses placeholder `Bearer ollama` for discovery.
+- **Catalog/discovery:** `catalog` doc update; `discovery` prefix `gpt-5/o4/gpt-3/4` broadened, cache handles `ollama` placeholder, `_fetch_openai_compatible_models` no auth for placeholder + Referer/Title for OpenRouter, unified mirrors fix.
+- **Adapters:** `openai` streams `reasoning` deltas; `anthropic` `MAX_TOKENS 4096→8192` + base_url forwarding; `gemini` thought/thinking handling for 2.5+ (`thought_signature`); `openai_compat` OpenRouter default_headers injection.
+- **Docs:** `docs/adr/0005-ai-provider-hardening-universal-openai.md` + `README` index; `context.md` last-updated.
+
 *Generated: 2026-08-27 from former `context.md` history block. New changes go to `context.md` `Last updated` one-liner.*

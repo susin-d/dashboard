@@ -5,6 +5,19 @@
       "schedule": "*/15 * * * *"
     }
   ],
+  "redirects": [
+    {
+      "source": "/(.*)",
+      "has": [
+        {
+          "type": "host",
+          "value": "starwaves.vercel.app"
+        }
+      ],
+      "destination": "https://starwaves.susindran.in/$1",
+      "permanent": true
+    }
+  ],
   "rewrites": [
     {
       "source": "/((?!api/).*)",

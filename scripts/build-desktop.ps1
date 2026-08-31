@@ -142,8 +142,8 @@ if ($BuildType -eq "release" -and $hasSigning) {
 if (-not $SkipWebBuild) {
   Write-Step "Web build (vite)"
   Push-Location -LiteralPath "website"
-  if (Test-Path -LiteralPath "package-lock.json") { & npm ci } else { & npm install }
-  if ($LASTEXITCODE -ne 0) { throw "npm ci failed" }
+  & npm install
+  if ($LASTEXITCODE -ne 0) { throw "npm install failed" }
   & npm run build
   if ($LASTEXITCODE -ne 0) { throw "vite build failed" }
   Pop-Location

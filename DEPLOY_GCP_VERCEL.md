@@ -41,8 +41,8 @@ cp .env.docker.example server/.env
 nano server/.env  # set:
 #  AUTH_SECRET_KEY=$(openssl rand -base64 48)
 #  CRON_SECRET=$(openssl rand -hex 32)
-#  CORS_ORIGINS=https://starwaves.vercel.app,https://starwaves.susindran.in,https://*.vercel.app,http://<VM_EXTERNAL_IP>
-#  FRONTEND_URL=https://starwaves.vercel.app
+#  CORS_ORIGINS=https://starwaves.susindran.in,https://starwaves.vercel.app,https://*.vercel.app,http://<VM_EXTERNAL_IP>
+#  FRONTEND_URL=https://starwaves.susindran.in  # canonical — vercel.app 308s to this (avoids Safe Browsing phishing flag)
 #  DATABASE_URL=postgresql+asyncpg://starwaves:starwaves_password@postgres:5432/starwaves
 #  plus OPENAI/ANTHROPIC/GEMINI keys etc
 
@@ -62,7 +62,7 @@ docker compose -f docker-compose.yml -f docker-compose.backend.yml logs -f serve
 
 `nginx/conf.d/default.backend.conf` on VM serves:
 - `GET /health`, `/api/*`, `/ws/*`, `/docs` → `server:8000`
-- `GET /` → `302` to `https://starwaves.vercel.app`
+- `GET /` → `302` to `https://starwaves.susindran.in` (canonical — `starwaves.vercel.app` 308s at edge via `vercel.json`)
 
 Add DNS **A** `api.starwaves.susindran.in` `→ <VM_EXTERNAL_IP>` and TLS:
 
@@ -108,7 +108,12 @@ VITE_API_URL=https://api.starwaves.susindran.in/api/v1
 # or http://<VM_EXTERNAL_IP>/api/v1 during dev
 ```
 
-`vercel.json` already SPA rewrites (`/(.*) → /index.html`), no API proxy needed — frontend calls GCP directly.
+Vercel Project → Settings → Domains:
+
+- Add `starwaves.susindran.in` (and `www` if owned) → set as **Primary**
+- Vercel auto-issues TLS. `starwaves.vercel.app` is kept for preview deploys but 308-redirected to canonical at edge (see `vercel.json` `redirects`).
+
+`vercel.json` SPA rewrites (`/((?!api/).*) → /index.html`) + `redirects` 308 `starwaves.vercel.app → starwaves.susindran.in` — no API proxy, frontend calls GCP directly.
 On push to `main`, Vercel auto-deploys `website/`.
 
 Local dev still works:

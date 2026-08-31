@@ -35,7 +35,23 @@ def chat_with_eve(
             logger.warning(f"[Eve Chat] Session '{session_id}' not found for user {user_id}: {error}")
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(error)) from error
 
-    context = resolve_chat_context(database, user_id, messages)
+    try:
+        context = resolve_chat_context(database, user_id, messages)
+    except AIServiceError as error:
+        logger.error(f"[Eve Chat] AI config error for user {user_id}: {error}", exc_info=True)
+        code = getattr(error, "status_code", 502)
+        headers = {"Retry-After": str(error.retry_after)} if getattr(error, "retry_after", None) else None
+        raise HTTPException(
+            status_code=code,
+            detail=f"Eve AI service error: {error}",
+            headers=headers,
+        ) from error
+    except Exception as error:
+        logger.error(f"[Eve Chat] Unexpected config error for user {user_id}: {type(error).__name__}: {error}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail=f"Eve chat error: {type(error).__name__}: {error}",
+        ) from error
 
     try:
         message, changed_resources, actions = run_tool_loop(
@@ -53,9 +69,12 @@ def chat_with_eve(
             f"[Eve Chat] AI service error with provider='{context.config.provider}', model='{context.config.model}' for user {user_id}: {error}",
             exc_info=True,
         )
+        code = getattr(error, "status_code", 502)
+        headers = {"Retry-After": str(error.retry_after)} if getattr(error, "retry_after", None) else None
         raise HTTPException(
-            status_code=status.HTTP_502_BAD_GATEWAY,
+            status_code=code,
             detail=f"Eve AI service error ({context.config.provider}/{context.config.model}): {error}",
+            headers=headers,
         ) from error
     except Exception as error:
         logger.error(

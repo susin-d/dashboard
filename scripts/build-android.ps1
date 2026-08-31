@@ -121,8 +121,9 @@ if (Test-Path -LiteralPath $gp) {
 if (-not $SkipWebBuild) {
   Write-Step "Web build + Capacitor sync"
   Push-Location -LiteralPath "website"
-  if (Test-Path -LiteralPath "package-lock.json") { & npm ci } else { & npm install }
-  if ($LASTEXITCODE -ne 0) { throw "npm ci failed" }
+  # Use npm install (ci is too strict/slow when optionalDeps change); npm install is resilient
+  & npm install
+  if ($LASTEXITCODE -ne 0) { throw "npm install failed" }
   & npm run build
   if ($LASTEXITCODE -ne 0) { throw "vite build failed" }
   & npx cap sync android
@@ -169,16 +170,17 @@ if ($IsWindows -or $env:OS -like "*Windows*") {
 }
 
 Push-Location -LiteralPath "website/android"
-$gradleCmd = ".\$gradlew $($gradleArgs -join ' ')"
-if ($gradlew -eq "gradlew") { $gradleCmd = "./gradlew $($gradleArgs -join ' ')" }
+$gradleExe = ".\$gradlew"
+if ($gradlew -eq "gradlew") { $gradleExe = "./gradlew" }
+$gradleCmd = "$gradleExe $($gradleArgs -join ' ')"
 # JAVA_HOME override via cli if present
 $extra = ""
 if ($env:JAVA_HOME) { $extra = " -Dorg.gradle.java.home=`"$env:JAVA_HOME`"" }
 Write-Host "  $gradleCmd$extra" -ForegroundColor DarkGray
 if ($env:JAVA_HOME) {
-  & $gradlew @gradleArgs "-Dorg.gradle.java.home=$env:JAVA_HOME"
+  & $gradleExe @gradleArgs "-Dorg.gradle.java.home=$env:JAVA_HOME"
 } else {
-  & $gradlew @gradleArgs
+  & $gradleExe @gradleArgs
 }
 $code = $LASTEXITCODE
 Pop-Location

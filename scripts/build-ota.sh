@@ -11,7 +11,7 @@ green(){ echo -e "\033[32m  ✓ $*\033[0m"; }
 cyan "OTA bundle build v$VERSION"
 if [[ ! -f website/dist/index.html ]]; then
   pushd website >/dev/null
-  if [[ -f package-lock.json ]]; then npm ci; else npm install; fi
+  npm install
   npm run build
   popd >/dev/null
 fi

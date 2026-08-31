@@ -18,7 +18,6 @@
     "createUpdaterArtifacts": "v1Compatible"
   },
   "app": {
-    "title": "Starwaves",
     "windows": [
       {
         "title": "Starwaves",

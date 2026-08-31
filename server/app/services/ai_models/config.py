@@ -84,12 +84,29 @@ def effective_base_url(provider: str) -> str | None:
     return None
 
 
+_PREFERRED_PROVIDER_ORDER = ["openai", "anthropic", "gemini", "groq", "openrouter", "ollama", "opencode"]
+
+
+def _first_available_provider() -> str:
+    """Return the first provider with a server key, falling back to DEFAULT_PROVIDER."""
+    for candidate in _PREFERRED_PROVIDER_ORDER:
+        if has_server_key(candidate):
+            return candidate
+    return DEFAULT_PROVIDER
+
+
 def _client_options(provider: str, user_api_key: str | None = None) -> dict[str, Any]:
     api_key = user_api_key or effective_api_key(provider, {})
 
     options: dict[str, Any] = {}
     if api_key:
-        options["api_key"] = api_key
+        # Ollama placeholder must not be sent as a real Bearer header for discovery —
+        # OpenAI SDK still requires some key, but discovery skips auth for it.
+        if not (provider == "ollama" and api_key == "ollama"):
+            options["api_key"] = api_key
+        else:
+            # Local Ollama: SDK still needs a dummy key, but discovery will omit header
+            options["api_key"] = "ollama"
     elif provider == "ollama":
         # Ollama needs a placeholder key for the OpenAI SDK
         options["api_key"] = "ollama"
@@ -97,6 +114,15 @@ def _client_options(provider: str, user_api_key: str | None = None) -> dict[str,
     base_url = effective_base_url(provider)
     if base_url:
         options["base_url"] = base_url
+    # OpenRouter requires Referer + Title for ranking/free-tier; inject defaults
+    if provider == "openrouter":
+        default_headers = options.get("default_headers") or {}
+        # Only set if not already provided via client_options
+        if "HTTP-Referer" not in default_headers and "Referer" not in default_headers:
+            default_headers["HTTP-Referer"] = settings.frontend_url
+        if "X-Title" not in default_headers:
+            default_headers["X-Title"] = "Starwaves"
+        options["default_headers"] = default_headers
     return options
 
 
@@ -106,10 +132,11 @@ def build_ai_config(
     user_api_key: str | None = None,
 ) -> AiConfig:
     if provider in ("default", "", None) or provider not in AI_PROVIDERS:
-        provider = DEFAULT_PROVIDER
+        provider = _first_available_provider()
         user_api_key = None
     elif not user_api_key and not has_server_key(provider):
-        provider = DEFAULT_PROVIDER
+        # Requested provider has no server key and no user key — fallback to first available
+        provider = _first_available_provider()
         user_api_key = None
 
     descriptor = AI_PROVIDERS[provider]
