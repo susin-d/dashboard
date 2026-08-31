@@ -2,7 +2,53 @@ import { getDeviceId, getDeviceName, getStoredAuthToken } from './authApi'
 
 export const API_URL = import.meta.env.VITE_API_URL ?? 'http://127.0.0.1:8000/api/v1'
 
+// Warn if prod build points to localhost (common Vercel mis-config)
+if (typeof window !== 'undefined' && import.meta.env.PROD && API_URL.includes('127.0.0.1')) {
+  console.warn('[StarWaves] VITE_API_URL is localhost in production — set Vercel env to https://api.starwaves.susindran.in/api/v1')
+}
+if (typeof window !== 'undefined' && import.meta.env.PROD && API_URL.startsWith('http://')) {
+  console.warn('[StarWaves] VITE_API_URL should be https:// in production, got', API_URL)
+}
+
 const DEFAULT_REQUEST_TIMEOUT_MS = 30_000
+const DEFAULT_RETRIES_FOR_IDEMPOTENT = 2
+
+// Frontend concurrency limiter — prevents dashboard thundering herd
+// e2-micro Nginx: 10r/s burst 60. Dashboard fires ~15 GETs (+15 OPTIONS preflights =30).
+// Limiting JS to 4 concurrent keeps Nginx ≤8 in-flight, well under burst.
+const MAX_CONCURRENT_REQUESTS = 6
+let activeRequests = 0
+const requestQueue = []
+
+function withConcurrencyLimit(task) {
+  return new Promise((resolve, reject) => {
+    const run = async () => {
+      activeRequests += 1
+      try {
+        const result = await task()
+        resolve(result)
+      } catch (error) {
+        reject(error)
+      } finally {
+        activeRequests -= 1
+        const next = requestQueue.shift()
+        if (next) next()
+      }
+    }
+    if (activeRequests < MAX_CONCURRENT_REQUESTS) run()
+    else requestQueue.push(run)
+  })
+}
+
+function isRetryableNetworkError(error) {
+  const msg = error?.message ?? ''
+  return (
+    msg.includes('Failed to fetch') ||
+    msg.includes('NetworkError') ||
+    msg.includes('Load failed') ||
+    msg.includes('too long')
+  )
+}
 
 // Lightweight dedup + cache for GET on e2-micro single worker (reduces thundering herd)
 // Default policy: cache GETs for 30s unless caller opts out with useCache:false or useCacheTtl:0
@@ -79,6 +125,8 @@ export async function apiRequest(
   } = {},
 ) {
   const method = (fetchOptions.method || 'GET').toUpperCase()
+  // Default retries: idempotent GETs retry on 429/503/network; mutations do not
+  if (retries === 0 && method === 'GET') retries = DEFAULT_RETRIES_FOR_IDEMPOTENT
   const fullUrl = `${API_URL}${basePath}${path}`
   const dedupKey = cacheKey(method, fullUrl + JSON.stringify(fetchOptions.body || ''))
   const effectiveUseCache = shouldCacheGet(path, useCache, useCacheTtl, method)
@@ -114,25 +162,38 @@ export async function apiRequest(
   const exec = async (attempt = 0) => {
     let response
     try {
-      response = await fetchWithTimeout(fullUrl, {
-        ...fetchOptions,
-        headers: { ...headers, ...fetchOptions.headers },
-      }, timeoutMs)
+      response = await withConcurrencyLimit(() =>
+        fetchWithTimeout(fullUrl, {
+          mode: 'cors',
+          credentials: 'omit',
+          ...fetchOptions,
+          headers: { ...headers, ...fetchOptions.headers },
+        }, timeoutMs)
+      )
     } catch (error) {
-      // Retry on timeout/network for transient e2-micro burst throttling
-      if (attempt < retries && error.message?.includes('too long')) {
-        await new Promise((r) => setTimeout(r, 300 * (attempt + 1)))
+      // Retry on timeout / network / CORS-blocked (Failed to fetch) for transient e2-micro burst throttling
+      // Nginx 429 without CORS manifests as TypeError: Failed to fetch — retry with jitter
+      if (attempt < retries && isRetryableNetworkError(error)) {
+        const jitter = 100 + Math.random() * 200
+        const delay = 350 * Math.pow(1.8, attempt) + jitter
+        await new Promise((r) => setTimeout(r, delay))
         return exec(attempt + 1)
       }
       if (onFetchError) throw onFetchError(error)
+      // Surface a friendlier message for CORS/network failures
+      if (isRetryableNetworkError(error)) {
+        throw new Error('Network error — please check your connection and try again.')
+      }
       throw error
     }
 
     if (!response.ok) {
-      // Retry on 429/502/503 with backoff
+      // Retry on 429/502/503 with backoff + jitter (respects Retry-After when Nginx/RateLimit sends it)
       if (attempt < retries && [429, 502, 503].includes(response.status)) {
         const retryAfter = parseInt(response.headers.get('Retry-After') || '0', 10)
-        const delay = retryAfter ? retryAfter * 1000 : 400 * Math.pow(2, attempt)
+        const baseDelay = retryAfter ? retryAfter * 1000 : 400 * Math.pow(2, attempt)
+        const jitter = 100 + Math.random() * 200
+        const delay = baseDelay + jitter
         await new Promise((r) => setTimeout(r, delay))
         return exec(attempt + 1)
       }

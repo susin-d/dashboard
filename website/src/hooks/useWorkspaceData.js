@@ -167,7 +167,8 @@ export function useWorkspaceData(currentUser, activePage, refreshKey = 0) {
   }, [calendarEventIndex, firedReminderIds, setFiredReminderIds])
 
   // Consolidated workspace fetch — single debounced effect for all refreshKey-gated resources
-  // Previously 3 separate effects fired 8 parallel requests; now one effect + debounced key collapses bursts
+  // Staggered to avoid e2-micro burst (15 GETs + 15 OPTIONS =30 → Nginx burst 60, but JS concurrency limiter =6)
+  // Delays spread the 8 parallel requests (was 3 effects firing 8 at once) across 600ms
   useEffect(() => {
     let active = true
     if (!currentUserId) {
@@ -181,7 +182,17 @@ export function useWorkspaceData(currentUser, activePage, refreshKey = 0) {
       return () => { active = false }
     }
 
-    // Google calendar + documents (2)
+    const staggered = (fn, delayMs) =>
+      new Promise((resolve, reject) => {
+        window.setTimeout(() => {
+          Promise.resolve()
+            .then(fn)
+            .then(resolve)
+            .catch(reject)
+        }, delayMs)
+      })
+
+    // Tier 1: immediate (docs + calendar, cheap and cached)
     loadGoogleCalendarData()
       .then(({ events }) => { if (active) setGoogleCalendarEvents(events) })
       .catch((error) => { console.error('Could not load Google Calendar:', error); if (active) setGoogleCalendarEvents([]) })
@@ -189,18 +200,18 @@ export function useWorkspaceData(currentUser, activePage, refreshKey = 0) {
       .then((savedDocuments) => { if (active) setDocuments(savedDocuments) })
       .catch((error) => { console.error('Could not load documents:', error); if (active) setDocuments([]) })
 
-    // Todos (1)
-    loadTodos()
+    // Tier 2: todos staggered 120ms (so not all at t=0)
+    staggered(loadTodos, 120)
       .then((savedTasks) => { if (active) setTasks(savedTasks) })
       .catch((error) => { console.error('Could not load todos:', error); if (active) setTasks([]) })
 
-    // Core workspace batch (5) — respects request.js GET cache (30s TTL) so re-hits within TTL are free
+    // Core workspace batch (5) — staggered 0/150/300/450ms, respects request.js GET cache (30s TTL) + concurrency limiter (6)
     Promise.allSettled([
-      loadJobs(),
-      loadHackathons(),
-      loadNotifications(),
-      loadContests(),
-      loadProjects(),
+      loadJobs(), // t=0
+      staggered(loadHackathons, 150),
+      staggered(loadNotifications, 300),
+      staggered(loadContests, 300),
+      staggered(loadProjects, 450),
     ]).then(([jobsResult, hackathonsResult, notificationsResult, contestsResult, projectsResult]) => {
       if (!active) return
       const jobsPage = jobsResult.status === 'fulfilled' ? jobsResult.value : { items: [] }
@@ -290,9 +301,10 @@ export function useWorkspaceData(currentUser, activePage, refreshKey = 0) {
     }
   }, [currentUserId, activePage])
 
-  // GitHub Data Fetch — gated by uid, not object ref
+  // GitHub Data Fetch — gated by uid, staggered 600ms to avoid burst with core batch
   useEffect(() => {
     let active = true
+    let timeoutId
     if (!currentUserId) {
       setProjects([])
       setCodingStats((current) => ({ ...current, github: {} }))
@@ -300,7 +312,8 @@ export function useWorkspaceData(currentUser, activePage, refreshKey = 0) {
         active = false
       }
     }
-    loadGithubData()
+    const run = () =>
+      loadGithubData()
       .then((data) => {
         if (!active) return
         setCodingStats((current) => ({
@@ -339,8 +352,10 @@ export function useWorkspaceData(currentUser, activePage, refreshKey = 0) {
           setCodingStats((current) => ({ ...current, github: {} }))
         }
       })
+    timeoutId = window.setTimeout(run, 600)
     return () => {
       active = false
+      window.clearTimeout(timeoutId)
     }
   }, [currentUserId])
 
