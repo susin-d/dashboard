@@ -77,6 +77,12 @@ export function useEveAgentChat({ workspaceId, workspaceName, activeFilePath, on
           if (controller.signal.aborted) {
             donePayload = { message: receivedText, changed_resources: [], actions: [] }
           } else if (!receivedText) {
+            const isRate = streamError.code === 'rate_limit' || streamError.status === 429 || /rate limit/i.test(streamError.message || '')
+            if (isRate) {
+              setError(streamError.message || 'Rate limit exceeded. Please wait a moment and retry.')
+              commit('')
+              return
+            }
             fallbackToRest = true
           } else {
             setError(streamError.message || 'Eve response was interrupted.')
@@ -86,10 +92,22 @@ export function useEveAgentChat({ workspaceId, workspaceName, activeFilePath, on
         }
 
         if (fallbackToRest) {
-          const response = await sendEveMessage(apiMessages, null)
-          commit(response.message)
-          if (response.changed_resources?.includes(WORKSPACE_CHANGED_RESOURCE)) onFilesChanged?.()
-          return
+          try {
+            const response = await sendEveMessage(apiMessages, null)
+            commit(response.message)
+            if (response.changed_resources?.includes(WORKSPACE_CHANGED_RESOURCE)) onFilesChanged?.()
+            return
+          } catch (restError) {
+            const status = restError?.status || 502
+            const code = restError?.code
+            const isRate = status === 429 || code === 'rate_limit' || /rate limit/i.test(restError.message || '')
+            const isAuth = status === 401 || code === 'auth' || /authentication|api key/i.test(restError.message || '')
+            if (isRate) setError(restError.message || 'Rate limit exceeded. Please wait a moment and retry.')
+            else if (isAuth) setError(restError.message || 'Authentication failed. Check Settings → AI Models.')
+            else setError(restError.message || 'Eve is unavailable right now.')
+            commit('')
+            return
+          }
         }
 
         const finalText = donePayload?.message ?? receivedText

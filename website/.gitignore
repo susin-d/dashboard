@@ -28,6 +28,7 @@ dist-ssr
 
 # Tauri + Android build outputs
 src-tauri/target/
+src-tauri/gen/
 android/.gradle/
 android/app/build/
 android/app/release.keystore

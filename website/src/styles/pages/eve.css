@@ -1764,6 +1764,18 @@
   font-size: 0.82rem;
 }
 
+.eve-error-banner--rate {
+  border-color: var(--border-heavy, #52525b);
+  border-left: 3px solid var(--text-primary, #ffffff);
+  background: var(--bg-secondary, #121212);
+}
+
+.eve-error-banner--auth {
+  border-color: var(--border-heavy, #52525b);
+  border-left: 3px solid var(--text-secondary, #a1a1aa);
+  background: var(--bg-secondary, #121212);
+}
+
 .eve-success-banner {
   display: flex;
   align-items: center;
