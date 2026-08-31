@@ -77,6 +77,8 @@ class Settings:
         "AUTH_GOOGLE_CALLBACK_URL",
         "http://127.0.0.1:8000/api/v1/auth/google/callback",
     )
+    native_app_scheme_android: str = os.getenv("NATIVE_APP_SCHEME_ANDROID", "com.starwaves.app")
+    native_app_scheme_tauri: str = os.getenv("NATIVE_APP_SCHEME_TAURI", "app.starwaves.workspace")
     auth_secret_key: str = os.getenv("AUTH_SECRET_KEY") or (
         "starwaves-super-secret-auth-key-change-in-prod" if app_env != "production" else ""
     )

@@ -32,6 +32,10 @@
     }
   },
   "plugins": {
+    "deepLink": {
+      "domains": false,
+      "schemes": ["com.starwaves.app", "app.starwaves.workspace"]
+    },
     "updater": {
       "pubkey": "",
       "endpoints": ["https://api.starwaves.susindran.in/api/v1/updates/latest.json"],

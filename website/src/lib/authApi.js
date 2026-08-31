@@ -105,6 +105,92 @@ export function consumeAuthTokenFromHash() {
   return true
 }
 
+export function consumeAuthTokenFromUrl(url) {
+  if (!url) return false
+  try {
+    const u = new URL(url)
+    let token = u.searchParams.get('token')
+    if (!token && u.hash) {
+      const hp = new URLSearchParams(u.hash.slice(1))
+      token = hp.get('token')
+      if (!token && u.hash.includes('token=')) {
+        const parts = u.hash.split('token=')
+        token = decodeURIComponent(parts[1]?.split('&')[0] || '').trim()
+      }
+    }
+    if (token) {
+      const decoded = decodeURIComponent(token).trim()
+      if (decoded) {
+        setStoredAuthToken(decoded, undefined)
+        // Close Capacitor Browser if open
+        try {
+          import('@capacitor/browser').then(({ Browser }) => Browser.close().catch(() => {})).catch(() => {})
+        } catch {}
+        return true
+      }
+    }
+  } catch {}
+  return false
+}
+
+let _nativeOAuthSetup = false
+export function setupNativeOAuthListeners() {
+  if (_nativeOAuthSetup || typeof window === 'undefined') return
+  _nativeOAuthSetup = true
+  // Capacitor Android deep-link
+  try {
+    const cap = window.Capacitor
+    if (cap?.isNativePlatform?.()) {
+      import('@capacitor/app').then(({ App }) => {
+        App.addListener('appUrlOpen', (data) => {
+          if (data?.url && data.url.includes('token=')) {
+            if (consumeAuthTokenFromUrl(data.url)) {
+              window.dispatchEvent(new Event('starwaves:auth-change'))
+              // Navigate to dashboard
+              try { window.history.replaceState({}, '', '/app/dashboard'); window.dispatchEvent(new PopStateEvent('popstate')) } catch {}
+              window.location.replace('/app/dashboard')
+            }
+          }
+        }).catch(() => {})
+      }).catch(() => {})
+      // Also handle launch URL (cold start)
+      try {
+        import('@capacitor/app').then(({ App }) => {
+          App.getLaunchUrl?.().then((res) => {
+            if (res?.url && res.url.includes('token=')) consumeAuthTokenFromUrl(res.url)
+          }).catch(() => {})
+        }).catch(() => {})
+      } catch {}
+    }
+  } catch {}
+  // Tauri deep-link
+  try {
+    if (window.__TAURI__ || navigator.userAgent.includes('Tauri')) {
+      import('@tauri-apps/plugin-deep-link').then(({ onOpenUrl }) => {
+        onOpenUrl((urls) => {
+          const list = Array.isArray(urls) ? urls : [urls]
+          for (const u of list) {
+            if (typeof u === 'string' && u.includes('token=')) {
+              if (consumeAuthTokenFromUrl(u)) {
+                window.location.replace('/app/dashboard')
+              }
+            }
+          }
+        })
+      }).catch(() => {})
+      // Fallback: also check current URL for token (tauri://localhost?token=...)
+      if (window.location.href.includes('token=')) consumeAuthTokenFromUrl(window.location.href)
+    }
+  } catch {}
+  // Also check current location on web for native scheme passthrough (e.g. after redirect)
+  try {
+    if (window.location.href.includes('token=')) {
+      // For web reuse of consume
+      consumeAuthTokenFromHash()
+    }
+  } catch {}
+}
+
 function request(path, options = {}) {
   return apiRequest(path, {
     errorMessage: 'Authentication request failed.',
@@ -205,10 +291,54 @@ export async function updateCurrentUserProfile(profileData) {
 }
 
 export async function beginGoogleOAuth() {
-  const origin = typeof window !== 'undefined' ? window.location.origin : ''
-  const data = await request(`/auth/google/login?origin=${encodeURIComponent(origin)}`, { authRequired: false })
+  const isCapacitorNative = (() => {
+    try { return !!window.Capacitor?.isNativePlatform?.() && window.Capacitor.isNativePlatform() } catch { return false }
+  })()
+  const isTauri = typeof window !== 'undefined' && (!!window.__TAURI__ || navigator.userAgent.includes('Tauri'))
+  let platform = 'web'
+  let origin = typeof window !== 'undefined' ? window.location.origin : ''
+  if (isCapacitorNative) {
+    platform = 'android'
+    // Use capacitor scheme as origin for backend validation
+    origin = 'capacitor://localhost'
+    // Also ensure listener is set up before opening browser
+    setupNativeOAuthListeners()
+  } else if (isTauri) {
+    platform = 'tauri'
+    origin = 'tauri://localhost'
+    setupNativeOAuthListeners()
+  }
+  const data = await request(`/auth/google/login?origin=${encodeURIComponent(origin)}&platform=${platform}`, { authRequired: false })
   if (!data?.url) throw new Error('Could not initiate Google authentication.')
 
+  if (platform === 'android') {
+    try {
+      const { Browser } = await import('@capacitor/browser')
+      await Browser.open({ url: data.url, windowName: '_blank' })
+      // Keep promise pending; deep-link will resolve via appUrlOpen
+      return new Promise(() => {})
+    } catch {
+      // Fallback to system open via window
+      window.location.assign(data.url)
+      return new Promise(() => {})
+    }
+  }
+  if (platform === 'tauri') {
+    try {
+      const shell = await import('@tauri-apps/plugin-shell').catch(() => null)
+      if (shell?.open) {
+        await shell.open(data.url)
+      } else if (window.__TAURI__?.shell?.open) {
+        await window.__TAURI__.shell.open(data.url)
+      } else {
+        window.open(data.url, '_blank', 'noopener')
+      }
+      return new Promise(() => {})
+    } catch {
+      window.location.assign(data.url)
+      return new Promise(() => {})
+    }
+  }
   window.location.assign(data.url)
   return new Promise(() => {})
 }
@@ -255,4 +385,12 @@ export function revokeDeviceSession(sessionId) {
 
 export function revokeOtherSessions() {
   return request('/auth/sessions/revoke-others', { method: 'POST' })
+}
+
+// Auto-setup native OAuth listeners on load (deep-link)
+if (typeof window !== 'undefined') {
+  try {
+    // Defer to next tick so Capacitor bridge is ready
+    setTimeout(() => { try { setupNativeOAuthListeners() } catch {} }, 0)
+  } catch {}
 }

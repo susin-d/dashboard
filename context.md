@@ -2,7 +2,7 @@
 
 Living snapshot for AI agents. `AGENTS.md` holds permanent rules; this file holds the **current state**. See `CHANGELOG.md` for history and `PROJECT_MAP.md` for the file index.
 
-Last updated: 2026-08-31 — Differentiated AI errors: rate_limit→429 vs auth/model/context/server with distinct messages (ADR 0007) + provider classifier + Eve banners
+Last updated: 2026-08-31 — OAuth deep-link for native (android com.starwaves.app + tauri app.starwaves.workspace → 302 deep-link with token, Capacitor Browser/App + Tauri deep-link plugin, isNativeApp landing→login, mobile auth 16px/safe-area) + ADR 0008
 
 ## Contents
 1. [Overview](#1-overview) · 2. [Repository structure](#2-repository-structure) · 3. [Backend](#3-backend) · 4. [Frontend](#4-frontend) · 5. [Design system](#5-design-system) · 6. [Current snapshot](#6-current-snapshot) · 7. [Limitations](#7-limitations) · 8. [Verification](#8-verification)
@@ -15,7 +15,7 @@ Personal productivity workspace: projects, jobs, tasks, documents, code workspac
 - **Desktop** (`/website/src-tauri`): Tauri v2 + bundle `msi/nsis` + `tauri-plugin-updater/process` (pubkey in tauri.conf, endpoints `api.starwaves.../updates/latest.json`).
 - **Worker** (`/services/whatsapp-worker`): Go (WhatsMeow) bridge.
 - **Build** (`/scripts`): `build-{android,desktop,ota,all}.{ps1,sh}` + `lib/common.ps1` (sign via env `TAURI_SIGNING_PRIVATE_KEY`/`ANDROID_KEYSTORE_*`, version sync `package.json→gradle/tauri.conf`, `cap sync`, `gradlew/tauri build`, scp publish).
-- **Auth:** Bearer `itsdangerous` tokens + Google OAuth. Deploy targets Vercel (serverless) or Docker VM.
+- **Auth:** Bearer `itsdangerous` tokens + Google OAuth (web popup + native deep-link `com.starwaves.app://` / `app.starwaves.workspace://` via `platform` state → 302, Capacitor Browser/App + Tauri deep-link, `isNativeApp` landing→login, 16px mobile inputs). Deploy targets Vercel (serverless) or Docker VM.
 
 ## 2. Repository structure
 ```text
@@ -26,7 +26,7 @@ starwaves/
 ├── sql/                extensions.sql, schema.sql (18 tables incl. user_sessions+ai_usage), migrations.sql, indexes.sql (incl. HNSW)
 ├── nginx/              reverse proxy (10r/s burst 60, /api /ws /updates + Gzip; alias /updates → server_backend)
 ├── scripts/            build-android/desktop/ota/all (.ps1+.sh, lib/common) + deploy (vm-*, pc-*)
-├── docs/adr/           ADRs (0001 no-sub-agents, 0002 eve-tool-calling, 0003 build scripts, 0004 auto-update, 0005 ai-provider-hardening, 0006 canonical-domain, 0007 diff-errors + _template + README)
+├── docs/adr/           ADRs (0001 no-sub-agents, 0002 eve-tool-calling, 0003 build scripts, 0004 auto-update, 0005 ai-provider-hardening, 0006 canonical-domain, 0007 diff-errors, 0008 oauth-deep-link + _template + README)
 ├── docs/BUILD.md       Build guide (Android APK/AAB + Desktop MSI/NSIS + OTA)
 ├── PROJECT_MAP.md      Compact index for agents — read first (Tier 1)
 ├── context.md          This file — current snapshot (Tier 2, <15k)

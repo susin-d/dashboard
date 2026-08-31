@@ -20,6 +20,7 @@
 | [0005](0005-ai-provider-hardening-universal-openai.md) | AI provider hardening: universal OpenAI default + adapter fixes | Accepted | 2026-08-31 |
 | [0006](0006-canonical-domain-starwaves-susindran-in.md) | Canonical domain starwaves.susindran.in + api.starwaves.susindran.in | Accepted | 2026-08-31 |
 | [0007](0007-differentiated-ai-error-messages.md) | Differentiated AI provider error messages (rate limit vs other) | Accepted | 2026-08-31 |
+| [0008](0008-oauth-deep-link-mobile-auth.md) | OAuth deep-link for native + mobile login layout | Accepted | 2026-08-31 |
 
 ## How to add a new ADR
 

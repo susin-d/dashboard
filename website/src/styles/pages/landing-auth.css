@@ -2144,3 +2144,71 @@ html.dark-theme .landing-cinematic .public-nav {
     font-size: 22px;
   }
 }
+
+/* Mobile-first polish for native WebView (320–480) + prevent iOS zoom + safe-area */
+@media (max-width: 480px) {
+  .auth-page {
+    grid-template-columns: 1fr;
+    overflow-x: hidden;
+  }
+  .auth-brand-panel {
+    gap: 16px;
+    padding: 18px 14px;
+    min-height: auto;
+  }
+  .auth-brand-panel p {
+    font-size: 10px;
+  }
+  .auth-brand-panel small {
+    display: none;
+  }
+  .auth-form-panel {
+    padding: 18px 14px calc(18px + env(safe-area-inset-bottom));
+    min-height: auto;
+  }
+  .auth-form-shell {
+    width: 100%;
+    max-width: 100%;
+  }
+  .auth-heading {
+    margin-bottom: 18px;
+  }
+  .auth-heading h2 {
+    font-size: 20px;
+  }
+  .auth-heading span {
+    font-size: 12px;
+  }
+  .auth-form {
+    gap: 14px;
+  }
+  .auth-form label span input {
+    font-size: 16px !important;
+    height: 48px;
+    padding: 0 42px 0 42px;
+  }
+  .auth-google,
+  .auth-submit {
+    height: 48px;
+    font-size: 14px;
+    min-height: 44px;
+  }
+  .auth-divider {
+    margin: 16px 0;
+  }
+  .auth-switch {
+    font-size: 12px;
+  }
+}
+
+/* Ensure inputs never trigger iOS zoom and tap targets are 44px+ */
+.auth-form label span input,
+.onboarding-form input,
+.auth-otp-field {
+  font-size: 16px;
+}
+@media (min-width: 641px) {
+  .auth-form label span input {
+    font-size: 13px;
+  }
+}

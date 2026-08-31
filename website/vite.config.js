@@ -16,7 +16,7 @@ export default defineConfig({
     cssCodeSplit: true,
     chunkSizeWarningLimit: 600,
     rollupOptions: {
-      external: (id) => id.startsWith('@capgo/') || id.startsWith('@tauri-apps/'),
+      external: (id) => id.startsWith('@capgo/'),
       output: {
         manualChunks(id) {
           if (id.includes('node_modules')) {

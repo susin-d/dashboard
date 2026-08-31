@@ -78,6 +78,17 @@ function App() {
   const activeUser = currentUser || sessionUser
   const callCenter = useCallCenter({ user: activeUser })
   useSyncEvents({ user: activeUser, onInvalidate: () => setWorkspaceRefreshKey((k) => k + 1) })
+  const isNativeApp = (() => {
+    try {
+      if (typeof window !== 'undefined') {
+        if (window.Capacitor?.isNativePlatform?.() && window.Capacitor.isNativePlatform()) return true
+        if (window.__TAURI__) return true
+        if (navigator.userAgent.includes('Capacitor') || navigator.userAgent.includes('Tauri')) return true
+        if (window.location.protocol === 'capacitor:' || window.location.protocol === 'tauri:') return true
+      }
+    } catch {}
+    return false
+  })()
   const { update: appUpdate, dismiss: dismissAppUpdate } = useAutoUpdater()
 
   const resetToken = (() => {
@@ -593,6 +604,9 @@ function App() {
     if (!authReady) return <WaveLoader />
     if (resetToken) {
       return publicRoute(<AuthPage mode="reset" resetToken={resetToken} onNavigate={navigateRoute} onAuthenticate={beginOnboarding} />)
+    }
+    if (isNativeApp && !activeUser) {
+      return publicRoute(<AuthPage mode="login" onNavigate={navigateRoute} onAuthenticate={beginOnboarding} />)
     }
     return publicRoute(<LandingPage user={activeUser} onNavigate={navigateRoute} />)
   }
