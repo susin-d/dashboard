@@ -40,21 +40,6 @@
       "pubkey": "",
       "endpoints": ["https://api.starwaves.susindran.in/api/v1/updates/latest.json"],
       "windows": { "installMode": "passive" }
-    },
-    "process": {},
-    "fs": {
-      "scope": {
-        "allow": ["**"],
-        "deny": []
-      }
-    },
-    "shell": {
-      "open": true,
-      "scope": []
-    },
-    "dialog": {
-      "open": true,
-      "save": true
     }
   }
 }
