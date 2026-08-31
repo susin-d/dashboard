@@ -1,14 +1,22 @@
+import { createRequire } from 'node:module'
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+
+const require = createRequire(import.meta.url)
+const pkg = require('./package.json')
 
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
+  define: {
+    __APP_VERSION__: JSON.stringify(pkg.version || '0.1.0'),
+  },
   build: {
     target: 'esnext',
     cssCodeSplit: true,
     chunkSizeWarningLimit: 600,
     rollupOptions: {
+      external: (id) => id.startsWith('@capgo/') || id.startsWith('@tauri-apps/'),
       output: {
         manualChunks(id) {
           if (id.includes('node_modules')) {

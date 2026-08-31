@@ -2,7 +2,7 @@
 
 Living snapshot for AI agents. `AGENTS.md` holds permanent rules; this file holds the **current state**. See `CHANGELOG.md` for history and `PROJECT_MAP.md` for the file index.
 
-Last updated: 2026-08-31 — CORS/rate-limit fix: nginx burst 30→60, vercel regex+wildcard, conditional CORS maps + frontend concurrency 6 staggered 0/150/300/450/600ms + GET retries 2 with jitter (fix 429 No Allow-Origin)
+Last updated: 2026-08-31 — Build + auto-update: scripts/build-{android,desktop,ota,all}.{ps1,sh} + backend /api/v1/updates (Tauri latest.json signed, android.json, OTA) + /updates static mount + Nginx /updates proxy + frontend updaters (useAutoUpdater, UpdateBanner, UpdateSection) + Tauri bundler (msi/nsis, updater pubkey, process) + ADRs 0003/0004
 
 ## Contents
 1. [Overview](#1-overview) · 2. [Repository structure](#2-repository-structure) · 3. [Backend](#3-backend) · 4. [Frontend](#4-frontend) · 5. [Design system](#5-design-system) · 6. [Current snapshot](#6-current-snapshot) · 7. [Limitations](#7-limitations) · 8. [Verification](#8-verification)
@@ -10,10 +10,11 @@ Last updated: 2026-08-31 — CORS/rate-limit fix: nginx burst 30→60, vercel re
 ## 1. Overview
 Personal productivity workspace: projects, jobs, tasks, documents, code workspace, calendars, email, WhatsApp, hackathons, competitive programming, and EVE AI assistant.
 
-- **Frontend** (`/website`): React 19 + Vite + Vanilla CSS (monochrome) + Monaco Editor. Docker multi-stage + Nginx.
-- **Backend** (`/server`): FastAPI + Supabase PostgreSQL 16 + pgvector + Async SQLAlchemy 2.0.
-- **Desktop** (`/website/src-tauri`): Tauri v2 scaffold.
+- **Frontend** (`/website`): React 19 + Vite + Vanilla CSS (monochrome) + Monaco Editor. Docker multi-stage + Nginx. `vite define __APP_VERSION__` + updaters (`updatesApi`, `desktopUpdater`, `androidUpdater`, `otaUpdater`, `useAutoUpdater`, `UpdateBanner`, `UpdateSection` in Settings).
+- **Backend** (`/server`): FastAPI + Supabase PostgreSQL 16 + pgvector + Async SQLAlchemy 2.0. Mount `server/static/updates` at `/updates` (StaticFiles) + `/api/v1/updates` (check/latest/android/ota).
+- **Desktop** (`/website/src-tauri`): Tauri v2 + bundle `msi/nsis` + `tauri-plugin-updater/process` (pubkey in tauri.conf, endpoints `api.starwaves.../updates/latest.json`).
 - **Worker** (`/services/whatsapp-worker`): Go (WhatsMeow) bridge.
+- **Build** (`/scripts`): `build-{android,desktop,ota,all}.{ps1,sh}` + `lib/common.ps1` (sign via env `TAURI_SIGNING_PRIVATE_KEY`/`ANDROID_KEYSTORE_*`, version sync `package.json→gradle/tauri.conf`, `cap sync`, `gradlew/tauri build`, scp publish).
 - **Auth:** Bearer `itsdangerous` tokens + Google OAuth. Deploy targets Vercel (serverless) or Docker VM.
 
 ## 2. Repository structure
@@ -23,8 +24,10 @@ starwaves/
 ├── server/             FastAPI backend (app/api, app/core, app/db/sql, models, repos, schemas, services)
 ├── services/whatsapp-worker/  Go bridge
 ├── sql/                extensions.sql, schema.sql (18 tables incl. user_sessions+ai_usage), migrations.sql, indexes.sql (incl. HNSW)
-├── nginx/              reverse proxy (5r/s limit_req on /api & /ws, 20M cap, Gzip)
-├── docs/adr/           ADRs (0001 no-sub-agents, 0002 eve-tool-calling + _template + README)
+├── nginx/              reverse proxy (10r/s burst 60, /api /ws /updates + Gzip; alias /updates → server_backend)
+├── scripts/            build-android/desktop/ota/all (.ps1+.sh, lib/common) + deploy (vm-*, pc-*)
+├── docs/adr/           ADRs (0001 no-sub-agents, 0002 eve-tool-calling, 0003 build scripts, 0004 auto-update + _template + README)
+├── docs/BUILD.md       Build guide (Android APK/AAB + Desktop MSI/NSIS + OTA)
 ├── PROJECT_MAP.md      Compact index for agents — read first (Tier 1)
 ├── context.md          This file — current snapshot (Tier 2, <15k)
 ├── CHANGELOG.md        History log

@@ -56,6 +56,7 @@
 @import './styles/pages/usage.css';
 
 @import './styles/components/device-section.css';
+@import './styles/components/update-banner.css';
 
 /* Eve UI runtime overrides */
 @import './styles/components/eve-ui.css';

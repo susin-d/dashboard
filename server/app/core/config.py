@@ -155,6 +155,9 @@ class Settings:
     whatsapp_my_number: str = os.getenv("WHATSAPP_MY_NUMBER", "")
     whatsapp_my_jid: str = os.getenv("WHATSAPP_MY_JID", "")
     whatsapp_worker_secret: str | None = os.getenv("WHATSAPP_WORKER_SECRET")
+    updates_dir: str | None = os.getenv("UPDATES_DIR") or os.getenv("STATIC_UPDATES_DIR")
+    updater_secret: str | None = os.getenv("UPDATER_SECRET") or os.getenv("OTA_SECRET")
+    tauri_signing_public_key: str | None = os.getenv("TAURI_SIGNING_PUBLIC_KEY")
 
     # Twilio PSTN provider (dual call option: in-app WebRTC vs PSTN)
     twilio_account_sid: str | None = os.getenv("TWILIO_ACCOUNT_SID")

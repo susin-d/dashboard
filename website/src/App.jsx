@@ -48,6 +48,8 @@ import { WaveLoader } from './components/WaveLoader'
 import { useDialogAccessibility } from './hooks/useDialogAccessibility'
 import { CustomUIProvider } from './hooks/useCustomUI'
 import { EveUiBanner } from './components/ui/EveUiBanner'
+import { UpdateBanner } from './components/ui/UpdateBanner'
+import { useAutoUpdater } from './hooks/useAutoUpdater'
 
 const routeTitles = {
   '/': 'StarWaves — Developer productivity workspace',
@@ -76,6 +78,7 @@ function App() {
   const activeUser = currentUser || sessionUser
   const callCenter = useCallCenter({ user: activeUser })
   useSyncEvents({ user: activeUser, onInvalidate: () => setWorkspaceRefreshKey((k) => k + 1) })
+  const { update: appUpdate, dismiss: dismissAppUpdate } = useAutoUpdater()
 
   const resetToken = (() => {
     const hash = window.location.hash || ''
@@ -685,6 +688,7 @@ function App() {
         </Suspense>
       </AppLayout>
       <IncomingCallOverlay callCenter={callCenter} myUid={userProfile?.uid} />
+      <UpdateBanner update={appUpdate} onDismiss={dismissAppUpdate} />
       <EveUiBanner />
     </CustomUIProvider>
   )

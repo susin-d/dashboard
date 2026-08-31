@@ -28,6 +28,9 @@ def render_template(template_name: str, context: dict) -> str:
     return template.render(**context)
 
 
+SMTP_TIMEOUT_SECONDS = 15
+
+
 def send_email(
     to_email: str,
     subject: str,
@@ -47,27 +50,46 @@ def send_email(
         msg.set_content(body_text)
     msg.add_alternative(body_html, subtype="html")
 
+    # Brevo's recommended host for transactional SMTP is smtp-relay.brevo.com
+    # (legacy alias smtp-relay.sendinblue.com still works). Port 587 STARTTLS
+    # (TLS=true, SSL=false) is preferred; 465 SSL is retained for fallback.
+    use_ssl = bool(getattr(settings, "smtp_use_ssl", False) or settings.smtp_port == 465)
+
     try:
-        if getattr(settings, "smtp_use_ssl", False) or settings.smtp_port == 465:
-            with smtplib.SMTP_SSL(settings.smtp_host, settings.smtp_port, timeout=10) as server:
+        if use_ssl:
+            with smtplib.SMTP_SSL(settings.smtp_host, settings.smtp_port, timeout=SMTP_TIMEOUT_SECONDS) as server:
                 if settings.smtp_user and settings.smtp_password:
                     server.login(settings.smtp_user, settings.smtp_password)
                 server.send_message(msg)
         elif settings.smtp_use_tls:
-            with smtplib.SMTP(settings.smtp_host, settings.smtp_port, timeout=10) as server:
-                server.starttls()
+            with smtplib.SMTP(settings.smtp_host, settings.smtp_port, timeout=SMTP_TIMEOUT_SECONDS) as server:
+                server.ehlo()
+                if server.has_extn("starttls"):
+                    server.starttls()
+                    server.ehlo()
                 if settings.smtp_user and settings.smtp_password:
                     server.login(settings.smtp_user, settings.smtp_password)
                 server.send_message(msg)
         else:
-            with smtplib.SMTP(settings.smtp_host, settings.smtp_port, timeout=10) as server:
+            with smtplib.SMTP(settings.smtp_host, settings.smtp_port, timeout=SMTP_TIMEOUT_SECONDS) as server:
                 if settings.smtp_user and settings.smtp_password:
                     server.login(settings.smtp_user, settings.smtp_password)
                 server.send_message(msg)
-        logger.info("Successfully sent SMTP email to %s", to_email)
+        logger.info("Successfully sent SMTP email to %s via %s:%s", to_email, settings.smtp_host, settings.smtp_port)
         return True
+    except smtplib.SMTPAuthenticationError as exc:
+        logger.error(
+            "SMTP authentication failed for %s on %s:%s as %s: %s (%s)",
+            to_email,
+            settings.smtp_host,
+            settings.smtp_port,
+            settings.smtp_user,
+            exc.smtp_code,
+            exc.smtp_error.decode(errors="ignore") if isinstance(exc.smtp_error, bytes) else exc.smtp_error,
+        )
+        raise EmailDeliveryError(f"SMTP authentication failed ({exc.smtp_code}). Verify SMTP_USER/SMTP_PASSWORD and that smtp-relay.brevo.com is enabled for this Brevo account.") from exc
     except Exception as exc:
-        logger.error("Failed to send SMTP email to %s: %s", to_email, exc)
+        logger.error("Failed to send SMTP email to %s via %s:%s: %s", to_email, settings.smtp_host, settings.smtp_port, exc)
         raise EmailDeliveryError(str(exc)) from exc
 
 

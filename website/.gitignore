@@ -25,3 +25,10 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Tauri + Android build outputs
+src-tauri/target/
+android/.gradle/
+android/app/build/
+android/app/release.keystore
+android/app/debug.keystore

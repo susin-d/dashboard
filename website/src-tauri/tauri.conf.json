@@ -8,6 +8,15 @@
     "beforeBuildCommand": "npm run build",
     "frontendDist": "../dist"
   },
+  "bundle": {
+    "active": true,
+    "category": "DeveloperTool",
+    "targets": ["msi", "nsis"],
+    "icon": ["icons/icon.png", "icons/icon.ico"],
+    "shortDescription": "StarWaves — Developer Productivity Workspace",
+    "longDescription": "Projects, jobs, tasks, documents, workspace IDE, EVE AI, WhatsApp & more.",
+    "createUpdaterArtifacts": "v1Compatible"
+  },
   "app": {
     "title": "Starwaves",
     "windows": [
@@ -24,6 +33,12 @@
     }
   },
   "plugins": {
+    "updater": {
+      "pubkey": "",
+      "endpoints": ["https://api.starwaves.susindran.in/api/v1/updates/latest.json"],
+      "windows": { "installMode": "passive" }
+    },
+    "process": {},
     "fs": {
       "scope": {
         "allow": ["**"],

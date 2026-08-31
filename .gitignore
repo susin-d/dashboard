@@ -25,3 +25,16 @@ certbot/www/*
 certbot/certs/archive/
 certbot/certs/live/
 certbot/certs/renewal/
+
+# Build signing secrets (never commit)
+*.key
+*.keystore
+*.jks
+*.p12
+*.pfx
+server/static/updates/*.apk
+server/static/updates/*.aab
+server/static/updates/*.exe
+server/static/updates/*.msi
+server/static/updates/*.sig
+server/static/updates/bundles/*.zip

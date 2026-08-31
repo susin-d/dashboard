@@ -15,6 +15,8 @@
 |-----|-------|--------|------|
 | [0001](0001-no-sub-agents-context-first-adr-required.md) | No sub-agents, context.md first, ADRs required | Accepted | 2026-08-30 |
 | [0002](0002-fix-eve-tool-calling-adapter.md) | Fix Eve tool calling for OpenAI-compatible providers and add Groq | Accepted | 2026-08-30 |
+| [0003](0003-build-scripts-android-tauri.md) | Build scripts for Android (Capacitor) + Desktop EXE (Tauri) | Accepted | 2026-08-31 |
+| [0004](0004-backend-hosted-auto-update.md) | Backend-hosted auto-update (Tauri signed + APK sideload + OTA) | Accepted | 2026-08-31 |
 
 ## How to add a new ADR
 

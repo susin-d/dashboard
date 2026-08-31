@@ -11,6 +11,7 @@ import { EveVoiceSection } from './settings/EveVoiceSection'
 import { HackathonSourcesSection } from './settings/HackathonSourcesSection'
 import { ProfileSection } from './settings/ProfileSection'
 import { ThemeSection } from './settings/ThemeSection'
+import { UpdateSection } from './settings/UpdateSection'
 import { WhatsAppSection } from './settings/WhatsAppSection'
 
 const SETTINGS_SECTIONS = [
@@ -25,6 +26,7 @@ const SETTINGS_SECTIONS = [
   { id: 'settings-hackathons', href: '#settings-hackathons', label: 'Hackathons' },
   { id: 'settings-eve-voice', href: '#settings-eve-voice', label: 'Eve voice' },
   { id: 'settings-devices', href: '#settings-devices', label: 'Devices & sessions' },
+  { id: 'settings-updates', href: '#settings-updates', label: 'Updates' },
   { id: 'settings-account', href: '#settings-account', label: 'Account & security' },
 ]
 
@@ -141,6 +143,7 @@ export function SettingPage({
       <HackathonSourcesSection user={user} onHackathonsChange={onHackathonsChange} />
       <EveVoiceSection />
       <DeviceSection />
+      <UpdateSection />
       <AccountSection user={user} onSignOut={onSignOut} />
     </section>
   )

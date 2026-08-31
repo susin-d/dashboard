@@ -20,6 +20,8 @@ from app.core.cors import ALLOWED_ORIGIN_REGEX, is_allowed_origin as _is_allowed
 from app.core.rate_limit import RateLimitMiddleware
 from app.core.worker import server_worker
 
+from fastapi.staticfiles import StaticFiles
+
 from app.db.session import init_db
 
 logger = logging.getLogger(__name__)
@@ -148,6 +150,23 @@ def create_app() -> FastAPI:
     application.include_router(calls_ws_router)
     application.include_router(whatsapp_ws_router)
     application.include_router(twilio_relay_router)
+
+    # Backend-hosted updater static alias: /updates -> server/static/updates
+    # Serves APKs/EXEs/.sigs + OTA bundles; /api/v1/updates/latest.json is the Tauri entrypoint
+    try:
+        from pathlib import Path
+
+        updates_dir = Path(__file__).resolve().parents[1] / "static" / "updates"
+        # ENV override
+        import os as _os
+
+        _env_dir = _os.getenv("UPDATES_DIR") or _os.getenv("STATIC_UPDATES_DIR") or getattr(settings, "updates_dir", None)
+        if _env_dir:
+            updates_dir = Path(_env_dir)
+        updates_dir.mkdir(parents=True, exist_ok=True)
+        application.mount("/updates", StaticFiles(directory=str(updates_dir)), name="updates-static")
+    except Exception as exc:  # pragma: no cover
+        logger.warning("Could not mount /updates static dir: %s", exc)
 
     return application
 
