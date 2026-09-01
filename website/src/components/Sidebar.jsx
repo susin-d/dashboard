@@ -117,6 +117,23 @@ export function Sidebar({
             </div>
           ))}
         </nav>
+
+        <div className="sidebar-footer">
+          <button
+            type="button"
+            className="sidebar-footer-toggle"
+            onClick={onToggleExpand}
+            onMouseEnter={(e) => handleMouseEnter(e, isExpanded ? 'Collapse navigation' : 'Expand navigation')}
+            onMouseLeave={() => setHoveredItem(null)}
+            onFocus={(e) => handleFocus(e, isExpanded ? 'Collapse navigation' : 'Expand navigation')}
+            onBlur={() => setHoveredItem(null)}
+            aria-label={isExpanded ? 'Collapse navigation' : 'Expand navigation'}
+            title={!isExpanded ? (isExpanded ? 'Collapse navigation' : 'Expand navigation') : undefined}
+          >
+            {isExpanded ? <PanelLeftClose size={18} /> : <PanelLeftOpen size={18} />}
+            {isExpanded && <span>Collapse</span>}
+          </button>
+        </div>
       </aside>
 
       {!isExpanded && hoveredItem && (
