@@ -58,11 +58,12 @@ export function Sidebar({
         <div className="sidebar-header-row">
           <div
             className="sidebar-brand"
-            onClick={() => handleNavigate('dashboard')}
+            onClick={isExpanded ? () => handleNavigate('dashboard') : onToggleExpand}
             role="button"
             tabIndex={0}
-            onKeyDown={(e) => e.key === 'Enter' && handleNavigate('dashboard')}
-            title="StarWaves Dashboard"
+            onKeyDown={(e) => e.key === 'Enter' && (isExpanded ? handleNavigate('dashboard') : onToggleExpand())}
+            title={isExpanded ? 'StarWaves Dashboard' : 'Expand navigation'}
+            aria-label={isExpanded ? 'StarWaves Dashboard' : 'Expand navigation'}
           >
             <StarWavesLogo size={28} />
             {isExpanded && <span className="sidebar-brand-name">StarWaves</span>}

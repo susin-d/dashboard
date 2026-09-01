@@ -151,6 +151,13 @@ def create_app() -> FastAPI:
     application.include_router(whatsapp_ws_router)
     application.include_router(twilio_relay_router)
 
+    # Root /health alias for load balancers and direct probe requests
+    @application.get("/health", include_in_schema=False)
+    async def root_health_check(request: Request):
+        from app.services.health import collect_health
+        payload = await collect_health(app=request.app, detailed=False)
+        return JSONResponse(content=payload)
+
     # Backend-hosted updater static alias: /updates -> server/static/updates
     # Serves APKs/EXEs/.sigs + OTA bundles; /api/v1/updates/latest.json is the Tauri entrypoint
     try:

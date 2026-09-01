@@ -189,6 +189,16 @@ export function setupNativeOAuthListeners() {
       consumeAuthTokenFromHash()
     }
   } catch {}
+
+  // Popup postMessage listener for web OAuth popup flows
+  try {
+    window.addEventListener('message', (event) => {
+      if (event.data?.type === 'STARWAVES_AUTH_SUCCESS' && event.data.data?.token) {
+        setStoredAuthToken(event.data.data.token, event.data.data.user)
+        window.dispatchEvent(new Event('starwaves:auth-change'))
+      }
+    })
+  } catch {}
 }
 
 function request(path, options = {}) {

@@ -199,9 +199,22 @@ export function ForgotPasswordPage({ onNavigate }) {
 
       <section className="auth-form-panel">
         <div className="auth-form-shell">
-          <button className="auth-back" onClick={() => onNavigate('/login')}>
-            <ArrowLeft size={16} /> Back to log in
-          </button>
+          <div className="auth-form-top-bar">
+            <button className="auth-back" onClick={() => onNavigate('/login')} aria-label="Back to log in">
+              <ArrowLeft size={16} /> Back to log in
+            </button>
+            <div
+              className="auth-mobile-brand"
+              onClick={() => onNavigate('/')}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => e.key === 'Enter' && onNavigate('/')}
+              title="StarWaves Home"
+            >
+              <StarWavesLogo size={22} />
+              <span>StarWaves</span>
+            </div>
+          </div>
 
           {/* Stepper Progress Bar */}
           <div className="auth-stepper" aria-label="Password recovery steps">

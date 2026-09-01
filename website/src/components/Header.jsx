@@ -10,8 +10,8 @@ import {
   ChevronRight,
   FolderKanban,
   LogOut,
-  Menu,
-  Moon,
+  PanelLeftClose,
+  PanelLeftOpen,
   Phone,
   PhoneIncoming,
   PhoneMissed,
@@ -19,7 +19,6 @@ import {
   Search,
   Settings,
   Trophy,
-  Sun,
   Trash2,
   UserRound,
   X,
@@ -29,7 +28,6 @@ import { deleteNotification, markAllNotificationsRead } from '../lib/workspaceAp
 import { CALENDAR_REMINDER_PREFIX } from '../utils/calendarReminders'
 import { getNotificationPermission, requestNotificationPermission } from '../utils/browserNotifications'
 import { navigationItems } from '../config/navigation'
-import { StarWavesLogo } from './StarWavesLogo'
 import { EveAssistantModal } from './EveAssistantModal'
 import { AdvancedSearchModal } from './search/AdvancedSearchModal'
 
@@ -212,19 +210,8 @@ export function Header({
             aria-expanded={navigationExpanded}
             title={navigationExpanded ? 'Collapse navigation' : 'Expand navigation'}
           >
-            <Menu size={20} />
+            {navigationExpanded ? <PanelLeftClose size={18} /> : <PanelLeftOpen size={18} />}
           </button>
-          <div
-            className="brand mobile-brand"
-            onClick={() => onNavigate?.('dashboard')}
-            role="button"
-            tabIndex={0}
-            onKeyDown={(e) => e.key === 'Enter' && onNavigate?.('dashboard')}
-            title="Go to Dashboard"
-          >
-            <StarWavesLogo size={26} />
-            <span>StarWaves</span>
-          </div>
           <div className="topbar-breadcrumb">
             <span className="breadcrumb-group">{currentNav.group}</span>
             <ChevronRight size={13} className="breadcrumb-sep" />
@@ -253,16 +240,6 @@ export function Header({
         >
           <Bot size={17} />
           <span>Eve</span>
-        </button>
-        <button
-          className="icon-button theme-toggle"
-          type="button"
-          onClick={() => setDarkTheme((current) => !current)}
-          aria-label={darkTheme ? 'Switch to light theme' : 'Switch to dark theme'}
-          aria-pressed={darkTheme}
-          title={darkTheme ? 'Switch to light theme' : 'Switch to dark theme'}
-        >
-          {darkTheme ? <Sun size={18} /> : <Moon size={18} />}
         </button>
         <button
           className="icon-button notification-button"

@@ -217,12 +217,12 @@ async def google_callback(
     email_json = json.dumps(user_record["email"])
     display_json = json.dumps(user_record.get("display_name") or name)
     origin_json = json.dumps(target_origin)
+    redirect_target = f"{target_origin.rstrip('/')}/#token={token}"
+    redirect_target_json = json.dumps(redirect_target)
 
-    # Token is delivered ONLY via postMessage to the validated targetOrigin.
-    # No token in URL, meta refresh, or location fragment to avoid history/
-    # Referer / log leakage. The opener (popup flow) receives the token;
-    # the same-tab fallback posts to BroadcastChannel / localStorage via
-    # the frontend's auth listener without exposing the token in the address bar.
+    # Token is delivered via postMessage (if popup flow) or via URL fragment (#token=...)
+    # for same-tab redirect. The URL fragment is never transmitted over HTTP to servers,
+    # and is consumed and cleared from history immediately by consumeAuthTokenFromHash().
     html_content = f"""
     <!DOCTYPE html>
     <html>
@@ -241,6 +241,7 @@ async def google_callback(
             }}
           }};
           const targetOrigin = {origin_json};
+          const redirectTarget = {redirect_target_json};
           let delivered = false;
           try {{
             if (window.opener) {{
@@ -249,16 +250,9 @@ async def google_callback(
               setTimeout(() => {{ try {{ window.close(); }} catch(e) {{}} }}, 150);
             }}
           }} catch (e) {{}}
-          // Same-tab fallback: store in sessionStorage under a one-time key so the
-          // frontend can pick it up on next load without the token ever appearing
-          // in the URL. The key is origin-bound and cleared after read.
-          try {{
-            if (!delivered) {{
-              sessionStorage.setItem("starwaves:oauth:pending", JSON.stringify(authData));
-            }}
-          }} catch (e) {{}}
-          // Navigate to the app root WITHOUT token in fragment/query.
-          setTimeout(() => {{ window.location.replace(targetOrigin + "/"); }}, delivered ? 200 : 50);
+          if (!delivered) {{
+            window.location.replace(redirectTarget);
+          }}
         </script>
         <p>Authentication successful. Redirecting to StarWaves...</p>
       </body>

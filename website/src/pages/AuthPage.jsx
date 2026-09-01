@@ -100,7 +100,22 @@ export function AuthPage({ mode, onNavigate, onAuthenticate, resetToken }) {
 
       <section className="auth-form-panel">
         <div className="auth-form-shell">
-          <button className="auth-back" onClick={() => onNavigate('/')}><ArrowLeft size={16} /> Back home</button>
+          <div className="auth-form-top-bar">
+            <button className="auth-back" onClick={() => onNavigate('/')} aria-label="Back home">
+              <ArrowLeft size={16} /> Back home
+            </button>
+            <div
+              className="auth-mobile-brand"
+              onClick={() => onNavigate('/')}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => e.key === 'Enter' && onNavigate('/')}
+              title="StarWaves Home"
+            >
+              <StarWavesLogo size={22} />
+              <span>StarWaves</span>
+            </div>
+          </div>
           <div className="auth-heading">
             <p>{resetting ? 'Reset your password' : signup ? 'Create an account' : 'Welcome back'}</p>
             <h2>{resetting ? 'Set a new password' : signup ? 'Build your workspace' : 'Log in to StarWaves'}</h2>
