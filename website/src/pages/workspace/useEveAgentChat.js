@@ -16,6 +16,7 @@ export function useEveAgentChat({ workspaceId, workspaceName, activeFilePath, on
   const [messages, setMessages] = useState([])
   const [sending, setSending] = useState(false)
   const [streamText, setStreamText] = useState('')
+  const [thinkingText, setThinkingText] = useState('')
   const [activeTool, setActiveTool] = useState(null)
   const [error, setError] = useState('')
   const historyRef = useRef([])
@@ -39,6 +40,7 @@ export function useEveAgentChat({ workspaceId, workspaceName, activeFilePath, on
       setError('')
       setSending(true)
       setStreamText('')
+      setThinkingText('')
       setActiveTool(null)
       historyRef.current = [...historyRef.current, { role: 'user', content }]
       setMessages((log) => [...log, { role: 'user', content }])
@@ -65,6 +67,9 @@ export function useEveAgentChat({ workspaceId, workspaceName, activeFilePath, on
             onDelta: (delta) => {
               receivedText += delta
               setStreamText((current) => current + delta)
+            },
+            onThinking: (delta) => {
+              setThinkingText((current) => current + delta)
             },
             onToolStart: (name) => {
               if (FILE_MUTATING_TOOLS.has(name)) filesTouched = true
@@ -135,6 +140,7 @@ export function useEveAgentChat({ workspaceId, workspaceName, activeFilePath, on
         abortRef.current = null
         setSending(false)
         setStreamText('')
+        setThinkingText('')
         setActiveTool(null)
       }
     },

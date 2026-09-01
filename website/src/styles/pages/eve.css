@@ -439,6 +439,67 @@
 /* Streaming Response States */
 .eve-streaming-text {
   position: relative;
+  animation: eve-stream-fade-in 0.22s ease;
+}
+
+.eve-streaming-cursor {
+  display: inline-block;
+  width: 7px;
+  height: 1.05em;
+  margin-left: 3px;
+  vertical-align: -0.15em;
+  border-radius: 1px;
+  background: var(--text-primary, #ffffff);
+  animation: eve-caret-blink 0.95s steps(1, end) infinite;
+}
+
+.eve-thinking-cursor {
+  display: inline-block;
+  width: 6px;
+  height: 0.95em;
+  margin-left: 2px;
+  vertical-align: -0.12em;
+  border-radius: 1px;
+  background: var(--text-secondary, #a1a1aa);
+  animation: eve-caret-blink 0.95s steps(1, end) infinite;
+}
+
+@keyframes eve-caret-blink {
+  0%, 45% { opacity: 1; }
+  50%, 100% { opacity: 0; }
+}
+
+@keyframes eve-stream-fade-in {
+  from { opacity: 0; transform: translateY(3px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.eve-thought-stream {
+  white-space: pre-wrap;
+  word-break: break-word;
+  animation: eve-thought-stream-in 0.25s ease;
+}
+
+.eve-thought-stream-text {
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+@keyframes eve-thought-stream-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .eve-streaming-cursor,
+  .eve-thinking-cursor {
+    animation: none;
+    opacity: 1;
+  }
+  .eve-streaming-text,
+  .eve-thought-stream {
+    animation: none;
+  }
 }
 
 /* Thought & Reasoning Block */
@@ -512,6 +573,33 @@
 
 .eve-thought-content p:last-child {
   margin-bottom: 0;
+}
+
+.eve-thought-preview {
+  font-weight: 400;
+  color: var(--text-muted, #71717a);
+  font-size: 0.72rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 180px;
+  margin-left: 6px;
+}
+
+.eve-thought-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted, #71717a);
+  flex-shrink: 0;
+}
+
+.eve-thought-container.collapsed .eve-thought-header {
+  border-bottom: 0;
+}
+
+.eve-thought-container.open .eve-thought-header {
+  border-bottom: 1px solid transparent;
 }
 
 /* Tool Calls Container */
