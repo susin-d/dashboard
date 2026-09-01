@@ -135,7 +135,7 @@ export function ThemesPage() {
       <div className="themes-section">
         <SectionHeading
           title="1. Theme Presets"
-          description="Curated presets grouped by palette — 10 Monochrome and 12 vibrant Two-Color duotone themes, each strictly two-color (neutral canvas + one accent hue)."
+          description="Curated presets grouped by palette — Monochrome, vibrant Two-Color duotones, and multi-hue Spectrum themes with unique per-role colors."
         />
         {PALETTE_GROUPS.map((group) => {
           const presets = getPresetsByPalette(group.id)
