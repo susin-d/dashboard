@@ -17,6 +17,47 @@ from app.services.ai_models.contracts import (
 
 logger = logging.getLogger(__name__)
 
+# Conservative max output tokens to avoid OpenRouter 402 credit checks
+# (free tier can only afford ~3810 total tokens; request + prompt must fit).
+# OpenRouter is most constrained, so use 2048 there, 4096 elsewhere.
+DEFAULT_MAX_TOKENS = 4096
+OPENROUTER_MAX_TOKENS = 2048
+
+_PROVIDER_MAX_TOKENS: dict[str, int] = {
+    "openrouter": OPENROUTER_MAX_TOKENS,
+    "groq": 4096,
+    "ollama": 8192,
+    "opencode": 4096,
+    "openai": 4096,
+}
+
+
+def _provider_label(client: Any) -> str:
+    try:
+        raw = getattr(client, "_base_url", None) or getattr(client, "base_url", None) or ""
+        label = str(raw)
+    except Exception:
+        label = ""
+    low = label.lower()
+    if "openrouter" in low:
+        return "openrouter"
+    if "groq" in low:
+        return "groq"
+    if "opencode" in low:
+        return "opencode"
+    if "ollama" in low or "11434" in low:
+        return "ollama"
+    if "openai" in low:
+        return "openai"
+    return "provider"
+
+
+def _max_tokens_for(client: Any) -> int:
+    try:
+        return _PROVIDER_MAX_TOKENS.get(_provider_label(client), DEFAULT_MAX_TOKENS)
+    except Exception:
+        return DEFAULT_MAX_TOKENS
+
 
 def _parse_arguments(raw: Any) -> dict[str, Any]:
     if isinstance(raw, dict):
@@ -95,19 +136,36 @@ class OpenAiCompatibleClient(ProviderClient):
         conversation: Any,
         tools: list[dict[str, Any]],
     ) -> ProviderResponse:
+        converted = [_convert_tool(tool) for tool in tools] if tools else None
+        max_tokens = _max_tokens_for(self.client)
+        response = None
         try:
-            converted = [_convert_tool(tool) for tool in tools] if tools else None
             response = self.client.chat.completions.create(
                 model=model,
                 messages=[{"role": "system", "content": instructions}, *conversation],
                 tools=converted,
+                max_tokens=max_tokens,
             )
         except OpenAIError as error:
             logger.error(f"[OpenAI-Compatible Provider] API call failed for model '{model}': {type(error).__name__}: {error}", exc_info=True)
-            # Heuristic provider label from base_url for better UX (openrouter/groq/ollama/opencode)
-            label = getattr(getattr(self.client, "_base_url", ""), "__str__", lambda: "")() or ""
-            prov = "openrouter" if "openrouter" in str(label) else "groq" if "groq" in str(label) else "provider"
-            raise classify_provider_error(error, prov, model) from error
+            prov = _provider_label(self.client)
+            classified = classify_provider_error(error, prov, model)
+            # Quota 402 often due to max_tokens too high on free tier — retry once with halved tokens
+            if classified.kind == "quota" and max_tokens > 1024:
+                try:
+                    retry_tokens = max(1024, max_tokens // 2)
+                    logger.warning(f"[OpenAI-Compatible Provider] Retrying {model} with max_tokens={retry_tokens} after quota error")
+                    response = self.client.chat.completions.create(
+                        model=model,
+                        messages=[{"role": "system", "content": instructions}, *conversation],
+                        tools=converted,
+                        max_tokens=retry_tokens,
+                    )
+                except Exception as retry_error:
+                    logger.error(f"[OpenAI-Compatible Provider] Retry failed for model '{model}': {type(retry_error).__name__}: {retry_error}", exc_info=True)
+                    raise classified from error
+            else:
+                raise classified from error
         except Exception as error:
             logger.error(f"[OpenAI-Compatible Provider] Unexpected failure calling model '{model}': {type(error).__name__}: {error}", exc_info=True)
             raise classify_provider_error(error, "provider", model) from error
@@ -132,19 +190,37 @@ class OpenAiCompatibleClient(ProviderClient):
         conversation: Any,
         tools: list[dict[str, Any]],
     ) -> Iterator[StreamChunk]:
+        converted = [_convert_tool(tool) for tool in tools] if tools else None
+        max_tokens = _max_tokens_for(self.client)
+        stream = None
         try:
-            converted = [_convert_tool(tool) for tool in tools] if tools else None
             stream = self.client.chat.completions.create(
                 model=model,
                 messages=[{"role": "system", "content": instructions}, *conversation],
                 tools=converted,
+                max_tokens=max_tokens,
                 stream=True,
             )
         except OpenAIError as error:
             logger.error(f"[OpenAI-Compatible Provider] Streaming call failed for model '{model}': {type(error).__name__}: {error}", exc_info=True)
-            label = getattr(getattr(self.client, "_base_url", ""), "__str__", lambda: "")() or ""
-            prov = "openrouter" if "openrouter" in str(label) else "groq" if "groq" in str(label) else "provider"
-            raise classify_provider_error(error, prov, model) from error
+            prov = _provider_label(self.client)
+            classified = classify_provider_error(error, prov, model)
+            if classified.kind == "quota" and max_tokens > 1024:
+                try:
+                    retry_tokens = max(1024, max_tokens // 2)
+                    logger.warning(f"[OpenAI-Compatible Provider] Retrying stream {model} with max_tokens={retry_tokens} after quota error")
+                    stream = self.client.chat.completions.create(
+                        model=model,
+                        messages=[{"role": "system", "content": instructions}, *conversation],
+                        tools=converted,
+                        max_tokens=retry_tokens,
+                        stream=True,
+                    )
+                except Exception as retry_error:
+                    logger.error(f"[OpenAI-Compatible Provider] Stream retry failed for model '{model}': {type(retry_error).__name__}: {retry_error}", exc_info=True)
+                    raise classified from error
+            else:
+                raise classified from error
         except Exception as error:
             logger.error(f"[OpenAI-Compatible Provider] Unexpected streaming failure for model '{model}': {type(error).__name__}: {error}", exc_info=True)
             raise classify_provider_error(error, "provider", model) from error
@@ -211,7 +287,7 @@ class OpenAiCompatibleClient(ProviderClient):
             raise
         except Exception as error:
             logger.error(f"[OpenAI-Compatible Provider] Streaming iteration failed for model '{model}': {type(error).__name__}: {error}", exc_info=True)
-            raise classify_provider_error(error, "provider", model) from error
+            raise classify_provider_error(error, _provider_label(self.client), model) from error
 
         # Synthesize a raw response shaped like the non-streaming one so
         # continuation() can read choices[0].message unchanged.
