@@ -47,7 +47,7 @@ function sanitizeEmailHtml(html = '') {
       USE_PROFILES: { html: true },
       FORBID_TAGS: ['style', 'script', 'iframe', 'object', 'embed', 'form'],
       FORBID_ATTR: ['style'],
-      ALLOW_URI_REGEXP: /^(?:(?:https?|mailto):|[^a-z]|[a-z+.\-]+(?:[^a-z+.\-:]|$))/i,
+      ALLOW_URI_REGEXP: /^(?:(?:https?|mailto):|[^a-z]|[a-z+.-]+(?:[^a-z+.-:]|$))/i,
     })
   } catch {
     return html.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
@@ -480,9 +480,8 @@ export function MailsPage({ onNavigate }) {
             >
               <p>{error}</p>
               <button
-                className="secondary-button"
+                className="secondary-button mail-retry-btn"
                 type="button"
-                style={{ marginTop: '8px' }}
                 onClick={() => refresh(query, folder, pageToken, true, selectedAccountEmail)}
                 disabled={loading}
               >

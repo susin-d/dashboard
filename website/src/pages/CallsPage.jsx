@@ -196,7 +196,7 @@ export function CallsPage({ callCenter, user }) {
           </div>
 
           {twilioEnabled && (
-            <div className="calls-provider-toggle" role="group" aria-label="Call provider" style={{ marginBottom: 12 }}>
+            <div className="calls-provider-toggle" role="group" aria-label="Call provider">
               <button type="button" className={`calls-mode-option ${provider === 'in_app' ? 'active' : ''}`} onClick={() => setProvider('in_app')} aria-pressed={provider === 'in_app'}>In-App</button>
               <button type="button" className={`calls-mode-option ${provider === 'twilio' ? 'active' : ''}`} onClick={() => setProvider('twilio')} aria-pressed={provider === 'twilio'}>Phone (Twilio)</button>
             </div>

@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { CalendarDays, ChevronDown, Clock3, Filter, SlidersHorizontal, Trophy } from 'lucide-react'
+import { CalendarDays, ChevronDown, Clock3, Filter, Search, SlidersHorizontal, Trophy } from 'lucide-react'
 import { CustomDropdown, EmptyState, FilterBar, MetricCard, MetricGrid, PageHeader, SearchBar } from '../components/ui'
 import { usePersistentState } from '../hooks/usePersistentState'
 

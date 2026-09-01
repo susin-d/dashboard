@@ -63,3 +63,6 @@
 
 /* Final shared geometry pass */
 @import './styles/layout-symmetry.css';
+
+/* Glassmorphism layer — applied last so it overrides base surface styles */
+@import './styles/glassmorphism.css';

@@ -40,4 +40,18 @@ html.dark-theme {
   --color-danger-light: #27272a;
   --color-purple: #a1a1aa;
   --color-purple-light: #27272a;
+
+  /* Glassmorphism — dark overrides */
+  --glass-bg: rgba(18, 18, 18, 0.52);
+  --glass-bg-card: rgba(14, 14, 14, 0.48);
+  --glass-bg-overlay: rgba(10, 10, 10, 0.72);
+  --glass-bg-sidebar: rgba(12, 12, 12, 0.65);
+  --glass-bg-topbar: rgba(8, 8, 8, 0.72);
+  --glass-bg-dropdown: rgba(20, 20, 20, 0.82);
+  --glass-border: rgba(255, 255, 255, 0.10);
+  --glass-border-card: rgba(255, 255, 255, 0.07);
+  --glass-border-subtle: rgba(255, 255, 255, 0.04);
+  --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.55), 0 2px 8px rgba(0, 0, 0, 0.38), inset 0 1px 0 rgba(255, 255, 255, 0.07);
+  --glass-shadow-lifted: 0 20px 60px rgba(0, 0, 0, 0.75), 0 6px 16px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.07);
+  --glass-shadow-modal: 0 32px 80px rgba(0, 0, 0, 0.85), 0 8px 24px rgba(0, 0, 0, 0.60), inset 0 1px 0 rgba(255, 255, 255, 0.07);
 }

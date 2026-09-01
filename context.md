@@ -2,7 +2,7 @@
 
 Living snapshot for AI agents. `AGENTS.md` holds permanent rules; this file holds the **current state**. See `CHANGELOG.md` for history and `PROJECT_MAP.md` for the file index.
 
-Last updated: 2026-08-31 — OAuth deep-link for native (android com.starwaves.app + tauri app.starwaves.workspace → 302 deep-link with token, Capacitor Browser/App + Tauri deep-link plugin, isNativeApp landing→login, mobile auth 16px/safe-area) + ADR 0008
+Last updated: 2026-09-01 — Glassmorphism design system: 15 new --glass-* tokens (light/dark), radial gradient body mesh, glassmorphism.css layer covering 12 surfaces (topbar, sidebar, cards, modals, dropdowns, settings cards, search palette, metric cards, alerts, Eve panel, tab nav, backdrops) with prefers-reduced-motion support + ADR 0010
 
 ## Contents
 1. [Overview](#1-overview) · 2. [Repository structure](#2-repository-structure) · 3. [Backend](#3-backend) · 4. [Frontend](#4-frontend) · 5. [Design system](#5-design-system) · 6. [Current snapshot](#6-current-snapshot) · 7. [Limitations](#7-limitations) · 8. [Verification](#8-verification)

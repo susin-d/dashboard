@@ -468,41 +468,44 @@ export function JobsPage({ jobs, setJobs, documents, createIntent, canLoadMore, 
           )}
           <div className="project-edit-form-row">
             <label>Company<input value={editForm.company} onChange={(event) => updateEditField('company', event.target.value)} required data-modal-initial-focus /></label>
-                <label>Location<input value={editForm.location} onChange={(event) => updateEditField('location', event.target.value)} /></label>
-                <label>Work type<select value={editForm.workType} onChange={(event) => updateEditField('workType', event.target.value)}><option>Full-time</option><option>Part-time</option><option>Contract</option><option>Internship</option><option>Hybrid</option></select></label>
-                <label>Salary<input value={editForm.salary} onChange={(event) => updateEditField('salary', event.target.value)} /></label>
-              </div>
-              <div className="project-edit-form-row">
-                <label>Applied date<input type="date" value={editForm.appliedDate} onChange={(event) => updateEditField('appliedDate', event.target.value)} /></label>
-                <label>Interview date<input type="date" value={editForm.interviewDate} onChange={(event) => updateEditField('interviewDate', event.target.value)} /></label>
-                <label>Deadline<input type="date" value={editForm.deadline} onChange={(event) => updateEditField('deadline', event.target.value)} /></label>
-              </div>
-              <label>
-                Resume used
-                <select
-                  value={editForm.resumeId}
-                  onChange={(event) =>
-                    updateEditField('resumeId', event.target.value)
-                  }
-                >
-                  <option value="">No resume selected</option>
-                  {resumeDocuments.map((document) => (
-                    <option key={document.id} value={document.id}>
-                      {document.name}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label>Job URL<input type="url" value={editForm.jobUrl} onChange={(event) => updateEditField('jobUrl', event.target.value)} /></label>
-              <label>Notes<textarea rows="3" value={editForm.notes} onChange={(event) => updateEditField('notes', event.target.value)} /></label>
-              <div className="todo-modal-actions">
-                <button className="secondary-button" type="button" onClick={() => setEditingJob(null)} disabled={editSaving}>Cancel</button>
-                <button className="primary-button jobs-add-button" type="submit" disabled={editSaving}>{editSaving ? 'Saving…' : 'Save changes'}</button>
-              </div>
-            </form>
-          </Modal>
+            <label>Role<input value={editForm.role} onChange={(event) => updateEditField('role', event.target.value)} required /></label>
+            <label>Status<select value={editForm.status} onChange={(event) => updateEditField('status', event.target.value)}><option>Saved</option><option>Applied</option><option>Interview</option><option>Offer</option><option>Rejected</option></select></label>
+          </div>
+          <div className="project-edit-form-row">
+            <label>Location<input value={editForm.location} onChange={(event) => updateEditField('location', event.target.value)} /></label>
+            <label>Work type<select value={editForm.workType} onChange={(event) => updateEditField('workType', event.target.value)}><option>Full-time</option><option>Part-time</option><option>Contract</option><option>Internship</option><option>Hybrid</option></select></label>
+            <label>Salary<input value={editForm.salary} onChange={(event) => updateEditField('salary', event.target.value)} /></label>
+          </div>
+          <div className="project-edit-form-row">
+            <label>Applied date<input type="date" value={editForm.appliedDate} onChange={(event) => updateEditField('appliedDate', event.target.value)} /></label>
+            <label>Interview date<input type="date" value={editForm.interviewDate} onChange={(event) => updateEditField('interviewDate', event.target.value)} /></label>
+            <label>Deadline<input type="date" value={editForm.deadline} onChange={(event) => updateEditField('deadline', event.target.value)} /></label>
+          </div>
+          <label>
+            Resume used
+            <select
+              value={editForm.resumeId}
+              onChange={(event) =>
+                updateEditField('resumeId', event.target.value)
+              }
+            >
+              <option value="">No resume selected</option>
+              {resumeDocuments.map((document) => (
+                <option key={document.id} value={document.id}>
+                  {document.name}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>Job URL<input type="url" value={editForm.jobUrl} onChange={(event) => updateEditField('jobUrl', event.target.value)} /></label>
+          <label>Notes<textarea rows="3" value={editForm.notes} onChange={(event) => updateEditField('notes', event.target.value)} /></label>
+          <div className="todo-modal-actions">
+            <button className="secondary-button" type="button" onClick={() => setEditingJob(null)} disabled={editSaving}>Cancel</button>
+            <button className="primary-button jobs-add-button" type="submit" disabled={editSaving}>{editSaving ? 'Saving…' : 'Save changes'}</button>
+          </div>
+        </form>
+      </Modal>
       <ConfirmDialog isOpen={Boolean(deleteId)} message="Are you sure you want to delete this job entry?" onCancel={() => setDeleteId(null)} onConfirm={confirmDeleteJob} />
     </section>
   )
 }
-

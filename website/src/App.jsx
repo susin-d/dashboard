@@ -264,8 +264,10 @@ function App() {
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
-  const navigateWorkspace = (page, projectId = null, documentId = null) => {
-    navigate(page, { projectId, documentId })
+  const navigateWorkspace = (page, projectId = null, documentId = null, hackathonId = null) => {
+    const effectiveHackathonId = hackathonId || (page === 'hackathon-detail' ? projectId : null)
+    const effectiveProjectId = page === 'hackathon-detail' ? null : projectId
+    navigate(page, { projectId: effectiveProjectId, documentId, hackathonId: effectiveHackathonId })
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 

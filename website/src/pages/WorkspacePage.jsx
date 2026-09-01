@@ -94,9 +94,13 @@ export function WorkspacePage() {
 
   const handleConfirmDeleteWorkspace = useCallback(async () => {
     if (!workspaceToDelete) return
+    const targetId = workspaceToDelete.id
     try {
-      await workspace.deleteWorkspace(workspaceToDelete.id)
+      await workspace.deleteWorkspace(targetId)
       setWorkspaceToDelete(null)
+      if (workspace.activeWorkspaceId === targetId || workspace.workspaces.length <= 1) {
+        setView('overview')
+      }
     } catch {
       // Error handled by workspace hook
     }
@@ -147,255 +151,149 @@ export function WorkspacePage() {
     return () => document.removeEventListener('keydown', handleKeyboardSave)
   }, [handleKeyboardSave])
 
-  if (view === 'overview') {
-    return (
-      <div className="workspace-page">
-        {workspace.error && (
-          <div className="workspace-error">
-            <span>{workspace.error}</span>
-            <button onClick={workspace.clearError}>×</button>
-          </div>
-        )}
-        <WorkspaceOverview
-          workspaces={workspace.workspaces}
-          activeWorkspaceId={workspace.activeWorkspaceId}
-          loading={workspace.loading}
-          onOpenWorkspace={handleOpenWorkspace}
-          onOpenCreateWorkspace={() => {
-            setNewWorkspaceName('')
-            setCreateWorkspaceOpen(true)
-          }}
-          onOpenRenameWorkspace={handleOpenRenameWorkspace}
-          onOpenDeleteWorkspace={(ws) => setWorkspaceToDelete(ws)}
-        />
-
-        {/* Create Workspace Modal */}
-        <Modal
-          isOpen={createWorkspaceOpen}
-          onClose={() => setCreateWorkspaceOpen(false)}
-          title="Create New Workspace"
-          subtitle="Each workspace is an isolated folder — like a project root"
-        >
-          <form
-            onSubmit={(e) => {
-              e.preventDefault()
-              handleConfirmCreateWorkspace()
-            }}
-          >
-            <FormField label="Workspace Name" id="new-workspace-name">
-              <input
-                id="new-workspace-name"
-                type="text"
-                className="text-input"
-                value={newWorkspaceName}
-                onChange={(e) => setNewWorkspaceName(e.target.value)}
-                placeholder="e.g., Portfolio Website, Backend API, Notes"
-                autoFocus
-                data-modal-initial-focus
-              />
-            </FormField>
-            <p className="workspace-modal-hint">This will create a folder on disk/cloud. Switch workspaces to open its files in the editor.</p>
-            <div className="modal-actions">
-              <button
-                type="button"
-                className="secondary-button"
-                onClick={() => setCreateWorkspaceOpen(false)}
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                className="primary-button"
-                disabled={!newWorkspaceName.trim()}
-              >
-                Create Workspace
-              </button>
-            </div>
-          </form>
-        </Modal>
-
-        {/* Rename Workspace Modal */}
-        <Modal
-          isOpen={Boolean(workspaceToRename)}
-          onClose={() => setWorkspaceToRename(null)}
-          title="Rename Workspace"
-          subtitle={`Update display name for workspace`}
-        >
-          <form
-            onSubmit={(e) => {
-              e.preventDefault()
-              handleConfirmRenameWorkspace()
-            }}
-          >
-            <FormField label="Workspace Name" id="rename-workspace-name">
-              <input
-                id="rename-workspace-name"
-                type="text"
-                className="text-input"
-                value={renameWorkspaceName}
-                onChange={(e) => setRenameWorkspaceName(e.target.value)}
-                placeholder="e.g., Project Name"
-                autoFocus
-                data-modal-initial-focus
-              />
-            </FormField>
-            <div className="modal-actions">
-              <button
-                type="button"
-                className="secondary-button"
-                onClick={() => setWorkspaceToRename(null)}
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                className="primary-button"
-                disabled={!renameWorkspaceName.trim()}
-              >
-                Save Changes
-              </button>
-            </div>
-          </form>
-        </Modal>
-
-        {/* Delete Workspace Confirmation */}
-        <ConfirmDialog
-          isOpen={Boolean(workspaceToDelete)}
-          title="Delete Workspace"
-          message={`Are you sure you want to delete "${workspaceToDelete?.name}"? All files and folders inside this workspace will be permanently removed.`}
-          confirmLabel="Delete Workspace"
-          destructive={true}
-          onConfirm={async () => {
-            await handleConfirmDeleteWorkspace()
-            const stillExists = workspace.workspaces.some(
-              (ws) => ws.id === workspaceToDelete?.id,
-            )
-            if (!stillExists && view === 'ide') setView('overview')
-          }}
-          onCancel={() => setWorkspaceToDelete(null)}
-        />
-      </div>
-    )
-  }
-
   return (
     <div className="workspace-page">
-      <WorkspaceToolbar
-        workspaces={workspace.workspaces}
-        activeWorkspace={workspace.activeWorkspace}
-        onBackToOverview={() => setView('overview')}
-        onSwitchWorkspace={workspace.switchWorkspace}
-        onOpenCreateWorkspace={() => {
-          setNewWorkspaceName('')
-          setCreateWorkspaceOpen(true)
-        }}
-        onOpenRenameWorkspace={handleOpenRenameWorkspace}
-        onOpenDeleteWorkspace={(ws) => setWorkspaceToDelete(ws)}
-        isTauri={workspace.isTauri}
-        loading={workspace.loading}
-        onRefresh={workspace.refreshTree}
-        terminalVisible={terminalVisible}
-        onToggleTerminal={() => setTerminalVisible(!terminalVisible)}
-        browserVisible={browserVisible}
-        onToggleBrowser={() => setBrowserVisible(!browserVisible)}
-        onCreateFile={handleCreateFile}
-        onCreateFolder={handleCreateFolder}
-      />
-
-      {workspace.error && (
-        <div className="workspace-error">
-          <span>{workspace.error}</span>
-          <button onClick={workspace.clearError}>×</button>
-        </div>
-      )}
-
-      <div className="workspace-layout">
-        <WorkspaceFileTree
-          files={workspace.fileTree}
-          activeFile={workspace.activeTab}
-          onFileSelect={workspace.openFile}
-          onDelete={workspace.deleteFile}
-          onCreateFile={handleCreateFile}
-          onCreateFolder={handleCreateFolder}
-        />
-
-        <div className={`workspace-center${browserVisible ? ' browser-open' : ''}`}>
-          <div className="workspace-center-stack">
-            <WorkspaceEditor
-              tabs={workspace.openTabs}
-              activeTab={workspace.activeTab}
-              onTabSelect={workspace.setActiveTab}
-              onTabClose={workspace.closeTab}
-              onContentChange={workspace.updateTabContent}
-              onSave={workspace.saveFile}
-              isFileDirty={workspace.isFileDirty}
-              onCreateFile={handleCreateFile}
-              onRunHtml={handleRunHtml}
-            />
-            {terminalVisible && (
-              <WorkspaceTerminal isTauri={workspace.isTauri} />
-            )}
-          </div>
-          {browserVisible && (
-            <WorkspaceBrowser
-              workspaceId={workspace.activeWorkspaceId}
-              initialUrl={browserUrl}
-              htmlContent={activeHtmlContent}
-              onClose={() => setBrowserVisible(false)}
-            />
+      {view === 'overview' ? (
+        <>
+          {workspace.error && (
+            <div className="workspace-error">
+              <span>{workspace.error}</span>
+              <button onClick={workspace.clearError}>×</button>
+            </div>
           )}
-        </div>
-
-        <WorkspaceEvePanel
-          collapsed={evePanelCollapsed}
-          onToggle={() => setEvePanelCollapsed(!evePanelCollapsed)}
-          workspaceId={workspace.activeWorkspaceId}
-          workspaceName={workspace.activeWorkspace?.name}
-          activeFilePath={workspace.activeTab}
-          onFilesChanged={workspace.refreshTree}
-          onAction={handleEveAction}
-        />
-      </div>
-
-      <Modal isOpen={newFilePrompt} onClose={() => setNewFilePrompt(false)} title="New File" subtitle="Creates inside the current workspace folder. Use folder/file.ext to nest.">
-        <FormField label="File name" id="workspace-new-file-name">
-          <input
-            id="workspace-new-file-name"
-            type="text"
-            value={newFileName}
-            onChange={(e) => setNewFileName(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') handleConfirmCreate()
+          <WorkspaceOverview
+            workspaces={workspace.workspaces}
+            activeWorkspaceId={workspace.activeWorkspaceId}
+            loading={workspace.loading}
+            onOpenWorkspace={handleOpenWorkspace}
+            onOpenCreateWorkspace={() => {
+              setNewWorkspaceName('')
+              setCreateWorkspaceOpen(true)
             }}
-            placeholder="path/to/filename.ext  e.g. src/app.js"
-            data-modal-initial-focus
+            onOpenRenameWorkspace={handleOpenRenameWorkspace}
+            onOpenDeleteWorkspace={(ws) => setWorkspaceToDelete(ws)}
           />
-        </FormField>
-        <div className="modal-actions">
-          <button type="button" className="secondary-button" onClick={() => setNewFilePrompt(false)}>Cancel</button>
-          <button type="button" className="primary-button" onClick={handleConfirmCreate} disabled={!newFileName.trim()}>Create</button>
-        </div>
-      </Modal>
-
-      <Modal isOpen={newFolderPrompt} onClose={() => setNewFolderPrompt(false)} title="New Folder" subtitle="Creates a folder inside the workspace. You can then add files inside it.">
-        <FormField label="Folder name" id="workspace-new-folder-name">
-          <input
-            id="workspace-new-folder-name"
-            type="text"
-            value={newFolderName}
-            onChange={(e) => setNewFolderName(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') handleConfirmCreateFolder()
+        </>
+      ) : (
+        <>
+          <WorkspaceToolbar
+            workspaces={workspace.workspaces}
+            activeWorkspace={workspace.activeWorkspace}
+            onBackToOverview={() => setView('overview')}
+            onSwitchWorkspace={workspace.switchWorkspace}
+            onOpenCreateWorkspace={() => {
+              setNewWorkspaceName('')
+              setCreateWorkspaceOpen(true)
             }}
-            placeholder="folder name  e.g. src/components"
-            data-modal-initial-focus
+            onOpenRenameWorkspace={handleOpenRenameWorkspace}
+            onOpenDeleteWorkspace={(ws) => setWorkspaceToDelete(ws)}
+            isTauri={workspace.isTauri}
+            loading={workspace.loading}
+            onRefresh={workspace.refreshTree}
+            terminalVisible={terminalVisible}
+            onToggleTerminal={() => setTerminalVisible(!terminalVisible)}
+            browserVisible={browserVisible}
+            onToggleBrowser={() => setBrowserVisible(!browserVisible)}
+            onCreateFile={handleCreateFile}
+            onCreateFolder={handleCreateFolder}
           />
-        </FormField>
-        <div className="modal-actions">
-          <button type="button" className="secondary-button" onClick={() => setNewFolderPrompt(false)}>Cancel</button>
-          <button type="button" className="primary-button" onClick={handleConfirmCreateFolder} disabled={!newFolderName.trim()}>Create Folder</button>
-        </div>
-      </Modal>
+
+          {workspace.error && (
+            <div className="workspace-error">
+              <span>{workspace.error}</span>
+              <button onClick={workspace.clearError}>×</button>
+            </div>
+          )}
+
+          <div className="workspace-layout">
+            <WorkspaceFileTree
+              files={workspace.fileTree}
+              activeFile={workspace.activeTab}
+              onFileSelect={workspace.openFile}
+              onDelete={workspace.deleteFile}
+              onCreateFile={handleCreateFile}
+              onCreateFolder={handleCreateFolder}
+            />
+
+            <div className={`workspace-center${browserVisible ? ' browser-open' : ''}`}>
+              <div className="workspace-center-stack">
+                <WorkspaceEditor
+                  tabs={workspace.openTabs}
+                  activeTab={workspace.activeTab}
+                  onTabSelect={workspace.setActiveTab}
+                  onTabClose={workspace.closeTab}
+                  onContentChange={workspace.updateTabContent}
+                  onSave={workspace.saveFile}
+                  isFileDirty={workspace.isFileDirty}
+                  onCreateFile={handleCreateFile}
+                  onRunHtml={handleRunHtml}
+                />
+                {terminalVisible && (
+                  <WorkspaceTerminal isTauri={workspace.isTauri} />
+                )}
+              </div>
+              {browserVisible && (
+                <WorkspaceBrowser
+                  workspaceId={workspace.activeWorkspaceId}
+                  initialUrl={browserUrl}
+                  htmlContent={activeHtmlContent}
+                  onClose={() => setBrowserVisible(false)}
+                />
+              )}
+            </div>
+
+            <WorkspaceEvePanel
+              collapsed={evePanelCollapsed}
+              onToggle={() => setEvePanelCollapsed(!evePanelCollapsed)}
+              workspaceId={workspace.activeWorkspaceId}
+              workspaceName={workspace.activeWorkspace?.name}
+              activeFilePath={workspace.activeTab}
+              onFilesChanged={workspace.refreshTree}
+              onAction={handleEveAction}
+            />
+          </div>
+
+          <Modal isOpen={newFilePrompt} onClose={() => setNewFilePrompt(false)} title="New File" subtitle="Creates inside the current workspace folder. Use folder/file.ext to nest.">
+            <FormField label="File name" id="workspace-new-file-name">
+              <input
+                id="workspace-new-file-name"
+                type="text"
+                value={newFileName}
+                onChange={(e) => setNewFileName(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handleConfirmCreate()
+                }}
+                placeholder="path/to/filename.ext  e.g. src/app.js"
+                data-modal-initial-focus
+              />
+            </FormField>
+            <div className="modal-actions">
+              <button type="button" className="secondary-button" onClick={() => setNewFilePrompt(false)}>Cancel</button>
+              <button type="button" className="primary-button" onClick={handleConfirmCreate} disabled={!newFileName.trim()}>Create</button>
+            </div>
+          </Modal>
+
+          <Modal isOpen={newFolderPrompt} onClose={() => setNewFolderPrompt(false)} title="New Folder" subtitle="Creates a folder inside the workspace. You can then add files inside it.">
+            <FormField label="Folder name" id="workspace-new-folder-name">
+              <input
+                id="workspace-new-folder-name"
+                type="text"
+                value={newFolderName}
+                onChange={(e) => setNewFolderName(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handleConfirmCreateFolder()
+                }}
+                placeholder="folder name  e.g. src/components"
+                data-modal-initial-focus
+              />
+            </FormField>
+            <div className="modal-actions">
+              <button type="button" className="secondary-button" onClick={() => setNewFolderPrompt(false)}>Cancel</button>
+              <button type="button" className="primary-button" onClick={handleConfirmCreateFolder} disabled={!newFolderName.trim()}>Create Folder</button>
+            </div>
+          </Modal>
+        </>
+      )}
 
       {/* Create Workspace Modal */}
       <Modal

@@ -643,16 +643,16 @@ export function WhatsAppPage() {
           <div className="whatsapp-sync-progress-bar-bg">
             <div
               className="whatsapp-sync-progress-bar-fill"
-              style={{ width: `${syncProgress}%` }}
+              style={{ '--progress': `${syncProgress}%` }}
             />
           </div>
 
           <div className="whatsapp-sync-footer">
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <div className="whatsapp-sync-footer-status">
               <Loader2 size={13} className="spin" />
               <span>Syncing encrypted session & conversations</span>
             </div>
-            <span style={{ fontWeight: 600 }}>{syncProgress}%</span>
+            <span className="whatsapp-sync-footer-percent">{syncProgress}%</span>
           </div>
         </div>
       </div>
@@ -674,9 +674,8 @@ export function WhatsAppPage() {
           <div className="whatsapp-sync-actions">
             <button
               type="button"
-              className="primary-button"
+              className="primary-button whatsapp-sync-retry-btn"
               onClick={runFullSync}
-              style={{ minHeight: '40px', padding: '8px 20px', gap: '8px' }}
             >
               <RefreshCw size={16} /> Retry Synchronization
             </button>

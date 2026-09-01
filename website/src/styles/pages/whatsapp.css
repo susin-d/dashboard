@@ -2611,6 +2611,7 @@
 
 .whatsapp-sync-progress-bar-fill {
   height: 100%;
+  width: var(--progress, 0%);
   background: var(--text-primary, #ffffff);
   border-radius: 999px;
   transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -2623,6 +2624,22 @@
   justify-content: space-between;
   font-size: 0.75rem;
   color: var(--text-secondary, #a1a1aa);
+}
+
+.whatsapp-sync-footer-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.whatsapp-sync-footer-percent {
+  font-weight: 600;
+}
+
+.whatsapp-sync-retry-btn {
+  min-height: 40px;
+  padding: 8px 20px;
+  gap: 8px;
 }
 
 .whatsapp-sync-actions {
