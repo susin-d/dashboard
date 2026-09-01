@@ -19,9 +19,9 @@ logger = logging.getLogger(__name__)
 
 # Conservative max output tokens to avoid OpenRouter 402 credit checks
 # (free tier can only afford ~3810 total tokens; request + prompt must fit).
-# OpenRouter is most constrained, so use 2048 there, 4096 elsewhere.
+# OpenRouter is most constrained, so use 1024 there, 4096 elsewhere.
 DEFAULT_MAX_TOKENS = 4096
-OPENROUTER_MAX_TOKENS = 2048
+OPENROUTER_MAX_TOKENS = 1024
 
 _PROVIDER_MAX_TOKENS: dict[str, int] = {
     "openrouter": OPENROUTER_MAX_TOKENS,
@@ -151,9 +151,9 @@ class OpenAiCompatibleClient(ProviderClient):
             prov = _provider_label(self.client)
             classified = classify_provider_error(error, prov, model)
             # Quota 402 often due to max_tokens too high on free tier — retry once with halved tokens
-            if classified.kind == "quota" and max_tokens > 1024:
+            if classified.kind == "quota" and max_tokens > 512:
                 try:
-                    retry_tokens = max(1024, max_tokens // 2)
+                    retry_tokens = max(512, max_tokens // 2)
                     logger.warning(f"[OpenAI-Compatible Provider] Retrying {model} with max_tokens={retry_tokens} after quota error")
                     response = self.client.chat.completions.create(
                         model=model,
@@ -205,9 +205,9 @@ class OpenAiCompatibleClient(ProviderClient):
             logger.error(f"[OpenAI-Compatible Provider] Streaming call failed for model '{model}': {type(error).__name__}: {error}", exc_info=True)
             prov = _provider_label(self.client)
             classified = classify_provider_error(error, prov, model)
-            if classified.kind == "quota" and max_tokens > 1024:
+            if classified.kind == "quota" and max_tokens > 512:
                 try:
-                    retry_tokens = max(1024, max_tokens // 2)
+                    retry_tokens = max(512, max_tokens // 2)
                     logger.warning(f"[OpenAI-Compatible Provider] Retrying stream {model} with max_tokens={retry_tokens} after quota error")
                     stream = self.client.chat.completions.create(
                         model=model,
