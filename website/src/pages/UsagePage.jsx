@@ -1,3 +1,4 @@
+import "../styles/pages/usage.css"
 import { useEffect, useMemo, useState } from 'react'
 import { RefreshCw } from 'lucide-react'
 import { EmptyState, LoadingState } from '../components/ui'

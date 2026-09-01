@@ -1,3 +1,4 @@
+import "../styles/pages/settings.css"
 import { PageHeader } from '../components/ui'
 import { ProfileCard } from '../components/ProfileCard'
 

@@ -1,3 +1,4 @@
+import "../styles/pages/todo.css"
 import { useEffect, useMemo, useState } from 'react'
 import { CalendarDays, Check, Pencil, Plus, Trash2 } from 'lucide-react'
 import { createTodo, deleteTodo, updateTodo } from '../lib/todosApi'

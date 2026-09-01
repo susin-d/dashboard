@@ -1,3 +1,4 @@
+import "../styles/pages/jobs.css"
 import { useEffect, useMemo, useState } from 'react'
 import {
   BriefcaseBusiness,

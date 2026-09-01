@@ -1,3 +1,4 @@
+import "../styles/pages/whatsapp.css"
 import { useEffect, useRef, useState } from 'react'
 import {
   fetchWhatsAppStatus,

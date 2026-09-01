@@ -1,3 +1,4 @@
+import "../styles/pages/eve.css"
 import { useEffect, useRef, useState } from 'react'
 import {
   createEveMemory,

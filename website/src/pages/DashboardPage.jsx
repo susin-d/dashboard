@@ -1,3 +1,4 @@
+import "../styles/pages/dashboard.css"
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { ResponsiveGridLayout, useContainerWidth } from 'react-grid-layout'
 import {

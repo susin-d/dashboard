@@ -1,3 +1,4 @@
+import "../styles/pages/chats.css"
 import { useEffect, useState, useMemo, useCallback } from 'react'
 import {
   MessageSquare,

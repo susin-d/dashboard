@@ -33,31 +33,8 @@
 /* Component Styles — Avatar (glass, must load before page overrides) */
 @import './styles/components/eve-avatar.css';
 
-/* Page Styles */
-@import './styles/pages/avatar.css';
-@import './styles/pages/dashboard.css';
-@import './styles/pages/calendar.css';
-@import './styles/pages/documents.css';
-@import './styles/pages/mails.css';
-@import './styles/pages/todo.css';
-@import './styles/pages/projects.css';
-@import './styles/pages/stats.css';
-@import './styles/pages/hackathons.css';
-@import './styles/pages/coding.css';
-@import './styles/pages/jobs.css';
-@import './styles/pages/settings.css';
-@import './styles/pages/themes.css';
-@import './styles/pages/chats.css';
-@import './styles/pages/calls.css';
-@import './styles/pages/contacts.css';
-@import './styles/pages/whatsapp.css';
-@import './styles/pages/eve.css';
-@import './styles/pages/workspace.css';
-@import './styles/pages/studio.css';
-@import './styles/pages/landing-auth.css';
-@import './styles/pages/landing.css';
-@import './styles/pages/missing-states.css';
-@import './styles/pages/usage.css';
+/* Page Styles — now per-route code-split: each page imports its own CSS
+   (App.css keeps only global tokens/components; page CSS is lazy via JS imports) */
 
 @import './styles/components/device-section.css';
 @import './styles/components/update-banner.css';

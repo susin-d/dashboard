@@ -1,3 +1,4 @@
+import "../../styles/pages/studio.css"
 import { useCallback, useEffect, useState } from 'react'
 import {
   ArrowLeft,

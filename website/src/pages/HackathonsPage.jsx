@@ -1,3 +1,4 @@
+import "../styles/pages/hackathons.css"
 import { useEffect, useState } from 'react'
 import {
   CalendarDays,

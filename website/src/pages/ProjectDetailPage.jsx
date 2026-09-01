@@ -1,3 +1,4 @@
+import "../styles/pages/projects.css"
 import { useState } from 'react'
 import {
   ArrowLeft,

@@ -1,3 +1,4 @@
+import "../styles/pages/avatar.css"
 import { useEffect, useRef, useState } from 'react'
 import { Bot, Eye, GlassWater, Heart, Maximize2, Mic, Monitor, Move, RotateCcw, Settings2, Sparkles, TestTube, Upload, Trash2, Smartphone, Zap } from 'lucide-react'
 import { PageHeader, EmptyState, CustomDropdown } from '../components/ui'

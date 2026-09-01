@@ -25,6 +25,8 @@ export default defineConfig({
             if (id.includes('react-grid-layout')) return 'grid'
             if (id.includes('three') || id.includes('@pixiv/three-vrm') || id.includes('@react-three')) return 'avatar-3d'
             if (id.includes('pixi')) return 'avatar-live2d'
+            if (id.includes('framer-motion')) return 'motion'
+            if (id.includes('lucide-react')) return 'icons'
             if (id.includes('react') || id.includes('react-dom')) return 'vendor'
           }
           return null

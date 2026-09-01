@@ -1,3 +1,4 @@
+import "../styles/pages/landing-auth.css"
 import { ArrowLeft, ArrowRight, Eye, EyeOff, LockKeyhole, Mail } from 'lucide-react'
 import { useState } from 'react'
 import {

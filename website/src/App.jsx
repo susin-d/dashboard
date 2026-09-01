@@ -1,19 +1,20 @@
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react'
 import { AppLayout } from './layouts/AppLayout'
-import { DashboardPage } from './pages/DashboardPage'
-import { DocumentsPage } from './pages/DocumentsPage'
-import { DocumentOpenerPage } from './pages/DocumentOpenerPage'
-import { HackathonsPage } from './pages/HackathonsPage'
-import { HackathonDetailPage } from './pages/HackathonDetailPage'
-import { JobsPage } from './pages/JobsPage'
-import { ProjectsPage } from './pages/ProjectsPage'
-import { ProjectDetailPage } from './pages/ProjectDetailPage'
-import { SettingPage } from './pages/SettingPage'
-import { ThemesPage } from './pages/ThemesPage'
-import { StatsPage } from './pages/StatsPage'
-import { TodoPage } from './pages/TodoPage'
-import { ProfilePage } from './pages/ProfilePage'
 import { IncomingCallOverlay } from './components/calls/IncomingCallOverlay'
+// Eager only for tiny shells — heavy pages lazy for code-split (fixes 567k index)
+const DashboardPage = lazy(() => import('./pages/DashboardPage').then((m) => ({ default: m.DashboardPage })))
+const DocumentsPage = lazy(() => import('./pages/DocumentsPage').then((m) => ({ default: m.DocumentsPage })))
+const DocumentOpenerPage = lazy(() => import('./pages/DocumentOpenerPage').then((m) => ({ default: m.DocumentOpenerPage })))
+const HackathonsPage = lazy(() => import('./pages/HackathonsPage').then((m) => ({ default: m.HackathonsPage })))
+const HackathonDetailPage = lazy(() => import('./pages/HackathonDetailPage').then((m) => ({ default: m.HackathonDetailPage })))
+const JobsPage = lazy(() => import('./pages/JobsPage').then((m) => ({ default: m.JobsPage })))
+const ProjectsPage = lazy(() => import('./pages/ProjectsPage').then((m) => ({ default: m.ProjectsPage })))
+const ProjectDetailPage = lazy(() => import('./pages/ProjectDetailPage').then((m) => ({ default: m.ProjectDetailPage })))
+const SettingPage = lazy(() => import('./pages/SettingPage').then((m) => ({ default: m.SettingPage })))
+const ThemesPage = lazy(() => import('./pages/ThemesPage').then((m) => ({ default: m.ThemesPage })))
+const StatsPage = lazy(() => import('./pages/StatsPage').then((m) => ({ default: m.StatsPage })))
+const TodoPage = lazy(() => import('./pages/TodoPage').then((m) => ({ default: m.TodoPage })))
+const ProfilePage = lazy(() => import('./pages/ProfilePage').then((m) => ({ default: m.ProfilePage })))
 // Heavy pages lazy (Vercel split: monaco, whatsapp 1.3k, WebRTC, Eve)
 const CalendarPage = lazy(() => import('./pages/CalendarPage').then((m) => ({ default: m.CalendarPage })))
 const CompetitiveCodingPage = lazy(() => import('./pages/CompetitiveCodingPage').then((m) => ({ default: m.CompetitiveCodingPage })))

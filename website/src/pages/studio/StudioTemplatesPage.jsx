@@ -1,3 +1,4 @@
+import "../../styles/pages/studio.css"
 import { useCallback, useEffect, useState } from 'react'
 import { LayoutTemplate } from 'lucide-react'
 import { EmptyState, FormField, LoadingState, Modal, PageHeader } from '../../components/ui'

@@ -1,3 +1,4 @@
+import "../styles/pages/themes.css"
 import { useRef, useState } from 'react'
 import {
   Check,

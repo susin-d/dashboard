@@ -1,3 +1,4 @@
+import "../styles/pages/landing-auth.css"
 import { ArrowLeft, ArrowRight, CheckCircle2, Eye, EyeOff, LockKeyhole, Mail, RefreshCw } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { requestPasswordReset, resetPassword, verifyResetCode } from '../lib/authApi'

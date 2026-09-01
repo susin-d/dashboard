@@ -1,3 +1,4 @@
+import "../styles/pages/mails.css"
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
   Archive, BellRing, ChevronDown, Inbox, LoaderCircle, Mail, MailOpen,

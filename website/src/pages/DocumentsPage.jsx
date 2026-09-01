@@ -1,3 +1,4 @@
+import "../styles/pages/documents.css"
 import { useEffect, useMemo, useState } from 'react'
 import {
   CalendarClock,

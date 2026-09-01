@@ -1,3 +1,4 @@
+import "../styles/pages/coding.css"
 import { useMemo, useState } from 'react'
 import { CalendarDays, ChevronDown, Clock3, Filter, Search, SlidersHorizontal, Trophy } from 'lucide-react'
 import { CustomDropdown, EmptyState, FilterBar, MetricCard, MetricGrid, PageHeader, SearchBar } from '../components/ui'

@@ -1,3 +1,4 @@
+import "../styles/pages/settings.css"
 import { useEffect, useRef, useState } from 'react'
 import { TabNav } from '../components/ui'
 import { AccountSection } from './settings/AccountSection'
