@@ -84,7 +84,7 @@ def effective_base_url(provider: str) -> str | None:
     return None
 
 
-_PREFERRED_PROVIDER_ORDER = ["openai", "anthropic", "gemini", "groq", "openrouter", "ollama", "opencode"]
+_PREFERRED_PROVIDER_ORDER = ["openrouter", "openai", "anthropic", "gemini", "groq", "ollama", "opencode"]
 
 
 def _first_available_provider() -> str:

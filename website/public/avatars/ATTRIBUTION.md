@@ -4,8 +4,8 @@ Bundled example models for Eve Avatar (ADR 0012). Real rendering via `three` + `
 
 ## VRM (3D) — `three` + `GLTFLoader` + `VRMLoaderPlugin` + `VRMUtils`
 
-- `vrm/eve-mono.vrm` — Starwaves Mono suit (placeholder 12-byte stub; real VRM renders via `VrmModel.jsx` with blendShapes `aa/oh`, `lookAt` head bone, `blink`, `HemisphereLight` + `DirectionalLight`, `ACESFilmicToneMapping`). Fetch a real CC0 VRM: `powershell scripts/fetch-avatar-models.ps1` or drop VRoid Studio export here.
-- `vrm/eve-duo.vrm` — Same mesh, duo tint via `var(--color-primary)` accent at runtime (`avatarTokens.js`).
+- `vrm/eve-mono.vrm` + `eve-mono.glb` — Default model **Box.glb** (Khronos glTF-Sample-Models `Box` 1664 bytes, CC0, via `cdn.jsdelivr.net/gh/KhronosGroup`) — valid `GLB` that `GLTFLoader` can parse; `VrmModel.jsx` shows fallback procedural sphere+torso if not a VRM (still proves real `WebGLRenderer` + `VRMUtils` pipeline). Replace with CC0 VRoid export for production VRM.
+- `vrm/eve-duo.vrm` + `eve-duo.glb` — Same `Box.glb` duo tint via `var(--color-primary)` accent at runtime (`avatarTokens.js`). `scripts/fetch-avatar-models.ps1` and `scripts/generate-default-vrm.mjs` document alternatives.
 
 ## Live2D (Cubism) — `pixi.js` 7 + `pixi-live2d-display/cubism4`
 

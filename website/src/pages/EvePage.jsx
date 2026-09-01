@@ -83,7 +83,7 @@ export function EvePage({
   const [isAddingMemory, setIsAddingMemory] = useState(false)
   const [isLoadingSidebar, setIsLoadingSidebar] = useState(true)
   const [aiProviders, setAiProviders] = useState([])
-  const [activeModel, setActiveModel] = useState({ provider: 'openai', model: 'gpt-5-mini', label: 'GPT-5 mini' })
+  const [activeModel, setActiveModel] = useState({ provider: 'openrouter', model: 'openrouter/free', label: 'Free Models Router' })
   const { prefs: avatarPrefs, activeModel: avatarModel, setPrefs: setAvatarPrefs } = useEveAvatar()
   const { activePreset } = useThemeCustomizer() || {}
 
@@ -106,8 +106,8 @@ export function EvePage({
           const modelObj = selectedProv.models?.find((m) => m.id === (pref?.model || '')) || selectedProv.models?.[0]
           setActiveModel({
             provider: selectedProv.id,
-            model: modelObj?.id || pref?.model || selectedProv.default_model || 'gpt-5-mini',
-            label: modelObj?.label || modelObj?.id || 'GPT-5 mini',
+            model: modelObj?.id || pref?.model || selectedProv.default_model || 'openrouter/free',
+            label: modelObj?.label || modelObj?.id || 'Free Models Router',
           })
         }
       }

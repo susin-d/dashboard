@@ -82,7 +82,7 @@ class Settings:
     auth_secret_key: str = os.getenv("AUTH_SECRET_KEY") or (
         "starwaves-super-secret-auth-key-change-in-prod" if app_env != "production" else ""
     )
-    default_ai_provider: str = os.getenv("DEFAULT_AI_PROVIDER", "openai")
+    default_ai_provider: str = os.getenv("DEFAULT_AI_PROVIDER", "openrouter")
     openai_api_key: str | None = os.getenv("OPENAI_API_KEY")
     openai_url: str | None = os.getenv("OPENAI_URL") or None
     openai_model: str = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
@@ -102,7 +102,7 @@ class Settings:
     deepgram_stt_model: str = os.getenv("DEEPGRAM_STT_MODEL", "nova-3")
     openrouter_api_key: str | None = os.getenv("OPENROUTER_API_KEY")
     openrouter_url: str | None = os.getenv("OPENROUTER_URL") or None
-    openrouter_model: str = os.getenv("OPENROUTER_MODEL", "openai/gpt-4o-mini")
+    openrouter_model: str = os.getenv("OPENROUTER_MODEL", "openrouter/free")
     ollama_url: str | None = os.getenv("OLLAMA_URL") or None
     ollama_model: str = os.getenv("OLLAMA_MODEL", "llama3.1")
     ollama_api_key: str | None = os.getenv("OLLAMA_API_KEY")

@@ -33,5 +33,5 @@ class AiModelPreferenceResponse(BaseModel):
 class AiModelsResponse(BaseModel):
     providers: list[AiProviderDescriptor]
     preference: AiModelPreferenceResponse | None = None
-    default_provider: str = "openai"
-    default_model: str = "gpt-5-mini"
+    default_provider: str = "openrouter"
+    default_model: str = "openrouter/free"
