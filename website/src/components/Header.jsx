@@ -7,6 +7,7 @@ import {
   CalendarDays,
   CheckCheck,
   ChevronDown,
+  ChevronRight,
   FolderKanban,
   LogOut,
   Menu,
@@ -27,11 +28,13 @@ import { clearAuthSession } from '../lib/authApi'
 import { deleteNotification, markAllNotificationsRead } from '../lib/workspaceApi'
 import { CALENDAR_REMINDER_PREFIX } from '../utils/calendarReminders'
 import { getNotificationPermission, requestNotificationPermission } from '../utils/browserNotifications'
+import { navigationItems } from '../config/navigation'
 import { StarWavesLogo } from './StarWavesLogo'
 import { EveAssistantModal } from './EveAssistantModal'
 import { AdvancedSearchModal } from './search/AdvancedSearchModal'
 
 export function Header({
+  activePage,
   onMenuOpen,
   navigationExpanded,
   onNavigate,
@@ -189,34 +192,47 @@ export function Header({
     )
   }
 
+  const currentNav = navigationItems.find((item) => item.id === activePage) || {
+    label: activePage ? activePage.charAt(0).toUpperCase() + activePage.slice(1) : 'Dashboard',
+    group: 'Workspace',
+  }
+
   return (
     <>
       <header className="topbar">
-      <div
-        className="brand"
-        onClick={() => onNavigate?.('dashboard')}
-        role="button"
-        tabIndex={0}
-        onKeyDown={(e) => e.key === 'Enter' && onNavigate?.('dashboard')}
-        title="Go to Dashboard"
-      >
-        <button
-          className="icon-button menu-button header-menu-btn"
-          onClick={(e) => {
-            e.stopPropagation()
-            onMenuOpen()
-          }}
-          aria-label={navigationExpanded ? 'Collapse navigation' : 'Expand navigation'}
-          aria-expanded={navigationExpanded}
-          title={navigationExpanded ? 'Collapse navigation' : 'Expand navigation'}
-        >
-          <Menu size={20} />
-        </button>
-        <StarWavesLogo size={30} />
-        <span>StarWaves</span>
-      </div>
+        <div className="topbar-left">
+          <button
+            type="button"
+            className="icon-button menu-button header-menu-btn"
+            onClick={(e) => {
+              e.stopPropagation()
+              onMenuOpen()
+            }}
+            aria-label={navigationExpanded ? 'Collapse navigation' : 'Expand navigation'}
+            aria-expanded={navigationExpanded}
+            title={navigationExpanded ? 'Collapse navigation' : 'Expand navigation'}
+          >
+            <Menu size={20} />
+          </button>
+          <div
+            className="brand mobile-brand"
+            onClick={() => onNavigate?.('dashboard')}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => e.key === 'Enter' && onNavigate?.('dashboard')}
+            title="Go to Dashboard"
+          >
+            <StarWavesLogo size={26} />
+            <span>StarWaves</span>
+          </div>
+          <div className="topbar-breadcrumb">
+            <span className="breadcrumb-group">{currentNav.group}</span>
+            <ChevronRight size={13} className="breadcrumb-sep" />
+            <span className="breadcrumb-current">{currentNav.label}</span>
+          </div>
+        </div>
 
-      <div className="header-actions">
+        <div className="header-actions">
         <div className="search-container">
           <button
             type="button"

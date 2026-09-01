@@ -62,6 +62,7 @@ export function AppLayout({
       />
       <div className="app-main-wrapper">
         <Header
+          activePage={activePage}
           onMenuOpen={toggleNavigation}
           navigationExpanded={isSidebarExpanded}
           onNavigate={onNavigate}

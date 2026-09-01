@@ -55,19 +55,19 @@ export function Sidebar({
         onScroll={() => setHoveredItem(null)}
         onMouseLeave={() => setHoveredItem(null)}
       >
-        <div
-          className="sidebar-brand"
-          onClick={() => handleNavigate('dashboard')}
-          role="button"
-          tabIndex={0}
-          onKeyDown={(e) => e.key === 'Enter' && handleNavigate('dashboard')}
-          title="StarWaves Dashboard"
-        >
-          <StarWavesLogo size={30} />
-          {isExpanded && <span className="sidebar-brand-name">StarWaves</span>}
-        </div>
+        <div className="sidebar-header-row">
+          <div
+            className="sidebar-brand"
+            onClick={() => handleNavigate('dashboard')}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => e.key === 'Enter' && handleNavigate('dashboard')}
+            title="StarWaves Dashboard"
+          >
+            <StarWavesLogo size={28} />
+            {isExpanded && <span className="sidebar-brand-name">StarWaves</span>}
+          </div>
 
-        <div className="sidebar-toggle-row">
           <button
             type="button"
             className="sidebar-toggle-btn"
@@ -76,8 +76,8 @@ export function Sidebar({
             title={isExpanded ? 'Collapse navigation' : 'Expand navigation'}
           >
             {isExpanded ? <PanelLeftClose size={18} /> : <PanelLeftOpen size={18} />}
-            {isExpanded && <span className="sidebar-toggle-label">Collapse</span>}
           </button>
+
           {isOpen && (
             <button
               type="button"
