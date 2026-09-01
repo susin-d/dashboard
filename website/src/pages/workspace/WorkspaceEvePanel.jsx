@@ -1,6 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
 import { Bot, Send, PanelRightClose, PanelRightOpen, Square, Wrench } from 'lucide-react'
 import { useEveAgentChat } from './useEveAgentChat'
+import { EveInlineAvatar } from '../../components/eve/avatar/EveInlineAvatar'
+import { useEveAvatar } from '../../components/eve/avatar/EveAvatarProvider'
+import { useThemeCustomizer } from '../../hooks/useThemeCustomizer'
 
 export function WorkspaceEvePanel({
   collapsed,
@@ -20,6 +23,8 @@ export function WorkspaceEvePanel({
   })
   const [draft, setDraft] = useState('')
   const chatRef = useRef(null)
+  const { prefs: avatarPrefs, activeModel: avatarModel } = useEveAvatar()
+  const { activePreset } = useThemeCustomizer() || {}
 
   useEffect(() => {
     const node = chatRef.current
@@ -29,6 +34,20 @@ export function WorkspaceEvePanel({
   if (collapsed) {
     return (
       <div className="workspace-eve-collapsed">
+        {avatarPrefs?.enabled !== false && (
+          <div className="workspace-eve-micro-avatar" aria-hidden="true">
+            <EveInlineAvatar
+              size="sm"
+              presetId={activePreset}
+              prefs={avatarPrefs}
+              activeModel={avatarModel}
+              isEveSpeaking={sending}
+              isSending={sending}
+              streamText={streamText}
+              activeTool={activeTool}
+            />
+          </div>
+        )}
         <button
           className="workspace-eve-toggle"
           onClick={onToggle}

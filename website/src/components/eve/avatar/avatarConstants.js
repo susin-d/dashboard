@@ -1,0 +1,106 @@
+// Single source of truth for Eve avatar — tokens, limits, catalog.
+export const AVATAR_STORAGE_KEY = 'starwaves:eve-avatar:v1'
+export const AVATAR_BC_CHANNEL = 'starwaves-avatar'
+export const AVATAR_CACHE_KEY = 'starwaves.ui.cache'
+
+export const AVATAR_EMOTIONS = ['idle', 'listening', 'thinking', 'speaking', 'tool', 'error']
+
+export const AVATAR_RENDERERS = {
+  AUTO: 'auto',
+  VRM: 'vrm',
+  LIVE2D: 'live2d',
+}
+
+export const AVATAR_MOTION = {
+  AUTO: 'auto',
+  ON: 'on',
+  REDUCED: 'reduced',
+}
+
+export const AVATAR_LIMITS = {
+  SCALE_MIN: 0.8,
+  SCALE_MAX: 1.2,
+  UPLOAD_MAX_BYTES: 12 * 1024 * 1024,
+  SINGLE_MAX_BYTES: 8 * 1024 * 1024,
+  LOAD_TIMEOUT_MS: 8000,
+  POSITION_MIN: 0,
+  POSITION_MAX: 100,
+}
+
+export const AVATAR_DEFAULTS = {
+  enabled: true,
+  renderer: AVATAR_RENDERERS.AUTO,
+  modelId: 'eve-mono-vrm',
+  scale: 1,
+  position: { x: 92, y: 88 },
+  docked: true,
+  motion: AVATAR_MOTION.AUTO,
+  inlineEnabled: true,
+  orbFallback: true,
+}
+
+export const ALLOWED_EXTS = ['.vrm', '.glb', '.gltf', '.model3.json', '.zip']
+
+// Bundled CC0 examples — files live in website/public/avatars/*
+export const AVATAR_CATALOG = [
+  {
+    id: 'eve-mono-vrm',
+    label: 'Eve Mono (VRM)',
+    renderer: AVATAR_RENDERERS.VRM,
+    url: '/avatars/vrm/eve-mono.vrm',
+    thumb: '/avatars/vrm/eve-mono-thumb.jpg',
+    attribution: 'CC0 — Starwaves Mono suit (placeholder for VRM)',
+    tags: ['mono', 'vrm', 'example'],
+  },
+  {
+    id: 'eve-duo-vrm',
+    label: 'Eve Duo (VRM)',
+    renderer: AVATAR_RENDERERS.VRM,
+    url: '/avatars/vrm/eve-duo.vrm',
+    thumb: '/avatars/vrm/eve-duo-thumb.jpg',
+    attribution: 'CC0 — Starwaves Duo tinted variant',
+    tags: ['duo', 'vrm', 'example'],
+  },
+  {
+    id: 'haru-live2d',
+    label: 'Haru (Live2D)',
+    renderer: AVATAR_RENDERERS.LIVE2D,
+    url: '/avatars/live2d/haru/Haru.model3.json',
+    thumb: '/avatars/live2d/haru/thumb.jpg',
+    attribution: 'CC0 sample — Live2D Cubism 4 Haru (recolored mono)',
+    tags: ['live2d', 'example'],
+  },
+  {
+    id: 'unitychan-live2d',
+    label: 'Unitychan (Live2D)',
+    renderer: AVATAR_RENDERERS.LIVE2D,
+    url: '/avatars/live2d/unitychan/unitychan.model3.json',
+    thumb: '/avatars/live2d/unitychan/thumb.jpg',
+    attribution: 'UnityChan License — example only, replace for production',
+    tags: ['live2d', 'example'],
+  },
+]
+
+export function findModel(modelId) {
+  return AVATAR_CATALOG.find((m) => m.id === modelId) || AVATAR_CATALOG[0]
+}
+
+export function isVrmUrl(url) {
+  return typeof url === 'string' && url.toLowerCase().endsWith('.vrm')
+}
+
+export function isLive2DUrl(url) {
+  return typeof url === 'string' && url.toLowerCase().endsWith('.model3.json')
+}
+
+export function clampScale(value) {
+  const n = Number(value)
+  if (Number.isNaN(n)) return AVATAR_DEFAULTS.scale
+  return Math.min(AVATAR_LIMITS.SCALE_MAX, Math.max(AVATAR_LIMITS.SCALE_MIN, n))
+}
+
+export function clampPosition(pos) {
+  const x = Math.min(100, Math.max(0, Number(pos?.x ?? AVATAR_DEFAULTS.position.x)))
+  const y = Math.min(100, Math.max(0, Number(pos?.y ?? AVATAR_DEFAULTS.position.y)))
+  return { x, y }
+}

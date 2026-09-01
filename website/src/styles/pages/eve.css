@@ -1,5 +1,24 @@
 /* ── Eve AI Page Layout & Subpage Styles (Strict Monochrome) ── */
 
+.eve-inline-avatar-wrap {
+  display: flex;
+  justify-content: center;
+  padding: 0 0 0.5rem;
+}
+
+.eve-call-avatar-row {
+  display: flex;
+  justify-content: center;
+  padding: 0.5rem 0;
+}
+
+.workspace-eve-micro-avatar {
+  display: flex;
+  justify-content: center;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--border-color);
+}
+
 .eve-page-container {
   display: flex;
   flex-direction: column;

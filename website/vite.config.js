@@ -23,6 +23,8 @@ export default defineConfig({
             if (id.includes('firebase')) return 'firebase'
             if (id.includes('@monaco-editor')) return 'monaco'
             if (id.includes('react-grid-layout')) return 'grid'
+            if (id.includes('three') || id.includes('@pixiv/three-vrm') || id.includes('@react-three')) return 'avatar-3d'
+            if (id.includes('pixi')) return 'avatar-live2d'
             if (id.includes('react') || id.includes('react-dom')) return 'vendor'
           }
           return null

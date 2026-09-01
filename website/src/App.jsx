@@ -50,6 +50,8 @@ import { CustomUIProvider } from './hooks/useCustomUI'
 import { EveUiBanner } from './components/ui/EveUiBanner'
 import { UpdateBanner } from './components/ui/UpdateBanner'
 import { useAutoUpdater } from './hooks/useAutoUpdater'
+import { EveAvatarProvider } from './components/eve/avatar/EveAvatarProvider'
+import { EveGlobalCompanionHost } from './components/eve/avatar/EveGlobalCompanionHost'
 
 const routeTitles = {
   '/': 'StarWaves — Developer productivity workspace',
@@ -657,7 +659,8 @@ function App() {
 
   return (
     <CustomUIProvider>
-      <AppLayout
+      <EveAvatarProvider>
+        <AppLayout
         activePage={
           activePage === 'project-detail'
             ? 'projects'
@@ -702,10 +705,12 @@ function App() {
               })()
             : (pages[activePage] ?? pages.dashboard)}
         </Suspense>
+        <IncomingCallOverlay callCenter={callCenter} myUid={userProfile?.uid} />
+        <UpdateBanner update={appUpdate} onDismiss={dismissAppUpdate} />
+        <EveUiBanner />
+        <EveGlobalCompanionHost />
       </AppLayout>
-      <IncomingCallOverlay callCenter={callCenter} myUid={userProfile?.uid} />
-      <UpdateBanner update={appUpdate} onDismiss={dismissAppUpdate} />
-      <EveUiBanner />
+    </EveAvatarProvider>
     </CustomUIProvider>
   )
 }

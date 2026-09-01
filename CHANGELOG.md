@@ -81,6 +81,12 @@ Historical implementation log extracted from `context.md`. `context.md` now hold
 - **Adapters:** `openai` streams `reasoning` deltas; `anthropic` `MAX_TOKENS 4096→8192` + base_url forwarding; `gemini` thought/thinking handling for 2.5+ (`thought_signature`); `openai_compat` OpenRouter default_headers injection.
 - **Docs:** `docs/adr/0005-ai-provider-hardening-universal-openai.md` + `README` index; `context.md` last-updated.
 
+## 2026-09-01 — Eve Avatar Live2D/3D (ADR 0012) — dual renderer + global + inline + auto + upload
+
+- **Frontend:** `components/eve/avatar/` 11 files (`EveAvatar`, `EveGlobalCompanion`+`Host`, `EveInlineAvatar`, `VrmModel`/`Live2DModel` procedural fallbacks, `useEveAvatarState`/`useLipSync`/`useEyeTracking`/`useAvatarPref`/`useAvatarLifecycle` + `avatarConstants`/`avatarTokens` + `EveAvatarProvider`) + `styles/components/eve-avatar.css` (glass, tokens, reduced-motion) + `lib/eveAvatarApi` + `pages/settings/EveAvatarSection` (renderer/motion/scale, model grid 4 examples, upload 12MB + zip guard) + `App.jsx` provider + `AppLayout` global dock + `EvePage` inline header + `EveCallSection` avatar row + `WorkspaceEvePanel` micro. `vite.config` manualChunks `avatar-3d`/`avatar-live2d`, `App.css` import, `public/avatars/` examples + `ATTRIBUTION.md`.
+- **Backend:** `schemas/eve_avatar` + `services/eve_avatar` (prefs in `ui-preferences.eve_avatar`, `eve_avatar_uploads` capped 20, validate ext/size/magic/zip `model3.json` traversal, store `WORKSPACE_STORAGE_PATH/avatars/{uid}/`) + `api/routes/eve_avatar` (`GET /preferences`, `PUT /preferences`, `GET /models limit+1`, `POST /upload` base64, `DELETE /models/{id}`) + `api/router` mount. Cached `SHORT/LONG` + invalidate `eve:avatar`+`ui:preferences`.
+- **Docs:** ADR `0012-eve-avatar-live2d-3d.md` + `README` index, `context.md` one-liner.
+
 ## 2026-08-31 — Differentiated AI errors (ADR 0007) — rate_limit vs other
 
 - **Contracts:** `ai_models/contracts` `AIServiceError(kind/status/retry_after)` + `classify_provider_error` (429 rate_limit/quota, 401 auth, 404 model, 422 context, 503 server) with Retry-After parsing.

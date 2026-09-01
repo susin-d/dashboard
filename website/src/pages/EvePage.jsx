@@ -16,6 +16,9 @@ import { EveSessionsSection } from './eve/EveSessionsSection'
 import { EveMemorySection } from './eve/EveMemorySection'
 import { EveSchedulesSection } from './eve/EveSchedulesSection'
 import { EveCallSection } from './eve/EveCallSection'
+import { EveInlineAvatar } from '../components/eve/avatar/EveInlineAvatar'
+import { useEveAvatar } from '../components/eve/avatar/EveAvatarProvider'
+import { useThemeCustomizer } from '../hooks/useThemeCustomizer'
 
 const STARTER_MESSAGES = [
   {
@@ -81,6 +84,8 @@ export function EvePage({
   const [isLoadingSidebar, setIsLoadingSidebar] = useState(true)
   const [aiProviders, setAiProviders] = useState([])
   const [activeModel, setActiveModel] = useState({ provider: 'openai', model: 'gpt-5-mini', label: 'GPT-5 mini' })
+  const { prefs: avatarPrefs, activeModel: avatarModel, setPrefs: setAvatarPrefs } = useEveAvatar()
+  const { activePreset } = useThemeCustomizer() || {}
 
   const refreshSidebar = async () => {
     try {
@@ -484,8 +489,38 @@ export function EvePage({
     setDraft(item.prompt)
   }
 
+  // Broadcast Eve live state to global companion
+  useEffect(() => {
+    const detail = { isSending, isEveSpeaking: Boolean(streamText) && isSending, isEveThinking: Boolean(thinkingText) && isSending, thinkingText, activeTool, streamText, error }
+    window.dispatchEvent(new CustomEvent('starwaves:eve-state', { detail }))
+  }, [isSending, streamText, thinkingText, activeTool, error])
+
+  const handleAvatarToggleRenderer = () => {
+    const next = avatarPrefs?.renderer === 'vrm' ? 'live2d' : avatarPrefs?.renderer === 'live2d' ? 'auto' : 'vrm'
+    setAvatarPrefs({ renderer: next })
+    import('../lib/eveAvatarApi').then(({ saveAvatarPreferences }) => { saveAvatarPreferences({ ...avatarPrefs, renderer: next }).catch(() => {}) }).catch(() => {})
+  }
+
   return (
     <div className="eve-page-container">
+      {activeTab === 'chat' && avatarPrefs?.inlineEnabled !== false && avatarPrefs?.enabled !== false && (
+        <div className="eve-inline-avatar-wrap" data-eve-target="eve-inline-avatar">
+          <EveInlineAvatar
+            size="md"
+            presetId={activePreset}
+            prefs={avatarPrefs}
+            activeModel={avatarModel}
+            isSending={isSending}
+            isEveSpeaking={Boolean(streamText) && isSending}
+            isEveThinking={Boolean(thinkingText) && isSending}
+            thinkingText={thinkingText}
+            activeTool={activeTool}
+            streamText={streamText}
+            error={error}
+            onToggleRenderer={handleAvatarToggleRenderer}
+          />
+        </div>
+      )}
       <div className="eve-active-view-container full-width">
         {activeTab === 'chat' && (
           <EveChatSection
@@ -517,7 +552,13 @@ export function EvePage({
         )}
 
         {activeTab === 'call' && (
-          <EveCallSection callCenter={callCenter} />
+          <EveCallSection
+            callCenter={callCenter}
+            avatarPrefs={avatarPrefs}
+            avatarModel={avatarModel}
+            presetId={activePreset}
+            onToggleAvatarRenderer={handleAvatarToggleRenderer}
+          />
         )}
 
         {activeTab === 'sessions' && (

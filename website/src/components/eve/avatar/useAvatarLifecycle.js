@@ -1,0 +1,62 @@
+import { useEffect, useMemo, useState } from 'react'
+import { AVATAR_LIMITS } from './avatarConstants'
+
+function supportsWebGL2() {
+  if (typeof document === 'undefined') return false
+  try {
+    const canvas = document.createElement('canvas')
+    return Boolean(canvas.getContext('webgl2'))
+  } catch { return false }
+}
+
+function deviceMemoryProbe() {
+  if (typeof navigator === 'undefined') return 4
+  const dm = navigator.deviceMemory
+  return typeof dm === 'number' ? dm : 4
+}
+
+export function useAvatarLifecycle({ renderer = 'auto', modelUrl = '' } = {}) {
+  const [phase, setPhase] = useState('loading')
+  const [error, setError] = useState('')
+
+  const probe = useMemo(() => {
+    const webgl2 = supportsWebGL2()
+    const dm = deviceMemoryProbe()
+    const cores = (typeof navigator !== 'undefined' && navigator.hardwareConcurrency) || 4
+    const lowMemory = dm < 4 || cores <= 2
+    return { webgl2, dm, cores, lowMemory }
+  }, [])
+
+  const resolvedRenderer = useMemo(() => {
+    if (renderer !== 'auto') return renderer
+    const url = String(modelUrl || '').toLowerCase()
+    if (url.endsWith('.model3.json') || url.endsWith('.zip')) return 'live2d'
+    if (url.endsWith('.vrm') || url.endsWith('.glb') || url.endsWith('.gltf')) return 'vrm'
+    if (probe.lowMemory || !probe.webgl2) return 'live2d'
+    return 'vrm'
+  }, [modelUrl, probe.lowMemory, probe.webgl2, renderer])
+
+  const prefersReducedMotion = useMemo(() => {
+    if (typeof window === 'undefined' || !window.matchMedia) return false
+    return window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  }, [])
+
+  useEffect(() => {
+    let timeout = window.setTimeout(() => {
+      setPhase((current) => (current === 'loading' ? 'timeout' : current))
+      setError('Avatar load timed out — showing fallback.')
+    }, AVATAR_LIMITS.LOAD_TIMEOUT_MS)
+    return () => window.clearTimeout(timeout)
+  }, [modelUrl, resolvedRenderer])
+
+  const markReady = () => {
+    setPhase('ready')
+    setError('')
+  }
+  const markError = (message) => {
+    setPhase('error')
+    setError(message || 'Could not load avatar model.')
+  }
+
+  return { phase, error, probe, resolvedRenderer, prefersReducedMotion, markReady, markError }
+}

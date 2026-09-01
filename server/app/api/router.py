@@ -12,6 +12,7 @@ from app.api.routes import (
     documents,
     email,
     eve,
+    eve_avatar,
     eve_memory_settings,
     eve_schedules,
     eve_speech,
@@ -54,6 +55,7 @@ api_router.include_router(eve_stream.router, tags=["Eve AI assistant"])
 api_router.include_router(eve_schedules.router, tags=["Eve automated schedules"])
 api_router.include_router(eve_memory_settings.router, tags=["Eve memory settings"])
 api_router.include_router(eve_speech.router, tags=["Eve speech settings"])
+api_router.include_router(eve_avatar.router, tags=["Eve avatar"])
 api_router.include_router(gmail.router, tags=["Gmail integration"])
 api_router.include_router(
     competitive_coding_profile.router,
