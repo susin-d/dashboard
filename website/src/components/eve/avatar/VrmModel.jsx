@@ -37,8 +37,10 @@ export function VrmModel({ url, mouthOpen = 0, lookAt = { x: 0, y: 0 }, isBlinki
   useEffect(() => {
     if (!mountRef.current) return undefined
     const mount = mountRef.current
-    const width = mount.clientWidth || 320
-    const height = mount.clientHeight || 240
+    // Ensure mount has size even before layout (Avatar Studio preview 360px)
+    const rect = mount.getBoundingClientRect()
+    const width = Math.max(320, rect.width || mount.clientWidth || 320)
+    const height = Math.max(240, rect.height || mount.clientHeight || 280)
 
     const scene = new THREE.Scene()
     scene.background = new THREE.Color(0x000000)
@@ -48,13 +50,26 @@ export function VrmModel({ url, mouthOpen = 0, lookAt = { x: 0, y: 0 }, isBlinki
     const camera = new THREE.PerspectiveCamera(30, width / height, 0.1, 20)
     camera.position.set(0, 1.35, 1.1)
 
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: false })
+    let renderer
+    try {
+      renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: false })
+    } catch {
+      setStatus('fallback')
+      handleReady()
+      return undefined
+    }
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.8))
     renderer.setSize(width, height)
     renderer.outputColorSpace = THREE.SRGBColorSpace
     renderer.toneMapping = THREE.ACESFilmicToneMapping
     rendererRef.current = renderer
+    // Clear any prior canvas
+    mount.innerHTML = ''
     mount.appendChild(renderer.domElement)
+    // Ensure canvas fills mount
+    renderer.domElement.style.width = '100%'
+    renderer.domElement.style.height = '100%'
+    renderer.domElement.style.display = 'block'
 
     const ambient = new THREE.HemisphereLight(0xffffff, 0x222222, 1.2)
     const dir = new THREE.DirectionalLight(0xffffff, 1.0)
@@ -159,9 +174,9 @@ export function VrmModel({ url, mouthOpen = 0, lookAt = { x: 0, y: 0 }, isBlinki
       handleReady()
       return
     }
-    // treat /avatars/vrm placeholders as fallback procedural if file missing (avoid 404 throw)
-    if (url === '/avatars/vrm/eve-mono.vrm' || url === '/avatars/vrm/eve-duo.vrm') {
-      // try to fetch, but don't error if missing
+    // Bundled anime VRMs — fetch HEAD then load; fallback to CSS avatar if missing
+    const bundled = ['/avatars/vrm/eve-mono.vrm', '/avatars/vrm/eve-duo.vrm', '/avatars/vrm/eve-anime.vrm', '/avatars/vrm/eve-mono.glb', '/avatars/vrm/eve-duo.glb']
+    if (bundled.includes(url)) {
       fetch(url, { method: 'HEAD' }).then((r) => {
         if (!r.ok) {
           setStatus('fallback')
@@ -217,6 +232,8 @@ export function VrmModel({ url, mouthOpen = 0, lookAt = { x: 0, y: 0 }, isBlinki
     // still render fallback canvas (mounted) but show badge
   }
 
+  const showCssFallback = status !== 'ready'
+
   return (
     <div
       className={`eve-vrm-real is-${emotion} ${isBlinking ? 'is-blinking' : ''}`}
@@ -226,17 +243,52 @@ export function VrmModel({ url, mouthOpen = 0, lookAt = { x: 0, y: 0 }, isBlinki
       style={{
         width: '100%',
         height: '100%',
+        minHeight: 220,
         position: 'relative',
+        background: 'var(--bg-primary)',
+        borderRadius: 'var(--radius-md)',
+        overflow: 'hidden',
       }}
     >
       <div
         ref={mountRef}
         className="eve-vrm-mount"
-        style={{ width: '100%', height: '100%', minHeight: 180, borderRadius: 'var(--radius-md)', overflow: 'hidden', background: 'var(--bg-primary)' }}
+        style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', minHeight: 220, borderRadius: 'var(--radius-md)', overflow: 'hidden', background: 'transparent', zIndex: showCssFallback ? 0 : 1 }}
       />
-      {status === 'loading' && <span className="eve-vrm-badge">Loading 3D…</span>}
-      {status === 'fallback' && (
-        <span className="eve-vrm-badge" title={loadError || url}>{loadError ? 'Fallback' : (url ? url.split('/').pop() : 'Eve Mono VRM')}</span>
+      {/* CSS procedural fallback — always visible until VRM ready, ensures the grey bar never appears empty */}
+      {showCssFallback && (
+        <div
+          className={`eve-vrm-fallback is-${emotion} ${isBlinking ? 'is-blinking' : ''}`}
+          style={{
+            position: 'absolute',
+            inset: 0,
+            zIndex: 1,
+            background: 'var(--bg-primary)',
+            '--mouth': String(Math.max(0, Math.min(1, mouthOpen))),
+            '--look-x': String(lookAt.x),
+            '--look-y': String(lookAt.y),
+          }}
+        >
+          <div className="eve-vrm-head">
+            <div className="eve-vrm-face">
+              <div className="eve-vrm-eyes">
+                <span className="eve-vrm-eye left" />
+                <span className="eve-vrm-eye right" />
+              </div>
+              <div className="eve-vrm-mouth" />
+              <div className="eve-vrm-blush" />
+            </div>
+            <div className="eve-vrm-hair" />
+          </div>
+          <div className="eve-vrm-body">
+            <div className="eve-vrm-torso" />
+          </div>
+          <span className="eve-vrm-url" aria-hidden="true">{status === 'loading' ? 'Loading 3D — anime VRM 10MB…' : (loadError ? 'Fallback — CSS avatar' : 'Anime VRM ready')}</span>
+        </div>
+      )}
+      {status === 'loading' && <span className="eve-vrm-badge" style={{ zIndex: 2 }}>Loading 3D…</span>}
+      {status === 'fallback' && loadError && (
+        <span className="eve-vrm-badge" title={loadError} style={{ zIndex: 2 }}>{loadError}</span>
       )}
     </div>
   )
