@@ -21,7 +21,7 @@ export function EveGlobalCompanion({
   onOpenSettings,
   onToggleRenderer,
 }) {
-  const [expanded, setExpanded] = useState(() => prefs?.docked !== false)
+  const [expanded, setExpanded] = useState(false)
   const [dragging, setDragging] = useState(false)
   const rootRef = useRef(null)
   const pos = prefs?.position || { x: 92, y: 88 }

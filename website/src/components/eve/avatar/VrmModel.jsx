@@ -52,19 +52,18 @@ export function VrmModel({ url, mouthOpen = 0, lookAt = { x: 0, y: 0 }, isBlinki
 
     let renderer
     try {
-      renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: false })
+      // low-power + DPR 1.0 saves memory on low-end PCs
+      renderer = new THREE.WebGLRenderer({ antialias: false, alpha: true, preserveDrawingBuffer: false, powerPreference: 'low-power' })
     } catch {
       setStatus('fallback')
       handleReady()
       return undefined
     }
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.8))
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.0))
     renderer.setSize(width, height)
     renderer.outputColorSpace = THREE.SRGBColorSpace
-    renderer.toneMapping = THREE.ACESFilmicToneMapping
+    renderer.toneMapping = THREE.NoToneMapping
     rendererRef.current = renderer
-    // Clear any prior canvas
-    mount.innerHTML = ''
     mount.appendChild(renderer.domElement)
     // Ensure canvas fills mount
     renderer.domElement.style.width = '100%'

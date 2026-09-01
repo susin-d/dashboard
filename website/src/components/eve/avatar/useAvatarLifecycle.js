@@ -23,16 +23,19 @@ export function useAvatarLifecycle({ renderer = 'auto', modelUrl = '' } = {}) {
     const webgl2 = supportsWebGL2()
     const dm = deviceMemoryProbe()
     const cores = (typeof navigator !== 'undefined' && navigator.hardwareConcurrency) || 4
-    const lowMemory = dm < 4 || cores <= 2
+    // Be conservative for Avatar Studio — 10MB VRM + 2.7MB Live2D textures crash low-end PCs
+    // Mark lowMemory if dm < 6 or cores <= 4 or no WebGL2, so we default to procedural
+    const lowMemory = dm < 6 || cores <= 4 || !webgl2
     return { webgl2, dm, cores, lowMemory }
   }, [])
 
   const resolvedRenderer = useMemo(() => {
+    if (modelUrl === null || modelUrl === '') return 'procedural'
     if (renderer !== 'auto') return renderer
     const url = String(modelUrl || '').toLowerCase()
     if (url.endsWith('.model3.json') || url.endsWith('.zip')) return 'live2d'
     if (url.endsWith('.vrm') || url.endsWith('.glb') || url.endsWith('.gltf')) return 'vrm'
-    if (probe.lowMemory || !probe.webgl2) return 'live2d'
+    if (probe.lowMemory || !probe.webgl2) return 'procedural'
     return 'vrm'
   }, [modelUrl, probe.lowMemory, probe.webgl2, renderer])
 

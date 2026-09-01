@@ -1,13 +1,14 @@
-import { useMemo, useRef } from 'react'
+import { lazy, Suspense, useMemo, useRef } from 'react'
 import { AVATAR_DEFAULTS } from './avatarConstants'
 import { EveAvatarCanvas } from './EveAvatarCanvas'
-import { Live2DModel } from './Live2DModel'
-import { VrmModel } from './VrmModel'
 import { avatarCardStyle } from './avatarTokens'
 import { useAvatarLifecycle } from './useAvatarLifecycle'
 import { useEveAvatarState } from './useEveAvatarState'
 import { useEyeTracking } from './useEyeTracking'
 import { useLipSync } from './useLipSync'
+
+const VrmModel = lazy(() => import('./VrmModel').then((m) => ({ default: m.VrmModel })))
+const Live2DModel = lazy(() => import('./Live2DModel').then((m) => ({ default: m.Live2DModel })))
 
 export function EveAvatar({
   size = 'md',
@@ -55,28 +56,59 @@ export function EveAvatar({
         </div>
       )
     }
+    if (resolvedRenderer === 'procedural' || !model.url) {
+      return (
+        <div
+          className={`eve-vrm-fallback is-${emotion}`}
+          style={{
+            '--mouth': String(Math.max(0, Math.min(1, lip.mouthOpen))),
+            '--look-x': String(eye.lookAt.x),
+            '--look-y': String(eye.lookAt.y),
+          }}
+        >
+          <div className="eve-vrm-head">
+            <div className="eve-vrm-face">
+              <div className="eve-vrm-eyes">
+                <span className="eve-vrm-eye left" />
+                <span className="eve-vrm-eye right" />
+              </div>
+              <div className="eve-vrm-mouth" />
+            </div>
+            <div className="eve-vrm-hair" />
+          </div>
+          <div className="eve-vrm-body">
+            <div className="eve-vrm-torso" />
+          </div>
+          <span className="eve-vrm-url" aria-hidden="true">Procedural — lightweight</span>
+        </div>
+      )
+    }
     if (resolvedRenderer === 'live2d') {
       return (
-        <Live2DModel
+        <Suspense fallback={<div className="eve-avatar-loading">Loading Live2D…</div>}>
+          <Live2DModel
+            url={model.url}
+            mouthOpen={lip.mouthOpen}
+            lookAt={eye.lookAt}
+            isBlinking={eye.isBlinking}
+            emotion={emotion}
+            onReady={lifecycle.markReady}
+          />
+        </Suspense>
+      )
+    }
+    return (
+      <Suspense fallback={<div className="eve-avatar-loading">Loading 3D…</div>}>
+        <VrmModel
           url={model.url}
           mouthOpen={lip.mouthOpen}
           lookAt={eye.lookAt}
           isBlinking={eye.isBlinking}
           emotion={emotion}
           onReady={lifecycle.markReady}
+          onError={lifecycle.markError}
         />
-      )
-    }
-    return (
-      <VrmModel
-        url={model.url}
-        mouthOpen={lip.mouthOpen}
-        lookAt={eye.lookAt}
-        isBlinking={eye.isBlinking}
-        emotion={emotion}
-        onReady={lifecycle.markReady}
-        onError={lifecycle.markError}
-      />
+      </Suspense>
     )
   }, [emotion, eye.isBlinking, eye.lookAt, lifecycle, lip.mouthOpen, model.url, resolvedRenderer])
 

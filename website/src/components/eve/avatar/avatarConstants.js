@@ -30,7 +30,7 @@ export const AVATAR_LIMITS = {
 export const AVATAR_DEFAULTS = {
   enabled: true,
   renderer: AVATAR_RENDERERS.AUTO,
-  modelId: 'eve-anime-vrm',
+  modelId: 'procedural-light',
   scale: 1,
   position: { x: 92, y: 88 },
   docked: true,
@@ -41,16 +41,25 @@ export const AVATAR_DEFAULTS = {
 
 export const ALLOWED_EXTS = ['.vrm', '.glb', '.gltf', '.model3.json', '.zip']
 
-// Bundled anime defaults — files live in website/public/avatars/*
+// Bundled — lightweight procedural default + heavy anime opt-in
 export const AVATAR_CATALOG = [
+  {
+    id: 'procedural-light',
+    label: 'Procedural (Lightweight)',
+    renderer: AVATAR_RENDERERS.VRM,
+    url: null,
+    thumb: null,
+    attribution: 'Procedural CSS avatar — 0 bytes, never crashes, always available',
+    tags: ['procedural', 'lightweight', 'default'],
+  },
   {
     id: 'eve-anime-vrm',
     label: 'Eve Anime (VRM 10MB)',
     renderer: AVATAR_RENDERERS.VRM,
     url: '/avatars/vrm/eve-anime.vrm',
     thumb: '/avatars/vrm/eve-anime-thumb.jpg',
-    attribution: 'Anime VRM — VRM1 Constraint Twist Sample (pixiv/three-vrm, CC0) 10.3MB downloaded',
-    tags: ['anime', 'vrm', 'default'],
+    attribution: 'Anime VRM — VRM1 Constraint Twist Sample (pixiv/three-vrm, CC0) 10.3MB — click to load',
+    tags: ['anime', 'vrm', 'heavy'],
   },
   {
     id: 'eve-mono-vrm',

@@ -30,6 +30,7 @@ export function AvatarPage({ onNavigate }) {
   const [previewEmotion, setPreviewEmotion] = useState('idle')
   const [previewSpeaking, setPreviewSpeaking] = useState(false)
   const [mouthDemo, setMouthDemo] = useState(0)
+  const [heavyPreview, setHeavyPreview] = useState(false)
   const fileRef = useRef(null)
 
   useEffect(() => {
@@ -138,26 +139,38 @@ export function AvatarPage({ onNavigate }) {
             <span className={`avatar-preview-emotion is-${previewEmotion}`}>{previewEmotion}</span>
           </div>
           <div className="avatar-preview-stage">
-            <EveAvatar
-              size="lg"
-              presetId={activePreset}
-              prefs={prefs}
-              activeModel={activeModel}
-              isSending={isThinking || isSpeaking}
-              isEveSpeaking={isSpeaking}
-              isEveThinking={isThinking}
-              thinkingText={isThinking ? 'Thinking…' : ''}
-              activeTool={previewEmotion === 'tool' ? 'workspace_files' : null}
-              streamText={isSpeaking ? 'Hello! I’m Eve — your anime companion.' : ''}
-              sttRecording={isListening}
-              sttStatus={isListening ? 'listening' : 'idle'}
-              error={previewEmotion === 'error' ? 'Demo error state' : ''}
-              onToggleRenderer={() => persist({ renderer: prefs?.renderer === 'vrm' ? 'live2d' : prefs?.renderer === 'live2d' ? 'auto' : 'vrm' })}
-            />
-            {/* mouth demo drives lip-sync via streamText + isSpeaking; overlay mouth vis */}
+            {heavyPreview ? (
+              <EveAvatar
+                size="lg"
+                presetId={activePreset}
+                prefs={prefs}
+                activeModel={activeModel}
+                isSending={isThinking || isSpeaking}
+                isEveSpeaking={isSpeaking}
+                isEveThinking={isThinking}
+                thinkingText={isThinking ? 'Thinking…' : ''}
+                activeTool={previewEmotion === 'tool' ? 'workspace_files' : null}
+                streamText={isSpeaking ? 'Hello! I’m Eve — your anime companion.' : ''}
+                sttRecording={isListening}
+                sttStatus={isListening ? 'listening' : 'idle'}
+                error={previewEmotion === 'error' ? 'Demo error state' : ''}
+                onToggleRenderer={() => persist({ renderer: prefs?.renderer === 'vrm' ? 'live2d' : prefs?.renderer === 'live2d' ? 'auto' : 'vrm' })}
+              />
+            ) : (
+              <div className="avatar-preview-placeholder">
+                <div className="avatar-preview-placeholder-card">
+                  <GlassWater size={24} />
+                  <p>3D preview is paused to save memory</p>
+                  <small>Procedural avatar is active (0 bytes). Heavy 10MB VRM + 3MB Live2D textures can crash low-end PCs.</small>
+                  <button type="button" className="btn-primary" onClick={() => setHeavyPreview(true)}><Zap size={14} /> Load 3D preview (heavy)</button>
+                </div>
+              </div>
+            )}
+            {heavyPreview && (
             <div className="avatar-preview-mouth-hint" style={{ opacity: isSpeaking ? 1 : 0 }} aria-hidden="true">
               <span className="avatar-mouth-bar" style={{ width: `${Math.round(mouthDemo * 100)}%` }} />
             </div>
+            )}
           </div>
           <div className="avatar-emotion-row" role="group" aria-label="Preview emotion">
             {EMOTIONS.map((emo) => (
