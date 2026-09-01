@@ -30,7 +30,7 @@ export const AVATAR_LIMITS = {
 export const AVATAR_DEFAULTS = {
   enabled: true,
   renderer: AVATAR_RENDERERS.AUTO,
-  modelId: 'eve-mono-vrm',
+  modelId: 'eve-anime-vrm',
   scale: 1,
   position: { x: 92, y: 88 },
   docked: true,
@@ -41,15 +41,24 @@ export const AVATAR_DEFAULTS = {
 
 export const ALLOWED_EXTS = ['.vrm', '.glb', '.gltf', '.model3.json', '.zip']
 
-// Bundled CC0 examples — files live in website/public/avatars/*
+// Bundled anime defaults — files live in website/public/avatars/*
 export const AVATAR_CATALOG = [
+  {
+    id: 'eve-anime-vrm',
+    label: 'Eve Anime (VRM 10MB)',
+    renderer: AVATAR_RENDERERS.VRM,
+    url: '/avatars/vrm/eve-anime.vrm',
+    thumb: '/avatars/vrm/eve-anime-thumb.jpg',
+    attribution: 'Anime VRM — VRM1 Constraint Twist Sample (pixiv/three-vrm, CC0) 10.3MB downloaded',
+    tags: ['anime', 'vrm', 'default'],
+  },
   {
     id: 'eve-mono-vrm',
     label: 'Eve Mono (VRM)',
     renderer: AVATAR_RENDERERS.VRM,
     url: '/avatars/vrm/eve-mono.vrm',
     thumb: '/avatars/vrm/eve-mono-thumb.jpg',
-    attribution: 'CC0 — Starwaves Mono suit (placeholder for VRM)',
+    attribution: 'Same anime VRM (mono tint via CSS)',
     tags: ['mono', 'vrm', 'example'],
   },
   {
@@ -58,16 +67,25 @@ export const AVATAR_CATALOG = [
     renderer: AVATAR_RENDERERS.VRM,
     url: '/avatars/vrm/eve-duo.vrm',
     thumb: '/avatars/vrm/eve-duo-thumb.jpg',
-    attribution: 'CC0 — Starwaves Duo tinted variant',
+    attribution: 'Same anime VRM (duo tint via var(--color-primary))',
     tags: ['duo', 'vrm', 'example'],
   },
   {
+    id: 'haru-greeter-live2d',
+    label: 'Haru Greeter (Live2D Anime)',
+    renderer: AVATAR_RENDERERS.LIVE2D,
+    url: '/avatars/live2d/haru/haru_greeter_t03.model3.json',
+    thumb: '/avatars/live2d/haru/thumb.jpg',
+    attribution: 'Live2D Cubism 4 Haru Greeter (pixi-live2d-display, 0.37MB moc3 + 2.7MB textures) — real anime',
+    tags: ['anime', 'live2d', 'default'],
+  },
+  {
     id: 'haru-live2d',
-    label: 'Haru (Live2D)',
+    label: 'Haru (Live2D stub)',
     renderer: AVATAR_RENDERERS.LIVE2D,
     url: '/avatars/live2d/haru/Haru.model3.json',
     thumb: '/avatars/live2d/haru/thumb.jpg',
-    attribution: 'CC0 sample — Live2D Cubism 4 Haru (recolored mono)',
+    attribution: 'Stub — prefers haru_greeter_t03; fallback if textures missing',
     tags: ['live2d', 'example'],
   },
   {
@@ -76,7 +94,7 @@ export const AVATAR_CATALOG = [
     renderer: AVATAR_RENDERERS.LIVE2D,
     url: '/avatars/live2d/unitychan/unitychan.model3.json',
     thumb: '/avatars/live2d/unitychan/thumb.jpg',
-    attribution: 'UnityChan License — example only, replace for production',
+    attribution: 'UnityChan License — example only',
     tags: ['live2d', 'example'],
   },
 ]

@@ -8,7 +8,7 @@ export function StudioProjectsPage({ onOpenProject }) {
   const [isCreatingFromPrompt, setIsCreatingFromPrompt] = useState(false)
   const [promptError, setPromptError] = useState('')
 
-  const handlePromptSubmit = async (prompt, mode = 'plan', model = 'gpt-5-mini', attachments = []) => {
+  const handlePromptSubmit = async (prompt, mode = 'plan', model = 'openrouter/free', attachments = []) => {
     setIsCreatingFromPrompt(true)
     setPromptError('')
     try {

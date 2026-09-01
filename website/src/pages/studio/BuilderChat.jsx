@@ -43,7 +43,7 @@ export function BuilderChat({ projectId, projectName, onActions, onAssistantRepl
   }
   const [messages, setMessages] = useState(() => [starter])
   const [draft, setDraft] = useState('')
-  const [selectedModel, setSelectedModel] = useState('gpt-5-mini')
+  const [selectedModel, setSelectedModel] = useState('openrouter/free')
   const [attachments, setAttachments] = useState([])
   const [isSending, setIsSending] = useState(false)
   const [error, setError] = useState('')

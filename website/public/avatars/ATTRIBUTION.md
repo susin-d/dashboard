@@ -2,14 +2,15 @@
 
 Bundled example models for Eve Avatar (ADR 0012). Real rendering via `three` + `@pixiv/three-vrm` (VRM) and `pixi.js` + `pixi-live2d-display` (Live2D Cubism 4). Procedural fallback renders when assets are stubbed.
 
-## VRM (3D) — `three` + `GLTFLoader` + `VRMLoaderPlugin` + `VRMUtils`
+## VRM (3D) — `three` + `GLTFLoader` + `VRMLoaderPlugin` + `VRMUtils` — **anime default downloaded**
 
-- `vrm/eve-mono.vrm` + `eve-mono.glb` — Default model **Box.glb** (Khronos glTF-Sample-Models `Box` 1664 bytes, CC0, via `cdn.jsdelivr.net/gh/KhronosGroup`) — valid `GLB` that `GLTFLoader` can parse; `VrmModel.jsx` shows fallback procedural sphere+torso if not a VRM (still proves real `WebGLRenderer` + `VRMUtils` pipeline). Replace with CC0 VRoid export for production VRM.
-- `vrm/eve-duo.vrm` + `eve-duo.glb` — Same `Box.glb` duo tint via `var(--color-primary)` accent at runtime (`avatarTokens.js`). `scripts/fetch-avatar-models.ps1` and `scripts/generate-default-vrm.mjs` document alternatives.
+- `vrm/eve-anime.vrm` / `eve-mono.vrm` / `eve-duo.vrm` — **Anime VRM 10.28 MB** (`VRM1_Constraint_Twist_Sample.vrm` from `pixiv/three-vrm@dev`, via `cdn.jsdelivr.net/gh/pixiv/three-vrm`) — real humanoid rig + `VRMC_vrm` blendShapes, `VRMUtils.removeUnnecessaryVertices/Joints`, `humanoid.getNormalizedBoneNode('head')` lookAt. All three are copies of same anime VRM (mono/duo/anime labels for UI). Previously `Box.glb` 1664b placeholder; now replaced.
+- `scripts/fetch-avatar-models.ps1` and `scripts/generate-default-vrm.mjs` kept for regeneration.
 
-## Live2D (Cubism) — `pixi.js` 7 + `pixi-live2d-display/cubism4`
+## Live2D (Cubism) — `pixi.js` 7 + `pixi-live2d-display/cubism4` — **anime default downloaded**
 
-- `live2d/haru/Haru.model3.json` — Live2D Cubism 4 “Haru” sample (stub with `ParamMouthOpenY`/`ParamEyeLOpen`/`ParamAngleX`/`ParamBodyAngleX`; real textures via CDN or Cubism Editor export). `Live2DModel.jsx` drives `ParamMouthOpenY`, `ParamEyeLOpen/R`, `ParamAngleX/Y` from `mouthOpen`/`lookAt`/`isBlinking`/`emotion`.
+- `live2d/haru/haru_greeter_t03.model3.json` + `haru_greeter_t03.moc3` (0.37MB) + `haru_greeter_t03.2048/texture_00.png` (1.46MB) + `texture_01.png` (1.13MB) + `physics3.json` + `pose3.json` — **Haru Greeter anime Live2D** (from `guansss/pixi-live2d-display/test/assets/haru`, via `cdn.jsdelivr.net`) — real `ParamMouthOpenY`/`ParamEyeLOpen/R`/`ParamAngleX/Y`/`ParamBodyAngleX` driven by `Live2DModel.jsx`.
+- `live2d/haru/Haru.model3.json` — minimal stub (kept for fallback).
 - `live2d/unitychan/unitychan.model3.json` — UnityChan (UnityChan License) stub.
 
 ## Adding your own
