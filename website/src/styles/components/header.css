@@ -66,6 +66,18 @@
   -webkit-user-select: none;
 }
 
+.header-menu-btn {
+  display: none !important;
+}
+
+@media (max-width: 900px) {
+  .header-menu-btn {
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+  }
+}
+
 .starwaves-logo-icon {
   display: block;
   flex: 0 0 auto;

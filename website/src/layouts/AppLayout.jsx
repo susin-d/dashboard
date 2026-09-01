@@ -78,6 +78,7 @@ export function AppLayout({
           isOpen={sidebarOpen}
           onNavigate={onNavigate}
           onClose={() => setSidebarOpen(false)}
+          onToggleExpand={() => setSidebarExpanded((expanded) => !expanded)}
         />
         <main
           ref={contentRef}

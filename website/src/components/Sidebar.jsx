@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react'
+import { PanelLeftClose, PanelLeftOpen, X } from 'lucide-react'
 import { navigationItems } from '../config/navigation'
 
 export function Sidebar({
@@ -7,6 +8,7 @@ export function Sidebar({
   isOpen,
   onClose,
   onNavigate,
+  onToggleExpand,
 }) {
   const sidebarRef = useRef(null)
   const itemRefs = useRef(new Map())
@@ -52,6 +54,29 @@ export function Sidebar({
         onScroll={() => setHoveredItem(null)}
         onMouseLeave={() => setHoveredItem(null)}
       >
+        <div className="sidebar-toggle-row">
+          <button
+            type="button"
+            className="sidebar-toggle-btn"
+            onClick={onToggleExpand}
+            aria-label={isExpanded ? 'Collapse navigation' : 'Expand navigation'}
+            title={isExpanded ? 'Collapse navigation' : 'Expand navigation'}
+          >
+            {isExpanded ? <PanelLeftClose size={18} /> : <PanelLeftOpen size={18} />}
+            {isExpanded && <span className="sidebar-toggle-label">Collapse</span>}
+          </button>
+          {isOpen && (
+            <button
+              type="button"
+              className="close-button"
+              onClick={onClose}
+              aria-label="Close navigation"
+            >
+              <X size={18} />
+            </button>
+          )}
+        </div>
+
         <nav aria-label="Main navigation">
           {navigationGroups.map((group) => (
             <div className="sidebar-nav-group" key={group}>

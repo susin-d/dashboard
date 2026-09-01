@@ -201,7 +201,7 @@ export function Header({
         title="Go to Dashboard"
       >
         <button
-          className="icon-button menu-button"
+          className="icon-button menu-button header-menu-btn"
           onClick={(e) => {
             e.stopPropagation()
             onMenuOpen()
