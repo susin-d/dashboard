@@ -16,8 +16,8 @@ ALLOWED_EXTS = {".vrm", ".glb", ".gltf", ".zip"}
 # model3.json checked via endswith
 CATALOG = [
     {"id": "eve-anime-vrm", "label": "Eve Anime (VRM 10MB)", "renderer": "vrm", "url": "/avatars/vrm/eve-anime.vrm", "attribution": "Anime VRM — VRM1 Twist Sample (pixiv/three-vrm) 10.3MB"},
-    {"id": "eve-mono-vrm", "label": "Eve Mono (VRM)", "renderer": "vrm", "url": "/avatars/vrm/eve-mono.vrm", "attribution": "Same anime VRM (mono tint)"},
-    {"id": "eve-duo-vrm", "label": "Eve Duo (VRM)", "renderer": "vrm", "url": "/avatars/vrm/eve-duo.vrm", "attribution": "Same anime VRM (duo tint)"},
+    {"id": "eve-mono-vrm", "label": "Eve Mono (VRM)", "renderer": "vrm", "url": "/avatars/vrm/eve-anime.vrm", "attribution": "Same anime VRM (mono tint) — deduped to eve-anime.vrm"},
+    {"id": "eve-duo-vrm", "label": "Eve Duo (VRM)", "renderer": "vrm", "url": "/avatars/vrm/eve-anime.vrm", "attribution": "Same anime VRM (duo tint) — deduped"},
     {"id": "haru-greeter-live2d", "label": "Haru Greeter (Live2D Anime)", "renderer": "live2d", "url": "/avatars/live2d/haru/haru_greeter_t03.model3.json", "attribution": "Haru Greeter — pixi-live2d-display (moc3 0.37MB + 2.7MB textures)"},
     {"id": "haru-live2d", "label": "Haru (Live2D stub)", "renderer": "live2d", "url": "/avatars/live2d/haru/Haru.model3.json", "attribution": "Stub — prefers greeter"},
     {"id": "unitychan-live2d", "label": "Unitychan (Live2D)", "renderer": "live2d", "url": "/avatars/live2d/unitychan/unitychan.model3.json", "attribution": "UnityChan License - example"},
