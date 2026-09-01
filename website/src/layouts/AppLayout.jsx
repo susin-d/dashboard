@@ -52,33 +52,33 @@ export function AppLayout({
     <div className={`app-shell ${isSidebarExpanded ? 'sidebar-expanded' : ''}`}>
       <a className="skip-link" href="#main-content">Skip to main content</a>
       <NetworkStatus />
-      <Header
-        onMenuOpen={toggleNavigation}
-        navigationExpanded={isSidebarExpanded}
+      <Sidebar
+        activePage={activePage}
+        isExpanded={isSidebarExpanded}
+        isOpen={sidebarOpen}
         onNavigate={onNavigate}
-        onCreate={onCreate}
-        callCenter={callCenter}
-        notifications={notifications}
-        setNotifications={setNotifications}
-        notificationsOpen={notificationsOpen}
-        setNotificationsOpen={setNotificationsOpen}
-        user={user}
-        notificationsCanLoadMore={notificationsCanLoadMore}
-        notificationsLoading={notificationsLoading}
-        onLoadMoreNotifications={onLoadMoreNotifications}
-        onWorkspaceChanged={onWorkspaceChanged}
-        onEveNewChat={onEveNewChat}
-        onSignOut={onSignOut}
-        workspaceData={workspaceData}
+        onClose={() => setSidebarOpen(false)}
+        onToggleExpand={() => setSidebarExpanded((expanded) => !expanded)}
       />
-      <div className="app-body">
-        <Sidebar
-          activePage={activePage}
-          isExpanded={isSidebarExpanded}
-          isOpen={sidebarOpen}
+      <div className="app-main-wrapper">
+        <Header
+          onMenuOpen={toggleNavigation}
+          navigationExpanded={isSidebarExpanded}
           onNavigate={onNavigate}
-          onClose={() => setSidebarOpen(false)}
-          onToggleExpand={() => setSidebarExpanded((expanded) => !expanded)}
+          onCreate={onCreate}
+          callCenter={callCenter}
+          notifications={notifications}
+          setNotifications={setNotifications}
+          notificationsOpen={notificationsOpen}
+          setNotificationsOpen={setNotificationsOpen}
+          user={user}
+          notificationsCanLoadMore={notificationsCanLoadMore}
+          notificationsLoading={notificationsLoading}
+          onLoadMoreNotifications={onLoadMoreNotifications}
+          onWorkspaceChanged={onWorkspaceChanged}
+          onEveNewChat={onEveNewChat}
+          onSignOut={onSignOut}
+          workspaceData={workspaceData}
         />
         <main
           ref={contentRef}

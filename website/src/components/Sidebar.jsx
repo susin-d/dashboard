@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react'
 import { PanelLeftClose, PanelLeftOpen, X } from 'lucide-react'
 import { navigationItems } from '../config/navigation'
+import { StarWavesLogo } from './StarWavesLogo'
 
 export function Sidebar({
   activePage,
@@ -54,6 +55,18 @@ export function Sidebar({
         onScroll={() => setHoveredItem(null)}
         onMouseLeave={() => setHoveredItem(null)}
       >
+        <div
+          className="sidebar-brand"
+          onClick={() => handleNavigate('dashboard')}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => e.key === 'Enter' && handleNavigate('dashboard')}
+          title="StarWaves Dashboard"
+        >
+          <StarWavesLogo size={30} />
+          {isExpanded && <span className="sidebar-brand-name">StarWaves</span>}
+        </div>
+
         <div className="sidebar-toggle-row">
           <button
             type="button"
