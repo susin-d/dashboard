@@ -179,7 +179,7 @@ export function AvatarPage({ onNavigate }) {
         </div>
 
         <div className="avatar-controls-stack">
-          <SettingsCard icon={Eye} title="Presence" description="Toggle everywhere vs inline. Header pill is drag handle.">
+          <SettingsCard icon={<Eye size={16} />} title="Presence" description="Toggle everywhere vs inline. Header pill is drag handle.">
             <div className="avatar-controls-grid">
               <label className="avatar-toggle"><input type="checkbox" checked={prefs?.enabled !== false} onChange={(e) => persist({ enabled: e.target.checked })} disabled={busy} /> <Eye size={14} /> Enabled</label>
               <label className="avatar-toggle"><input type="checkbox" checked={prefs?.inlineEnabled !== false} onChange={(e) => persist({ inlineEnabled: e.target.checked })} disabled={busy} /> Inline on Eve</label>
@@ -187,7 +187,7 @@ export function AvatarPage({ onNavigate }) {
             </div>
           </SettingsCard>
 
-          <SettingsCard icon={Sparkles} title="Appearance" description="Auto respects WebGL2 + memory + prefers-reduced-motion.">
+          <SettingsCard icon={<Sparkles size={16} />} title="Appearance" description="Auto respects WebGL2 + memory + prefers-reduced-motion.">
             <div className="avatar-form-grid">
               <div className="form-row">
                 <label className="form-label">Renderer</label>
@@ -205,7 +205,7 @@ export function AvatarPage({ onNavigate }) {
             </div>
           </SettingsCard>
 
-          <SettingsCard icon={Upload} title="Upload model" description=".vrm / .glb / .model3.json / .zip (max 12MB, zip must contain one model3.json). Per-user storage.">
+          <SettingsCard icon={<Upload size={16} />} title="Upload model" description=".vrm / .glb / .model3.json / .zip (max 12MB, zip must contain one model3.json). Per-user storage.">
             <div className="avatar-upload-row">
               <input ref={fileRef} type="file" accept=".vrm,.glb,.gltf,.json,.zip,model3.json" onChange={handleUpload} disabled={busy} aria-label="Upload avatar model" style={{ display: 'none' }} />
               <button type="button" className="btn-secondary" onClick={() => fileRef.current?.click()} disabled={busy}><Upload size={14} /> Choose file</button>
@@ -217,7 +217,7 @@ export function AvatarPage({ onNavigate }) {
         </div>
       </div>
 
-      <SettingsCard icon={GlassWater} title="Model library" description="6 bundled anime defaults (3× VRM 10MB + Haru Greeter 3MB). Uploaded models appear here with delete.">
+      <SettingsCard icon={<GlassWater size={16} />} title="Model library" description="6 bundled anime defaults (3× VRM 10MB + Haru Greeter 3MB). Uploaded models appear here with delete.">
         <div className="avatar-model-grid">
           {allModels.length === 0 && <EmptyState title="No models" description="Bundled models failed to load." />}
           {allModels.map((model) => {
@@ -237,7 +237,7 @@ export function AvatarPage({ onNavigate }) {
         </div>
       </SettingsCard>
 
-      <SettingsCard icon={Maximize2} title="How it works" description="Auto theme + lip-sync.">
+      <SettingsCard icon={<Maximize2 size={16} />} title="How it works" description="Auto theme + lip-sync.">
         <ul className="avatar-help-list">
           <li><strong>Auto renderer:</strong> probes WebGL2 + `navigator.deviceMemory` + url ext; 8s timeout → orb fallback (never blank).</li>
           <li><strong>Auto tint:</strong> `avatarTokens` maps 25 presets — mono keeps monochrome, duo/spectrum accent → `var(--color-primary)` one hue (ADR 0011).</li>

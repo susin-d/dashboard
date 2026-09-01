@@ -124,7 +124,7 @@ export function EveAvatarSection() {
       description="Global floating companion + inline avatar on Eve pages. Auto picks 3D VRM on desktop and Live2D on mobile, or choose manually. Upload your own .vrm / .glb / .model3.json (.zip)."
     >
       <SettingsCard
-        icon={Bot}
+        icon={<Bot size={16} />}
         title="Avatar presence"
         description="Toggle everywhere vs inline only. Global dock is draggable — drag the header pill."
         actions={
@@ -198,7 +198,7 @@ export function EveAvatarSection() {
       </SettingsCard>
 
       <SettingsCard
-        icon={Sparkles}
+        icon={<Sparkles size={16} />}
         title="Example models"
         description="Bundled CC0 examples. Pick one — auto applies renderer."
       >
@@ -230,7 +230,7 @@ export function EveAvatarSection() {
       </SettingsCard>
 
       <SettingsCard
-        icon={Upload}
+        icon={<Upload size={16} />}
         title="Upload model"
         description="Validate .vrm / .glb / .model3.json / .zip (max 12MB, zip must contain one model3.json). Stored per-user in workspace storage."
       >
