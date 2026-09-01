@@ -56,8 +56,8 @@ Instructions and guidelines for AI Coding Agents working in the **Starwaves** co
      guidance.
 
 4. **Respect System Architecture**:
-   - **Frontend (`/website`)**: React 19 + Vite + Vanilla CSS (Monochrome
-     Design System) + Monaco Editor.
+   - **Frontend (`/website`)**: React 19 + Vite + Vanilla CSS (Design
+     Tokens & Presets: Mono, Duo, Spectrum) + Monaco Editor.
    - **Backend (`/server`)**: FastAPI (Python) + Supabase (PostgreSQL) / Async
      SQLAlchemy 2.0.
    - **Desktop Shell** (`/website/src-tauri`): Tauri v2 scaffold.
@@ -841,7 +841,7 @@ Never declare success without running build/lint/test tools to verify correctnes
 - [ ] Frontend uses existing UI primitives
 - [ ] API client uses `apiRequest()` from `request.js`
 - [ ] CSS uses design tokens, not raw values
-- [ ] Colors are monochrome only (black/white/gray)
+- [ ] Colors adhere to theme presets (Monochrome / Duotone / Spectrum single-color-per-role rule per ADR 0011; light/dark/stone preserved)
 - [ ] Tests added for new backend logic
 - [ ] `context.md` updated with new routes/pages/features
 - [ ] ADR created if architecture/pattern/schema/auth/cache decision (commit with code)

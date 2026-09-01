@@ -8,7 +8,7 @@
 
 ```text
 starwaves/
-├── website/          React 19 + Vite frontend (monochrome design system)
+├── website/          React 19 + Vite frontend (monochrome + spectrum design system)
 ├── server/           FastAPI Python backend (SQLAlchemy 2.0 + PostgreSQL)
 ├── services/         Microservices
 │   └── whatsapp-worker/   Go (WhatsMeow) WhatsApp bridge
@@ -27,7 +27,7 @@ starwaves/
 
 ## Frontend (`website/`)
 
-**Stack**: React 19, Vite, Vanilla CSS (monochrome tokens), Monaco Editor, lucide-react, Framer Motion
+**Stack**: React 19, Vite, Vanilla CSS (monochrome + spectrum tokens), Monaco Editor, lucide-react, Framer Motion
 
 ### Key Directories
 
@@ -45,7 +45,7 @@ starwaves/
 | `src/pages/workspace/` | WorkspacePage + IDE components (editor, browser, eve panel) |
 | `src/pages/landing/` | Cinematic landing (Framer Motion sections, scoped cinema.css) |
 | `src/styles/` | tokens.css, base.css, components/, pages/, themes/ |
-| `src/themes/` | 22 presets (10 mono + 12 duotone) + engine |
+| `src/themes/` | 25 presets (10 mono + 12 duo + 3 spectrum) + engine |
 | `src/config/` | navigation.js, search/ package |
 | `src/utils/` | Pure transformers (speech, calendar, projectLifecycle, fileSize) |
 | `src-tauri/` | Tauri v2 desktop shell scaffold |

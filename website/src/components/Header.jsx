@@ -192,10 +192,20 @@ export function Header({
   return (
     <>
       <header className="topbar">
-      <div className="brand">
+      <div
+        className="brand"
+        onClick={() => onNavigate?.('dashboard')}
+        role="button"
+        tabIndex={0}
+        onKeyDown={(e) => e.key === 'Enter' && onNavigate?.('dashboard')}
+        title="Go to Dashboard"
+      >
         <button
           className="icon-button menu-button"
-          onClick={onMenuOpen}
+          onClick={(e) => {
+            e.stopPropagation()
+            onMenuOpen()
+          }}
           aria-label={navigationExpanded ? 'Collapse navigation' : 'Expand navigation'}
           aria-expanded={navigationExpanded}
           title={navigationExpanded ? 'Collapse navigation' : 'Expand navigation'}

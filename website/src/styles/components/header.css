@@ -55,6 +55,15 @@
   border: none !important;
   box-shadow: none !important;
   outline: none !important;
+  user-select: none;
+  -webkit-user-select: none;
+  cursor: pointer;
+  color: var(--text-primary);
+}
+
+.brand span {
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 .starwaves-logo-icon {
@@ -63,6 +72,9 @@
   border-radius: var(--radius-sm);
   border: none !important;
   box-shadow: none !important;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-user-drag: none;
 }
 
 .brand-mark {

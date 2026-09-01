@@ -8,6 +8,16 @@
   font-family: inherit;
 }
 
+::selection {
+  background: var(--color-primary);
+  color: var(--text-inverse);
+}
+
+::-moz-selection {
+  background: var(--color-primary);
+  color: var(--text-inverse);
+}
+
 html,
 body,
 #root {
