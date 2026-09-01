@@ -405,18 +405,32 @@ website/src/
 
 ### 4.6 CSS & Design System
 
-#### 4.6.1 Color Palette — Monochrome + Curated Duotone
+#### 4.6.1 Color Palette — Monochrome, Duotone & Spectrum Color System
 
-**Base is monochrome; curated duotones are allowed.** 22 presets exist in `src/themes/presets.js`: 10 mono (`light`, `dark`, `oled`…) + 12 duotones (`abyss`, `ember`, `aurum`…). Each duotone pairs a neutral canvas (`#000`/`#fff`/gray) with **exactly one** curated accent hue. Arbitrary red/blue/green/yellow/purple, gradients, or rainbow themes outside the preset list remain forbidden.
+The design system supports three palette modes: **Monochrome**, **Duotone**, and **Spectrum** (25 presets in `src/themes/presets.js`, ADR 0011):
+
+1. **Monochrome (`mono`)**: Pure black, white, and gray scales (e.g. `light`, `dark`, `oled`, `stone`…). State indicators and accents stay within neutral tonal values.
+2. **Duotone (`duo`)**: Pairs a neutral canvas with **exactly one** curated accent hue (e.g. `abyss`, `ember`, `aurum`…).
+3. **Spectrum (`spectrum`)**: Uses a **per-element / per-role unique color rule**. Each functional element/role owns its own distinct hue on screen:
+   - `--color-primary`: Primary action button / main active element
+   - `--color-accent`: Secondary highlight / navigation indicator / link
+   - `--color-success`: Success indicator / tag
+   - `--color-warning`: Warning indicator / tag
+   - `--color-danger`: Destructive action / error tag
+   - `--color-purple`: Special category badge / AI marker
+   - `--scrollbar-thumb`: Scrollbar tracking accent
+   **Rule for Spectrum themes**: No color is used more than once across distinct semantic roles on screen; only one element/role can have that color. Canvas, cards, text, and base borders remain high-contrast neutrals.
 
 | Role | Allowed Values |
 |------|---------------|
 | Pure/Dark Black | `#000000`, `#09090b`, `#121212`, `#18181b` |
 | Pure/Off White | `#ffffff`, `#fafafa`, `#f4f4f5` |
 | Grayscale Accents / Borders | `#27272a`, `#3f3f46`, `#71717a`, `#e4e4e7` |
-| Curated duotone accent | One accent per preset from `presets.js` (e.g. abyss teal, ember tangerine, aurum amber, coral rose, azure sky) |
+| Core Preserved Mono Themes | `light` (Default Light), `dark` (Default Dark), `stone` (Stone Grey) |
+| Curated Duotone Accents | One accent per duo preset from `presets.js` |
+| Spectrum Semantic Hues | Unique, non-repeating hue per semantic token in spectrum presets (`prism`, `neonGrid`, `botanical`) |
 
-**PROHIBITED**: Arbitrary colors, gradients, or rainbow themes outside the 22 presets. State indicators must use high-contrast black/white/gray unless the active preset's single accent is intentional.
+**PROHIBITED**: Arbitrary unconstrained rainbow styling or sharing identical non-neutral accent hues across different semantic roles in Spectrum themes. Core monochrome themes (`light`, `dark`, `stone`) must remain unaltered.
 
 #### 4.6.2 CSS Architecture
 

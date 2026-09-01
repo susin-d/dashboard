@@ -23,6 +23,7 @@
 | [0008](0008-oauth-deep-link-mobile-auth.md) | OAuth deep-link for native + mobile login layout | Accepted | 2026-08-31 |
 | [0009](0009-ui-ux-design-system-and-routing-hardening.md) | UI/UX design system and routing hardening (modal dedup, delete redirect, navigateWorkspace, LoadingState, CustomDropdown search, inline style cleanup) | Accepted | 2026-09-01 |
 | [0010](0010-glassmorphism-design-system.md) | Glassmorphism design system — frosted-glass tokens, background mesh, 12 surface categories, reduced-motion support | Accepted | 2026-09-01 |
+| [0011](0011-spectrum-color-role-system.md) | Spectrum color role system — per-element unique hue assignment replacing monochrome rule; light/dark/stone preserved | Accepted | 2026-09-01 |
 
 ## How to add a new ADR
 

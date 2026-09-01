@@ -20,6 +20,9 @@ import azureTheme from '../styles/themes/azure.css?raw'
 import meadowTheme from '../styles/themes/meadow.css?raw'
 import lilacTheme from '../styles/themes/lilac.css?raw'
 import citrusTheme from '../styles/themes/citrus.css?raw'
+import prismTheme from '../styles/themes/prism.css?raw'
+import neonGridTheme from '../styles/themes/neon-grid.css?raw'
+import botanicalTheme from '../styles/themes/botanical.css?raw'
 
 function parseThemeColors(cssText) {
   const colors = {}
@@ -208,6 +211,30 @@ export const THEME_PRESETS = {
     description: "Lemon cream sorbet sparked by zesty lime — citrus two-color pop",
     colors: parseThemeColors(citrusTheme),
   },
+  prism: {
+    id: 'prism',
+    mode: 'light',
+    palette: 'spectrum',
+    name: "Prism Light",
+    description: "Crisp light spectrum theme where every semantic role has a unique distinct hue",
+    colors: parseThemeColors(prismTheme),
+  },
+  neonGrid: {
+    id: 'neonGrid',
+    mode: 'dark',
+    palette: 'spectrum',
+    name: "Neon Grid",
+    description: "High-contrast dark cyber spectrum theme with distinct neon hues per role",
+    colors: parseThemeColors(neonGridTheme),
+  },
+  botanical: {
+    id: 'botanical',
+    mode: 'dark',
+    palette: 'spectrum',
+    name: "Botanical Forest",
+    description: "Deep forest dark spectrum theme with earthy botanical hues per role",
+    colors: parseThemeColors(botanicalTheme),
+  },
 }
 
 export const PALETTE_GROUPS = [
@@ -220,6 +247,11 @@ export const PALETTE_GROUPS = [
     id: 'duo',
     label: 'Two Color',
     description: 'Curated duotone themes — each pairs a neutral canvas with one signature accent hue for a strict two-color identity.',
+  },
+  {
+    id: 'spectrum',
+    label: 'Spectrum',
+    description: 'Each UI role owns a unique hue — no color is shared between two elements on screen.',
   },
 ]
 

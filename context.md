@@ -2,7 +2,7 @@
 
 Living snapshot for AI agents. `AGENTS.md` holds permanent rules; this file holds the **current state**. See `CHANGELOG.md` for history and `PROJECT_MAP.md` for the file index.
 
-Last updated: 2026-09-01 — Glassmorphism design system: 15 new --glass-* tokens (light/dark), radial gradient body mesh, glassmorphism.css layer covering 12 surfaces (topbar, sidebar, cards, modals, dropdowns, settings cards, search palette, metric cards, alerts, Eve panel, tab nav, backdrops) with prefers-reduced-motion support + ADR 0010
+Last updated: 2026-09-01 — Spectrum Color Role System: per-element unique hue assignment replacing monochrome mandate for spectrum themes (prism, neonGrid, botanical); light, dark, and stone grey preserved + ADR 0011
 
 ## Contents
 1. [Overview](#1-overview) · 2. [Repository structure](#2-repository-structure) · 3. [Backend](#3-backend) · 4. [Frontend](#4-frontend) · 5. [Design system](#5-design-system) · 6. [Current snapshot](#6-current-snapshot) · 7. [Limitations](#7-limitations) · 8. [Verification](#8-verification)
@@ -10,7 +10,7 @@ Last updated: 2026-09-01 — Glassmorphism design system: 15 new --glass-* token
 ## 1. Overview
 Personal productivity workspace: projects, jobs, tasks, documents, code workspace, calendars, email, WhatsApp, hackathons, competitive programming, and EVE AI assistant.
 
-- **Frontend** (`/website`): React 19 + Vite + Vanilla CSS (monochrome) + Monaco Editor. Docker multi-stage + Nginx. `vite define __APP_VERSION__` + updaters (`updatesApi`, `desktopUpdater`, `androidUpdater`, `otaUpdater`, `useAutoUpdater`, `UpdateBanner`, `UpdateSection` in Settings).
+- **Frontend** (`/website`): React 19 + Vite + Vanilla CSS (monochrome + spectrum) + Monaco Editor. Docker multi-stage + Nginx. `vite define __APP_VERSION__` + updaters (`updatesApi`, `desktopUpdater`, `androidUpdater`, `otaUpdater`, `useAutoUpdater`, `UpdateBanner`, `UpdateSection` in Settings).
 - **Backend** (`/server`): FastAPI + Supabase PostgreSQL 16 + pgvector + Async SQLAlchemy 2.0. Mount `server/static/updates` at `/updates` (StaticFiles) + `/api/v1/updates` (check/latest/android/ota).
 - **Desktop** (`/website/src-tauri`): Tauri v2 + bundle `msi/nsis` + `tauri-plugin-updater/process` (pubkey in tauri.conf, endpoints `api.starwaves.../updates/latest.json`).
 - **Worker** (`/services/whatsapp-worker`): Go (WhatsMeow) bridge.
@@ -20,13 +20,13 @@ Personal productivity workspace: projects, jobs, tasks, documents, code workspac
 ## 2. Repository structure
 ```text
 starwaves/
-├── website/            React 19 + Vite (monochrome, Monaco, lucide-react, Framer Motion)
+├── website/            React 19 + Vite (monochrome/spectrum, Monaco, lucide-react, Framer Motion)
 ├── server/             FastAPI backend (app/api, app/core, app/db/sql, models, repos, schemas, services)
 ├── services/whatsapp-worker/  Go bridge
 ├── sql/                extensions.sql, schema.sql (18 tables incl. user_sessions+ai_usage), migrations.sql, indexes.sql (incl. HNSW)
 ├── nginx/              reverse proxy (10r/s burst 60, /api /ws /updates + Gzip; alias /updates → server_backend)
 ├── scripts/            build-android/desktop/ota/all (.ps1+.sh, lib/common) + deploy (vm-*, pc-*)
-├── docs/adr/           ADRs (0001 no-sub-agents, 0002 eve-tool-calling, 0003 build scripts, 0004 auto-update, 0005 ai-provider-hardening, 0006 canonical-domain, 0007 diff-errors, 0008 oauth-deep-link + _template + README)
+├── docs/adr/           ADRs (0001–0011 + _template + README)
 ├── docs/BUILD.md       Build guide (Android APK/AAB + Desktop MSI/NSIS + OTA)
 ├── PROJECT_MAP.md      Compact index for agents — read first (Tier 1)
 ├── context.md          This file — current snapshot (Tier 2, <15k)
@@ -50,16 +50,15 @@ For full maps see `PROJECT_MAP.md`. Keep this section brief; expand there.
 - **Entry:** `website/src/main.jsx` → `App.jsx` (routing + workspace state). **Layout:** `layouts/AppLayout.jsx`.
 - **UI primitives** `components/ui/` (`Modal`, `MailModal`, `ConfirmDialog`, `PageHeader`, `EmptyState`, `CustomDropdown`, `CalendarPicker`, `Markdown`, `TabNav`, `SectionHeading`, `SettingsCard`, `MetricCard`, `SearchBar`, `Pagination`, `FilterBar`, `Alert`, `LoadingState`, `Avatar`, `Badge`, `EveUiBanner`) — must reuse before creating ad-hoc.
 - **Hooks:** `hooks/` (`useAuth` + storage/BroadcastChannel sync, `useRouter`, `useThemeCustomizer`, `useWorkspaceData` (single debounced effect, uid-stable, **staggered 0/120/150/300/450ms tiers + 600ms GitHub**), `useCustomUI` + `CustomUIProvider` (single fetch, per-nav reuse), `useDevices`, `useSyncEvents` (debounced 300ms, selective invalidation), `call/` `useWebRTC`/`useEveVoice`/`useCallCenter` (multi-device ring, BroadcastChannel)) + `usePersistentState`.
- - **API clients** `lib/` — one per backend feature, all via `request.js` `apiRequest` (dedup + **default GET cache 30s / 15s for `/usage/` + 60s/120s per-path TTL + `useCache:false` opt-out** + `invalidateCacheForPath` + **concurrency 6 + GET retries 2 (jitter, Retry-After, Failed-to-fetch) + mode cors + Vercel localhost warn** + `X-Device-Id/Name`, 401 auto-logout). `usageApi` now respects 15s per-path cache (was `useCache:false`), `aiModelsApi.listProviderModels` `useCache 60s + retries 2`, `authApi.js` device-aware, `useDevices`, `uiPreferencesApi`, `firebase.js`.
-- **Pages:** Dashboard, Projects, ProjectDetail, Jobs, Hackathons, Todo, Documents, Workspace (IDE + Eve + Browser), Studio (hero → builder/apps/templates), Eve (chat+memory+voice+schedules), Calls (WebRTC+Twilio), WhatsApp, Mails, Calendar, Contacts, CompetitiveCoding, Stats, `UsagePage` (honest empty state + `EmptyState`, column-major 26×7 heatmap, Daily/Weekly/Cumulative, dynamic months, clamp tooltips, formatTokens), Settings (`DeviceSection` + `AppearanceSection`), `CustomPage`, Themes, Profile, Onboarding, Landing, etc.
-- **Config:** `config/navigation.js`, `config/search/` (7 modules), `dashboard/dashboardConfig.js`, `themes/` 22 presets, `utils/` pure transformers, `styles/` tokens→base→utilities→responsive→components (`eve-ui.css`, `device-section.css`)→pages→`layout-symmetry.css`.
-- **Performance:** lazy heavy pages, Vite `manualChunks` (vendor/firebase/monaco/grid), `request.js` default cache + dedup + **concurrency 6** (navigation is cache-hit within TTL, workspace bust only via 300ms-debounced `sync_invalidate`; staggered 600ms spreads dashboard burst well under Nginx 60).
+- **API clients** `lib/` — one per backend feature, all via `request.js` `apiRequest` (dedup + **default GET cache 30s / 15s for `/usage/` + 60s/120s per-path TTL + `useCache:false` opt-out** + `invalidateCacheForPath` + **concurrency 6 + GET retries 2 (jitter, Retry-After, Failed-to-fetch) + mode cors + Vercel localhost warn** + `X-Device-Id/Name`, 401 auto-logout). `usageApi` now respects 15s per-path cache (was `useCache:false`), `aiModelsApi.listProviderModels` `useCache 60s + retries 2`, `authApi.js` device-aware, `useDevices`, `uiPreferencesApi`, `firebase.js`.
+- **Pages:** Dashboard, Projects, ProjectDetail, Jobs, Hackathons, Todo, Documents, Workspace (IDE + Eve + Browser), Studio (hero → builder/apps/templates), Eve (chat+memory+voice+schedules), Calls (WebRTC+Twilio), WhatsApp, Mails, Calendar, Contacts, CompetitiveCoding, Stats, `UsagePage`, Settings (`DeviceSection` + `AppearanceSection`), `CustomPage`, Themes, Profile, Onboarding, Landing, etc.
+- **Config:** `config/navigation.js`, `config/search/` (7 modules), `dashboard/dashboardConfig.js`, `themes/` 25 presets (Mono, Duo, Spectrum), `utils/` pure transformers, `styles/` tokens→base→utilities→responsive→components→pages→`layout-symmetry.css`.
 
 ## 5. Design system
-- **Palette:** monochrome base (`#000`/`#09090b`/`#121212`/`#18181b`, `#fff`/`#fafafa`/`#f4f4f5`, grays `#27272a`/`#3f3f46`/`#71717a`/`#e4e4e7`) + 12 curated duotones (abyss teal, ember, aurum etc. via `presets.js` 22 total). No arbitrary colors outside presets.
+- **Palette:** 25 presets across Mono, Duo, and Spectrum (ADR 0011). Mono base (`#000`/`#09090b`/`#121212`/`#18181b`, `#fff`/`#fafafa`/`#f4f4f5`, grays `#27272a`/`#3f3f46`/`#71717a`/`#e4e4e7` incl. `light`, `dark`, `stone`); 12 curated duotones (`abyss`, `ember`…); 3 Spectrum themes (`prism`, `neonGrid`, `botanical`) where each semantic role owns a unique hue without on-screen duplicates.
 - **Tokens first:** `styles/tokens.css` CSS vars (8pt scale `--space-3xs`→`--space-3xl`, `--content-max-width` 1440, `--content-gutter` clamp, `--section-gap` clamp, `--card-padding` clamp, `--header-height` 68/62, `--sidebar-collapsed/expanded`). Import order `tokens→base→utilities→responsive→components→pages→layout-symmetry` via `App.css`.
-- **One CSS per component/page**, `kebab-case` classes scoped (`studio-prompt-attachment-chip`), use vars (`var(--radius-lg)`), dark overrides in `styles/themes/dark.css`.
-- **Full-page, no clip:** `min-height:100vh` accounting for chrome, natural scroll. Responsive mobile-first with `clamp()`. Geometry now single-source in `layout-symmetry.css` (centered `max-width:1440` + symmetric `content-gutter` + `safe-area` insets; fullscreen exceptions for Workspace/WhatsApp/Studio/Eve).
+- **One CSS per component/page**, `kebab-case` classes scoped, use vars (`var(--radius-lg)`), dark overrides in `styles/themes/dark.css`.
+- **Full-page, no clip:** `min-height:100vh` accounting for chrome, natural scroll. Responsive mobile-first with `clamp()`. Geometry in `layout-symmetry.css`.
 - Icons `lucide-react` only.
 
 ## 6. Current snapshot
