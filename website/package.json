@@ -28,22 +28,28 @@
     "@capacitor/cli": "^8.4.2",
     "@capacitor/core": "^8.4.2",
     "@monaco-editor/react": "^4.7.0",
+    "@pixiv/three-vrm": "^3.5.5",
+    "@react-three/drei": "^9.122.0",
+    "@react-three/fiber": "^8.18.0",
     "dompurify": "^3.4.14",
     "firebase": "^12.16.0",
     "framer-motion": "^13.1.1",
     "lucide-react": "^1.26.0",
     "picomatch": "^4.0.5",
+    "pixi-live2d-display": "^0.4.0",
+    "pixi.js": "^7.4.3",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
-    "react-grid-layout": "^2.2.3"
+    "react-grid-layout": "^2.2.3",
+    "three": "^0.160.1"
   },
   "optionalDependencies": {
     "@capgo/capacitor-updater": "^7.15.3",
-    "@tauri-apps/plugin-updater": "^2.8.0",
-    "@tauri-apps/plugin-process": "^2.2.0",
-    "@tauri-apps/plugin-dialog": "^2.4.0",
     "@tauri-apps/plugin-deep-link": "^2.4.1",
-    "@tauri-apps/plugin-shell": "^2.3.4"
+    "@tauri-apps/plugin-dialog": "^2.4.0",
+    "@tauri-apps/plugin-process": "^2.2.0",
+    "@tauri-apps/plugin-shell": "^2.3.4",
+    "@tauri-apps/plugin-updater": "^2.8.0"
   },
   "devDependencies": {
     "@capacitor/assets": "^3.0.5",

@@ -14,6 +14,8 @@ export function EveAvatarCanvas({
   onReady,
   onError,
   children,
+  style = {},
+  className = '',
 }) {
   const containerRef = useRef(null)
   const eye = useEyeTracking({ enabled: !reducedMotion, containerRef })
@@ -26,11 +28,11 @@ export function EveAvatarCanvas({
   return (
     <div
       ref={containerRef}
-      className={`eve-avatar-canvas eve-avatar-canvas--${renderer} is-${emotion} ${effectiveBlink ? 'is-blink' : ''} ${reducedMotion ? 'is-reduced' : ''}`}
+      className={`eve-avatar-canvas eve-avatar-canvas--${renderer} is-${emotion} ${effectiveBlink ? 'is-blink' : ''} ${reducedMotion ? 'is-reduced' : ''} ${className}`}
       data-eve-target="eve-avatar-canvas"
       data-renderer={renderer}
       data-emotion={emotion}
-      style={{ '--eve-mouth-open': String(effectiveMouth), '--eve-look-x': String(effectiveLookAt.x), '--eve-look-y': String(effectiveLookAt.y) }}
+      style={{ '--eve-mouth-open': String(effectiveMouth), '--eve-look-x': String(effectiveLookAt.x), '--eve-look-y': String(effectiveLookAt.y), ...style }}
       aria-hidden="true"
     >
       <Suspense fallback={<div className="eve-avatar-loading" role="status" aria-label="Loading avatar" />}>

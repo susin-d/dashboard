@@ -5,6 +5,24 @@ const ERROR_MESSAGE = 'Eve is unavailable right now.'
 const TOKEN_MESSAGE = 'Sign in to use Eve.'
 const STREAM_TIMEOUT_MS = 120_000
 
+function formatStreamDetail(detail, fallback) {
+  if (!detail) return fallback
+  if (typeof detail === 'string') return detail
+  if (Array.isArray(detail)) {
+    const hasEmptyContent = detail.some((e) => e?.type === 'string_too_short' && Array.isArray(e.loc) && e.loc.includes('content'))
+    if (hasEmptyContent) return 'A message was empty and could not be sent. Please write a message and try again.'
+    return detail.map((e) => (e && typeof e === 'object' && typeof e.msg === 'string' ? (Array.isArray(e.loc) ? `${e.loc.slice(1).join('.')}: ${e.msg}` : e.msg) : JSON.stringify(e))).join('; ') || fallback
+  }
+  if (typeof detail === 'object') {
+    try {
+      return typeof detail.msg === 'string' ? detail.msg : JSON.stringify(detail)
+    } catch {
+      return fallback
+    }
+  }
+  return String(detail) || fallback
+}
+
 function request(path, options = {}) {
   return apiRequest(path, {
     errorMessage: ERROR_MESSAGE,
@@ -63,7 +81,7 @@ export async function streamEveMessage({
 
   if (!response.ok) {
     const failure = await response.json().catch(() => null)
-    const err = new Error(failure?.detail || 'Eve stream could not be started.')
+    const err = new Error(formatStreamDetail(failure?.detail, 'Eve stream could not be started.'))
     err.status = response.status
     err.detail = failure?.detail
     // Heuristic: detect rate limit from status or message for better UX
@@ -100,7 +118,7 @@ export async function streamEveMessage({
     } else if (event.type === 'done') {
       onDone?.(event)
     } else if (event.type === 'error') {
-      const err = new Error(event.detail || 'Eve response failed mid-stream.')
+      const err = new Error(formatStreamDetail(event.detail, 'Eve response failed mid-stream.'))
       err.code = event.code || 'provider_error'
       err.status = event.status || 502
       err.retryAfter = event.retry_after
@@ -161,7 +179,7 @@ export async function streamEveVoice({
 
   if (!response.ok) {
     const failure = await response.json().catch(() => null)
-    const err = new Error(failure?.detail || 'Eve voice stream could not be started.')
+    const err = new Error(formatStreamDetail(failure?.detail, 'Eve voice stream could not be started.'))
     err.status = response.status
     if (response.status === 429) err.code = 'rate_limit'
     else if (response.status === 401) err.code = 'auth'
@@ -191,7 +209,7 @@ export async function streamEveVoice({
     } else if (event.type === 'done') {
       onDone?.(event)
     } else if (event.type === 'error') {
-      const err = new Error(event.detail || 'Eve voice failed mid-stream.')
+      const err = new Error(formatStreamDetail(event.detail, 'Eve voice failed mid-stream.'))
       err.code = event.code || 'provider_error'
       err.status = event.status || 502
       throw err

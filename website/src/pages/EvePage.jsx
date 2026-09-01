@@ -179,28 +179,32 @@ export function EvePage({
   }
 
   const buildApiMessages = (nextMessages) =>
-    nextMessages.map((m) => {
-      if (m.role === 'user' && m.attachments?.length) {
-        const fileBlocks = m.attachments
-          .map((att) => {
-            if (att.textContent) {
-              return `[Attached file: ${att.name}]\n\`\`\`\n${att.textContent}\n\`\`\``
-            }
-            return `[Attached file: ${att.name} (${att.type || 'file'})]`
-          })
-          .join('\n\n')
-        return {
-          role: 'user',
-          content: `${fileBlocks}\n\n${m.content || 'Please review the attached file(s).'}`,
+    nextMessages
+      .map((m) => {
+        if (m.role === 'user' && m.attachments?.length) {
+          const fileBlocks = m.attachments
+            .map((att) => {
+              if (att.textContent) {
+                return `[Attached file: ${att.name}]\n\`\`\`\n${att.textContent}\n\`\`\``
+              }
+              return `[Attached file: ${att.name} (${att.type || 'file'})]`
+            })
+            .join('\n\n')
+          return {
+            role: 'user',
+            content: `${fileBlocks}\n\n${m.content || 'Please review the attached file(s).'}`,
+          }
         }
-      }
-      return { role: m.role, content: m.content }
-    })
+        return { role: m.role, content: m.content }
+      })
+      .filter((m) => typeof m.content === 'string' && m.content.trim().length > 0)
+      .map((m) => ({ role: m.role, content: m.content.trim() }))
 
   const runNonStreamedTurn = async (apiMessages, nextMessages) => {
     let sessionId = activeSessionId
     if (!sessionId) {
-      const createdSession = await createEveSession(nextMessages)
+      const sanitizedForSession = nextMessages.filter((m) => typeof m.content === 'string' && m.content.trim().length > 0)
+      const createdSession = await createEveSession(sanitizedForSession.length ? sanitizedForSession : nextMessages)
       sessionId = createdSession.session.id
       setActiveSessionId(sessionId)
     }
@@ -216,11 +220,18 @@ export function EvePage({
     turnThinking = '',
     turnToolCalls = [],
   ) => {
+    const hasAssistantContent = typeof assistantContent === 'string' && assistantContent.trim().length > 0
+    if (!hasAssistantContent) {
+      if (changedResources?.length) onWorkspaceChanged?.()
+      handleActions(actions)
+      refreshSidebar()
+      return baseMessages
+    }
     const finalMessages = [
       ...baseMessages,
       {
         role: 'assistant',
-        content: assistantContent,
+        content: assistantContent.trim(),
         thinking: turnThinking || undefined,
         toolCalls: turnToolCalls?.length ? turnToolCalls : undefined,
       },
@@ -376,13 +387,15 @@ export function EvePage({
   const resumeSession = async (session) => {
     try {
       const sessionData = await getEveSession(session.id)
-      setMessages(sessionData?.session?.messages || STARTER_MESSAGES)
+      const loaded = sessionData?.session?.messages || STARTER_MESSAGES
+      const sanitized = Array.isArray(loaded) ? loaded.filter((m) => typeof m.content === 'string' && m.content.trim().length > 0) : loaded
+      setMessages(sanitized.length ? sanitized : STARTER_MESSAGES)
       setActiveSessionId(session.id)
       setError('')
       setActiveTab('chat')
       onNavigate?.('eve')
     } catch (sessionError) {
-      setError(sessionError.message || 'Could not load that Eve session.')
+      setError(String(sessionError.message || 'Could not load that Eve session.'))
     }
   }
 

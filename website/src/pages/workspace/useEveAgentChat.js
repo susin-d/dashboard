@@ -26,8 +26,10 @@ export function useEveAgentChat({ workspaceId, workspaceName, activeFilePath, on
   }, [])
 
   const commit = useCallback((content) => {
-    historyRef.current = [...historyRef.current, { role: 'assistant', content }]
-    setMessages((log) => [...log, { role: 'assistant', content }])
+    const trimmed = typeof content === 'string' ? content.trim() : ''
+    if (!trimmed) return
+    historyRef.current = [...historyRef.current, { role: 'assistant', content: trimmed }]
+    setMessages((log) => [...log, { role: 'assistant', content: trimmed }])
   }, [])
 
   const send = useCallback(
@@ -77,15 +79,14 @@ export function useEveAgentChat({ workspaceId, workspaceName, activeFilePath, on
           if (controller.signal.aborted) {
             donePayload = { message: receivedText, changed_resources: [], actions: [] }
           } else if (!receivedText) {
-            const isRate = streamError.code === 'rate_limit' || streamError.status === 429 || /rate limit/i.test(streamError.message || '')
+            const isRate = streamError.code === 'rate_limit' || streamError.status === 429 || /rate limit/i.test(String(streamError.message || ''))
             if (isRate) {
-              setError(streamError.message || 'Rate limit exceeded. Please wait a moment and retry.')
-              commit('')
+              setError(String(streamError.message || 'Rate limit exceeded. Please wait a moment and retry.'))
               return
             }
             fallbackToRest = true
           } else {
-            setError(streamError.message || 'Eve response was interrupted.')
+            setError(String(streamError.message || 'Eve response was interrupted.'))
             commit(receivedText)
             return
           }
@@ -100,12 +101,11 @@ export function useEveAgentChat({ workspaceId, workspaceName, activeFilePath, on
           } catch (restError) {
             const status = restError?.status || 502
             const code = restError?.code
-            const isRate = status === 429 || code === 'rate_limit' || /rate limit/i.test(restError.message || '')
-            const isAuth = status === 401 || code === 'auth' || /authentication|api key/i.test(restError.message || '')
-            if (isRate) setError(restError.message || 'Rate limit exceeded. Please wait a moment and retry.')
-            else if (isAuth) setError(restError.message || 'Authentication failed. Check Settings → AI Models.')
-            else setError(restError.message || 'Eve is unavailable right now.')
-            commit('')
+            const isRate = status === 429 || code === 'rate_limit' || /rate limit/i.test(String(restError.message || ''))
+            const isAuth = status === 401 || code === 'auth' || /authentication|api key/i.test(String(restError.message || ''))
+            if (isRate) setError(String(restError.message || 'Rate limit exceeded. Please wait a moment and retry.'))
+            else if (isAuth) setError(String(restError.message || 'Authentication failed. Check Settings → AI Models.'))
+            else setError(String(restError.message || 'Eve is unavailable right now.'))
             return
           }
         }
@@ -130,7 +130,7 @@ export function useEveAgentChat({ workspaceId, workspaceName, activeFilePath, on
           } catch {}
         }
       } catch (turnError) {
-        setError(turnError.message || 'Eve is unavailable right now.')
+        setError(String(turnError.message || 'Eve is unavailable right now.'))
       } finally {
         abortRef.current = null
         setSending(false)

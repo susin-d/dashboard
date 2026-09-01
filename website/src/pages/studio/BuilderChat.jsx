@@ -126,7 +126,8 @@ export function BuilderChat({ projectId, projectName, onActions, onAssistantRepl
     setAttachments([])
     setError('')
     setIsSending(true)
-    const nextMessages = [...messages, { role: 'user', content }]
+    const sanitizedBase = messages.filter((m) => typeof m.content === 'string' && m.content.trim().length > 0)
+    const nextMessages = [...sanitizedBase, { role: 'user', content }]
     setMessages(nextMessages)
 
     try {
@@ -136,13 +137,14 @@ export function BuilderChat({ projectId, projectName, onActions, onAssistantRepl
         sessionId = created.session.id
         storeSessionId(projectId, sessionId)
       }
-      const apiMessages = nextMessages.map(({ role, content: text }) => ({ role, content: text }))
-      const response = await sendEveMessage(apiMessages, sessionId)
-      setMessages([...nextMessages, { role: 'assistant', content: response.message }])
+      const apiMessages = nextMessages.filter((m) => typeof m.content === 'string' && m.content.trim().length > 0).map(({ role, content: text }) => ({ role, content: text.trim() }))
+      const response = await sendEveMessage(apiMessages.length ? apiMessages : nextMessages, sessionId)
+      const assistantText = typeof response.message === 'string' ? response.message.trim() : ''
+      if (assistantText) setMessages([...nextMessages, { role: 'assistant', content: assistantText }])
       onActions?.(response.actions)
       onAssistantReply?.()
     } catch (sendError) {
-      setError(sendError.message || 'Eve could not respond. Try again.')
+      setError(String(sendError.message || 'Eve could not respond. Try again.'))
     } finally {
       setIsSending(false)
     }
@@ -152,7 +154,13 @@ export function BuilderChat({ projectId, projectName, onActions, onAssistantRepl
     if (!text || isSending) return
     setError('')
     setIsSending(true)
-    const nextMessages = [...messages, { role: 'user', content: text }]
+    const trimmed = typeof text === 'string' ? text.trim() : text
+    if (!trimmed) {
+      setIsSending(false)
+      return
+    }
+    const sanitizedBase = messages.filter((m) => typeof m.content === 'string' && m.content.trim().length > 0)
+    const nextMessages = [...sanitizedBase, { role: 'user', content: trimmed }]
     setMessages(nextMessages)
 
     try {
@@ -162,9 +170,10 @@ export function BuilderChat({ projectId, projectName, onActions, onAssistantRepl
         sessionId = created.session.id
         storeSessionId(projectId, sessionId)
       }
-      const apiMessages = nextMessages.map(({ role, content: msgText }) => ({ role, content: msgText }))
-      const response = await sendEveMessage(apiMessages, sessionId)
-      setMessages([...nextMessages, { role: 'assistant', content: response.message }])
+      const apiMessages = nextMessages.filter((m) => typeof m.content === 'string' && m.content.trim().length > 0).map(({ role, content: msgText }) => ({ role, content: msgText.trim() }))
+      const response = await sendEveMessage(apiMessages.length ? apiMessages : nextMessages, sessionId)
+      const assistantText = typeof response.message === 'string' ? response.message.trim() : ''
+      if (assistantText) setMessages([...nextMessages, { role: 'assistant', content: assistantText }])
       onActions?.(response.actions)
       onAssistantReply?.()
     } catch (sendError) {

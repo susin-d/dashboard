@@ -206,7 +206,10 @@ export function EveAssistantModal({ isOpen, onClose, onNavigate, onWorkspaceChan
   }
 
   const sendPrompt = async (content, baseMessages, sessionIdOverride = null) => {
-    const nextMessages = [...baseMessages, { role: 'user', content }]
+    const trimmed = typeof content === 'string' ? content.trim() : content
+    if (!trimmed) return { messages: baseMessages, sessionId: sessionIdOverride }
+    const sanitizedBase = Array.isArray(baseMessages) ? baseMessages.filter((m) => typeof m.content === 'string' && m.content.trim().length > 0) : baseMessages
+    const nextMessages = [...sanitizedBase, { role: 'user', content: trimmed }]
     setMessages(nextMessages)
     setDraft('')
     setError('')
@@ -222,9 +225,11 @@ export function EveAssistantModal({ isOpen, onClose, onNavigate, onWorkspaceChan
         ...current,
       ])
     }
-    const response = await sendEveMessage(nextMessages, nextSessionId)
-    const assistantMessage = { role: 'assistant', content: response.message }
-    const finalMessages = [...nextMessages, assistantMessage]
+    const apiMessages = nextMessages.filter((m) => typeof m.content === 'string' && m.content.trim().length > 0).map((m) => ({ role: m.role, content: m.content.trim() }))
+    const response = await sendEveMessage(apiMessages.length ? apiMessages : nextMessages, nextSessionId)
+    const assistantText = typeof response.message === 'string' ? response.message.trim() : ''
+    const assistantMessage = assistantText ? { role: 'assistant', content: assistantText } : null
+    const finalMessages = assistantMessage ? [...nextMessages, assistantMessage] : nextMessages
     setMessages(finalMessages)
     setSessions((current) => [
       { id: nextSessionId, title: sessionTitle, updated_at: new Date().toISOString(), preview: previewFor(finalMessages) },

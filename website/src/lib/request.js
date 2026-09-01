@@ -13,6 +13,34 @@ if (typeof window !== 'undefined' && import.meta.env.PROD && API_URL.startsWith(
 const DEFAULT_REQUEST_TIMEOUT_MS = 30_000
 const DEFAULT_RETRIES_FOR_IDEMPOTENT = 2
 
+function formatErrorDetail(detail, fallback) {
+  if (!detail) return fallback
+  if (typeof detail === 'string') return detail
+  if (Array.isArray(detail)) {
+    const hasEmptyContent = detail.some((e) => e?.type === 'string_too_short' && Array.isArray(e.loc) && e.loc.includes('content'))
+    if (hasEmptyContent) return 'A message was empty and could not be sent. Please write a message and try again.'
+    const parts = detail.map((entry) => {
+      if (!entry || typeof entry !== 'object') return String(entry)
+      if (typeof entry.msg === 'string') {
+        const loc = Array.isArray(entry.loc) ? entry.loc.slice(1).join('.') : ''
+        return loc ? `${loc}: ${entry.msg}` : entry.msg
+      }
+      return JSON.stringify(entry)
+    })
+    const joined = parts.join('; ')
+    return joined || fallback
+  }
+  if (typeof detail === 'object') {
+    if (typeof detail.msg === 'string') return detail.msg
+    try {
+      return JSON.stringify(detail)
+    } catch {
+      return fallback
+    }
+  }
+  return String(detail) || fallback
+}
+
 // Frontend concurrency limiter — prevents dashboard thundering herd
 // e2-micro Nginx: 10r/s burst 60. Dashboard fires ~15 GETs (+15 OPTIONS preflights =30).
 // Limiting JS to 4 concurrent keeps Nginx ≤8 in-flight, well under burst.
@@ -214,7 +242,8 @@ export async function apiRequest(
           window.dispatchEvent(new CustomEvent('starwaves:session-revoked'))
         } catch {}
       }
-      throw Object.assign(new Error(failure?.detail || errorMessage), { status: response.status })
+      const detailMessage = formatErrorDetail(failure?.detail, errorMessage)
+      throw Object.assign(new Error(detailMessage), { status: response.status, detail: failure?.detail })
     }
     if (response.status === 204) return null
     try {
