@@ -109,7 +109,6 @@ export function AvatarPage({ onNavigate }) {
 
   const allModels = [...AVATAR_CATALOG, ...remoteModels.filter((m) => !AVATAR_CATALOG.some((c) => c.id === m.id))]
 
-  const isIdle = previewEmotion === 'idle'
   const isSpeaking = previewEmotion === 'speaking' || previewSpeaking
   const isThinking = previewEmotion === 'thinking'
   const isListening = previewEmotion === 'listening'
@@ -244,7 +243,7 @@ export function AvatarPage({ onNavigate }) {
           <li><strong>Auto tint:</strong> `avatarTokens` maps 25 presets — mono keeps monochrome, duo/spectrum accent → `var(--color-primary)` one hue (ADR 0011).</li>
           <li><strong>Lip-sync:</strong> `Web Audio AnalyserNode` (32 FFT, `aa/oh`, smooth 0.4) or viseme pulse; barge-in clears mouth.</li>
           <li><strong>Eye & blink:</strong> `pointermove` lerp + 3–6s blink via `ParamEyeLOpen/R` / VRM `blink`.</li>
-          <li><strong>Positions:</strong> global dock header drag → `position {x,y}` clamped 0–100 + `BroadcastChannel` across tabs.</li>
+          <li><strong>Positions:</strong> global dock header drag → <code>position {'{x,y}'}</code> clamped 0–100 + <code>BroadcastChannel</code> across tabs.</li>
         </ul>
       </SettingsCard>
     </div>

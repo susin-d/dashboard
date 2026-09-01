@@ -34,6 +34,7 @@
 @import './styles/components/eve-avatar.css';
 
 /* Page Styles */
+@import './styles/pages/avatar.css';
 @import './styles/pages/dashboard.css';
 @import './styles/pages/calendar.css';
 @import './styles/pages/documents.css';

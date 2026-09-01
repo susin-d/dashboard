@@ -14,7 +14,7 @@ export function WorkspaceEvePanel({
   onFilesChanged,
   onAction,
 }) {
-  const { messages, sending, streamText, activeTool, error, send, stop } = useEveAgentChat({
+  const { messages, sending, streamText, thinkingText, activeTool, error, send, stop } = useEveAgentChat({
     workspaceId,
     workspaceName,
     activeFilePath,
@@ -29,7 +29,7 @@ export function WorkspaceEvePanel({
   useEffect(() => {
     const node = chatRef.current
     if (node) node.scrollTop = node.scrollHeight
-  }, [messages, streamText, activeTool])
+  }, [messages, streamText, thinkingText, activeTool])
 
   if (collapsed) {
     return (
@@ -97,6 +97,13 @@ export function WorkspaceEvePanel({
                 {entry.content}
               </div>
             ))}
+            {thinkingText && (
+              <div className="workspace-eve-thinking">
+                <span className="workspace-eve-thinking-label">Thinking…</span>
+                <span className="workspace-eve-thinking-text">{thinkingText}</span>
+                {!streamText && <span className="eve-thinking-cursor" aria-hidden="true" />}
+              </div>
+            )}
             {activeTool && (
               <div className="workspace-eve-tool">
                 <Wrench size={12} />
@@ -104,7 +111,10 @@ export function WorkspaceEvePanel({
               </div>
             )}
             {streamText && (
-              <div className="workspace-eve-message assistant streaming">{streamText}</div>
+              <div className="workspace-eve-message assistant streaming">
+                {streamText}
+                <span className="eve-streaming-cursor" aria-hidden="true" />
+              </div>
             )}
           </>
         )}

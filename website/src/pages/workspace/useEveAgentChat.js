@@ -147,5 +147,5 @@ export function useEveAgentChat({ workspaceId, workspaceName, activeFilePath, on
     [activeFilePath, commit, onAction, onFilesChanged, sending, workspaceId, workspaceName],
   )
 
-  return { messages, sending, streamText, activeTool, error, send, stop }
+  return { messages, sending, streamText, thinkingText, activeTool, error, send, stop }
 }

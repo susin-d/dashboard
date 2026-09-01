@@ -18,6 +18,7 @@ import { IncomingCallOverlay } from './components/calls/IncomingCallOverlay'
 const CalendarPage = lazy(() => import('./pages/CalendarPage').then((m) => ({ default: m.CalendarPage })))
 const CompetitiveCodingPage = lazy(() => import('./pages/CompetitiveCodingPage').then((m) => ({ default: m.CompetitiveCodingPage })))
 const EvePage = lazy(() => import('./pages/EvePage').then((m) => ({ default: m.EvePage })))
+const AvatarPage = lazy(() => import('./pages/AvatarPage').then((m) => ({ default: m.AvatarPage })))
 const MailsPage = lazy(() => import('./pages/MailsPage').then((m) => ({ default: m.MailsPage })))
 const WhatsAppPage = lazy(() => import('./pages/WhatsAppPage').then((m) => ({ default: m.WhatsAppPage })))
 const ChatsPage = lazy(() => import('./pages/ChatsPage').then((m) => ({ default: m.ChatsPage })))
@@ -434,6 +435,7 @@ function App() {
         chatResetKey={eveChatKey}
       />
     ),
+    avatar: <AvatarPage onNavigate={navigateWorkspace} />,
     stats: (
       <StatsPage
         codingStats={codingStats}

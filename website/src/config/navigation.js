@@ -23,6 +23,7 @@ import {
   PhoneCall,
   Rocket,
   Settings,
+  Smile,
   SquareTerminal,
   UserRound,
 } from 'lucide-react'
@@ -37,6 +38,7 @@ export const navigationItems = [
   { id: 'studio-apps', label: 'Apps', icon: AppWindow, group: 'Studio' },
   { id: 'studio-templates', label: 'Templates', icon: LayoutTemplate, group: 'Studio' },
   { id: 'eve', label: 'Chat', icon: Bot, group: 'Eve AI' },
+  { id: 'avatar', label: 'Avatar Studio', icon: Smile, group: 'Eve AI' },
   { id: 'eve-sessions', label: 'Chat Sessions', icon: History, group: 'Eve AI' },
   { id: 'eve-memory', label: 'Eve Memory', icon: Brain, group: 'Eve AI' },
   { id: 'eve-call', label: 'Voice & AI Call', icon: PhoneCall, group: 'Eve AI' },

@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 const workspacePages = new Set([
   'dashboard',
   'eve',
+  'avatar',
   'eve-chat',
   'eve-sessions',
   'eve-memory',
