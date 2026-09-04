@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Download, RefreshCw, CheckCircle, AlertCircle } from 'lucide-react'
 import { checkAndroidUpdateInteractive } from '../../lib/androidUpdater'
 import { checkDesktopUpdateInteractive, isTauri } from '../../lib/desktopUpdater'
+import { isNative as isCapacitorNative } from '../../lib/otaUpdater'
 import { fetchOtaLatest, getAppVersion } from '../../lib/updatesApi'
 import { SettingsCard, SettingsSection } from '../../components/ui'
 
@@ -44,6 +45,11 @@ export function UpdateSection() {
   }
 
   const platformLabel = tauri ? 'Desktop (Tauri)' : 'Android / Web'
+
+  // Native-shell only: on plain web there is nothing to update in-app —
+  // the site refreshes itself on redeploy. Render nothing instead of
+  // exposing Tauri/APK/OTA machinery that can never apply.
+  if (!tauri && !isCapacitorNative()) return null
 
   return (
     <SettingsSection id="settings-updates" title="Updates" description={`Current version v${version} • ${platformLabel}`}>
