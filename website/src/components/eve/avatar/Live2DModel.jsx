@@ -119,6 +119,7 @@ export function Live2DModel({ url, mouthOpen = 0, lookAt = { x: 0, y: 0 }, isBli
         antialias: false,
         autoDensity: true,
         resolution: Math.min(window.devicePixelRatio || 1, 1),
+        powerPreference: 'low-power',
       })
       mount.appendChild(app.view)
       appRef.current = app
@@ -175,9 +176,32 @@ export function Live2DModel({ url, mouthOpen = 0, lookAt = { x: 0, y: 0 }, isBli
       ro = new ResizeObserver(onResize)
       ro.observe(mount)
 
+      // Pause the shared ticker when the tab is hidden or the canvas scrolls
+      // off-screen — stops GPU renders + motion eval instead of burning
+      // cycles on an invisible avatar. Pending Idle motions simply wait.
+      let mountIsVisible = true
+      const updateTickerRunning = () => {
+        try {
+          if (document.hidden || !mountIsVisible) app.ticker.stop()
+          else app.ticker.start()
+        } catch {}
+      }
+      const visibilityObserver = new IntersectionObserver(
+        (entries) => {
+          mountIsVisible = entries[0]?.isIntersecting !== false
+          updateTickerRunning()
+        },
+        { threshold: 0 },
+      )
+      visibilityObserver.observe(mount)
+      const onVisibility = () => updateTickerRunning()
+      document.addEventListener('visibilitychange', onVisibility)
+
       const destroyApp = () => {
         try { app.ticker.remove(ticker) } catch {}
         try { ro?.disconnect() } catch {}
+        try { visibilityObserver.disconnect() } catch {}
+        try { document.removeEventListener('visibilitychange', onVisibility) } catch {}
         try {
           if (modelRef.current) modelRef.current.destroy?.({ texture: true, baseTexture: true })
         } catch {}
