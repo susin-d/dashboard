@@ -38,6 +38,7 @@
 
 @import './styles/components/device-section.css';
 @import './styles/components/appearance-section.css';
+@import './styles/components/update-section.css';
 @import './styles/components/update-banner.css';
 
 /* Eve UI runtime overrides */

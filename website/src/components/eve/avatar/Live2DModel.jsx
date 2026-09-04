@@ -1,15 +1,24 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import * as PIXI from 'pixi.js'
 
+let PixiModule = null
 let Live2DFactory = null
+
+async function ensurePixi() {
+  if (PixiModule) return PixiModule
+  const mod = await import('pixi.js')
+  PixiModule = mod
+  // pixi-live2d-display expects global PIXI
+  if (typeof window !== 'undefined') window.PIXI = mod
+  return PixiModule
+}
 
 async function ensureLive2D() {
   if (Live2DFactory) return Live2DFactory
+  const PIXI = await ensurePixi()
+  void PIXI
   try {
     const mod = await import('pixi-live2d-display/cubism4')
     Live2DFactory = mod.Live2DModel
-    // pixi-live2d-display expects global PIXI
-    if (typeof window !== 'undefined') window.PIXI = PIXI
     return Live2DFactory
   } catch {
     return null
@@ -20,6 +29,7 @@ export function Live2DModel({ url, mouthOpen = 0, lookAt = { x: 0, y: 0 }, isBli
   const mountRef = useRef(null)
   const appRef = useRef(null)
   const modelRef = useRef(null)
+  const cleanupRef = useRef(null)
   const [status, setStatus] = useState('loading')
   const [loadError, setLoadError] = useState('')
   const mouthRef = useRef(0)
@@ -47,16 +57,22 @@ export function Live2DModel({ url, mouthOpen = 0, lookAt = { x: 0, y: 0 }, isBli
   useEffect(() => {
     if (!mountRef.current) return undefined
     const mount = mountRef.current
-    const app = new PIXI.Application({
-      width: mount.clientWidth || 320,
-      height: mount.clientHeight || 240,
-      backgroundAlpha: 0,
-      antialias: true,
-      autoDensity: true,
-      resolution: Math.min(window.devicePixelRatio, 1.8),
-    })
-    mount.appendChild(app.view)
-    appRef.current = app
+    let cancelled = false
+    let app = null
+    let ro = null
+
+    ensurePixi().then((PIXI) => {
+      if (cancelled || !mountRef.current) return
+      app = new PIXI.Application({
+        width: mount.clientWidth || 320,
+        height: mount.clientHeight || 240,
+        backgroundAlpha: 0,
+        antialias: true,
+        autoDensity: true,
+        resolution: Math.min(window.devicePixelRatio, 1.8),
+      })
+      mount.appendChild(app.view)
+      appRef.current = app
 
     const ticker = () => {
       const model = modelRef.current
@@ -83,33 +99,48 @@ export function Live2DModel({ url, mouthOpen = 0, lookAt = { x: 0, y: 0 }, isBli
         }
       } catch {}
     }
-    app.ticker.add(ticker)
+      app.ticker.add(ticker)
 
-    const onResize = () => {
-      const w = mount.clientWidth || 320
-      const h = mount.clientHeight || 240
-      app.renderer.resize(w, h)
-      const m = modelRef.current
-      if (m) {
-        const scale = Math.min(w / m.width, h / m.height) * 0.9
-        m.scale.set(scale)
-        m.x = w / 2
-        m.y = h * 0.88
+      const onResize = () => {
+        const w = mount.clientWidth || 320
+        const h = mount.clientHeight || 240
+        app.renderer.resize(w, h)
+        const m = modelRef.current
+        if (m) {
+          const scale = Math.min(w / m.width, h / m.height) * 0.9
+          m.scale.set(scale)
+          m.x = w / 2
+          m.y = h * 0.88
+        }
       }
-    }
-    const ro = new ResizeObserver(onResize)
-    ro.observe(mount)
+      ro = new ResizeObserver(onResize)
+      ro.observe(mount)
+
+      const destroyApp = () => {
+        try { app.ticker.remove(ticker) } catch {}
+        try { ro?.disconnect() } catch {}
+        try {
+          if (modelRef.current) modelRef.current.destroy?.({ texture: true, baseTexture: true })
+        } catch {}
+        try { app.destroy(true, { texture: true, baseTexture: true }) } catch {}
+        try { if (mount.contains(app.view)) mount.removeChild(app.view) } catch {}
+        appRef.current = null
+        modelRef.current = null
+      }
+      // If the component unmounted while pixi was still loading, destroy now.
+      if (cancelled) {
+        destroyApp()
+      } else {
+        cleanupRef.current = destroyApp
+      }
+    })
 
     return () => {
-      try { app.ticker.remove(ticker) } catch {}
-      ro.disconnect()
-      try {
-        if (modelRef.current) modelRef.current.destroy?.({ texture: true, baseTexture: true })
-      } catch {}
-      try { app.destroy(true, { texture: true, baseTexture: true }) } catch {}
-      try { if (mount.contains(app.view)) mount.removeChild(app.view) } catch {}
-      appRef.current = null
-      modelRef.current = null
+      cancelled = true
+      if (typeof cleanupRef.current === 'function') {
+        cleanupRef.current()
+        cleanupRef.current = null
+      }
     }
   }, [])
 
@@ -172,13 +203,8 @@ export function Live2DModel({ url, mouthOpen = 0, lookAt = { x: 0, y: 0 }, isBli
       data-testid="live2d-model"
       role="img"
       aria-label={`Eve Live2D avatar, ${emotion}`}
-      style={{ width: '100%', height: '100%', position: 'relative' }}
     >
-      <div
-        ref={mountRef}
-        className="eve-live2d-mount"
-        style={{ width: '100%', height: '100%', minHeight: 180, borderRadius: 'var(--radius-md)', overflow: 'hidden', background: 'var(--bg-primary)' }}
-      />
+      <div ref={mountRef} className="eve-live2d-mount" />
       {status === 'loading' && <span className="eve-live2d-badge">Loading Live2D…</span>}
       {status === 'fallback' && (
         <span className="eve-live2d-badge" title={loadError || url}>{loadError ? 'Fallback' : (url ? url.split('/').pop() : 'Haru Live2D')}</span>

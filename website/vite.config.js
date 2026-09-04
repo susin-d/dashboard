@@ -20,13 +20,18 @@ export default defineConfig({
       output: {
         manualChunks(id) {
           if (id.includes('node_modules')) {
-            if (id.includes('firebase')) return 'firebase'
             if (id.includes('@monaco-editor')) return 'monaco'
             if (id.includes('react-grid-layout')) return 'grid'
             if (id.includes('three') || id.includes('@pixiv/three-vrm') || id.includes('@react-three')) return 'avatar-3d'
             if (id.includes('pixi')) return 'avatar-live2d'
             if (id.includes('framer-motion')) return 'motion'
-            if (id.includes('lucide-react')) return 'icons'
+            // NOTE: no shared `icons` chunk — lucide-react icons stay in the
+            // route chunks that use them so no page pays for every icon.
+            // This check must come before the `react` rule below because
+            // 'lucide-react' contains the substring 'react'.
+            if (id.includes('lucide-react')) return null
+            // NOTE: no `firebase` chunk — the dependency is not imported
+            // anywhere, so there is nothing to split out.
             if (id.includes('react') || id.includes('react-dom')) return 'vendor'
           }
           return null

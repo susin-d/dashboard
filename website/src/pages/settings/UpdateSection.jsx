@@ -48,40 +48,39 @@ export function UpdateSection() {
   return (
     <SettingsSection id="settings-updates" title="Updates" description={`Current version v${version} • ${platformLabel}`}>
       <SettingsCard title="App updates" description="Check for new versions hosted on the backend. Updates are optional and signed.">
-        <div style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
+        <div className="update-check-row">
           <button
             type="button"
-            className="btn btn-primary"
+            className="btn btn-primary update-check-btn"
             onClick={handleCheck}
             disabled={checking}
-            style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}
           >
             {checking ? <RefreshCw size={14} className="spin" /> : <Download size={14} />}
             {checking ? 'Checking…' : 'Check for updates'}
           </button>
-          <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
+          <span className="update-check-hint">
             Backend: <code>/api/v1/updates/check</code> + <code>/updates/…</code>
           </span>
         </div>
 
         {result && (
-          <div style={{ marginTop: 16, padding: 12, border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)', background: 'var(--bg-primary)' }}>
+          <div className="update-result">
             {result.error ? (
-              <div style={{ display: 'flex', gap: 8, alignItems: 'center', color: 'var(--text-primary)' }}>
-                <AlertCircle size={16} /> <span style={{ fontSize: 13 }}>{result.error}</span>
+              <div className="update-result-row update-result-row-primary">
+                <AlertCircle size={16} /> <span className="update-result-text">{result.error}</span>
               </div>
             ) : result.upToDate ? (
-              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                <CheckCircle size={16} /> <span style={{ fontSize: 13 }}>You are on the latest version (v{version}).</span>
+              <div className="update-result-row">
+                <CheckCircle size={16} /> <span className="update-result-text">You are on the latest version (v{version}).</span>
               </div>
             ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                <strong style={{ fontSize: 13 }}>
+              <div className="update-result-column">
+                <strong className="update-result-title">
                   Update available — v{result.info?.latestVersion || result.info?.version}
                 </strong>
-                {result.info?.notes && <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{result.info.notes}</span>}
+                {result.info?.notes && <span className="update-result-notes">{result.info.notes}</span>}
                 {result.info?.url && (
-                  <a href={result.info.url} target="_blank" rel="noreferrer" style={{ fontSize: 12, textDecoration: 'underline' }}>
+                  <a href={result.info.url} target="_blank" rel="noreferrer" className="update-result-link">
                     Download artifact
                   </a>
                 )}
@@ -90,7 +89,7 @@ export function UpdateSection() {
           </div>
         )}
 
-        <p style={{ marginTop: 12, fontSize: 11, color: 'var(--text-secondary)' }}>
+        <p className="update-footnote">
           Desktop uses Tauri signed updater (<code>latest.json</code>). Android uses backend <code>android.json</code> → browser APK download. OTA bundles via <code>/ota/latest.json</code> when Capgo plugin is present.
         </p>
       </SettingsCard>
