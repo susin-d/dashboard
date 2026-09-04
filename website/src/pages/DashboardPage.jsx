@@ -378,13 +378,12 @@ export function DashboardPage({
             rowHeight={34}
             margin={[16, 16]}
             containerPadding={[0, 0]}
-            gridConfig={{ allowOverlap: false, preventCollision: true }}
             dragConfig={{ enabled: editing, handle: '.dashboard-widget-drag-handle', cancel: 'button,a', threshold: 4 }}
             resizeConfig={{ enabled: editing, handles: ['se', 's', 'e'] }}
             onLayoutChange={(_, nextLayouts) => saveGridLayouts(nextLayouts)}
           >
             {visibleWidgets.map((definition) => (
-              <div key={definition.id}>
+              <div key={definition.id} className="dashboard-grid-item">
                 <WidgetCard
                   definition={definition}
                   editing={editing}
