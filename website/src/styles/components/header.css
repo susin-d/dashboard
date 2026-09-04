@@ -85,7 +85,10 @@
 }
 
 .header-menu-btn {
-  display: inline-flex;
+  /* Hidden on desktop — the sidebar owns its own collapse toggle and the
+     topbar shows the page title only. Shown on mobile (see below) where it
+     is the sole opener for the navigation drawer. */
+  display: none;
   align-items: center;
   justify-content: center;
   width: 34px;
