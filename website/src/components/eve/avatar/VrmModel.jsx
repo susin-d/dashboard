@@ -26,6 +26,12 @@ export function VrmModel({ url, mouthOpen = 0, lookAt = { x: 0, y: 0 }, isBlinki
     onReady?.()
   }, [onReady])
 
+  // Mount effect owns the WebGL context for the component lifetime — it must
+  // not re-run when parent callbacks change, so the latest handler is read
+  // through a ref instead of being listed as an effect dependency.
+  const readyRef = useRef(handleReady)
+  readyRef.current = handleReady
+
   const handleFail = useCallback((message) => {
     setStatus('fallback')
     setLoadError(message || 'Could not load VRM')
@@ -56,7 +62,7 @@ export function VrmModel({ url, mouthOpen = 0, lookAt = { x: 0, y: 0 }, isBlinki
       renderer = new THREE.WebGLRenderer({ antialias: false, alpha: true, preserveDrawingBuffer: false, powerPreference: 'low-power' })
     } catch {
       setStatus('fallback')
-      handleReady()
+      readyRef.current()
       return undefined
     }
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.0))
@@ -239,30 +245,13 @@ export function VrmModel({ url, mouthOpen = 0, lookAt = { x: 0, y: 0 }, isBlinki
       data-testid="vrm-model"
       role="img"
       aria-label={`Eve VRM avatar, ${emotion}`}
-      style={{
-        width: '100%',
-        height: '100%',
-        minHeight: 220,
-        position: 'relative',
-        background: 'var(--bg-primary)',
-        borderRadius: 'var(--radius-md)',
-        overflow: 'hidden',
-      }}
     >
-      <div
-        ref={mountRef}
-        className="eve-vrm-mount"
-        style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', minHeight: 220, borderRadius: 'var(--radius-md)', overflow: 'hidden', background: 'transparent', zIndex: showCssFallback ? 0 : 1 }}
-      />
+      <div ref={mountRef} className="eve-vrm-mount" />
       {/* CSS procedural fallback — always visible until VRM ready, ensures the grey bar never appears empty */}
       {showCssFallback && (
         <div
           className={`eve-vrm-fallback is-${emotion} ${isBlinking ? 'is-blinking' : ''}`}
           style={{
-            position: 'absolute',
-            inset: 0,
-            zIndex: 1,
-            background: 'var(--bg-primary)',
             '--mouth': String(Math.max(0, Math.min(1, mouthOpen))),
             '--look-x': String(lookAt.x),
             '--look-y': String(lookAt.y),
@@ -285,9 +274,9 @@ export function VrmModel({ url, mouthOpen = 0, lookAt = { x: 0, y: 0 }, isBlinki
           <span className="eve-vrm-url" aria-hidden="true">{status === 'loading' ? 'Loading 3D — anime VRM 10MB…' : (loadError ? 'Fallback — CSS avatar' : 'Anime VRM ready')}</span>
         </div>
       )}
-      {status === 'loading' && <span className="eve-vrm-badge" style={{ zIndex: 2 }}>Loading 3D…</span>}
+      {status === 'loading' && <span className="eve-vrm-badge">Loading 3D…</span>}
       {status === 'fallback' && loadError && (
-        <span className="eve-vrm-badge" title={loadError} style={{ zIndex: 2 }}>{loadError}</span>
+        <span className="eve-vrm-badge" title={loadError}>{loadError}</span>
       )}
     </div>
   )

@@ -25,6 +25,8 @@ export function EveGlobalCompanion({
   const [dragging, setDragging] = useState(false)
   const rootRef = useRef(null)
   const pos = prefs?.position || { x: 92, y: 88 }
+  const posRef = useRef(pos)
+  posRef.current = pos
   const enabled = prefs?.enabled !== false
   const inlineVisibleRef = useRef(false)
 
@@ -44,7 +46,7 @@ export function EveGlobalCompanion({
     if (event.target.closest('button')) return
     const startX = event.clientX
     const startY = event.clientY
-    const startPos = { ...pos }
+    const startPos = { ...posRef.current }
     setDragging(true)
     const onMove = (moveEvent) => {
       const dx = ((moveEvent.clientX - startX) / window.innerWidth) * 100
@@ -62,7 +64,7 @@ export function EveGlobalCompanion({
     }
     window.addEventListener('pointermove', onMove)
     window.addEventListener('pointerup', onUp)
-  }, [onPrefsChange, pos.x, pos.y])
+  }, [onPrefsChange])
 
   const isLanding = typeof window !== 'undefined' && (window.location.pathname === '/' || window.location.pathname === '/login' || window.location.pathname === '/signup')
   if (!enabled || isLanding) return null
