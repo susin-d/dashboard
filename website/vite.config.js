@@ -22,12 +22,18 @@ export default defineConfig({
           if (id.includes('node_modules')) {
             if (id.includes('@monaco-editor') || id.includes('monaco-editor')) return 'monaco'
             if (id.includes('react-grid-layout')) return 'grid'
-            // Feature-specific: only reachable via lazy VrmModel (itself
-            // React.lazy inside EveAvatar), never from the initial shell.
-            if (id.includes('three') || id.includes('@pixiv/three-vrm') || id.includes('@react-three')) return 'avatar-3d'
-            // Feature-specific: only reachable via lazy Live2DModel dynamic
-            // imports, never from the initial shell.
-            if (id.includes('pixi')) return 'avatar-live2d'
+            // 3D avatar, modular: three core renders the (lazy) VrmModel
+            // placeholder scene; GLTF + VRM plugin load only when a model URL
+            // actually loads, so they live in their own chunk. Order matters:
+            // '@pixiv/three-vrm' and 'three/examples' both contain 'three'.
+            if (id.includes('@pixiv/three-vrm')) return 'vrm-loader'
+            if (id.includes('three/addons') || id.includes('three/examples')) return 'vrm-loader'
+            if (id.includes('@react-three')) return 'three-core'
+            if (id.includes('three')) return 'three-core'
+            // Live2D avatar, modular: pixi engine vs display/cubism runtime.
+            // Order matters: 'pixi-live2d-display' contains 'pixi'.
+            if (id.includes('pixi-live2d-display')) return 'live2d'
+            if (id.includes('pixi')) return 'pixi'
             // Feature-specific: only reachable via lazy LandingPage sections.
             if (id.includes('framer-motion')) return 'motion'
             // NOTE: no manual `icons` chunk — every import is a tree-shakeable

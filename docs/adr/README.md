@@ -28,6 +28,7 @@
 | [0013](0013-default-openrouter-free-and-ui-strict-fix.md) | Default to OpenRouter Free Router and fix UI tool strict schema | Accepted | 2026-09-01 |
 | [0014](0014-eve-provider-quota-fallback-and-streaming.md) | Eve provider quota fallback and streaming text animation | Accepted | 2026-09-01 |
 | [0015](0015-lazy-public-shell-auth-storage-split.md) | Break request/authApi cycle (authStorage) and lazy-load public shell; index 248 → 152 kB | Accepted | 2026-09-04 |
+| [0016](0016-modular-avatar-engine-chunks.md) | Modular avatar engine chunks (three-core/vrm-loader/pixi/live2d); all chunks < 600 kB, zero build warnings | Accepted | 2026-09-04 |
 
 ## How to add a new ADR
 
