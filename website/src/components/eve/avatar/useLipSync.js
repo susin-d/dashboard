@@ -48,10 +48,10 @@ export function useLipSync({ isSpeaking = false, audioRef = null, enabled = true
     const tick = () => {
       const analyser = analyserRef.current
       if (!analyser) {
-        // viseme fallback: pulse 0.25 when speaking but no analyser
+        // viseme fallback: pulse when speaking but no analyser
         setMouthOpen((current) => {
           const next = 0.15 + Math.abs(Math.sin(Date.now() * 0.009)) * 0.25
-          return Math.abs(next - current) < 0.02 ? current : next
+          return Math.abs(next - current) < 0.03 ? current : next
         })
         rafRef.current = requestAnimationFrame(tick)
         return
@@ -62,7 +62,10 @@ export function useLipSync({ isSpeaking = false, audioRef = null, enabled = true
       for (let i = 0; i < data.length; i++) sum += data[i]
       const avg = sum / data.length / 255
       const target = Math.min(1, Math.max(0, avg * 1.8))
-      setMouthOpen((current) => current * 0.6 + target * 0.4)
+      setMouthOpen((current) => {
+        const next = current * 0.6 + target * 0.4
+        return Math.abs(next - current) < 0.02 ? current : next
+      })
       rafRef.current = requestAnimationFrame(tick)
     }
     rafRef.current = requestAnimationFrame(tick)

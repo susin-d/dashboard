@@ -4,9 +4,9 @@ import { useLipSync } from './useLipSync'
 
 export function EveAvatarCanvas({
   emotion = 'idle',
-  mouthOpen = 0,
-  lookAt = { x: 0, y: 0 },
-  isBlinking = false,
+  mouthOpen = null,
+  lookAt = null,
+  isBlinking = null,
   reducedMotion = false,
   audioRef = null,
   modelUrl = '',
@@ -18,12 +18,13 @@ export function EveAvatarCanvas({
   className = '',
 }) {
   const containerRef = useRef(null)
-  const eye = useEyeTracking({ enabled: !reducedMotion, containerRef })
-  const lip = useLipSync({ isSpeaking: emotion === 'speaking', audioRef, enabled: !reducedMotion })
+  const controlled = mouthOpen !== null || lookAt !== null || isBlinking !== null
+  const eye = useEyeTracking({ enabled: !reducedMotion && !controlled, containerRef })
+  const lip = useLipSync({ isSpeaking: emotion === 'speaking', audioRef, enabled: !reducedMotion && !controlled })
 
   const effectiveMouth = reducedMotion ? 0 : (mouthOpen ?? lip.mouthOpen ?? 0)
-  const effectiveLookAt = reducedMotion ? { x: 0, y: 0 } : (lookAt?.x !== undefined ? lookAt : eye.lookAt)
-  const effectiveBlink = reducedMotion ? false : (isBlinking || eye.isBlinking)
+  const effectiveLookAt = reducedMotion ? { x: 0, y: 0 } : (lookAt ?? eye.lookAt)
+  const effectiveBlink = reducedMotion ? false : (isBlinking ?? eye.isBlinking)
 
   return (
     <div

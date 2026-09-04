@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { AVATAR_LIMITS } from './avatarConstants'
 
 function supportsWebGL2() {
@@ -31,8 +31,10 @@ export function useAvatarLifecycle({ renderer = 'auto', modelUrl = '' } = {}) {
 
   const resolvedRenderer = useMemo(() => {
     if (modelUrl === null || modelUrl === '') return 'procedural'
-    if (renderer !== 'auto') return renderer
     const url = String(modelUrl || '').toLowerCase()
+    const isHeavyUrl = url.endsWith('.vrm') || url.endsWith('.glb') || url.endsWith('.gltf') || url.endsWith('.model3.json') || url.endsWith('.zip')
+    if (renderer === 'auto' && probe.lowMemory && isHeavyUrl) return 'procedural'
+    if (renderer !== 'auto') return renderer
     if (url.endsWith('.model3.json') || url.endsWith('.zip')) return 'live2d'
     if (url.endsWith('.vrm') || url.endsWith('.glb') || url.endsWith('.gltf')) return 'vrm'
     if (probe.lowMemory || !probe.webgl2) return 'procedural'
@@ -45,21 +47,31 @@ export function useAvatarLifecycle({ renderer = 'auto', modelUrl = '' } = {}) {
   }, [])
 
   useEffect(() => {
-    let timeout = window.setTimeout(() => {
+    if (resolvedRenderer === 'procedural') {
+      setPhase('ready')
+      setError('')
+      return undefined
+    }
+    setPhase('loading')
+    setError('')
+    const timeout = window.setTimeout(() => {
       setPhase((current) => (current === 'loading' ? 'timeout' : current))
-      setError('Avatar load timed out — showing fallback.')
+      setError((currentError) => currentError || 'Avatar load timed out — showing fallback.')
     }, AVATAR_LIMITS.LOAD_TIMEOUT_MS)
     return () => window.clearTimeout(timeout)
   }, [modelUrl, resolvedRenderer])
 
-  const markReady = () => {
+  const markReady = useCallback(() => {
     setPhase('ready')
     setError('')
-  }
-  const markError = (message) => {
+  }, [])
+  const markError = useCallback((message) => {
     setPhase('error')
     setError(message || 'Could not load avatar model.')
-  }
+  }, [])
 
-  return { phase, error, probe, resolvedRenderer, prefersReducedMotion, markReady, markError }
+  return useMemo(
+    () => ({ phase, error, probe, resolvedRenderer, prefersReducedMotion, markReady, markError }),
+    [phase, error, probe, resolvedRenderer, prefersReducedMotion, markReady, markError],
+  )
 }

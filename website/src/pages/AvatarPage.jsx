@@ -21,6 +21,10 @@ const MOTION_OPTIONS = [
   { value: 'reduced', label: 'Reduced' },
 ]
 
+const SAVE_MESSAGE_TIMEOUT_MS = 1800
+const UPLOAD_MESSAGE_TIMEOUT_MS = 2200
+const SCALE_SAVE_DEBOUNCE_MS = 350
+
 export function AvatarPage({ onNavigate }) {
   const { prefs, setPrefs, activeModel } = useEveAvatar()
   const { activePreset } = useThemeCustomizer() || {}
@@ -30,35 +34,30 @@ export function AvatarPage({ onNavigate }) {
   const [error, setError] = useState('')
   const [previewEmotion, setPreviewEmotion] = useState('idle')
   const [previewSpeaking, setPreviewSpeaking] = useState(false)
-  const [mouthDemo, setMouthDemo] = useState(0)
   const [heavyPreview, setHeavyPreview] = useState(false)
   const fileRef = useRef(null)
+  const scaleSaveTimeoutRef = useRef(0)
 
   useEffect(() => {
     let cancelled = false
     const load = async () => {
       try {
-        const res = await getAvatarPreferences().catch(() => null)
-        if (!cancelled && res?.preferences) setPrefs(res.preferences)
-        const models = await listAvatarModels().catch(() => null)
-        if (!cancelled && models?.models) setRemoteModels(models.models)
-      } catch {}
+        const [prefRes, modelRes] = await Promise.all([
+          getAvatarPreferences().catch(() => null),
+          listAvatarModels().catch(() => null),
+        ])
+        if (cancelled) return
+        if (prefRes?.preferences) setPrefs(prefRes.preferences)
+        if (modelRes?.models) setRemoteModels(modelRes.models)
+      } catch {
+        if (!cancelled) setError('Could not load avatar settings.')
+      }
     }
     load()
     return () => { cancelled = true }
   }, [setPrefs])
 
-  // lip-sync demo pulse when speaking
-  useEffect(() => {
-    if (!previewSpeaking) { setMouthDemo(0); return }
-    let raf = 0
-    const tick = () => {
-      setMouthDemo(0.22 + Math.abs(Math.sin(Date.now() * 0.009)) * 0.55)
-      raf = requestAnimationFrame(tick)
-    }
-    raf = requestAnimationFrame(tick)
-    return () => cancelAnimationFrame(raf)
-  }, [previewSpeaking])
+  useEffect(() => () => window.clearTimeout(scaleSaveTimeoutRef.current), [])
 
   const persist = async (patch) => {
     setBusy(true)
@@ -69,10 +68,27 @@ export function AvatarPage({ onNavigate }) {
       const res = await saveAvatarPreferences(next)
       if (res?.preferences) setPrefs(res.preferences)
       setMessage('Saved.')
-      window.setTimeout(() => setMessage(''), 1800)
+      window.setTimeout(() => setMessage(''), SAVE_MESSAGE_TIMEOUT_MS)
     } catch (err) {
       setError(err?.message || 'Could not save.')
     } finally { setBusy(false) }
+  }
+
+  const persistScale = (scale) => {
+    const next = { ...prefs, scale }
+    setPrefs(next)
+    setError('')
+    window.clearTimeout(scaleSaveTimeoutRef.current)
+    scaleSaveTimeoutRef.current = window.setTimeout(async () => {
+      try {
+        const res = await saveAvatarPreferences(next)
+        if (res?.preferences) setPrefs(res.preferences)
+        setMessage('Saved.')
+        window.setTimeout(() => setMessage(''), SAVE_MESSAGE_TIMEOUT_MS)
+      } catch (err) {
+        setError(err?.message || 'Could not save.')
+      }
+    }, SCALE_SAVE_DEBOUNCE_MS)
   }
 
   const handleUpload = async (event) => {
@@ -93,7 +109,7 @@ export function AvatarPage({ onNavigate }) {
       const models = await listAvatarModels().catch(() => null)
       if (models?.models) setRemoteModels(models.models)
       setMessage(`Uploaded ${file.name} — validated.`)
-      window.setTimeout(() => setMessage(''), 2200)
+      window.setTimeout(() => setMessage(''), UPLOAD_MESSAGE_TIMEOUT_MS)
     } catch (err) { setError(err?.message || 'Upload failed.') } finally { setBusy(false); event.target.value='' }
   }
 
@@ -168,8 +184,8 @@ export function AvatarPage({ onNavigate }) {
               </div>
             )}
             {heavyPreview && (
-            <div className="avatar-preview-mouth-hint" style={{ opacity: isSpeaking ? 1 : 0 }} aria-hidden="true">
-              <span className="avatar-mouth-bar" style={{ width: `${Math.round(mouthDemo * 100)}%` }} />
+            <div className="avatar-preview-mouth-hint" data-speaking={isSpeaking ? 'true' : 'false'} style={{ '--mouth': isSpeaking ? '0.6' : '0' }} aria-hidden="true">
+              <span className="avatar-mouth-bar" />
             </div>
             )}
           </div>
@@ -213,15 +229,15 @@ export function AvatarPage({ onNavigate }) {
                 <CustomDropdown options={MOTION_OPTIONS} value={prefs?.motion || 'auto'} onChange={(v) => persist({ motion: v })} placeholder="Auto" />
               </div>
               <div className="form-row">
-                <label className="form-label">Scale {(prefs?.scale ?? 1).toFixed(2)}×</label>
-                <input type="range" min="0.8" max="1.2" step="0.05" value={prefs?.scale ?? 1} onChange={(e) => persist({ scale: Number(e.target.value) })} disabled={busy} aria-label="Avatar scale" />
+                <label className="form-label" htmlFor="avatar-scale">Scale {(prefs?.scale ?? 1).toFixed(2)}×</label>
+                <input id="avatar-scale" className="avatar-scale-input" type="range" min="0.8" max="1.2" step="0.05" value={prefs?.scale ?? 1} onChange={(e) => persistScale(Number(e.target.value))} disabled={busy} aria-label="Avatar scale" />
               </div>
             </div>
           </SettingsCard>
 
           <SettingsCard icon={<Upload size={16} />} title="Upload model" description=".vrm / .glb / .model3.json / .zip (max 12MB, zip must contain one model3.json). Per-user storage.">
             <div className="avatar-upload-row">
-              <input ref={fileRef} type="file" accept=".vrm,.glb,.gltf,.json,.zip,model3.json" onChange={handleUpload} disabled={busy} aria-label="Upload avatar model" style={{ display: 'none' }} />
+              <input ref={fileRef} className="avatar-file-input is-hidden" type="file" accept=".vrm,.glb,.gltf,.json,.zip,model3.json" onChange={handleUpload} disabled={busy} aria-label="Upload avatar model" />
               <button type="button" className="btn-secondary" onClick={() => fileRef.current?.click()} disabled={busy}><Upload size={14} /> Choose file</button>
               <span className="form-hint"><Smartphone size={12} /> Mobile + Tauri supported.</span>
             </div>
@@ -236,16 +252,19 @@ export function AvatarPage({ onNavigate }) {
           {allModels.length === 0 && <EmptyState title="No models" description="Bundled models failed to load." />}
           {allModels.map((model) => {
             const active = (prefs?.modelId || activeModel?.id) === model.id
+            const selectModel = () => persist({ modelId: model.id, modelUrl: model.url || null, renderer: model.renderer === 'live2d' ? 'live2d' : model.renderer === 'vrm' ? 'vrm' : undefined })
             return (
-              <button key={model.id} type="button" className={`avatar-model-card ${active ? 'is-active' : ''}`} onClick={() => persist({ modelId: model.id, modelUrl: model.url || null, renderer: model.renderer === 'live2d' ? 'live2d' : model.renderer === 'vrm' ? 'vrm' : undefined })} disabled={busy} aria-pressed={active}>
-                <span className="avatar-model-thumb"><GlassWater size={18} /></span>
-                <span className="avatar-model-label">{model.label}</span>
-                <small className="avatar-model-meta">{model.renderer} • {model.id.startsWith('upload:') ? 'uploaded' : 'bundled'}</small>
-                <small className="avatar-model-attrib">{model.attribution}</small>
+              <div key={model.id} className={`avatar-model-card ${active ? 'is-active' : ''}`}>
+                <button type="button" className="avatar-model-select" onClick={selectModel} disabled={busy} aria-pressed={active} aria-label={`Use ${model.label}`}>
+                  <span className="avatar-model-thumb"><GlassWater size={18} /></span>
+                  <span className="avatar-model-label">{model.label}</span>
+                  <small className="avatar-model-meta">{model.renderer} • {model.id.startsWith('upload:') ? 'uploaded' : 'bundled'}</small>
+                  <small className="avatar-model-attrib">{model.attribution}</small>
+                </button>
                 {model.id.startsWith('upload:') && (
-                  <span className="avatar-model-delete" onClick={(e) => { e.stopPropagation(); handleDelete(model.id) }} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter') handleDelete(model.id) }} title="Delete"><Trash2 size={12} /> Delete</span>
+                  <button type="button" className="avatar-model-delete" onClick={() => handleDelete(model.id)} disabled={busy} title={`Delete ${model.label}`}><Trash2 size={12} /> Delete</button>
                 )}
-              </button>
+              </div>
             )
           })}
         </div>

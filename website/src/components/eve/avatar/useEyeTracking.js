@@ -30,12 +30,18 @@ export function useEyeTracking({ enabled = true, containerRef = null } = {}) {
 
   useEffect(() => {
     if (!enabled) return undefined
+    let lastSent = { x: 0, y: 0 }
     const lerp = () => {
       const cur = currentRef.current
       const tgt = targetRef.current
       cur.x += (tgt.x - cur.x) * 0.08
       cur.y += (tgt.y - cur.y) * 0.08
-      setLookAt({ x: cur.x, y: cur.y })
+      const dx = Math.abs(cur.x - lastSent.x)
+      const dy = Math.abs(cur.y - lastSent.y)
+      if (dx > 0.015 || dy > 0.015) {
+        lastSent = { x: cur.x, y: cur.y }
+        setLookAt(lastSent)
+      }
       rafRef.current = requestAnimationFrame(lerp)
     }
     rafRef.current = requestAnimationFrame(lerp)

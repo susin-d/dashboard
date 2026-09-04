@@ -30,6 +30,13 @@ export function EveGlobalCompanion({
   const enabled = prefs?.enabled !== false
   const inlineVisibleRef = useRef(false)
 
+  // Collapse to docked orb on Avatar Studio so the Studio preview owns the
+  // single WebGL context — avoids dual VRM + Live2D renderers on low-end PCs.
+  useEffect(() => {
+    const isAvatarStudio = typeof window !== 'undefined' && window.location.pathname.includes('/app/avatar')
+    if (isAvatarStudio && expanded) setExpanded(false)
+  }, [expanded])
+
   // Auto-minimize when inline avatar in viewport
   useEffect(() => {
     const observer = new IntersectionObserver((entries) => {

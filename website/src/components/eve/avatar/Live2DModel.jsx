@@ -67,9 +67,9 @@ export function Live2DModel({ url, mouthOpen = 0, lookAt = { x: 0, y: 0 }, isBli
         width: mount.clientWidth || 320,
         height: mount.clientHeight || 240,
         backgroundAlpha: 0,
-        antialias: true,
+        antialias: false,
         autoDensity: true,
-        resolution: Math.min(window.devicePixelRatio, 1.8),
+        resolution: Math.min(window.devicePixelRatio || 1, 1),
       })
       mount.appendChild(app.view)
       appRef.current = app

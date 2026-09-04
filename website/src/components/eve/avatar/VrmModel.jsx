@@ -121,9 +121,25 @@ export function VrmModel({ url, mouthOpen = 0, lookAt = { x: 0, y: 0 }, isBlinki
     scene.add(placeholder)
 
     const clock = new Clock()
+    let visible = true
+    const visibilityObserver = new IntersectionObserver(
+      (entries) => { visible = entries[0]?.isIntersecting !== false },
+      { threshold: 0 },
+    )
+    visibilityObserver.observe(mount)
+    const onVisibility = () => {
+      if (document.hidden) {
+        if (rafRef.current) cancelAnimationFrame(rafRef.current)
+        rafRef.current = 0
+      } else if (!rafRef.current) {
+        animate()
+      }
+    }
+    document.addEventListener('visibilitychange', onVisibility)
 
     const animate = () => {
       rafRef.current = requestAnimationFrame(animate)
+      if (!visible || document.hidden) return
       const delta = clock.getDelta()
 
       // VRM update
@@ -191,7 +207,10 @@ export function VrmModel({ url, mouthOpen = 0, lookAt = { x: 0, y: 0 }, isBlinki
 
     return () => {
       cancelAnimationFrame(rafRef.current)
+      rafRef.current = 0
       ro.disconnect()
+      visibilityObserver.disconnect()
+      document.removeEventListener('visibilitychange', onVisibility)
       try { mount.removeChild(renderer.domElement) } catch {}
       renderer.dispose()
       if (vrmRef.current) {
