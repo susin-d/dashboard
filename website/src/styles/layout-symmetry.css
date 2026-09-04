@@ -130,6 +130,8 @@
 .dashboard-heading,
 .project-page-heading,
 .calendar-toolbar {
+  display: flex;
+  justify-content: space-between;
   min-height: 72px;
   align-items: center;
   gap: var(--space-md);
