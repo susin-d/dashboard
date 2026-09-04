@@ -8,6 +8,7 @@ import silverTheme from '../styles/themes/silver.css?raw'
 import stoneTheme from '../styles/themes/stone.css?raw'
 import smokeTheme from '../styles/themes/smoke.css?raw'
 import boneTheme from '../styles/themes/bone.css?raw'
+import grayTheme from '../styles/themes/gray.css?raw'
 import abyssTheme from '../styles/themes/abyss.css?raw'
 import emberTheme from '../styles/themes/ember.css?raw'
 import verdantTheme from '../styles/themes/verdant.css?raw'
@@ -114,6 +115,14 @@ export const THEME_PRESETS = {
     name: "Bone White",
     description: "Warm off-white theme with gentle ivory surfaces",
     colors: parseThemeColors(boneTheme),
+  },
+  gray: {
+    id: 'gray',
+    mode: 'light',
+    palette: 'mono',
+    name: "Neutral Gray",
+    description: "Balanced true-neutral gray theme with pure grayscale surfaces",
+    colors: parseThemeColors(grayTheme),
   },
   abyss: {
     id: 'abyss',
