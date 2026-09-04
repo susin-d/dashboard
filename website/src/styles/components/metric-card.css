@@ -69,3 +69,48 @@
   margin-top: 2px;
   font-size: 10px;
 }
+
+/* ── Insight grid + cards (shared) ───────────────────────────────────── */
+/* Stacked label/value/detail stat cards used with MetricGrid on Projects
+   (clickable status filters), Hackathon detail, and Competitive Coding.
+   Lives here — not in a page stylesheet — so every route renders them
+   even with per-route code-split CSS. */
+.workspace-insight-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  padding-top: 20px;
+}
+
+.workspace-insight-card {
+  min-height: 92px;
+  display: grid;
+  align-content: center;
+  gap: 4px;
+  padding: 16px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  min-width: 0;
+}
+
+.workspace-insight-card span,
+.workspace-insight-card small {
+  color: var(--text-muted);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.workspace-insight-card strong {
+  font-size: 22px;
+  letter-spacing: -0.04em;
+}
+
+.workspace-insight-card small {
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+}
