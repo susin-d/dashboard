@@ -1,6 +1,6 @@
 import { EveAvatar } from './EveAvatar'
 
-export function EveInlineAvatar({ size = 'md', prefs, activeModel, presetId, isSending, isEveSpeaking, isEveThinking, thinkingText, activeTool, streamText, sttStatus, sttRecording, error, audioRef, onToggleRenderer }) {
+export function EveInlineAvatar({ size = 'md', prefs, activeModel, presetId, isSending, isEveSpeaking, isEveThinking, thinkingText, activeTool, streamText, sttStatus, sttRecording, error, audioRef, onToggleRenderer, resetViewSignal = 0 }) {
   return (
     <EveAvatar
       size={size}
@@ -18,6 +18,7 @@ export function EveInlineAvatar({ size = 'md', prefs, activeModel, presetId, isS
       error={error}
       audioRef={audioRef}
       onToggleRenderer={onToggleRenderer}
+      resetViewSignal={resetViewSignal}
       className="eve-inline-avatar"
     />
   )

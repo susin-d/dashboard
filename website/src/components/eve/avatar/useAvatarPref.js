@@ -6,6 +6,7 @@ import {
   AVATAR_STORAGE_KEY,
   clampPosition,
   clampScale,
+  clampZoom,
   findModel,
 } from './avatarConstants'
 
@@ -36,6 +37,8 @@ function sanitizePrefs(input) {
     renderer,
     modelId: known ? modelId : AVATAR_DEFAULTS.modelId,
     scale: clampScale(input.scale),
+    zoom: clampZoom(input.zoom),
+    autoRotate: typeof input.autoRotate === 'boolean' ? input.autoRotate : AVATAR_DEFAULTS.autoRotate,
     position: clampPosition(input.position),
     docked: typeof input.docked === 'boolean' ? input.docked : AVATAR_DEFAULTS.docked,
     motion,

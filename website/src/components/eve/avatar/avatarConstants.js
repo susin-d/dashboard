@@ -20,6 +20,8 @@ export const AVATAR_MOTION = {
 export const AVATAR_LIMITS = {
   SCALE_MIN: 0.8,
   SCALE_MAX: 1.2,
+  ZOOM_MIN: 0.5,
+  ZOOM_MAX: 2.0,
   UPLOAD_MAX_BYTES: 12 * 1024 * 1024,
   SINGLE_MAX_BYTES: 8 * 1024 * 1024,
   LOAD_TIMEOUT_MS: 8000,
@@ -32,6 +34,8 @@ export const AVATAR_DEFAULTS = {
   renderer: AVATAR_RENDERERS.AUTO,
   modelId: 'procedural-light',
   scale: 1,
+  zoom: 1,
+  autoRotate: false,
   position: { x: 92, y: 88 },
   docked: true,
   motion: AVATAR_MOTION.AUTO,
@@ -130,4 +134,10 @@ export function clampPosition(pos) {
   const x = Math.min(100, Math.max(0, Number(pos?.x ?? AVATAR_DEFAULTS.position.x)))
   const y = Math.min(100, Math.max(0, Number(pos?.y ?? AVATAR_DEFAULTS.position.y)))
   return { x, y }
+}
+
+export function clampZoom(value) {
+  const n = Number(value)
+  if (Number.isNaN(n)) return AVATAR_DEFAULTS.zoom
+  return Math.min(AVATAR_LIMITS.ZOOM_MAX, Math.max(AVATAR_LIMITS.ZOOM_MIN, n))
 }

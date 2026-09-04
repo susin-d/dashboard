@@ -11,6 +11,9 @@ from app.db import SqlClient
 AVATAR_PREF_KEY = "eve_avatar"
 MAX_UPLOAD_BYTES = 12 * 1024 * 1024
 MAX_SINGLE_BYTES = 8 * 1024 * 1024
+# Mirrors ui_preferences.MAX_HISTORY (kept local: importing ui_preferences here
+# would cycle through app.services.eve.handlers.ui depending on import order).
+MAX_HISTORY = 20
 
 ALLOWED_EXTS = {".vrm", ".glb", ".gltf", ".zip"}
 # model3.json checked via endswith
@@ -40,7 +43,7 @@ def get_prefs(database: SqlClient, user_id: str) -> dict:
     raw = _read_ui_raw(database, user_id)
     prefs = raw.get(AVATAR_PREF_KEY)
     if not prefs:
-        return {"enabled": True, "renderer": "auto", "modelId": "eve-mono-vrm", "modelUrl": None, "scale": 1.0, "position": {"x": 92, "y": 88}, "docked": True, "motion": "auto", "inlineEnabled": True, "orbFallback": True}
+        return {"enabled": True, "renderer": "auto", "modelId": "eve-mono-vrm", "modelUrl": None, "scale": 1.0, "zoom": 1.0, "autoRotate": False, "position": {"x": 92, "y": 88}, "docked": True, "motion": "auto", "inlineEnabled": True, "orbFallback": True}
     return prefs
 
 def save_prefs(database: SqlClient, user_id: str, patch: dict) -> dict:
@@ -77,12 +80,17 @@ def save_prefs(database: SqlClient, user_id: str, patch: dict) -> dict:
         if s < 0.8 or s > 1.2:
             raise ValueError("scale must be 0.8..1.2")
         next_prefs["scale"] = s
+    if "zoom" in patch and patch["zoom"] is not None:
+        z = float(patch["zoom"])
+        if z < 0.5 or z > 2.0:
+            raise ValueError("zoom must be 0.5..2.0")
+        next_prefs["zoom"] = z
     if "position" in patch and patch["position"] is not None:
         pos = patch["position"]
         if not isinstance(pos, dict) or "x" not in pos or "y" not in pos:
             raise ValueError("position must be {x,y}")
         next_prefs["position"] = {"x": float(pos["x"]), "y": float(pos["y"])}
-    for key in ("docked", "inlineEnabled", "orbFallback"):
+    for key in ("docked", "inlineEnabled", "orbFallback", "autoRotate"):
         if key in patch and patch[key] is not None:
             next_prefs[key] = bool(patch[key])
     if "motion" in patch and patch["motion"] is not None:
@@ -93,7 +101,6 @@ def save_prefs(database: SqlClient, user_id: str, patch: dict) -> dict:
     # ensure version/history kept by ui_preferences service shape
     if "version" not in raw:
         raw["version"] = 1
-    from app.services.ui_preferences import MAX_HISTORY
     # simple push history for avatar changes
     hist = raw.get("history", [])
     hist.append({"version": raw.get("version", 1), "at": __import__("datetime").datetime.now(__import__("datetime").timezone.utc).isoformat(), "cause": "avatar:prefs", "snapshot": {"eve_avatar": dict(next_prefs)}})

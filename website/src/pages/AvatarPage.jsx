@@ -1,6 +1,6 @@
 import "../styles/pages/avatar.css"
 import { useEffect, useRef, useState } from 'react'
-import { Bot, Eye, GlassWater, Heart, Maximize2, Mic, Monitor, Move, RotateCcw, Settings2, Sparkles, TestTube, Upload, Trash2, Smartphone, Zap } from 'lucide-react'
+import { Bot, Eye, GlassWater, Heart, Maximize2, Mic, Monitor, Move, Orbit, RotateCcw, Settings2, Sparkles, TestTube, Upload, Trash2, Smartphone, Zap } from 'lucide-react'
 import { PageHeader, EmptyState, CustomDropdown } from '../components/ui'
 import { SettingsCard } from '../components/ui/SettingsCard'
 import { EveAvatar } from '../components/eve/avatar/EveAvatar'
@@ -35,8 +35,10 @@ export function AvatarPage({ onNavigate }) {
   const [previewEmotion, setPreviewEmotion] = useState('idle')
   const [previewSpeaking, setPreviewSpeaking] = useState(false)
   const [heavyPreview, setHeavyPreview] = useState(false)
+  const [viewResetKey, setViewResetKey] = useState(0)
   const fileRef = useRef(null)
   const scaleSaveTimeoutRef = useRef(0)
+  const zoomSaveTimeoutRef = useRef(0)
 
   useEffect(() => {
     let cancelled = false
@@ -57,7 +59,10 @@ export function AvatarPage({ onNavigate }) {
     return () => { cancelled = true }
   }, [setPrefs])
 
-  useEffect(() => () => window.clearTimeout(scaleSaveTimeoutRef.current), [])
+  useEffect(() => () => {
+    window.clearTimeout(scaleSaveTimeoutRef.current)
+    window.clearTimeout(zoomSaveTimeoutRef.current)
+  }, [])
 
   const persist = async (patch) => {
     setBusy(true)
@@ -89,6 +94,28 @@ export function AvatarPage({ onNavigate }) {
         setError(err?.message || 'Could not save.')
       }
     }, SCALE_SAVE_DEBOUNCE_MS)
+  }
+
+  const persistZoom = (zoom) => {
+    const next = { ...prefs, zoom }
+    setPrefs(next)
+    setError('')
+    window.clearTimeout(zoomSaveTimeoutRef.current)
+    zoomSaveTimeoutRef.current = window.setTimeout(async () => {
+      try {
+        const res = await saveAvatarPreferences(next)
+        if (res?.preferences) setPrefs(res.preferences)
+        setMessage('Saved.')
+        window.setTimeout(() => setMessage(''), SAVE_MESSAGE_TIMEOUT_MS)
+      } catch (err) {
+        setError(err?.message || 'Could not save.')
+      }
+    }, SCALE_SAVE_DEBOUNCE_MS)
+  }
+
+  const handleResetView = () => {
+    setViewResetKey((key) => key + 1)
+    persist({ zoom: 1 })
   }
 
   const handleUpload = async (event) => {
@@ -171,6 +198,7 @@ export function AvatarPage({ onNavigate }) {
                 sttRecording={isListening}
                 sttStatus={isListening ? 'listening' : 'idle'}
                 error={previewEmotion === 'error' ? 'Demo error state' : ''}
+                resetViewSignal={viewResetKey}
                 onToggleRenderer={() => persist({ renderer: prefs?.renderer === 'vrm' ? 'live2d' : prefs?.renderer === 'live2d' ? 'auto' : 'vrm' })}
               />
             ) : (
@@ -235,6 +263,23 @@ export function AvatarPage({ onNavigate }) {
             </div>
           </SettingsCard>
 
+          <SettingsCard icon={<Orbit size={16} />} title="Model view" description="Zoom the camera and orbit the model. Drag the preview to rotate; Reset view straightens it.">
+            <div className="avatar-form-grid">
+              <div className="form-row">
+                <label className="form-label" htmlFor="avatar-zoom">Zoom {(prefs?.zoom ?? 1).toFixed(2)}×</label>
+                <input id="avatar-zoom" className="avatar-zoom-input" type="range" min="0.5" max="2" step="0.05" value={prefs?.zoom ?? 1} onChange={(e) => persistZoom(Number(e.target.value))} disabled={busy} aria-label="Model zoom" />
+                <small className="form-hint">Moves the 3D camera closer; enlarges Live2D.</small>
+              </div>
+              <div className="form-row">
+                <label className="avatar-toggle"><input type="checkbox" checked={prefs?.autoRotate === true} onChange={(e) => persist({ autoRotate: e.target.checked })} disabled={busy} /> <Orbit size={14} /> Auto-rotate turntable</label>
+                <small className="form-hint">Slow orbit when idle (3D only, off with reduced motion).</small>
+              </div>
+              <div className="form-row">
+                <button type="button" className="btn-secondary" onClick={handleResetView} disabled={busy}><RotateCcw size={14} /> Reset view</button>
+              </div>
+            </div>
+          </SettingsCard>
+
           <SettingsCard icon={<Upload size={16} />} title="Upload model" description=".vrm / .glb / .model3.json / .zip (max 12MB, zip must contain one model3.json). Per-user storage.">
             <div className="avatar-upload-row">
               <input ref={fileRef} className="avatar-file-input is-hidden" type="file" accept=".vrm,.glb,.gltf,.json,.zip,model3.json" onChange={handleUpload} disabled={busy} aria-label="Upload avatar model" />
@@ -276,6 +321,7 @@ export function AvatarPage({ onNavigate }) {
           <li><strong>Auto tint:</strong> `avatarTokens` maps 25 presets — mono keeps monochrome, duo/spectrum accent → `var(--color-primary)` one hue (ADR 0011).</li>
           <li><strong>Lip-sync:</strong> `Web Audio AnalyserNode` (32 FFT, `aa/oh`, smooth 0.4) or viseme pulse; barge-in clears mouth.</li>
           <li><strong>Eye & blink:</strong> `pointermove` lerp + 3–6s blink via `ParamEyeLOpen/R` / VRM `blink`.</li>
+          <li><strong>Model view:</strong> zoom moves the 3D camera (scales Live2D); drag the preview to orbit, Reset view straightens it; turntable auto-rotates when idle.</li>
           <li><strong>Positions:</strong> global dock header drag → <code>position {'{x,y}'}</code> clamped 0–100 + <code>BroadcastChannel</code> across tabs.</li>
         </ul>
       </SettingsCard>

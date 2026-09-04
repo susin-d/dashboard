@@ -32,10 +32,15 @@ async function ensureVrmLoader() {
   return vrmLoaderModules
 }
 
-export function VrmModel({ url, mouthOpen = 0, lookAt = { x: 0, y: 0 }, isBlinking = false, emotion = 'idle', onReady, onError }) {
+// VRM faces +Z by spec; the camera sits on +Z so no yaw offset is needed.
+const BASE_CAMERA_DISTANCE = 1.1
+const AUTO_ROTATE_SPEED = 0.35
+
+export function VrmModel({ url, mouthOpen = 0, lookAt = { x: 0, y: 0 }, isBlinking = false, emotion = 'idle', zoom = 1, autoRotate = false, resetSignal = 0, onReady, onError }) {
   const mountRef = useRef(null)
   const sceneRef = useRef(null)
   const rendererRef = useRef(null)
+  const cameraRef = useRef(null)
   const vrmRef = useRef(null)
   const rafRef = useRef(0)
   const mouthRef = useRef(0)
@@ -43,6 +48,7 @@ export function VrmModel({ url, mouthOpen = 0, lookAt = { x: 0, y: 0 }, isBlinki
   const blinkRef = useRef(false)
   const emotionRef = useRef(emotion)
   const yawRef = useRef(0)
+  const autoRotateRef = useRef(false)
   const [status, setStatus] = useState('loading')
   const [loadError, setLoadError] = useState('')
 
@@ -50,6 +56,7 @@ export function VrmModel({ url, mouthOpen = 0, lookAt = { x: 0, y: 0 }, isBlinki
   lookRef.current = lookAt
   blinkRef.current = isBlinking
   emotionRef.current = emotion
+  autoRotateRef.current = autoRotate
 
   const handleReady = useCallback(() => {
     setStatus('ready')
@@ -84,7 +91,8 @@ export function VrmModel({ url, mouthOpen = 0, lookAt = { x: 0, y: 0 }, isBlinki
     sceneRef.current = scene
 
     const camera = new PerspectiveCamera(30, width / height, 0.1, 20)
-    camera.position.set(0, 1.35, 1.1)
+    camera.position.set(0, 1.35, BASE_CAMERA_DISTANCE)
+    cameraRef.current = camera
 
     let renderer
     try {
@@ -146,7 +154,8 @@ export function VrmModel({ url, mouthOpen = 0, lookAt = { x: 0, y: 0 }, isBlinki
       // VRM update
       const vrm = vrmRef.current
       if (vrm) {
-        // user orbit (drag) — yaw applied every frame so loads and drags agree
+        // user orbit (drag) + optional turntable — yaw applied every frame
+        if (autoRotateRef.current) yawRef.current += delta * AUTO_ROTATE_SPEED
         vrm.scene.rotation.y = yawRef.current
         // mouth: map to VRM blendShapes (aa, ih, ee, oh) and jaw
         const mouth = MathUtils.clamp(mouthRef.current, 0, 1)
@@ -250,6 +259,20 @@ export function VrmModel({ url, mouthOpen = 0, lookAt = { x: 0, y: 0 }, isBlinki
       }
     }
   }, [])
+
+  // camera zoom from Studio prefs (0.5 far .. 2.0 close)
+  useEffect(() => {
+    const camera = cameraRef.current
+    if (!camera) return
+    const z = Number(zoom)
+    const safeZoom = Number.isFinite(z) ? Math.min(2, Math.max(0.5, z)) : 1
+    camera.position.z = BASE_CAMERA_DISTANCE / safeZoom
+  }, [zoom])
+
+  // Studio "Reset view" clears the drag orbit yaw
+  useEffect(() => {
+    yawRef.current = 0
+  }, [resetSignal])
 
   // load VRM/GLB when url changes
   useEffect(() => {

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Bot, Eye, Upload, Trash2, Monitor, Smartphone, GlassWater, Sparkles } from 'lucide-react'
+import { Bot, Eye, Orbit, RotateCcw, Upload, Trash2, Monitor, Smartphone, GlassWater, Sparkles } from 'lucide-react'
 import { CustomDropdown } from '../../components/ui/CustomDropdown'
 import { SettingsCard } from '../../components/ui/SettingsCard'
 import { SettingsSection } from '../../components/ui/SettingsSection'
@@ -35,6 +35,8 @@ export function EveAvatarSection() {
   const [error, setError] = useState('')
   const fileRef = useRef(null)
   const scaleSaveTimeoutRef = useRef(0)
+  const zoomSaveTimeoutRef = useRef(0)
+  const [viewResetKey, setViewResetKey] = useState(0)
 
   useEffect(() => {
     let cancelled = false
@@ -55,7 +57,10 @@ export function EveAvatarSection() {
     return () => { cancelled = true }
   }, [setPrefs])
 
-  useEffect(() => () => window.clearTimeout(scaleSaveTimeoutRef.current), [])
+  useEffect(() => () => {
+    window.clearTimeout(scaleSaveTimeoutRef.current)
+    window.clearTimeout(zoomSaveTimeoutRef.current)
+  }, [])
 
   const persist = async (patch) => {
     setBusy(true)
@@ -90,6 +95,28 @@ export function EveAvatarSection() {
         setError(err?.message || 'Could not save preferences.')
       }
     }, SCALE_SAVE_DEBOUNCE_MS)
+  }
+
+  const persistZoom = (zoom) => {
+    const next = { ...prefs, zoom }
+    setPrefs(next)
+    setError('')
+    window.clearTimeout(zoomSaveTimeoutRef.current)
+    zoomSaveTimeoutRef.current = window.setTimeout(async () => {
+      try {
+        const res = await saveAvatarPreferences(next)
+        if (res?.preferences) setPrefs(res.preferences)
+        setMessage('Avatar preferences saved.')
+        setTimeout(() => setMessage(''), SAVE_MESSAGE_TIMEOUT_MS)
+      } catch (err) {
+        setError(err?.message || 'Could not save preferences.')
+      }
+    }, SCALE_SAVE_DEBOUNCE_MS)
+  }
+
+  const handleResetView = () => {
+    setViewResetKey((key) => key + 1)
+    persist({ zoom: 1 })
   }
 
   const handleUpload = async (event) => {
@@ -169,6 +196,7 @@ export function EveAvatarSection() {
             activeModel={activeModel}
             isEveSpeaking={false}
             isEveThinking={false}
+            resetViewSignal={viewResetKey}
           />
           <div className="eve-avatar-controls">
             <div className="form-row">
@@ -204,6 +232,29 @@ export function EveAvatarSection() {
                 aria-label="Avatar scale"
               />
               <span className="form-value">{(prefs?.scale ?? 1).toFixed(2)}×</span>
+            </div>
+            <div className="form-row form-row-inline">
+              <label className="form-label">Zoom</label>
+              <input
+                type="range"
+                min="0.5"
+                max="2"
+                step="0.05"
+                value={prefs?.zoom ?? 1}
+                onChange={(e) => persistZoom(Number(e.target.value))}
+                disabled={busy}
+                aria-label="Model zoom"
+              />
+              <span className="form-value">{(prefs?.zoom ?? 1).toFixed(2)}×</span>
+            </div>
+            <div className="form-row form-row-inline">
+              <label className="checkbox-row">
+                <input type="checkbox" checked={prefs?.autoRotate === true} onChange={(e) => persist({ autoRotate: e.target.checked })} disabled={busy} />
+                <Orbit size={14} /> Auto-rotate
+              </label>
+              <button type="button" className="eve-avatar-model-delete" onClick={handleResetView} disabled={busy} title="Straighten the model and reset zoom">
+                <RotateCcw size={12} /> Reset view
+              </button>
             </div>
             <div className="form-row form-row-inline">
               <label className="checkbox-row">

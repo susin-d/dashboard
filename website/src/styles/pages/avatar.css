@@ -235,12 +235,14 @@
 
 .avatar-file-input.is-hidden { display: none; }
 
-.avatar-scale-input {
+.avatar-scale-input,
+.avatar-zoom-input {
   width: 100%;
   accent-color: var(--color-primary);
 }
 
-.avatar-scale-input:focus-visible {
+.avatar-scale-input:focus-visible,
+.avatar-zoom-input:focus-visible {
   outline: 2px solid var(--color-primary);
   outline-offset: 2px;
 }

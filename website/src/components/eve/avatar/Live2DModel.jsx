@@ -43,11 +43,13 @@ async function ensureLive2D() {
   }
 }
 
-export function Live2DModel({ url, mouthOpen = 0, lookAt = { x: 0, y: 0 }, isBlinking = false, emotion = 'idle', onReady, onError }) {
+export function Live2DModel({ url, mouthOpen = 0, lookAt = { x: 0, y: 0 }, isBlinking = false, emotion = 'idle', zoom = 1, onReady, onError }) {
   const mountRef = useRef(null)
   const appRef = useRef(null)
   const modelRef = useRef(null)
   const cleanupRef = useRef(null)
+  const baseScaleRef = useRef(1)
+  const zoomRef = useRef(1)
   const [status, setStatus] = useState('loading')
   const [loadError, setLoadError] = useState('')
   const mouthRef = useRef(0)
@@ -59,6 +61,7 @@ export function Live2DModel({ url, mouthOpen = 0, lookAt = { x: 0, y: 0 }, isBli
   lookRef.current = lookAt
   blinkRef.current = isBlinking
   emotionRef.current = emotion
+  zoomRef.current = zoom
 
   const handleReady = useCallback(() => {
     setStatus('ready')
@@ -126,7 +129,8 @@ export function Live2DModel({ url, mouthOpen = 0, lookAt = { x: 0, y: 0 }, isBli
         const m = modelRef.current
         if (m) {
           const scale = Math.min(w / m.width, h / m.height) * 0.9
-          m.scale.set(scale)
+          baseScaleRef.current = scale
+          m.scale.set(scale * zoomRef.current)
           m.x = w / 2
           m.y = h * 0.88
         }
@@ -202,7 +206,8 @@ export function Live2DModel({ url, mouthOpen = 0, lookAt = { x: 0, y: 0 }, isBli
           const w = mount.clientWidth || 320
           const h = mount.clientHeight || 240
           const scale = Math.min(w / model.width, h / model.height) * 0.9
-          model.scale.set(scale)
+          baseScaleRef.current = scale
+          model.scale.set(scale * zoomRef.current)
           model.x = w / 2
           model.y = h * 0.88
           model.anchor?.set?.(0.5, 0.5)
@@ -214,6 +219,14 @@ export function Live2DModel({ url, mouthOpen = 0, lookAt = { x: 0, y: 0 }, isBli
       }
     }
   }, [handleFail, handleReady, url])
+
+  // Studio zoom slider rescales the fitted model without reloading textures
+  useEffect(() => {
+    const m = modelRef.current
+    if (!m) return
+    const z = Number(zoom)
+    m.scale.set(baseScaleRef.current * (Number.isFinite(z) ? z : 1))
+  }, [zoom])
 
   return (
     <div

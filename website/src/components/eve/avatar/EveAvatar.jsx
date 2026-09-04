@@ -27,6 +27,7 @@ export function EveAvatar({
   error = '',
   audioRef = null,
   onToggleRenderer,
+  resetViewSignal = 0,
   className = '',
   style = {},
 }) {
@@ -44,6 +45,8 @@ export function EveAvatar({
 
   const tintStyle = avatarCardStyle(presetId, null)
   const scale = effectivePrefs.scale ?? 1
+  const zoom = effectivePrefs.zoom ?? 1
+  const autoRotate = effectivePrefs.autoRotate === true && !reducedMotion
 
   const resolvedRenderer = lifecycle.resolvedRenderer
 
@@ -92,6 +95,7 @@ export function EveAvatar({
             lookAt={eye.lookAt}
             isBlinking={eye.isBlinking}
             emotion={emotion}
+            zoom={zoom}
             onReady={lifecycle.markReady}
           />
         </Suspense>
@@ -105,12 +109,15 @@ export function EveAvatar({
           lookAt={eye.lookAt}
           isBlinking={eye.isBlinking}
           emotion={emotion}
+          zoom={zoom}
+          autoRotate={autoRotate}
+          resetSignal={resetViewSignal}
           onReady={lifecycle.markReady}
           onError={lifecycle.markError}
         />
       </Suspense>
     )
-  }, [emotion, eye.isBlinking, eye.lookAt, lifecycle, lip.mouthOpen, model.url, resolvedRenderer])
+  }, [autoRotate, emotion, eye.isBlinking, eye.lookAt, lifecycle, lip.mouthOpen, model.url, resetViewSignal, resolvedRenderer, zoom])
 
   return (
     <div

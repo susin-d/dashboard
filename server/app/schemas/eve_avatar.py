@@ -11,6 +11,8 @@ class EveAvatarPrefs(BaseModel):
     modelId: str = Field(default="eve-mono-vrm", max_length=120)
     modelUrl: str | None = Field(default=None, max_length=1000)
     scale: float = Field(default=1.0, ge=0.8, le=1.2)
+    zoom: float = Field(default=1.0, ge=0.5, le=2.0)
+    autoRotate: bool = False
     position: dict[str, float] | None = None
     docked: bool = True
     motion: str = Field(default="auto", pattern="^(auto|on|reduced)$")
@@ -24,6 +26,8 @@ class EveAvatarPrefsRequest(BaseModel):
     modelId: str | None = Field(default=None, max_length=120)
     modelUrl: str | None = Field(default=None, max_length=1000)
     scale: float | None = Field(default=None, ge=0.8, le=1.2)
+    zoom: float | None = Field(default=None, ge=0.5, le=2.0)
+    autoRotate: bool | None = None
     position: dict[str, float] | None = None
     docked: bool | None = None
     motion: str | None = Field(default=None, pattern="^(auto|on|reduced)$")
