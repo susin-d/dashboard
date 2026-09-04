@@ -2,7 +2,7 @@
 
 Living snapshot for AI agents. `AGENTS.md` holds permanent rules; this file holds the **current state**. See `CHANGELOG.md` for history and `PROJECT_MAP.md` for the file index.
 
-Last updated: 2026-09-04 - Shell modals deferred (index 152->107 kB); vendor/icons proven unsplittable, kept whole (see ADR-0017)
+Last updated: 2026-09-04 - Optimize all: lucide 1.40 (icons 469->43 kB), single-pixi override, theme leaf (index 154->113 kB), zero warnings
 
 ## Contents
 1. [Overview](#1-overview) · 2. [Repository structure](#2-repository-structure) · 3. [Backend](#3-backend) · 4. [Frontend](#4-frontend) · 5. [Design system](#5-design-system) · 6. [Current snapshot](#6-current-snapshot) · 7. [Limitations](#7-limitations) · 8. [Verification](#8-verification)
