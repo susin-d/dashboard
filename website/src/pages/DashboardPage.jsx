@@ -345,8 +345,7 @@ export function DashboardPage({
 
   return (
     <div className={`dashboard-page dashboard-density-${density}`}>
-      <div className="page-heading dashboard-heading">
-        <div><p>Overview</p><h1>Dashboard</h1></div>
+      <div className="page-heading dashboard-heading is-toolbar">
         <div className="dashboard-heading-actions">
           {editing && <span className="dashboard-edit-status"><LayoutGrid size={15} /> Editing layout</span>}
           <button className="secondary-button" type="button" onClick={() => setCustomizeOpen(true)}>

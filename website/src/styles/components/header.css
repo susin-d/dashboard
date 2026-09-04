@@ -68,24 +68,13 @@
   -webkit-user-select: none;
 }
 
-.breadcrumb-group {
-  color: var(--text-muted);
-  font-size: 12px;
-  font-weight: 550;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-
-.breadcrumb-sep {
-  color: var(--text-muted);
-  opacity: 0.55;
-  flex-shrink: 0;
-}
-
 .breadcrumb-current {
   color: var(--text-primary);
-  font-size: 13px;
+  font-size: 15px;
   font-weight: 700;
+  letter-spacing: -0.01em;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .header-actions,
@@ -127,7 +116,7 @@
   }
 
   .topbar-breadcrumb {
-    display: none;
+    max-width: 38vw;
   }
 
   .header-menu-btn {

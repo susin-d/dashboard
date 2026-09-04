@@ -114,13 +114,6 @@ export function SettingPage({
 
   return (
     <section className="setting-page">
-      <div className="page-heading">
-        <div>
-          <p>Account</p>
-          <h1>Settings</h1>
-        </div>
-      </div>
-
       <TabNav
         tabs={SETTINGS_SECTIONS}
         activeTab={activeSection}

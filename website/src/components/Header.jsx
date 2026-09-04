@@ -7,7 +7,6 @@ import {
   CalendarDays,
   CheckCheck,
   ChevronDown,
-  ChevronRight,
   FolderKanban,
   LogOut,
   PanelLeftClose,
@@ -215,9 +214,7 @@ export function Header({
             {navigationExpanded ? <PanelLeftClose size={18} /> : <PanelLeftOpen size={18} />}
           </button>
           <div className="topbar-breadcrumb">
-            <span className="breadcrumb-group">{currentNav.group}</span>
-            <ChevronRight size={13} className="breadcrumb-sep" />
-            <span className="breadcrumb-current">{currentNav.label}</span>
+            <span className="breadcrumb-current" aria-current="page">{currentNav.label}</span>
           </div>
         </div>
 
