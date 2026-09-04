@@ -1,41 +1,20 @@
 /* Todo Page Styles */
 
-.todo-page-heading {
-  gap: 32px;
-}
-
 .todo-add-trigger {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 7px;
 }
 
 .todo-container {
   width: 100%;
-  padding-top: 24px;
+  display: grid;
+  gap: var(--space-sm);
+  align-content: start;
 }
 
 .todo-filters {
-  display: flex;
-  gap: 4px;
-  margin: 0 0 10px;
-}
-
-.todo-filters button {
-  padding: 7px 11px;
-  color: var(--text-secondary);
-  background: transparent;
-  border: 0;
-  border-radius: 7px;
-  font-size: 11px;
-  font-weight: 700;
-  text-transform: capitalize;
-}
-
-.todo-filters button:hover,
-.todo-filters button.active {
-  color: var(--text-primary);
-  background: var(--bg-tertiary);
+  margin: 0;
 }
 
 .todo-list {

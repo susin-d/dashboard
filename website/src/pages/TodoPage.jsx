@@ -108,7 +108,6 @@ export function TodoPage({ tasks, setTasks, createIntent }) {
       <PageHeader
         eyebrow="Tasks"
         title="Todo List"
-        className="todo-page-heading"
         actions={
           <button
             className="primary-button todo-add-trigger"
@@ -138,12 +137,12 @@ export function TodoPage({ tasks, setTasks, createIntent }) {
           onChange={setFilter}
         />
 
-        <div className="todo-list">
-          {visibleTasks.length ? (
-            visibleTasks.map((task) => (
+        {visibleTasks.length ? (
+          <div className="todo-list">
+            {visibleTasks.map((task) => (
               <div
-              className={`todo-item ${task.completed ? 'completed' : ''}`}
-              data-record-id={task.id}
+                className={`todo-item ${task.completed ? 'completed' : ''}`}
+                data-record-id={task.id}
                 key={task.id}
               >
                 <button
@@ -185,11 +184,11 @@ export function TodoPage({ tasks, setTasks, createIntent }) {
                   </button>
                 </div>
               </div>
-            ))
-          ) : (
-            <EmptyState icon={Check} title="No tasks here" description={filter === 'all' ? 'Create your first task to get started.' : `No ${filter} tasks. Try a different filter.`} />
-          )}
-        </div>
+            ))}
+          </div>
+        ) : (
+          <EmptyState icon={Check} title="No tasks here" description={filter === 'all' ? 'Create your first task to get started.' : `No ${filter} tasks. Try a different filter.`} />
+        )}
       </div>
 
       <Modal
