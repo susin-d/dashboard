@@ -27,6 +27,7 @@
 | [0012](0012-eve-avatar-live2d-3d.md) | Eve Avatar — Live2D + 3D VRM dual renderer, global + inline, auto-theme, upload + examples | Accepted | 2026-09-01 |
 | [0013](0013-default-openrouter-free-and-ui-strict-fix.md) | Default to OpenRouter Free Router and fix UI tool strict schema | Accepted | 2026-09-01 |
 | [0014](0014-eve-provider-quota-fallback-and-streaming.md) | Eve provider quota fallback and streaming text animation | Accepted | 2026-09-01 |
+| [0015](0015-lazy-public-shell-auth-storage-split.md) | Break request/authApi cycle (authStorage) and lazy-load public shell; index 248 → 152 kB | Accepted | 2026-09-04 |
 
 ## How to add a new ADR
 

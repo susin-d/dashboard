@@ -31,13 +31,18 @@ const StudioAppsPage = lazy(() => import('./pages/studio/StudioAppsPage').then((
 const StudioBuilderPage = lazy(() => import('./pages/studio/StudioBuilderPage').then((m) => ({ default: m.StudioBuilderPage })))
 const StudioTemplatesPage = lazy(() => import('./pages/studio/StudioTemplatesPage').then((m) => ({ default: m.StudioTemplatesPage })))
 const UsagePage = lazy(() => import('./pages/UsagePage').then((m) => ({ default: m.UsagePage })))
-import { AuthPage } from './pages/AuthPage'
-import { ForgotPasswordPage } from './pages/ForgotPasswordPage'
-import { OnboardingPage } from './pages/OnboardingPage'
-import { LandingPage } from './pages/LandingPage'
-import { PrivacyPolicyPage } from './pages/PrivacyPolicyPage'
-import { TermsOfServicePage } from './pages/TermsOfServicePage'
-import { CustomPage } from './pages/CustomPage'
+// Public pages lazy — LandingPage pulls framer-motion; none of these are
+// needed for authenticated /app/* sessions, so keep them out of `index`.
+const AuthPage = lazy(() => import('./pages/AuthPage').then((m) => ({ default: m.AuthPage })))
+const ForgotPasswordPage = lazy(() => import('./pages/ForgotPasswordPage').then((m) => ({ default: m.ForgotPasswordPage })))
+const OnboardingPage = lazy(() => import('./pages/OnboardingPage').then((m) => ({ default: m.OnboardingPage })))
+const LandingPage = lazy(() => import('./pages/LandingPage').then((m) => ({ default: m.LandingPage })))
+const PrivacyPolicyPage = lazy(() => import('./pages/PrivacyPolicyPage').then((m) => ({ default: m.PrivacyPolicyPage })))
+const TermsOfServicePage = lazy(() => import('./pages/TermsOfServicePage').then((m) => ({ default: m.TermsOfServicePage })))
+const CustomPage = lazy(() => import('./pages/CustomPage').then((m) => ({ default: m.CustomPage })))
+// Global companion overlay lazy — pulls EveAvatar + useThemeCustomizer; not
+// needed for first paint, mounts quietly once loaded.
+const EveGlobalCompanionHost = lazy(() => import('./components/eve/avatar/EveGlobalCompanionHost').then((m) => ({ default: m.EveGlobalCompanionHost })))
 import { updateNotification } from './lib/workspaceApi'
 import { confirmEmailVerification } from './lib/emailApi'
 import { clearAuthSession, verifyAccountCombine } from './lib/authApi'
@@ -53,7 +58,6 @@ import { EveUiBanner } from './components/ui/EveUiBanner'
 import { UpdateBanner } from './components/ui/UpdateBanner'
 import { useAutoUpdater } from './hooks/useAutoUpdater'
 import { EveAvatarProvider } from './components/eve/avatar/EveAvatarProvider'
-import { EveGlobalCompanionHost } from './components/eve/avatar/EveGlobalCompanionHost'
 
 const routeTitles = {
   '/': 'StarWaves — Developer productivity workspace',
@@ -70,7 +74,7 @@ function publicRoute(content) {
     <>
       <a className="skip-link" href="#main-content">Skip to main content</a>
       <NetworkStatus />
-      {content}
+      <Suspense fallback={<WaveLoader />}>{content}</Suspense>
     </>
   )
 }
@@ -711,7 +715,9 @@ function App() {
         <IncomingCallOverlay callCenter={callCenter} myUid={userProfile?.uid} />
         <UpdateBanner update={appUpdate} onDismiss={dismissAppUpdate} />
         <EveUiBanner />
-        <EveGlobalCompanionHost />
+        <Suspense fallback={null}>
+          <EveGlobalCompanionHost />
+        </Suspense>
       </AppLayout>
     </EveAvatarProvider>
     </CustomUIProvider>

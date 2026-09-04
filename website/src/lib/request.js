@@ -1,4 +1,4 @@
-import { getDeviceId, getDeviceName, getStoredAuthToken } from './authApi'
+import { clearAuthSession, getDeviceId, getDeviceName, getStoredAuthToken } from './authStorage'
 
 export const API_URL = import.meta.env.VITE_API_URL ?? 'http://127.0.0.1:8000/api/v1'
 
@@ -237,7 +237,6 @@ export async function apiRequest(
       // Multi-device: revoked/expired token → force sign out so other device sees 401
       if (response.status === 401 && authRequired) {
         try {
-          const { clearAuthSession } = await import('./authApi')
           clearAuthSession()
           window.dispatchEvent(new CustomEvent('starwaves:session-revoked'))
         } catch {}

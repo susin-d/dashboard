@@ -20,13 +20,21 @@ export default defineConfig({
       output: {
         manualChunks(id) {
           if (id.includes('node_modules')) {
-            if (id.includes('@monaco-editor')) return 'monaco'
+            if (id.includes('@monaco-editor') || id.includes('monaco-editor')) return 'monaco'
             if (id.includes('react-grid-layout')) return 'grid'
+            // Feature-specific: only reachable via lazy VrmModel (itself
+            // React.lazy inside EveAvatar), never from the initial shell.
             if (id.includes('three') || id.includes('@pixiv/three-vrm') || id.includes('@react-three')) return 'avatar-3d'
+            // Feature-specific: only reachable via lazy Live2DModel dynamic
+            // imports, never from the initial shell.
             if (id.includes('pixi')) return 'avatar-live2d'
+            // Feature-specific: only reachable via lazy LandingPage sections.
             if (id.includes('framer-motion')) return 'motion'
-            // NOTE: no shared `icons` chunk — lucide-react icons stay in the
-            // route chunks that use them so no page pays for every icon.
+            // NOTE: no manual `icons` chunk — every import is a tree-shakeable
+            // named import (~180 unique icons, sideEffects:false), and
+            // Rolldown groups the icons shared across routes into one hashed
+            // chunk that is downloaded once and cached. Splitting per icon
+            // would create hundreds of tiny chunks.
             // This check must come before the `react` rule below because
             // 'lucide-react' contains the substring 'react'.
             if (id.includes('lucide-react')) return null
