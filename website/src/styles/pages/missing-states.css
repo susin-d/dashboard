@@ -502,7 +502,6 @@
   max-width: 760px;
 }
 
-.profile-edit-button,
 .empty-action button,
 .empty-action a {
   display: inline-flex;
@@ -518,10 +517,6 @@
   font-size: 10px;
   font-weight: 750;
   text-decoration: none;
-}
-
-.profile-edit-button {
-  margin-left: auto;
 }
 
 .empty-action {

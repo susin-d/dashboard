@@ -1170,6 +1170,7 @@
 .profile-card-header {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 16px;
   padding: 22px;
 }
@@ -1204,29 +1205,17 @@
 .profile-card-actions {
   display: flex;
   align-items: center;
-  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--space-2xs);
   margin-left: auto;
 }
 
-.profile-signout-button {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 14px;
-  color: var(--text-primary);
-  background: var(--bg-tertiary);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-sm, 6px);
-  font-size: 12px;
-  font-weight: 600;
-  cursor: pointer;
+.profile-card-actions .profile-card-btn {
+  min-height: 32px;
+  padding: 6px var(--space-xs);
+  font-size: 13px;
   white-space: nowrap;
-  transition: all 0.15s ease;
-}
-
-.profile-signout-button:hover {
-  background: var(--bg-hover, rgba(255, 255, 255, 0.08));
-  border-color: var(--border-heavy);
 }
 
 .profile-verification-actions {

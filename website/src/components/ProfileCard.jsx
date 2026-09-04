@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { CheckCircle2, Clock, Link2, LogOut, Mail, ShieldCheck, Trash2, User, X } from 'lucide-react'
+import { CheckCircle2, Clock, Link2, LogOut, Mail, Pencil, ShieldCheck, Trash2, User, X } from 'lucide-react'
 import {
   clearAuthSession,
   fetchCombinedAccounts,
@@ -142,17 +142,18 @@ export function ProfileCard({ user, onProfileUpdated, onSignOut }) {
           <div className="profile-card-actions">
             <button
               type="button"
-              className="profile-edit-button"
+              className="secondary-button profile-card-btn"
               onClick={() => {
                 setDisplayName(user.fullName)
                 setEditing(true)
               }}
             >
+              <Pencil size={14} />
               Edit profile
             </button>
             <button
               type="button"
-              className="profile-signout-button"
+              className="secondary-button profile-card-btn"
               onClick={handleSignOut}
               title="Sign out of account"
             >
