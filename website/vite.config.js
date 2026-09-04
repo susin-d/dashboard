@@ -36,16 +36,20 @@ export default defineConfig({
             if (id.includes('pixi')) return 'pixi'
             // Feature-specific: only reachable via lazy LandingPage sections.
             if (id.includes('framer-motion')) return 'motion'
-            // NOTE: no manual `icons` chunk — every import is a tree-shakeable
-            // named import (~180 unique icons, sideEffects:false), and
-            // Rolldown groups the icons shared across routes into one hashed
-            // chunk that is downloaded once and cached. Splitting per icon
-            // would create hundreds of tiny chunks.
+            // Single shared `icons` chunk on purpose: lucide-react@1.26.0
+            // ships no per-icon ESM (dist/esm holds only sourcemaps; the
+            // `module` entry is missing), so the bundler falls back to the
+            // single-file CJS build — one module id, nothing to split by
+            // importer. Content is still tree-shaken to the ~180 used icons.
+            // Per-icon chunks need a lucide version with intact ESM output.
             // This check must come before the `react` rule below because
             // 'lucide-react' contains the substring 'react'.
-            if (id.includes('lucide-react')) return null
+            if (id.includes('lucide-react')) return 'icons'
             // NOTE: no `firebase` chunk — the dependency is not imported
             // anywhere, so there is nothing to split out.
+            // React + ReactDOM stay together: version-locked, always
+            // co-loaded on first paint; splitting them saved zero bytes and
+            // only added a request plus cross-chunk edges.
             if (id.includes('react') || id.includes('react-dom')) return 'vendor'
           }
           return null

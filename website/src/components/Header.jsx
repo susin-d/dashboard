@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { lazy, Suspense, useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import {
   Bell,
@@ -28,8 +28,10 @@ import { deleteNotification, markAllNotificationsRead } from '../lib/workspaceAp
 import { CALENDAR_REMINDER_PREFIX } from '../utils/calendarReminders'
 import { getNotificationPermission, requestNotificationPermission } from '../utils/browserNotifications'
 import { navigationItems } from '../config/navigation'
-import { EveAssistantModal } from './EveAssistantModal'
-import { AdvancedSearchModal } from './search/AdvancedSearchModal'
+// Interaction-only modals — fetched on first open so the search index,
+// Eve modal, and Markdown renderer stay out of the initial shell.
+const EveAssistantModal = lazy(() => import('./EveAssistantModal').then((m) => ({ default: m.EveAssistantModal })))
+const AdvancedSearchModal = lazy(() => import('./search/AdvancedSearchModal').then((m) => ({ default: m.AdvancedSearchModal })))
 
 export function Header({
   activePage,
@@ -412,26 +414,34 @@ export function Header({
         </div>,
         document.body,
       )}
-      <EveAssistantModal
-        isOpen={eveOpen}
-        onClose={() => setEveOpen(false)}
-        onNavigate={onNavigate}
-        onWorkspaceChanged={onWorkspaceChanged}
-      />
-      <AdvancedSearchModal
-        isOpen={searchOpen}
-        onClose={() => setSearchOpen(false)}
-        onNavigate={onNavigate}
-        onCreate={onCreate}
-        callCenter={callCenter}
-        darkTheme={darkTheme}
-        setDarkTheme={setDarkTheme}
-        setEveOpen={setEveOpen}
-        setNotificationsOpen={setNotificationsOpen}
-        onEveNewChat={onEveNewChat}
-        onSignOut={handleSignOut}
-        workspaceData={workspaceData}
-      />
+      {eveOpen && (
+        <Suspense fallback={null}>
+          <EveAssistantModal
+            isOpen={eveOpen}
+            onClose={() => setEveOpen(false)}
+            onNavigate={onNavigate}
+            onWorkspaceChanged={onWorkspaceChanged}
+          />
+        </Suspense>
+      )}
+      {searchOpen && (
+        <Suspense fallback={null}>
+          <AdvancedSearchModal
+            isOpen={searchOpen}
+            onClose={() => setSearchOpen(false)}
+            onNavigate={onNavigate}
+            onCreate={onCreate}
+            callCenter={callCenter}
+            darkTheme={darkTheme}
+            setDarkTheme={setDarkTheme}
+            setEveOpen={setEveOpen}
+            setNotificationsOpen={setNotificationsOpen}
+            onEveNewChat={onEveNewChat}
+            onSignOut={handleSignOut}
+            workspaceData={workspaceData}
+          />
+        </Suspense>
+      )}
     </>
   )
 }

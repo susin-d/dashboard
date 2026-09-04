@@ -29,6 +29,7 @@
 | [0014](0014-eve-provider-quota-fallback-and-streaming.md) | Eve provider quota fallback and streaming text animation | Accepted | 2026-09-01 |
 | [0015](0015-lazy-public-shell-auth-storage-split.md) | Break request/authApi cycle (authStorage) and lazy-load public shell; index 248 → 152 kB | Accepted | 2026-09-04 |
 | [0016](0016-modular-avatar-engine-chunks.md) | Modular avatar engine chunks (three-core/vrm-loader/pixi/live2d); all chunks < 600 kB, zero build warnings | Accepted | 2026-09-04 |
+| [0017](0017-sub-100kb-shell-modals-keep-vendor-whole.md) | Sub-100 kB pass: defer shell modals (index 152→107 kB); vendor/icons stay whole with evidence | Accepted | 2026-09-04 |
 
 ## How to add a new ADR
 
