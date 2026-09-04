@@ -232,7 +232,15 @@
   justify-content: center;
   box-shadow: var(--shadow-sm);
   transform: scale(var(--eve-avatar-scale, 1));
-  transition: transform 220ms ease;
+  transition: transform 220ms ease, background-color 220ms ease;
+}
+
+/* Idle sway — procedural models breathe while the emotion is idle.
+   Scoped behind :not(.is-reduced) so Motion=Reduced disables it even when
+   the OS setting is off (the media query below covers the OS setting). */
+.eve-avatar:not(.is-reduced) .eve-vrm-fallback.is-idle .eve-vrm-head,
+.eve-avatar:not(.is-reduced) .eve-live2d-fallback.is-idle .eve-live2d-head {
+  animation: eve-idle-sway 3.6s ease-in-out infinite;
 }
 
 .eve-vrm-face,
@@ -458,10 +466,28 @@
 /* Inline */
 .eve-inline-avatar { width: 100%; }
 
+/* Mount entrance — one-shot fade/scale when a model (or fallback) appears */
+.eve-vrm-real,
+.eve-live2d-real,
+.eve-vrm-fallback,
+.eve-live2d-fallback {
+  animation: eve-model-enter 220ms ease-out;
+}
+
 /* Animations reuse tokens */
 @keyframes eve-avatar-pulse {
   0%,100% { transform: scale(1); opacity: 0.9; }
   50% { transform: scale(1.15); opacity: 1; }
+}
+
+@keyframes eve-idle-sway {
+  0%,100% { transform: scale(var(--eve-avatar-scale, 1)) translateY(0); }
+  50% { transform: scale(var(--eve-avatar-scale, 1)) translateY(-3px); }
+}
+
+@keyframes eve-model-enter {
+  from { opacity: 0; transform: scale(0.96); }
+  to { opacity: 1; transform: scale(1); }
 }
 
 @media (max-width: 640px) {
@@ -473,6 +499,16 @@
   .eve-avatar-status-dot.is-speaking,
   .eve-global-docked-orb,
   .eve-vrm-head,
-  .eve-live2d-head { animation: none !important; }
+  .eve-live2d-head,
+  .eve-vrm-real,
+  .eve-live2d-real,
+  .eve-vrm-fallback,
+  .eve-live2d-fallback { animation: none !important; }
   .eve-vrm-face, .eve-live2d-face { transition: none !important; }
 }
+
+/* Motion=Reduced without the OS setting: no entrance, no sway */
+.eve-avatar.is-reduced .eve-vrm-real,
+.eve-avatar.is-reduced .eve-live2d-real,
+.eve-avatar.is-reduced .eve-vrm-fallback,
+.eve-avatar.is-reduced .eve-live2d-fallback { animation: none; }

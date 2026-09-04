@@ -35,8 +35,10 @@ async function ensureVrmLoader() {
 // VRM faces +Z by spec; the camera sits on +Z so no yaw offset is needed.
 const BASE_CAMERA_DISTANCE = 1.1
 const AUTO_ROTATE_SPEED = 0.35
+// Emotion expression keys cross-faded each frame (module scope: no per-frame alloc).
+const EMOTION_EXPRESSION_KEYS = ['happy', 'angry', 'relaxed']
 
-export function VrmModel({ url, mouthOpen = 0, lookAt = { x: 0, y: 0 }, isBlinking = false, emotion = 'idle', zoom = 1, autoRotate = false, resetSignal = 0, onReady, onError }) {
+export function VrmModel({ url, mouthOpen = 0, lookAt = { x: 0, y: 0 }, isBlinking = false, emotion = 'idle', zoom = 1, autoRotate = false, idleMotion = true, resetSignal = 0, onReady, onError }) {
   const mountRef = useRef(null)
   const sceneRef = useRef(null)
   const rendererRef = useRef(null)
@@ -49,6 +51,10 @@ export function VrmModel({ url, mouthOpen = 0, lookAt = { x: 0, y: 0 }, isBlinki
   const emotionRef = useRef(emotion)
   const yawRef = useRef(0)
   const autoRotateRef = useRef(false)
+  const idleMotionRef = useRef(true)
+  const swayTimeRef = useRef(0)
+  const hipsBaseYRef = useRef(null)
+  const exprRef = useRef({ happy: 0, angry: 0, relaxed: 0 })
   const [status, setStatus] = useState('loading')
   const [loadError, setLoadError] = useState('')
 
@@ -57,6 +63,7 @@ export function VrmModel({ url, mouthOpen = 0, lookAt = { x: 0, y: 0 }, isBlinki
   blinkRef.current = isBlinking
   emotionRef.current = emotion
   autoRotateRef.current = autoRotate
+  idleMotionRef.current = idleMotion
 
   const handleReady = useCallback(() => {
     setStatus('ready')
@@ -157,6 +164,20 @@ export function VrmModel({ url, mouthOpen = 0, lookAt = { x: 0, y: 0 }, isBlinki
         // user orbit (drag) + optional turntable — yaw applied every frame
         if (autoRotateRef.current) yawRef.current += delta * AUTO_ROTATE_SPEED
         vrm.scene.rotation.y = yawRef.current
+        // idle sway — hips bob + spine drift (skipped under reduced motion)
+        if (idleMotionRef.current) {
+          swayTimeRef.current += delta
+          const t = swayTimeRef.current
+          const hips = vrm.humanoid?.getNormalizedBoneNode('hips')
+          if (hips && hipsBaseYRef.current !== null) {
+            hips.position.y = hipsBaseYRef.current + Math.sin(t * 1.4) * 0.008
+          }
+          const spine = vrm.humanoid?.getNormalizedBoneNode('spine')
+          if (spine) {
+            spine.rotation.x = Math.sin(t * 0.9) * 0.02
+            spine.rotation.z = Math.sin(t * 0.7) * 0.015
+          }
+        }
         // mouth: map to VRM blendShapes (aa, ih, ee, oh) and jaw
         const mouth = MathUtils.clamp(mouthRef.current, 0, 1)
         // smooth
@@ -176,14 +197,18 @@ export function VrmModel({ url, mouthOpen = 0, lookAt = { x: 0, y: 0 }, isBlinki
           vrm.expressionManager?.setValue('blinkLeft', blinkRef.current ? 1 : 0)
           vrm.expressionManager?.setValue('blinkRight', blinkRef.current ? 1 : 0)
         }
-        // emotion → expression
+        // emotion → expression (damped so states cross-fade, and stale
+        // weights decay back to neutral instead of sticking forever)
         const emo = emotionRef.current
-        if (emo === 'tool') {
-          vrm.expressionManager?.setValue('happy', 0.35)
-        } else if (emo === 'error') {
-          vrm.expressionManager?.setValue('angry', 0.5)
-        } else if (emo === 'thinking') {
-          vrm.expressionManager?.setValue('relaxed', 0.4)
+        const emoTargets = emo === 'tool' ? { happy: 0.35, angry: 0, relaxed: 0 }
+          : emo === 'error' ? { happy: 0, angry: 0.5, relaxed: 0 }
+          : emo === 'thinking' ? { happy: 0, angry: 0, relaxed: 0.4 }
+          : { happy: 0, angry: 0, relaxed: 0 }
+        const blend = 1 - Math.exp(-delta * 6)
+        const expr = exprRef.current
+        for (const key of EMOTION_EXPRESSION_KEYS) {
+          expr[key] += (emoTargets[key] - expr[key]) * blend
+          vrm.expressionManager?.setValue(key, expr[key])
         }
         vrm.update(delta)
       } else {
@@ -346,6 +371,12 @@ export function VrmModel({ url, mouthOpen = 0, lookAt = { x: 0, y: 0 }, isBlinki
             scene.add(vrm.scene)
           }
           vrmRef.current = vrm
+          // anchor for the idle-sway bob (absolute writes need the bind pose)
+          try {
+            hipsBaseYRef.current = vrm.humanoid?.getNormalizedBoneNode('hips')?.position.y ?? null
+          } catch {
+            hipsBaseYRef.current = null
+          }
           handleReady()
         },
         undefined,

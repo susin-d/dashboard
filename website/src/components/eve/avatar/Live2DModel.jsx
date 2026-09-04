@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-
 let PixiModule = null
 let Live2DFactory = null
 
@@ -43,13 +42,17 @@ async function ensureLive2D() {
   }
 }
 
-export function Live2DModel({ url, mouthOpen = 0, lookAt = { x: 0, y: 0 }, isBlinking = false, emotion = 'idle', zoom = 1, onReady, onError }) {
+export function Live2DModel({ url, mouthOpen = 0, lookAt = { x: 0, y: 0 }, isBlinking = false, emotion = 'idle', zoom = 1, idleMotion = true, onReady, onError }) {
   const mountRef = useRef(null)
   const appRef = useRef(null)
   const modelRef = useRef(null)
   const cleanupRef = useRef(null)
   const baseScaleRef = useRef(1)
   const zoomRef = useRef(1)
+  const idleMotionRef = useRef(true)
+  const idleMotionActiveRef = useRef(false)
+  const loopRunningRef = useRef(false)
+  const loadIdRef = useRef(0)
   const [status, setStatus] = useState('loading')
   const [loadError, setLoadError] = useState('')
   const mouthRef = useRef(0)
@@ -62,6 +65,31 @@ export function Live2DModel({ url, mouthOpen = 0, lookAt = { x: 0, y: 0 }, isBli
   blinkRef.current = isBlinking
   emotionRef.current = emotion
   zoomRef.current = zoom
+  idleMotionRef.current = idleMotion
+
+  // Loop the model's built-in Idle motion group (Haru ships one). Replays on
+  // finish; models without the group reject immediately and fall back to the
+  // param sway in the ticker below.
+  const startIdleLoop = useCallback((model) => {
+    if (!model || loopRunningRef.current || typeof model.motion !== 'function') return
+    loopRunningRef.current = true
+    const myLoad = loadIdRef.current
+    const loop = async () => {
+      while (loadIdRef.current === myLoad && modelRef.current === model) {
+        if (!idleMotionRef.current) break
+        idleMotionActiveRef.current = true
+        try {
+          await model.motion('Idle')
+        } catch {
+          idleMotionActiveRef.current = false
+          break
+        }
+      }
+      idleMotionActiveRef.current = false
+      loopRunningRef.current = false
+    }
+    loop()
+  }, [])
 
   const handleReady = useCallback(() => {
     setStatus('ready')
@@ -99,16 +127,25 @@ export function Live2DModel({ url, mouthOpen = 0, lookAt = { x: 0, y: 0 }, isBli
       const model = modelRef.current
       if (!model) return
       const mouth = mouthRef.current
-      // Drive Live2D parameters if available
+      // Drive Live2D parameters if available. Runs at LOW ticker priority so
+      // the model's internal update (motion curves, physics) runs first and
+      // our lip/look writes land on top instead of being overwritten.
       try {
         if (model.internalModel?.coreModel) {
-          model.internalModel.coreModel.setParamFloat('ParamMouthOpenY', Math.max(0, Math.min(1, mouth)))
-          model.internalModel.coreModel.setParamFloat('ParamEyeLOpen', blinkRef.current ? 0 : 1)
-          model.internalModel.coreModel.setParamFloat('ParamEyeROpen', blinkRef.current ? 0 : 1)
-          // look
-          model.internalModel.coreModel.setParamFloat('ParamAngleX', lookRef.current.x * 30)
-          model.internalModel.coreModel.setParamFloat('ParamAngleY', -lookRef.current.y * 20)
-          model.internalModel.coreModel.setParamFloat('ParamBodyAngleX', lookRef.current.x * 10)
+          const core = model.internalModel.coreModel
+          core.setParamFloat('ParamMouthOpenY', Math.max(0, Math.min(1, mouth)))
+          core.setParamFloat('ParamEyeLOpen', blinkRef.current ? 0 : 1)
+          core.setParamFloat('ParamEyeROpen', blinkRef.current ? 0 : 1)
+          if (!idleMotionActiveRef.current) {
+            // No Idle motion owns the body: steer toward the pointer plus a
+            // gentle sway fallback so stub-less models still feel alive.
+            const t = performance.now() * 0.001
+            const swayX = idleMotionRef.current ? Math.sin(t * 1.1) * 2.5 : 0
+            const swayY = idleMotionRef.current ? Math.sin(t * 0.9 + 1) * 1.5 : 0
+            core.setParamFloat('ParamAngleX', lookRef.current.x * 30 + swayX)
+            core.setParamFloat('ParamAngleY', -lookRef.current.y * 20 + swayY)
+            core.setParamFloat('ParamBodyAngleX', lookRef.current.x * 10 + swayX * 0.4)
+          }
           // emotion: map to ParamA
           if (emotionRef.current === 'tool') {
             model.internalModel.coreModel.setParamFloat('ParamA', 0.7)
@@ -120,7 +157,7 @@ export function Live2DModel({ url, mouthOpen = 0, lookAt = { x: 0, y: 0 }, isBli
         }
       } catch {}
     }
-      app.ticker.add(ticker)
+      app.ticker.add(ticker, undefined, PIXI.UPDATE_PRIORITY?.LOW ?? -10)
 
       const onResize = () => {
         const w = mount.clientWidth || 320
@@ -188,8 +225,10 @@ export function Live2DModel({ url, mouthOpen = 0, lookAt = { x: 0, y: 0 }, isBli
       return
     }
     doLoad(url)
+    return () => { loadIdRef.current += 1 }
 
     async function doLoad(targetUrl) {
+      loadIdRef.current += 1
       setStatus('loading')
       setLoadError('')
       const Factory = await ensureLive2D()
@@ -213,12 +252,20 @@ export function Live2DModel({ url, mouthOpen = 0, lookAt = { x: 0, y: 0 }, isBli
           model.anchor?.set?.(0.5, 0.5)
           app.stage.addChild(model)
         }
+        if (idleMotionRef.current) startIdleLoop(model)
         handleReady()
       } catch (err) {
         handleFail(err?.message || 'Failed to load Live2D model')
       }
     }
-  }, [handleFail, handleReady, url])
+  }, [handleFail, handleReady, startIdleLoop, url])
+
+  // Restart the Idle loop if motion was re-enabled while a model is loaded
+  useEffect(() => {
+    if (idleMotion && modelRef.current && !loopRunningRef.current) {
+      startIdleLoop(modelRef.current)
+    }
+  }, [idleMotion, startIdleLoop])
 
   // Studio zoom slider rescales the fitted model without reloading textures
   useEffect(() => {

@@ -96,6 +96,7 @@ export function EveAvatar({
             isBlinking={eye.isBlinking}
             emotion={emotion}
             zoom={zoom}
+            idleMotion={!reducedMotion}
             onReady={lifecycle.markReady}
           />
         </Suspense>
@@ -111,13 +112,14 @@ export function EveAvatar({
           emotion={emotion}
           zoom={zoom}
           autoRotate={autoRotate}
+          idleMotion={!reducedMotion}
           resetSignal={resetViewSignal}
           onReady={lifecycle.markReady}
           onError={lifecycle.markError}
         />
       </Suspense>
     )
-  }, [autoRotate, emotion, eye.isBlinking, eye.lookAt, lifecycle, lip.mouthOpen, model.url, resetViewSignal, resolvedRenderer, zoom])
+  }, [autoRotate, emotion, eye.isBlinking, eye.lookAt, lifecycle, lip.mouthOpen, model.url, reducedMotion, resetViewSignal, resolvedRenderer, zoom])
 
   return (
     <div
