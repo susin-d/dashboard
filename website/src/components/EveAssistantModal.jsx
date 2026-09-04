@@ -336,7 +336,7 @@ export function EveAssistantModal({ isOpen, onClose, onNavigate, onWorkspaceChan
             {/* ── Header ── */}
             <header className="eve-panel-header">
               <div className="eve-panel-heading">
-                <div className="eve-avatar" aria-hidden="true"><Bot size={22} /></div>
+                <div className="eve-panel-avatar" aria-hidden="true"><Bot size={22} /></div>
                 <div>
                   <h2 id={titleId}>Eve</h2>
                   <p id={descriptionId}>AI workspace assistant</p>

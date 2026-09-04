@@ -227,7 +227,7 @@
   gap: 12px;
 }
 
-.eve-avatar {
+.eve-panel-avatar {
   position: relative;
   display: grid;
   place-items: center;
@@ -239,7 +239,7 @@
   border-radius: 50%;
 }
 
-.eve-avatar::after {
+.eve-panel-avatar::after {
   content: '';
   position: absolute;
   inset: -3px;

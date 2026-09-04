@@ -16,10 +16,10 @@ html.dark-theme {
   --text-disabled: #52525b;
   --text-inverse: #09090b;
 
-  --color-primary: #f4f4f5;
-  --color-primary-hover: #e4e4e7;
+  --color-primary: #d4d4d8;
+  --color-primary-hover: #a1a1aa;
   --color-primary-light: #222222;
-  --color-foam: #ffffff;
+  --color-foam: #d4d4d8;
 
   --border-color: #27272a;
   --border-light: #1e1e1e;
@@ -30,13 +30,13 @@ html.dark-theme {
   --scrollbar-thumb: #52525b;
   --scrollbar-thumb-hover: #a1a1aa;
 
-  --color-accent: #f4f4f5;
+  --color-accent: #a1a1aa;
   --color-accent-light: #27272a;
-  --color-success: #f4f4f5;
+  --color-success: #a1a1aa;
   --color-success-light: #27272a;
   --color-warning: #a1a1aa;
   --color-warning-light: #27272a;
-  --color-danger: #f4f4f5;
+  --color-danger: #a1a1aa;
   --color-danger-light: #27272a;
   --color-purple: #a1a1aa;
   --color-purple-light: #27272a;
