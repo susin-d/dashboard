@@ -81,29 +81,24 @@ const UI_FETCH_DEBOUNCE_MS = 4000
 export function CustomUIProvider({ children }) {
   const { activePage } = useRouter()
   const prefsRef = useRef(readCachedPrefs())
+  const activePageRef = useRef(activePage)
+  activePageRef.current = activePage
   const [prefs, setPrefs] = useState(() => readCachedPrefs())
 
-  // Paint from localStorage on first paint so navigation is instant
+  // Paint from cache + re-apply stored overrides whenever the route changes.
+  // Local only — no network here so page navigation never triggers a fetch.
   useEffect(() => {
     if (prefsRef.current) applySnapshot(prefsRef.current, activePage)
   }, [activePage])
 
-  // Re-apply when activePage changes without refetch
-  useEffect(() => {
-    if (prefsRef.current) applySnapshot(prefsRef.current, activePage)
-  }, [activePage])
-
-  const applyPrefs = useCallback(
-    (nextPrefs) => {
-      prefsRef.current = nextPrefs
-      setPrefs(nextPrefs)
-      applySnapshot(nextPrefs, activePage)
-      try {
-        localStorage.setItem(CACHE_KEY, JSON.stringify(nextPrefs))
-      } catch {}
-    },
-    [activePage],
-  )
+  const applyPrefs = useCallback((nextPrefs) => {
+    prefsRef.current = nextPrefs
+    setPrefs(nextPrefs)
+    applySnapshot(nextPrefs, activePageRef.current)
+    try {
+      localStorage.setItem(CACHE_KEY, JSON.stringify(nextPrefs))
+    } catch {}
+  }, [])
 
   const refresh = useCallback(async ({ force = false } = {}) => {
     const now = Date.now()
@@ -111,7 +106,11 @@ export function CustomUIProvider({ children }) {
     lastUiFetchAt = now
     // Apply local cache immediately for first paint
     const cached = readCachedPrefs()
-    if (cached && !prefsRef.current) applySnapshot(cached, activePage)
+    if (cached && !prefsRef.current) {
+      prefsRef.current = cached
+      setPrefs(cached)
+      applySnapshot(cached, activePageRef.current)
+    }
     try {
       const res = await getUiPreferences()
       const next = res?.preferences
@@ -119,9 +118,11 @@ export function CustomUIProvider({ children }) {
     } catch {
       // silent — offline or not authed yet (request.js cache 120s makes re-hits free)
     }
-  }, [activePage, applyPrefs])
+  }, [applyPrefs])
 
-  // One fetch on mount / auth — not on every page change (fixed: previously refresh dep included activePage)
+  // One fetch on mount only — activePage changes re-apply locally via the
+  // effect above and must not re-fetch (previously refresh depended on
+  // activePage, so every navigation re-hit /ui/preferences).
   useEffect(() => {
     refresh()
   }, [refresh])

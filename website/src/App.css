@@ -37,6 +37,7 @@
    (App.css keeps only global tokens/components; page CSS is lazy via JS imports) */
 
 @import './styles/components/device-section.css';
+@import './styles/components/appearance-section.css';
 @import './styles/components/update-banner.css';
 
 /* Eve UI runtime overrides */

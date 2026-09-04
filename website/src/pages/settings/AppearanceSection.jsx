@@ -79,7 +79,6 @@ export function AppearanceSection() {
         window.dispatchEvent(new CustomEvent('eve-ui-update', { detail: { preferences: p } }))
       } else {
         await load()
-        window.location.reload()
       }
     } catch (err) {
       setError(err.message || 'Reset failed.')
@@ -132,34 +131,34 @@ export function AppearanceSection() {
     <SettingsSection id="settings-appearance" title="Appearance — Eve UI" icon={Palette} description="UI customizations made by Eve. Versioned, reversible, per-page.">
       <SettingsCard title="Current overrides" subtitle={`Version v${version}${hasOverrides ? ' · Eve has customized your UI' : ' · Default theme'}`}>
         {loading ? (
-          <p style={{ fontSize: 13, color: 'var(--text-muted)' }}>Loading…</p>
+          <p className="appearance-note">Loading…</p>
         ) : error ? (
-          <p style={{ fontSize: 13, color: 'var(--color-danger)' }}>{error}</p>
+          <p className="appearance-note-error">{error}</p>
         ) : !hasOverrides ? (
-          <p style={{ fontSize: 13, color: 'var(--text-muted)' }}>
+          <p className="appearance-note">
             No Eve overrides yet. Try asking Eve: “Make the cards more rounded” or “Create a custom page for my notes”.
           </p>
         ) : (
-          <div style={{ display: 'grid', gap: 12 }}>
+          <div className="appearance-stack">
             {Object.keys(globalTokens).length > 0 && (
               <div>
-                <strong style={{ fontSize: 12 }}>Global tokens</strong>
-                <pre style={{ marginTop: 6, background: 'var(--bg-tertiary)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)', padding: 10, fontSize: 11, overflow: 'auto' }}>
+                <strong className="appearance-label">Global tokens</strong>
+                <pre className="appearance-code">
                   {JSON.stringify(globalTokens, null, 2)}
                 </pre>
               </div>
             )}
             {globalCss && (
               <div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <strong style={{ fontSize: 12 }}>Global CSS</strong>
-                  <button type="button" onClick={() => setShowCss((v) => !v)} style={{ fontSize: 11, border: '1px solid var(--border-color)', borderRadius: 999, padding: '2px 8px', background: 'var(--bg-card)' }}>
-                    <Eye size={10} style={{ display: 'inline', marginRight: 4 }} />
+                <div className="appearance-row-head">
+                  <strong className="appearance-label">Global CSS</strong>
+                  <button type="button" onClick={() => setShowCss((v) => !v)} className="appearance-pill-btn" aria-expanded={showCss}>
+                    <Eye size={10} />
                     {showCss ? 'Hide' : 'Show'}
                   </button>
                 </div>
                 {showCss && (
-                  <pre style={{ marginTop: 6, background: 'var(--bg-tertiary)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)', padding: 10, fontSize: 11, overflow: 'auto', whiteSpace: 'pre-wrap' }}>
+                  <pre className="appearance-code appearance-code-wrap">
                     {globalCss}
                   </pre>
                 )}
@@ -167,18 +166,18 @@ export function AppearanceSection() {
             )}
             {Object.keys(pages).length > 0 && (
               <div>
-                <strong style={{ fontSize: 12 }}>Per-page overrides</strong>
-                <div style={{ display: 'grid', gap: 6, marginTop: 6 }}>
+                <strong className="appearance-label">Per-page overrides</strong>
+                <div className="appearance-list">
                   {Object.entries(pages).map(([page, val]) => (
-                    <div key={page} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)', padding: '8px 10px', background: 'var(--bg-card)' }}>
-                      <span style={{ fontSize: 12, fontWeight: 600 }}>{page}</span>
-                      <span style={{ fontSize: 11, color: 'var(--text-muted)', flex: 1, marginLeft: 8, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    <div key={page} className="appearance-row">
+                      <span className="appearance-row-name">{page}</span>
+                      <span className="appearance-row-meta">
                         {val?.tokens ? `${Object.keys(val.tokens).length} tokens` : ''}
                         {val?.css ? ' · CSS' : ''}
                         {val?.visibility ? ' · visibility' : ''}
                         {val?.type === 'custom_page' ? ` · ${val.title}` : ''}
                       </span>
-                      <button type="button" disabled={busy} onClick={() => handleResetPage(page)} style={{ fontSize: 11, border: '1px solid var(--border-color)', borderRadius: 999, padding: '4px 8px', background: 'var(--bg-card)', cursor: 'pointer' }}>
+                      <button type="button" disabled={busy} onClick={() => handleResetPage(page)} className="appearance-pill-btn">
                         Reset
                       </button>
                     </div>
@@ -186,8 +185,8 @@ export function AppearanceSection() {
                 </div>
               </div>
             )}
-            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-              <button type="button" disabled={busy} onClick={handleResetGlobal} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, border: '1px solid var(--border-color)', borderRadius: 999, padding: '8px 14px', background: 'var(--bg-card)', fontWeight: 600, fontSize: 12, cursor: 'pointer' }}>
+            <div className="appearance-actions">
+              <button type="button" disabled={busy} onClick={handleResetGlobal} className="appearance-primary-btn">
                 <RotateCcw size={12} /> {busy ? 'Resetting…' : 'Reset all to default'}
               </button>
             </div>
@@ -197,17 +196,17 @@ export function AppearanceSection() {
 
       <SettingsCard title="Version history" subtitle={`Last ${history.length} versions — click Restore to undo`}>
         {history.length === 0 ? (
-          <p style={{ fontSize: 13, color: 'var(--text-muted)' }}>No history yet.</p>
+          <p className="appearance-note">No history yet.</p>
         ) : (
-          <div style={{ display: 'grid', gap: 6, maxHeight: 280, overflow: 'auto', paddingRight: 4 }}>
+          <div className="appearance-history">
             {[...history].reverse().map((h) => (
-              <div key={h.version} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)', padding: '8px 10px', background: h.version === version ? 'var(--bg-tertiary)' : 'var(--bg-card)' }}>
-                <span style={{ fontSize: 12 }}>
+              <div key={h.version} className={`appearance-row${h.version === version ? ' appearance-row-active' : ''}`}>
+                <span className="appearance-label">
                   <strong>v{h.version}</strong> · {h.cause || 'update'} ·{' '}
-                  <span style={{ color: 'var(--text-muted)', fontSize: 11 }}>{h.at ? new Date(h.at).toLocaleString() : ''}</span>
+                  <span className="appearance-row-time">{h.at ? new Date(h.at).toLocaleString() : ''}</span>
                 </span>
-                <button type="button" disabled={busy || h.version === version} onClick={() => handleRestore(h.version)} style={{ fontSize: 11, border: '1px solid var(--border-color)', borderRadius: 999, padding: '4px 8px', background: 'var(--bg-card)', cursor: h.version === version ? 'default' : 'pointer', opacity: h.version === version ? 0.5 : 1 }}>
-                  <History size={10} style={{ display: 'inline', marginRight: 4 }} />Restore
+                <button type="button" disabled={busy || h.version === version} onClick={() => handleRestore(h.version)} className="appearance-pill-btn">
+                  <History size={10} />Restore
                 </button>
               </div>
             ))}
