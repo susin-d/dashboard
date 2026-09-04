@@ -113,13 +113,22 @@
 
 .model-selector-search-input {
   flex: 1;
-  background: transparent;
-  border: none;
-  outline: none;
+  min-width: 0;
+  width: auto;
+  min-height: 0;
+  background: transparent !important;
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
   font-size: 12px;
   line-height: 1.4;
   color: var(--text-primary);
-  padding: 0;
+}
+
+.model-selector-search-box:focus-within {
+  background: var(--bg-hover);
 }
 
 .model-selector-search-input::placeholder {
