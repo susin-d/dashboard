@@ -16,6 +16,24 @@ async function ensureLive2D() {
   if (Live2DFactory) return Live2DFactory
   const PIXI = await ensurePixi()
   void PIXI
+  // Cubism 4 models need the proprietary core (window.Live2DCubismCore),
+  // shipped at /live2d/live2dcubismcore.min.js and preloaded via index.html.
+  // If the preload missed (cached HTML, offline first run), inject it on demand.
+  if (typeof window !== 'undefined' && !window.Live2DCubismCore) {
+    try {
+      await new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = '/live2d/live2dcubismcore.min.js'
+        script.async = true
+        script.onload = () => resolve()
+        script.onerror = () => reject(new Error('Live2D core script failed to load'))
+        document.head.appendChild(script)
+      })
+    } catch {
+      return null
+    }
+  }
+  if (typeof window !== 'undefined' && !window.Live2DCubismCore) return null
   try {
     const mod = await import('pixi-live2d-display/cubism4')
     Live2DFactory = mod.Live2DModel

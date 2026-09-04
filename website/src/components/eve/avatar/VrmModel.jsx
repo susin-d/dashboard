@@ -42,6 +42,7 @@ export function VrmModel({ url, mouthOpen = 0, lookAt = { x: 0, y: 0 }, isBlinki
   const lookRef = useRef({ x: 0, y: 0 })
   const blinkRef = useRef(false)
   const emotionRef = useRef(emotion)
+  const yawRef = useRef(0)
   const [status, setStatus] = useState('loading')
   const [loadError, setLoadError] = useState('')
 
@@ -145,6 +146,8 @@ export function VrmModel({ url, mouthOpen = 0, lookAt = { x: 0, y: 0 }, isBlinki
       // VRM update
       const vrm = vrmRef.current
       if (vrm) {
+        // user orbit (drag) — yaw applied every frame so loads and drags agree
+        vrm.scene.rotation.y = yawRef.current
         // mouth: map to VRM blendShapes (aa, ih, ee, oh) and jaw
         const mouth = MathUtils.clamp(mouthRef.current, 0, 1)
         // smooth
@@ -205,12 +208,40 @@ export function VrmModel({ url, mouthOpen = 0, lookAt = { x: 0, y: 0 }, isBlinki
     const ro = new ResizeObserver(onResize)
     ro.observe(mount)
 
+    // Drag-to-rotate: horizontal drag orbits the model so the user can turn
+    // it to face them. Session-only yaw; resets on remount.
+    mount.style.touchAction = 'none'
+    mount.style.cursor = 'grab'
+    let dragX = null
+    const onPointerDown = (event) => {
+      dragX = event.clientX
+      mount.style.cursor = 'grabbing'
+      try { mount.setPointerCapture(event.pointerId) } catch {}
+    }
+    const onPointerMove = (event) => {
+      if (dragX === null) return
+      yawRef.current += (event.clientX - dragX) * 0.008
+      dragX = event.clientX
+    }
+    const onPointerUp = () => {
+      dragX = null
+      mount.style.cursor = 'grab'
+    }
+    mount.addEventListener('pointerdown', onPointerDown)
+    mount.addEventListener('pointermove', onPointerMove)
+    mount.addEventListener('pointerup', onPointerUp)
+    mount.addEventListener('pointercancel', onPointerUp)
+
     return () => {
       cancelAnimationFrame(rafRef.current)
       rafRef.current = 0
       ro.disconnect()
       visibilityObserver.disconnect()
       document.removeEventListener('visibilitychange', onVisibility)
+      mount.removeEventListener('pointerdown', onPointerDown)
+      mount.removeEventListener('pointermove', onPointerMove)
+      mount.removeEventListener('pointerup', onPointerUp)
+      mount.removeEventListener('pointercancel', onPointerUp)
       try { mount.removeChild(renderer.domElement) } catch {}
       renderer.dispose()
       if (vrmRef.current) {
@@ -272,10 +303,17 @@ export function VrmModel({ url, mouthOpen = 0, lookAt = { x: 0, y: 0 }, isBlinki
             handleFail('Not a valid VRM — showing fallback')
             return
           }
-          // optimize
+          // optimize: combine skinned-mesh skeletons (fewer bone-matrix
+          // calculations per frame); fall back to the legacy joint trimmer
+          // on older three-vrm runtimes.
           VRMUtils.removeUnnecessaryVertices(gltf.scene)
-          VRMUtils.removeUnnecessaryJoints(gltf.scene)
-          vrm.scene.rotation.y = Math.PI
+          if (typeof VRMUtils.combineSkeletons === 'function') {
+            VRMUtils.combineSkeletons(gltf.scene)
+          } else if (typeof VRMUtils.removeUnnecessaryJoints === 'function') {
+            VRMUtils.removeUnnecessaryJoints(gltf.scene)
+          }
+          // VRM faces +Z by spec — no yaw offset so the model faces the camera.
+          vrm.scene.rotation.y = yawRef.current
           // add to scene
           const scene = sceneRef.current
           if (scene) {

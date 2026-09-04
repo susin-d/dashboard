@@ -4,7 +4,7 @@ Bundled example models for Eve Avatar (ADR 0012). Real rendering via `three` + `
 
 ## VRM (3D) — `three` + `GLTFLoader` + `VRMLoaderPlugin` + `VRMUtils` — **anime default downloaded**
 
-- `vrm/eve-anime.vrm` / `eve-mono.vrm` / `eve-duo.vrm` — **Anime VRM 10.28 MB** (`VRM1_Constraint_Twist_Sample.vrm` from `pixiv/three-vrm@dev`, via `cdn.jsdelivr.net/gh/pixiv/three-vrm`) — real humanoid rig + `VRMC_vrm` blendShapes, `VRMUtils.removeUnnecessaryVertices/Joints`, `humanoid.getNormalizedBoneNode('head')` lookAt. All three are copies of same anime VRM (mono/duo/anime labels for UI). Previously `Box.glb` 1664b placeholder; now replaced.
+- `vrm/eve-anime.vrm` / `eve-mono.vrm` / `eve-duo.vrm` — **Anime VRM 10.28 MB** (`VRM1_Constraint_Twist_Sample.vrm` from `pixiv/three-vrm@dev`, via `cdn.jsdelivr.net/gh/pixiv/three-vrm`) — real humanoid rig + `VRMC_vrm` blendShapes, `VRMUtils.removeUnnecessaryVertices` + `combineSkeletons`, `humanoid.getNormalizedBoneNode('head')` lookAt. All three are copies of same anime VRM (mono/duo/anime labels for UI). Previously `Box.glb` 1664b placeholder; now replaced.
 - `scripts/fetch-avatar-models.ps1` and `scripts/generate-default-vrm.mjs` kept for regeneration.
 
 ## Live2D (Cubism) — `pixi.js` 7 + `pixi-live2d-display/cubism4` — **anime default downloaded**
@@ -12,6 +12,7 @@ Bundled example models for Eve Avatar (ADR 0012). Real rendering via `three` + `
 - `live2d/haru/haru_greeter_t03.model3.json` + `haru_greeter_t03.moc3` (0.37MB) + `haru_greeter_t03.2048/texture_00.png` (1.46MB) + `texture_01.png` (1.13MB) + `physics3.json` + `pose3.json` — **Haru Greeter anime Live2D** (from `guansss/pixi-live2d-display/test/assets/haru`, via `cdn.jsdelivr.net`) — real `ParamMouthOpenY`/`ParamEyeLOpen/R`/`ParamAngleX/Y`/`ParamBodyAngleX` driven by `Live2DModel.jsx`.
 - `live2d/haru/Haru.model3.json` — minimal stub (kept for fallback).
 - `live2d/unitychan/unitychan.model3.json` — UnityChan (UnityChan License) stub.
+- `../live2d/live2dcubismcore.min.js` — Live2D Cubism 4 runtime core (© Live2D Inc., marked Redistributable Code, from `cubism.live2d.com/sdk-web/cubismcore/`) — **required** by `pixi-live2d-display/cubism4`; without it every Live2D model falls back. Preloaded in `index.html`, re-injected on demand by `Live2DModel.jsx` if the preload missed.
 
 ## Adding your own
 
