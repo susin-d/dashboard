@@ -1,7 +1,8 @@
 /* Appearance (Eve UI) settings section — replaces inline styles */
-.appearance-note { font-size: 13px; color: var(--text-muted); }
-.appearance-note-error { font-size: 13px; color: var(--color-danger); }
-.appearance-stack { display: grid; gap: 12px; }
+/* Bodies carry their own spacing: settings-card-body provides none. */
+.appearance-note { margin: var(--space-sm) var(--space-md) var(--space-md); font-size: 13px; color: var(--text-muted); }
+.appearance-note-error { margin: var(--space-sm) var(--space-md) var(--space-md); font-size: 13px; color: var(--color-danger); }
+.appearance-stack { display: grid; gap: 12px; margin: var(--space-sm) var(--space-md) var(--space-md); }
 .appearance-label { font-size: 12px; }
 .appearance-code {
   margin-top: 6px;
@@ -62,4 +63,4 @@
   cursor: pointer;
 }
 .appearance-primary-btn:disabled { opacity: 0.6; cursor: default; }
-.appearance-history { display: grid; gap: 6px; max-height: 280px; overflow: auto; padding-right: 4px; }
+.appearance-history { display: grid; gap: 6px; max-height: 280px; overflow: auto; margin: var(--space-sm) var(--space-md) var(--space-md); padding-right: 4px; }

@@ -129,7 +129,7 @@ export function AppearanceSection() {
 
   return (
     <SettingsSection id="settings-appearance" title="Appearance — Eve UI" icon={Palette} description="UI customizations made by Eve. Versioned, reversible, per-page.">
-      <SettingsCard title="Current overrides" subtitle={`Version v${version}${hasOverrides ? ' · Eve has customized your UI' : ' · Default theme'}`}>
+      <SettingsCard title="Current overrides" description={`Version v${version}${hasOverrides ? ' · Eve has customized your UI' : ' · Default theme'}`}>
         {loading ? (
           <p className="appearance-note">Loading…</p>
         ) : error ? (
@@ -194,7 +194,7 @@ export function AppearanceSection() {
         )}
       </SettingsCard>
 
-      <SettingsCard title="Version history" subtitle={`Last ${history.length} versions — click Restore to undo`}>
+      <SettingsCard title="Version history" description={`Last ${history.length} versions — click Restore to undo`}>
         {history.length === 0 ? (
           <p className="appearance-note">No history yet.</p>
         ) : (
