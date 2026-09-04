@@ -4,7 +4,7 @@ import { CustomDropdown } from '../../components/ui/CustomDropdown'
 import { SettingsCard } from '../../components/ui/SettingsCard'
 import { SettingsSection } from '../../components/ui/SettingsSection'
 import { EveInlineAvatar } from '../../components/eve/avatar/EveInlineAvatar'
-import { AVATAR_CATALOG, AVATAR_RENDERERS } from '../../components/eve/avatar/avatarConstants'
+import { AVATAR_CATALOG, AVATAR_LIMITS, AVATAR_RENDERERS } from '../../components/eve/avatar/avatarConstants'
 import { useEveAvatar } from '../../components/eve/avatar/EveAvatarProvider'
 import { getAvatarPreferences, listAvatarModels, saveAvatarPreferences, uploadAvatarModel, deleteAvatarModel } from '../../lib/eveAvatarApi'
 import { useThemeCustomizer } from '../../hooks/useThemeCustomizer'
@@ -21,6 +21,10 @@ const MOTION_OPTIONS = [
   { value: 'reduced', label: 'Reduced' },
 ]
 
+const SAVE_MESSAGE_TIMEOUT_MS = 2200
+const UPLOAD_MESSAGE_TIMEOUT_MS = 2500
+const SCALE_SAVE_DEBOUNCE_MS = 350
+
 export function EveAvatarSection() {
   const { prefs, setPrefs, activeModel } = useEveAvatar()
   const { activePreset } = useThemeCustomizer() || {}
@@ -30,22 +34,28 @@ export function EveAvatarSection() {
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
   const fileRef = useRef(null)
+  const scaleSaveTimeoutRef = useRef(0)
 
   useEffect(() => {
     let cancelled = false
     const load = async () => {
       try {
-        const res = await getAvatarPreferences().catch(() => null)
-        if (!cancelled && res?.preferences) {
-          setPrefs(res.preferences)
-        }
-        const models = await listAvatarModels().catch(() => null)
-        if (!cancelled && models?.models) setRemoteModels(models.models)
-      } catch {}
+        const [prefRes, modelRes] = await Promise.all([
+          getAvatarPreferences().catch(() => null),
+          listAvatarModels().catch(() => null),
+        ])
+        if (cancelled) return
+        if (prefRes?.preferences) setPrefs(prefRes.preferences)
+        if (modelRes?.models) setRemoteModels(modelRes.models)
+      } catch {
+        if (!cancelled) setError('Could not load avatar settings.')
+      }
     }
     load()
     return () => { cancelled = true }
   }, [setPrefs])
+
+  useEffect(() => () => window.clearTimeout(scaleSaveTimeoutRef.current), [])
 
   const persist = async (patch) => {
     setBusy(true)
@@ -57,12 +67,29 @@ export function EveAvatarSection() {
       const res = await saveAvatarPreferences(next)
       if (res?.preferences) setPrefs(res.preferences)
       setMessage('Avatar preferences saved.')
-      setTimeout(() => setMessage(''), 2200)
+      setTimeout(() => setMessage(''), SAVE_MESSAGE_TIMEOUT_MS)
     } catch (err) {
       setError(err?.message || 'Could not save preferences.')
     } finally {
       setBusy(false)
     }
+  }
+
+  const persistScale = (scale) => {
+    const next = { ...prefs, scale }
+    setPrefs(next)
+    setError('')
+    window.clearTimeout(scaleSaveTimeoutRef.current)
+    scaleSaveTimeoutRef.current = window.setTimeout(async () => {
+      try {
+        const res = await saveAvatarPreferences(next)
+        if (res?.preferences) setPrefs(res.preferences)
+        setMessage('Avatar preferences saved.')
+        setTimeout(() => setMessage(''), SAVE_MESSAGE_TIMEOUT_MS)
+      } catch (err) {
+        setError(err?.message || 'Could not save preferences.')
+      }
+    }, SCALE_SAVE_DEBOUNCE_MS)
   }
 
   const handleUpload = async (event) => {
@@ -75,7 +102,7 @@ export function EveAvatarSection() {
       event.target.value = ''
       return
     }
-    if (file.size > 12 * 1024 * 1024) {
+    if (file.size > AVATAR_LIMITS.UPLOAD_MAX_BYTES) {
       setError('File too large — max 12MB.')
       event.target.value = ''
       return
@@ -91,7 +118,7 @@ export function EveAvatarSection() {
       const models = await listAvatarModels().catch(() => null)
       if (models?.models) setRemoteModels(models.models)
       setMessage(`Uploaded ${file.name} — validated.`)
-      setTimeout(() => setMessage(''), 2500)
+      setTimeout(() => setMessage(''), UPLOAD_MESSAGE_TIMEOUT_MS)
     } catch (err) {
       setError(err?.message || 'Upload failed — check file and try again.')
     } finally {
@@ -128,7 +155,7 @@ export function EveAvatarSection() {
         title="Avatar presence"
         description="Toggle everywhere vs inline only. Global dock is draggable — drag the header pill."
         actions={
-          <label className=" eve-avatar-toggle">
+          <label className="eve-avatar-toggle">
             <input type="checkbox" checked={prefs?.enabled !== false} onChange={(e) => persist({ enabled: e.target.checked })} disabled={busy} />
             <span>{prefs?.enabled !== false ? 'Enabled' : 'Disabled'}</span>
           </label>
@@ -172,7 +199,7 @@ export function EveAvatarSection() {
                 max="1.2"
                 step="0.05"
                 value={prefs?.scale ?? 1}
-                onChange={(e) => persist({ scale: Number(e.target.value) })}
+                onChange={(e) => persistScale(Number(e.target.value))}
                 disabled={busy}
                 aria-label="Avatar scale"
               />
@@ -205,25 +232,30 @@ export function EveAvatarSection() {
         <div className="eve-avatar-model-grid">
           {allModels.map((model) => {
             const active = (prefs?.modelId || activeModel?.id) === model.id
+            const selectModel = () => persist({ modelId: model.id, modelUrl: model.url || null, renderer: model.renderer === 'live2d' ? AVATAR_RENDERERS.LIVE2D : model.renderer === 'vrm' ? AVATAR_RENDERERS.VRM : undefined })
             return (
-              <button
-                key={model.id}
-                type="button"
-                className={`eve-avatar-model-card ${active ? 'is-active' : ''}`}
-                onClick={() => persist({ modelId: model.id, modelUrl: model.url || null, renderer: model.renderer === 'live2d' ? AVATAR_RENDERERS.LIVE2D : model.renderer === 'vrm' ? AVATAR_RENDERERS.VRM : undefined })}
-                disabled={busy}
-                aria-pressed={active}
-              >
-                <span className="eve-avatar-model-thumb" aria-hidden="true"><GlassWater size={18} /></span>
-                <span className="eve-avatar-model-label">{model.label}</span>
-                <small className="eve-avatar-model-meta">{model.renderer} • {model.id.startsWith('upload:') ? 'uploaded' : 'example'}</small>
-                <small className="eve-avatar-model-attrib">{model.attribution}</small>
-                {model.id.startsWith('upload:') ? (
-                  <span className="eve-avatar-model-delete" onClick={(e) => { e.stopPropagation(); handleDelete(model.id) }} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter') handleDelete(model.id) }} title="Delete uploaded model">
-                    <Trash2 size={12} /> Delete
+              <div key={model.id} className={`eve-avatar-model-card ${active ? 'is-active' : ''}`}>
+                <button
+                  type="button"
+                  className="eve-avatar-model-select"
+                  onClick={selectModel}
+                  disabled={busy}
+                  aria-pressed={active}
+                  aria-label={`Use ${model.label}`}
+                >
+                  <span className="eve-avatar-model-head">
+                    <span className="eve-avatar-model-thumb" aria-hidden="true"><GlassWater size={18} /></span>
+                    <span className="eve-avatar-model-label" title={model.label}>{model.label}</span>
                   </span>
+                  <small className="eve-avatar-model-meta">{model.renderer} • {model.id.startsWith('upload:') ? 'uploaded' : 'example'}</small>
+                  <small className="eve-avatar-model-attrib">{model.attribution}</small>
+                </button>
+                {model.id.startsWith('upload:') ? (
+                  <button type="button" className="eve-avatar-model-delete" onClick={() => handleDelete(model.id)} disabled={busy} title={`Delete ${model.label}`}>
+                    <Trash2 size={12} /> Delete
+                  </button>
                 ) : null}
-              </button>
+              </div>
             )
           })}
         </div>

@@ -37,16 +37,22 @@ export function EveGlobalCompanion({
     if (isAvatarStudio && expanded) setExpanded(false)
   }, [expanded])
 
-  // Auto-minimize when inline avatar in viewport
+  // Auto-minimize when inline avatar in viewport. Inline avatars mount
+  // late (route changes, async prefs), so re-scan on DOM mutations —
+  // a one-time query misses them and the companion overlaps settings.
   useEffect(() => {
     const observer = new IntersectionObserver((entries) => {
       const visible = entries.some((e) => e.isIntersecting)
       inlineVisibleRef.current = visible
       if (visible && expanded) setExpanded(false)
     }, { threshold: 0.2 })
-    const candidates = document.querySelectorAll('[data-eve-target="eve-avatar"]')
-    candidates.forEach((el) => observer.observe(el))
-    return () => observer.disconnect()
+    const observeAll = () => {
+      document.querySelectorAll('[data-eve-target="eve-avatar"]').forEach((el) => observer.observe(el))
+    }
+    observeAll()
+    const mutations = new MutationObserver(observeAll)
+    mutations.observe(document.body, { childList: true, subtree: true })
+    return () => { mutations.disconnect(); observer.disconnect() }
   }, [expanded])
 
   const handlePointerDown = useCallback((event) => {
