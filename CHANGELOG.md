@@ -2,6 +2,9 @@
 
 Historical implementation log extracted from `context.md`. `context.md` now holds the **current snapshot** only; this file preserves the full chronological history for audit.
 
+## 2026-09-04 — Neutral Gray mono theme preset
+- `website/src/styles/themes/gray.css` + `presets.js`: balanced true-neutral gray theme with pure grayscale surfaces (26 presets total).
+
 ## 2026-08-26 — Security Phase 5 — RLS SET LOCAL + pip harden
 - `core/rls.py` `set_rls_user` (SET LOCAL app.current_user_id) wired into `sql/base.py` generic handlers
 - `studio/commands.py` hardened: `pip --no-build-isolation` + `npx/pnpm --ignore-scripts` + extended npm/yarn allowlist
