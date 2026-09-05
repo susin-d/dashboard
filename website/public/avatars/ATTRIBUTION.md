@@ -9,7 +9,7 @@ Bundled example models for Eve Avatar (ADR 0012). Real rendering via `three` + `
 
 ## Live2D (Cubism) — `pixi.js` 7 + `pixi-live2d-display/cubism4` — **anime default downloaded**
 
-- `live2d/haru/haru_greeter_t03.model3.json` + `haru_greeter_t03.moc3` (0.37MB) + `haru_greeter_t03.2048/texture_00.png` (1.46MB) + `texture_01.png` (1.13MB) + `physics3.json` + `pose3.json` — **Haru Greeter anime Live2D** (from `guansss/pixi-live2d-display/test/assets/haru`, via `cdn.jsdelivr.net`) — real `ParamMouthOpenY`/`ParamEyeLOpen/R`/`ParamAngleX/Y`/`ParamBodyAngleX` driven by `Live2DModel.jsx`.
+- `live2d/haru/haru_greeter_t03.model3.json` + `haru_greeter_t03.moc3` (0.37MB) + `haru_greeter_t03.2048/texture_00.png` (1.46MB) + `texture_01.png` (1.13MB) + `physics3.json` + `pose3.json` + `motion/` (5 Idle/Tap `.motion3.json`) + `expressions/` (8 `.exp3.json`) — **Haru Greeter anime Live2D** (from `guansss/pixi-live2d-display/test/assets/haru`, via `cdn.jsdelivr.net`) — real `ParamMouthOpenY`/`ParamEyeLOpen/R`/`ParamAngleX/Y`/`ParamBodyAngleX` driven by `Live2DModel.jsx`. No `cdi3.json` upstream (optional metadata, loads without it); Tap sounds skipped (optional).
 - `live2d/haru/Haru.model3.json` — minimal stub (kept on disk for manual testing, not listed — loader falls back gracefully).
 - `live2d/unitychan/unitychan.model3.json` — UnityChan (UnityChan License) stub (kept on disk, not listed — textures absent so it falls back).
 - `../live2d/live2dcubismcore.min.js` — Live2D Cubism 4 runtime core (© Live2D Inc., marked Redistributable Code, from `cubism.live2d.com/sdk-web/cubismcore/`) — **required** by `pixi-live2d-display/cubism4`; without it every Live2D model falls back. Preloaded in `index.html`, re-injected on demand by `Live2DModel.jsx` if the preload missed.
