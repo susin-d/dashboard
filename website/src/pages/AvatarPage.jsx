@@ -245,12 +245,12 @@ export function AvatarPage({ onNavigate }) {
             </div>
           </SettingsCard>
 
-          <SettingsCard icon={<Sparkles size={16} />} title="Appearance" description="Auto respects WebGL2 + memory + prefers-reduced-motion.">
+          <SettingsCard icon={<Sparkles size={16} />} title="Appearance" description="Renderer, motion, widget scale, camera and orbit.">
             <div className="avatar-form-grid">
               <div className="form-row">
                 <label className="form-label">Renderer</label>
                 <CustomDropdown options={RENDERER_OPTIONS} value={prefs?.renderer || 'auto'} onChange={(v) => persist({ renderer: v })} placeholder="Auto" />
-                <small className="form-hint">VRM 3D on desktop, Live2D on mobile.</small>
+                <small className="form-hint">VRM 3D on desktop, Live2D on mobile. Auto respects WebGL2 + memory + prefers-reduced-motion.</small>
               </div>
               <div className="form-row">
                 <label className="form-label">Motion</label>
@@ -260,11 +260,8 @@ export function AvatarPage({ onNavigate }) {
                 <label className="form-label" htmlFor="avatar-scale">Scale {(prefs?.scale ?? 1).toFixed(2)}×</label>
                 <input id="avatar-scale" className="avatar-scale-input" type="range" min="0.8" max="1.2" step="0.05" value={prefs?.scale ?? 1} onChange={(e) => persistScale(Number(e.target.value))} disabled={busy} aria-label="Avatar scale" />
               </div>
-            </div>
-          </SettingsCard>
-
-          <SettingsCard icon={<Orbit size={16} />} title="Model view" description="Zoom the camera and orbit the model. Drag the preview to rotate; Reset view straightens it.">
-            <div className="avatar-form-grid">
+              <div className="avatar-form-divider" aria-hidden="true" />
+              <p className="avatar-form-subtitle">Camera & orbit</p>
               <div className="form-row">
                 <label className="form-label" htmlFor="avatar-zoom">Zoom {(prefs?.zoom ?? 1).toFixed(2)}×</label>
                 <input id="avatar-zoom" className="avatar-zoom-input" type="range" min="0.5" max="2" step="0.05" value={prefs?.zoom ?? 1} onChange={(e) => persistZoom(Number(e.target.value))} disabled={busy} aria-label="Model zoom" />
@@ -272,7 +269,7 @@ export function AvatarPage({ onNavigate }) {
               </div>
               <div className="form-row">
                 <label className="avatar-toggle"><input type="checkbox" checked={prefs?.autoRotate === true} onChange={(e) => persist({ autoRotate: e.target.checked })} disabled={busy} /> <Orbit size={14} /> Auto-rotate turntable</label>
-                <small className="form-hint">Slow orbit when idle (3D only, off with reduced motion).</small>
+                <small className="form-hint">Slow orbit when idle (3D only, off with reduced motion). Drag the preview to rotate; Reset view straightens it.</small>
               </div>
               <div className="form-row">
                 <button type="button" className="btn-secondary" onClick={handleResetView} disabled={busy}><RotateCcw size={14} /> Reset view</button>
