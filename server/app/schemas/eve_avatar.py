@@ -8,7 +8,7 @@ from pydantic import BaseModel, Field
 class EveAvatarPrefs(BaseModel):
     enabled: bool = True
     renderer: str = Field(default="auto", pattern="^(auto|vrm|live2d)$")
-    modelId: str = Field(default="eve-mono-vrm", max_length=120)
+    modelId: str = Field(default="eve-anime-vrm", max_length=120)
     modelUrl: str | None = Field(default=None, max_length=1000)
     scale: float = Field(default=1.0, ge=0.8, le=1.2)
     zoom: float = Field(default=1.0, ge=0.5, le=2.0)

@@ -45,7 +45,7 @@ export const AVATAR_DEFAULTS = {
 
 export const ALLOWED_EXTS = ['.vrm', '.glb', '.gltf', '.model3.json', '.zip']
 
-// Bundled — lightweight procedural default + heavy anime opt-in
+// Bundled — one entry per unique model file (procedural + heavy anime opt-ins)
 export const AVATAR_CATALOG = [
   {
     id: 'procedural-light',
@@ -66,24 +66,6 @@ export const AVATAR_CATALOG = [
     tags: ['anime', 'vrm', 'heavy'],
   },
   {
-    id: 'eve-mono-vrm',
-    label: 'Eve Mono (VRM)',
-    renderer: AVATAR_RENDERERS.VRM,
-    url: '/avatars/vrm/eve-anime.vrm',
-    thumb: '/avatars/vrm/eve-mono-thumb.jpg',
-    attribution: 'Same anime VRM (mono tint via CSS) — deduplicated to eve-anime.vrm 10.3MB',
-    tags: ['mono', 'vrm', 'example'],
-  },
-  {
-    id: 'eve-duo-vrm',
-    label: 'Eve Duo (VRM)',
-    renderer: AVATAR_RENDERERS.VRM,
-    url: '/avatars/vrm/eve-anime.vrm',
-    thumb: '/avatars/vrm/eve-duo-thumb.jpg',
-    attribution: 'Same anime VRM (duo tint via var(--color-primary)) — deduplicated',
-    tags: ['duo', 'vrm', 'example'],
-  },
-  {
     id: 'haru-greeter-live2d',
     label: 'Haru Greeter (Live2D Anime)',
     renderer: AVATAR_RENDERERS.LIVE2D,
@@ -91,24 +73,6 @@ export const AVATAR_CATALOG = [
     thumb: '/avatars/live2d/haru/thumb.jpg',
     attribution: 'Live2D Cubism 4 Haru Greeter (pixi-live2d-display, 0.37MB moc3 + 2.7MB textures) — real anime',
     tags: ['anime', 'live2d', 'default'],
-  },
-  {
-    id: 'haru-live2d',
-    label: 'Haru (Live2D stub)',
-    renderer: AVATAR_RENDERERS.LIVE2D,
-    url: '/avatars/live2d/haru/Haru.model3.json',
-    thumb: '/avatars/live2d/haru/thumb.jpg',
-    attribution: 'Stub — prefers haru_greeter_t03; fallback if textures missing',
-    tags: ['live2d', 'example'],
-  },
-  {
-    id: 'unitychan-live2d',
-    label: 'Unitychan (Live2D)',
-    renderer: AVATAR_RENDERERS.LIVE2D,
-    url: '/avatars/live2d/unitychan/unitychan.model3.json',
-    thumb: '/avatars/live2d/unitychan/thumb.jpg',
-    attribution: 'UnityChan License — example only',
-    tags: ['live2d', 'example'],
   },
 ]
 

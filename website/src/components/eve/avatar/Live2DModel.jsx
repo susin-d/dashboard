@@ -233,21 +233,8 @@ export function Live2DModel({ url, mouthOpen = 0, lookAt = { x: 0, y: 0 }, isBli
       handleReady()
       return
     }
-    // placeholder check
-    if (url === '/avatars/live2d/haru/Haru.model3.json' || url === '/avatars/live2d/unitychan/unitychan.model3.json') {
-      fetch(url, { method: 'HEAD' }).then((r) => {
-        if (!r.ok) {
-          setStatus('fallback')
-          handleReady()
-        } else {
-          doLoad(url)
-        }
-      }).catch(() => {
-        setStatus('fallback')
-        handleReady()
-      })
-      return
-    }
+    // Unlisted stub files stay on disk for manual testing — load them like
+    // any other URL; the loader error path falls back to the CSS avatar.
     doLoad(url)
     return () => { loadIdRef.current += 1 }
 

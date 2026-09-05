@@ -1,6 +1,6 @@
 import "../styles/pages/avatar.css"
 import { useEffect, useRef, useState } from 'react'
-import { Bot, Eye, GlassWater, Heart, Maximize2, Mic, Monitor, Move, Orbit, RotateCcw, Settings2, Sparkles, TestTube, Upload, Trash2, Smartphone, Zap } from 'lucide-react'
+import { Bot, Eye, GlassWater, Heart, Mic, Monitor, Move, Orbit, RotateCcw, Settings2, Sparkles, TestTube, Upload, Trash2, Smartphone, Zap } from 'lucide-react'
 import { PageHeader, EmptyState, CustomDropdown } from '../components/ui'
 import { SettingsCard } from '../components/ui/SettingsCard'
 import { EveAvatar } from '../components/eve/avatar/EveAvatar'
@@ -292,7 +292,7 @@ export function AvatarPage({ onNavigate }) {
         </div>
       </div>
 
-      <SettingsCard icon={<GlassWater size={16} />} title="Model library" description="6 bundled anime defaults (3× VRM 10MB + Haru Greeter 3MB). Uploaded models appear here with delete.">
+      <SettingsCard icon={<GlassWater size={16} />} title="Model library" description="3 bundled defaults (Procedural + Eve Anime VRM 10MB + Haru Greeter Live2D 3MB). Uploaded models appear here with delete.">
         <div className="avatar-model-grid">
           {allModels.length === 0 && <EmptyState title="No models" description="Bundled models failed to load." />}
           {allModels.map((model) => {
@@ -313,17 +313,6 @@ export function AvatarPage({ onNavigate }) {
             )
           })}
         </div>
-      </SettingsCard>
-
-      <SettingsCard icon={<Maximize2 size={16} />} title="How it works" description="Auto theme + lip-sync.">
-        <ul className="avatar-help-list">
-          <li><strong>Auto renderer:</strong> probes WebGL2 + `navigator.deviceMemory` + url ext; 8s timeout → orb fallback (never blank).</li>
-          <li><strong>Auto tint:</strong> `avatarTokens` maps 25 presets — mono keeps monochrome, duo/spectrum accent → `var(--color-primary)` one hue (ADR 0011).</li>
-          <li><strong>Lip-sync:</strong> `Web Audio AnalyserNode` (32 FFT, `aa/oh`, smooth 0.4) or viseme pulse; barge-in clears mouth.</li>
-          <li><strong>Eye & blink:</strong> `pointermove` lerp + 3–6s blink via `ParamEyeLOpen/R` / VRM `blink`.</li>
-          <li><strong>Model view:</strong> zoom moves the 3D camera (scales Live2D); drag the preview to orbit, Reset view straightens it; turntable auto-rotates when idle.</li>
-          <li><strong>Positions:</strong> global dock header drag → <code>position {'{x,y}'}</code> clamped 0–100 + <code>BroadcastChannel</code> across tabs.</li>
-        </ul>
       </SettingsCard>
     </div>
   )

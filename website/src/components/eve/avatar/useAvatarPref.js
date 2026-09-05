@@ -30,7 +30,11 @@ function sanitizePrefs(input) {
   if (!input || typeof input !== 'object') return { ...AVATAR_DEFAULTS }
   const renderer = ['auto', 'vrm', 'live2d'].includes(input.renderer) ? input.renderer : AVATAR_DEFAULTS.renderer
   const motion = ['auto', 'on', 'reduced'].includes(input.motion) ? input.motion : AVATAR_DEFAULTS.motion
-  const modelId = typeof input.modelId === 'string' ? input.modelId : AVATAR_DEFAULTS.modelId
+  // Legacy tint/duplicate entries shared one model file — migrate to the
+  // surviving unique entry so stored prefs keep rendering the same model.
+  const legacyIds = { 'eve-mono-vrm': 'eve-anime-vrm', 'eve-duo-vrm': 'eve-anime-vrm', 'haru-live2d': 'haru-greeter-live2d' }
+  const rawModelId = typeof input.modelId === 'string' ? input.modelId : AVATAR_DEFAULTS.modelId
+  const modelId = legacyIds[rawModelId] || rawModelId
   const known = AVATAR_CATALOG.some((m) => m.id === modelId) || String(modelId).startsWith('upload:')
   return {
     enabled: typeof input.enabled === 'boolean' ? input.enabled : AVATAR_DEFAULTS.enabled,

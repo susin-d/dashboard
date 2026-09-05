@@ -32,7 +32,7 @@ export function EveAvatar({
   style = {},
 }) {
   const effectivePrefs = prefs || AVATAR_DEFAULTS
-  const model = activeModel || { url: '/avatars/vrm/eve-mono.vrm', renderer: 'vrm', id: 'eve-mono-vrm' }
+  const model = activeModel || { url: '/avatars/vrm/eve-anime.vrm', renderer: 'vrm', id: 'eve-anime-vrm' }
   const containerRef = useRef(null)
 
   const avatarState = useEveAvatarState({ isSending, isEveSpeaking, isEveThinking, thinkingText, activeTool, streamText, sttStatus, sttRecording, error })

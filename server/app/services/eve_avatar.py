@@ -19,11 +19,7 @@ ALLOWED_EXTS = {".vrm", ".glb", ".gltf", ".zip"}
 # model3.json checked via endswith
 CATALOG = [
     {"id": "eve-anime-vrm", "label": "Eve Anime (VRM 10MB)", "renderer": "vrm", "url": "/avatars/vrm/eve-anime.vrm", "attribution": "Anime VRM — VRM1 Twist Sample (pixiv/three-vrm) 10.3MB"},
-    {"id": "eve-mono-vrm", "label": "Eve Mono (VRM)", "renderer": "vrm", "url": "/avatars/vrm/eve-anime.vrm", "attribution": "Same anime VRM (mono tint) — deduped to eve-anime.vrm"},
-    {"id": "eve-duo-vrm", "label": "Eve Duo (VRM)", "renderer": "vrm", "url": "/avatars/vrm/eve-anime.vrm", "attribution": "Same anime VRM (duo tint) — deduped"},
     {"id": "haru-greeter-live2d", "label": "Haru Greeter (Live2D Anime)", "renderer": "live2d", "url": "/avatars/live2d/haru/haru_greeter_t03.model3.json", "attribution": "Haru Greeter — pixi-live2d-display (moc3 0.37MB + 2.7MB textures)"},
-    {"id": "haru-live2d", "label": "Haru (Live2D stub)", "renderer": "live2d", "url": "/avatars/live2d/haru/Haru.model3.json", "attribution": "Stub — prefers greeter"},
-    {"id": "unitychan-live2d", "label": "Unitychan (Live2D)", "renderer": "live2d", "url": "/avatars/live2d/unitychan/unitychan.model3.json", "attribution": "UnityChan License - example"},
 ]
 
 def _read_ui_raw(database: SqlClient, user_id: str) -> dict:
@@ -43,7 +39,7 @@ def get_prefs(database: SqlClient, user_id: str) -> dict:
     raw = _read_ui_raw(database, user_id)
     prefs = raw.get(AVATAR_PREF_KEY)
     if not prefs:
-        return {"enabled": True, "renderer": "auto", "modelId": "eve-mono-vrm", "modelUrl": None, "scale": 1.0, "zoom": 1.0, "autoRotate": False, "position": {"x": 92, "y": 88}, "docked": True, "motion": "auto", "inlineEnabled": True, "orbFallback": True}
+        return {"enabled": True, "renderer": "auto", "modelId": "eve-anime-vrm", "modelUrl": None, "scale": 1.0, "zoom": 1.0, "autoRotate": False, "position": {"x": 92, "y": 88}, "docked": True, "motion": "auto", "inlineEnabled": True, "orbFallback": True}
     return prefs
 
 def save_prefs(database: SqlClient, user_id: str, patch: dict) -> dict:
@@ -217,7 +213,7 @@ def delete_upload(database: SqlClient, user_id: str, model_id: str) -> None:
     raw["eve_avatar_uploads"] = next_uploads
     prefs = raw.get(AVATAR_PREF_KEY)
     if prefs and prefs.get("modelId") == model_id:
-        prefs["modelId"] = "eve-mono-vrm"
+        prefs["modelId"] = "eve-anime-vrm"
         prefs["modelUrl"] = None
         prefs["renderer"] = "auto"
         raw[AVATAR_PREF_KEY] = prefs

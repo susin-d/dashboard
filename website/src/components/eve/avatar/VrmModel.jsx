@@ -307,8 +307,8 @@ export function VrmModel({ url, mouthOpen = 0, lookAt = { x: 0, y: 0 }, isBlinki
       return
     }
     let cancelled = false
-    // Bundled anime VRMs — fetch HEAD then load; fallback to CSS avatar if missing
-    const bundled = ['/avatars/vrm/eve-mono.vrm', '/avatars/vrm/eve-duo.vrm', '/avatars/vrm/eve-anime.vrm', '/avatars/vrm/eve-mono.glb', '/avatars/vrm/eve-duo.glb']
+    // Bundled anime VRM — fetch HEAD then load; fallback to CSS avatar if missing
+    const bundled = ['/avatars/vrm/eve-anime.vrm']
     if (bundled.includes(url)) {
       fetch(url, { method: 'HEAD' }).then((r) => {
         if (cancelled) return
