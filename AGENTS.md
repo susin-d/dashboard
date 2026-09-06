@@ -456,12 +456,31 @@ The design system uses a **vibrant multi-color architecture** with domain-specif
    .card { border-radius: var(--radius-lg); box-shadow: var(--shadow-md); }
    ```
 
-5. **Class Naming**: Use `kebab-case`, scoped to the feature/component
+5. **Single-Source Color Palette (ADR 0022)**: Every color must come from the
+   palette in `styles/tokens.css` (`:root`), consumed via `var(--…)`; dark-mode
+   values live in `styles/themes/dark.css`. Never write bare hex/`rgb()`/`hsl()`
+   color literals in component/page CSS, inline styles, or JS/JSX color data —
+   add a named token instead (`--on-fill`, `--chart-*`, `--menu-*`, …).
+   Translucent tints use `color-mix(in srgb, var(--…) N%, transparent)`, never a
+   hand-mixed `rgba()` of a palette hue.
+   ```css
+   /* ❌ Bad */
+   .badge { background: #f43f5e; box-shadow: 0 0 16px rgba(244,63,94,0.4); }
+
+   /* ✅ Good */
+   .badge { background: var(--module-eve); box-shadow: 0 0 16px color-mix(in srgb, var(--module-eve) 40%, transparent); }
+   ```
+   Only exceptions: per-theme presets under `styles/themes/`, intentionally
+   pinned scoped defaults (`.cinema`), `var(--x, fallback)` resilience
+   fallbacks, the neutral shadow/backdrop `rgba(0,0,0/255,255,255,…)` elevation
+   system, and functional color-input defaults in theme-customizer UI.
+
+6. **Class Naming**: Use `kebab-case`, scoped to the feature/component
    (e.g. `.studio-prompt-attachment-chip`, `.ws-overview-grid`). Never use
    generic class names that could collide (`.container`, `.wrapper`, `.card`
    without a prefix).
 
-6. **Dark Mode**: Use CSS custom properties defined per theme. Dark overrides
+7. **Dark Mode**: Use CSS custom properties defined per theme. Dark overrides
    live in `styles/themes/dark.css`. Never branch in JS to apply dark styles.
 
 #### 4.6.2 Full-Page Layout — Never Cut Off Content
@@ -820,6 +839,7 @@ Never declare success without running build/lint/test tools to verify correctnes
 - [ ] `python -m pytest tests -q` passes in `/server`
 - [ ] No dead code, unused imports, or commented-out blocks
 - [ ] No hardcoded magic values or inline styles
+- [ ] No bare color literals — `Grep` for `:\s*#[0-9a-fA-F]` in touched CSS and `'#` in touched JSX is clean outside the §4.6.2-item-5 exceptions (tokens/themes/cinema/fallbacks/shadows)
 - [ ] No demo/mock/placeholder values in UI — `Grep` for `demo|mockData|placeholder|fakeData|lorem` in `website/src/pages` + `components` is clean (§1.8)
 - [ ] No temp/easy fixes, hacks, or workarounds — `Grep` for `temp fix|easy fix|quick fix|hack|workaround` is clean; failing tests fixed not skipped (§1.9)
 - [ ] File sizes are under 400 lines (500 hard limit)
