@@ -1,4 +1,5 @@
-import "../../styles/pages/studio.css"
+import "../../styles/pages/studio-shared.css"
+import "../../styles/pages/studio-gallery.css"
 import { useState } from 'react'
 import { AppWindow, ExternalLink, FileCode, Play, Plus, RefreshCw } from 'lucide-react'
 import { ConfirmDialog, EmptyState, LoadingState, PageHeader, SectionHeading } from '../../components/ui'

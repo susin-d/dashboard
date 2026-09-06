@@ -156,6 +156,21 @@
   color: var(--text-inverse);
 }
 
+.jobs-page .contest-site-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.jobs-page .contest-site-card::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--module-growth), transparent);
+  opacity: 0.85;
+  pointer-events: none;
+}
+
 .job-detail-content {
   padding-top: 15px;
 }

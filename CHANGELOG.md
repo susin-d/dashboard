@@ -5,6 +5,11 @@ Historical implementation log extracted from `context.md`. `context.md` now hold
 ## 2026-09-06 — Loading screen redesign (from prior commit f81e6b0)
 - Branded WaveLoader card (orbit ring + wave bars + progress) and matching LoadingState (`components/WaveLoader.jsx`, `components/ui/LoadingState.jsx`, `wave-loader.css`, `loading-state.css`).
 
+## 2026-09-06 — Wave C: Studio, Jobs, Hackathons
+- `JobsPage` (512) split: `pages/jobs/` package (timeline, modals with shared field builder); eyebrow → Create; growth accent on job cards.
+- `studio.css` (1641) split into 7 scoped files (shared/hero/gallery/builder/stage/planning/questions) wired per page; StudioTabs already cross-link all three surfaces.
+- Hackathons eyebrow → Create; ember accent on hackathon cards.
+
 ## 2026-09-06 — Wave B: Workspace, Projects, Documents
 - `workspace.css` (1839) split into 7 scoped files (toolbar/filetree/editor/panels/eve/dialogs/overview) wired per component; overview header rhythm + workspace-amber card accents.
 - Removed fake avatar initials (§1.8) from project grid + detail cards (real member counts); dropped dead avatar CSS in the split; `projects.css` (1094) split into list/cards/detail/lifecycle; grid-card projects accent; Projects eyebrow → Code.

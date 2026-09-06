@@ -1,0 +1,66 @@
+/* Studio Shared — split from studio.css (Wave C) */
+/* Studio (Eve Builder) — projects grid, builder workspace, templates. */
+
+/* ── Shared ── */
+.studio-page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5, 1.25rem);
+  padding: var(--space-6, 1.5rem);
+}
+
+.studio-error-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md, 10px);
+  background: var(--bg-secondary);
+}
+
+.studio-form-error {
+  margin: 0.5rem 0 0;
+  color: var(--text-primary);
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm, 8px);
+  padding: 0.5rem 0.75rem;
+  font-size: 0.85rem;
+}
+
+.studio-stack-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.15rem 0.55rem;
+  border-radius: 999px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
+  font-size: 0.72rem;
+  letter-spacing: 0.02em;
+}
+/* ── Responsive ── */
+@media (max-width: 900px) {
+  .aistudio-body {
+    grid-template-columns: 1fr;
+    grid-template-rows: 360px minmax(0, 1fr);
+  }
+
+  .aistudio-chat-col {
+    border-right: none;
+    border-bottom: 1px solid var(--border-color);
+  }
+
+  .aistudio-code-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .aistudio-code-explorer {
+    max-height: 200px;
+    border-right: none;
+    border-bottom: 1px solid var(--border-color);
+  }
+}
+

@@ -1,4 +1,5 @@
-import "../../styles/pages/studio.css"
+import "../../styles/pages/studio-shared.css"
+import "../../styles/pages/studio-hero.css"
 import { useState } from 'react'
 import { createStudioProject } from '../../lib/studioApi'
 import { StudioHero } from './StudioHero'

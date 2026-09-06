@@ -175,7 +175,7 @@ export function HackathonsPage({ hackathons, setHackathons, canLoadMore, loading
   return (
     <section className="hackathons-page">
       <PageHeader
-        eyebrow="Build & collaborate"
+        eyebrow="Create"
         title="Hackathons"
         description="Find a room, a team, and a deadline worth building toward."
         actions={

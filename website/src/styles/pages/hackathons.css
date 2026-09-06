@@ -21,6 +21,21 @@
   padding-top: 18px;
 }
 
+.hackathons-page .contest-site-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.hackathons-page .contest-site-card::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--palette-ember), transparent);
+  opacity: 0.85;
+  pointer-events: none;
+}
+
 .hackathon-list > .empty-state,
 .hackathon-empty-state {
   grid-column: 1 / -1;
