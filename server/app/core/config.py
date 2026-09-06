@@ -141,6 +141,7 @@ class Settings:
         os.getenv("VERCEL") or os.getenv("AWS_LAMBDA_FUNCTION_NAME") or os.getenv("IS_SERVERLESS", "false").lower() == "true"
     )
     workspace_storage_path: str = os.getenv("WORKSPACE_STORAGE_PATH", "workspaces")
+    modeling_asset_max_bytes: int = int(os.getenv("MODELING_ASSET_MAX_BYTES", str(100 * 1024 * 1024)))
     redis_url: str | None = os.getenv("REDIS_URL") or None
     studio_preview_domain: str = os.getenv(
         "STUDIO_PREVIEW_DOMAIN",

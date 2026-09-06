@@ -1,7 +1,7 @@
 import "../../styles/pages/studio-shared.css"
 import "../../styles/pages/studio-gallery.css"
 import { useState } from 'react'
-import { AppWindow, ExternalLink, FileCode, Play, Plus, RefreshCw } from 'lucide-react'
+import { AppWindow, ExternalLink, FileCode, Play, Plus, RefreshCw, Sparkles, Trash2 } from 'lucide-react'
 import { ConfirmDialog, EmptyState, LoadingState, SectionHeading } from '../../components/ui'
 import { startPreview } from '../../lib/studioApi'
 import { ProjectCard } from './ProjectCard'
@@ -51,8 +51,14 @@ export function StudioAppsPage({ onOpenProject, onNavigate }) {
   }
 
   return (
-    <div className="studio-page">
-      <div className="page-inline-actions">
+    <div className="studio-page studio-page-gallery">
+      <header className="studio-section-header studio-gallery-header">
+        <div>
+          <span className="studio-eyebrow"><Sparkles size={13} /> Studio workspace</span>
+          <h2>Your apps, in motion.</h2>
+          <p>Pick up where you left off or open a live preview.</p>
+        </div>
+        <div className="page-inline-actions">
         <button
           type="button"
           className="secondary-button"
@@ -65,7 +71,8 @@ export function StudioAppsPage({ onOpenProject, onNavigate }) {
           <RefreshCw size={15} />
           Refresh
         </button>
-      </div>
+        </div>
+      </header>
       <StudioTabs activeTab="studio-apps" onNavigate={onNavigate} />
       {(error || runError) && (
         <div className="studio-error-banner" role="alert">
@@ -116,6 +123,10 @@ export function StudioAppsPage({ onOpenProject, onNavigate }) {
                           <FileCode size={12} /> {project.file_count} files
                         </span>
                         <span className="studio-file-count">Updated {formatDate(project.updated_at)}</span>
+                        <span className={`studio-preview-state ${project.preview_status}`}>
+                          {project.preview_status === 'ready' ? 'Preview ready' : 'No preview yet'}
+                        </span>
+                        {project.last_activity && <span className="studio-file-count">{project.last_activity.label}</span>}
                       </div>
                     </div>
                     <div className="studio-project-card-actions">
@@ -126,6 +137,9 @@ export function StudioAppsPage({ onOpenProject, onNavigate }) {
                       >
                         <Play size={14} />
                         Open Builder
+                      </button>
+                      <button type="button" className="studio-delete-btn" onClick={() => setProjectToDelete(project)}>
+                        <Trash2 size={13} /> Delete
                       </button>
                       <button
                         type="button"

@@ -2,7 +2,7 @@
 # Starwaves Context
 
 Living snapshot for AI agents. `AGENTS.md` holds permanent rules; this file holds the **current state**. See `CHANGELOG.md` for history and `PROJECT_MAP.md` for the file index.
-Last updated: 2026-09-06 — Jobs and Hackathons pages now start with combined search/filter/action toolbars; Jobs application-frequency chart removed while its pipeline status summary remains.
+Last updated: 2026-09-06 — Calendar page now has responsive outer spacing around the toolbar and calendar grid; day-detail drawer, Studio, WhatsApp, Jobs, and Usage updates remain current. WhatsApp chat loading now avoids a messages-state update loop.
 
 ## Contents
 1. [Overview](#1-overview) · 2. [Repository structure](#2-repository-structure) · 3. [Backend](#4-backend) · 4. [Frontend](#4-frontend) · 5. [Design system](#5-design-system) · 6. [Current snapshot](#6-current-snapshot) · 7. [Limitations](#7-limitations) · 8. [Verification](#8-verification)
@@ -68,7 +68,7 @@ For full maps see `PROJECT_MAP.md`. Keep this section brief; expand there.
   - GET caching: `core/cache.py` `cached` per-user keys (Redis/LRU) for hot GETs + `cache_clear` fixture.
   - Multi-device: `user_sessions` 30d/10 cap + `X-Device-Id` + `session_revoked`/`sync_invalidate` + `DeviceSection`.
   - Workspace IDE: folder-first Monaco + Explorer + Eve SSE panel (`workspace_id` required) + Browser `srcdoc`.
-  - Studio: `StudioHero` → builder IDE; `StudioAppsPage` lists `build_status: ready`.
+  - Studio: unified prompt-first Builder, status-aware Apps gallery, filterable Templates catalog, latest activity/preview readiness metadata, and Builder IDE handoff via `StudioHero`.
   - EVE: multi-provider + live `/v1/models`; `openai_compat` flat→nested `function` (ADR 0002); SSE `delta`/`thinking`/`tool`/`done`+RAG+auto-remember (capped 3); tools: workspace files, web, WhatsApp, browser, schedule, UI (`ui-preferences`); `ModelSelectorDropdown` + `openrouter/free` default.
   - Voice: `voice_fast.py` Groq 8b-instant + `POST /eve/voice/stream` + Twilio `ConversationRelay`; STT browser/Groq/Deepgram; TTS Google/OpenRouter Fish.
   - Calls: `in_app` WebRTC vs Twilio PSTN + `CallWSManager` multi + `BroadcastChannel`.

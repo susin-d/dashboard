@@ -297,11 +297,6 @@ export function WhatsAppPage() {
       return
     }
 
-    // If sync already fetched messages for this chat, don't clear/refetch (avoids flicker after runFullSync)
-    if (syncStatus !== 'ready') {
-      // During initial sync, runFullSync handles the first chat's messages
-      return
-    }
     const cleanSelectedEarly = selectedChatId.replace(/@s\.whatsapp\.net|@g\.us|@lid/g, '')
     const hasMessagesForChat =
       messages.length > 0 &&
@@ -349,9 +344,10 @@ export function WhatsAppPage() {
     return () => {
       isCurrent = false
     }
-    // messages intentionally excluded — runFullSync populates first chat before this effect
+    // Messages are intentionally excluded: this effect owns the initial load
+    // for each selected chat and also updates the messages state.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedChatId, syncStatus])
+  }, [selectedChatId])
 
   const handleLoadMoreMessages = async () => {
     if (isLoadingMore || !hasMoreMessages || messages.length === 0 || !selectedChatId) return

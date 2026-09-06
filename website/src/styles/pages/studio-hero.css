@@ -9,9 +9,13 @@
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  margin: 0 calc(-1 * (var(--layout-gutter, 24px) + var(--space-6, 1.5rem)));
-  padding: 0 var(--layout-gutter, 24px);
-  min-height: calc(100vh - 120px);
+  margin: 0 auto;
+  padding: 1rem 0 2rem;
+  min-height: min(680px, calc(100vh - 220px));
+  width: min(100%, var(--content-max-width, 1440px));
+  border-radius: var(--radius-xl, 24px);
+  background: color-mix(in srgb, var(--bg-card) 72%, transparent);
+  border: 1px solid color-mix(in srgb, var(--module-studio) 14%, var(--border-color));
 }
 
 /* Ambient glow backdrop */
@@ -19,7 +23,7 @@
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(ellipse 60% 55% at 50% 15%, var(--color-primary, #6366f1) 0%, transparent 70%),
+    radial-gradient(ellipse 60% 55% at 50% 15%, var(--module-studio) 0%, transparent 70%),
     linear-gradient(180deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
   opacity: 0.08;
   pointer-events: none;
@@ -34,8 +38,8 @@
   align-items: center;
   gap: 1rem;
   width: 100%;
-  max-width: 820px;
-  padding: 3.5rem 0 4rem;
+  max-width: 920px;
+  padding: 3rem var(--layout-gutter, 24px) 3.5rem;
   text-align: center;
 }
 
@@ -47,7 +51,7 @@
   border-radius: 999px;
   border: 1px solid var(--border-color);
   background: var(--bg-card);
-  color: var(--color-primary, var(--text-secondary));
+  color: var(--module-studio, var(--text-secondary));
   font-size: 0.75rem;
   font-weight: 600;
   letter-spacing: 0.03em;
@@ -64,7 +68,7 @@
 }
 
 .studio-hero-title-accent {
-  background: linear-gradient(135deg, var(--color-primary, #6366f1) 0%, var(--color-accent, #8b5cf6) 100%);
+  background: var(--gradient-studio, linear-gradient(135deg, var(--module-studio), var(--color-accent)));
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -106,20 +110,20 @@
   display: flex;
   flex-direction: column;
   gap: 0.85rem;
-  width: min(740px, 100%);
+  width: min(780px, 100%);
   margin-top: 0.5rem;
   padding: 1.15rem 1.25rem 0.95rem;
-  border: 1.5px solid var(--border-heavy);
+  border: 1.5px solid color-mix(in srgb, var(--module-studio) 32%, var(--border-heavy));
   border-radius: 20px;
   background: var(--bg-card);
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06), 0 1px 4px rgba(0, 0, 0, 0.04);
+  box-shadow: var(--shadow-lg);
   text-align: left;
   transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
 }
 
 .studio-prompt-card:focus-within {
-  border-color: var(--color-primary, var(--text-primary));
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1), 0 0 0 1px var(--color-primary, var(--text-primary));
+  border-color: var(--module-studio, var(--text-primary));
+  box-shadow: var(--shadow-xl), 0 0 0 1px var(--module-studio, var(--text-primary));
 }
 
 .studio-prompt-input {
@@ -259,7 +263,7 @@
   place-items: center;
   border-radius: 50%;
   border: none;
-  background: var(--color-primary);
+  background: var(--module-studio);
   color: var(--text-inverse);
   cursor: pointer;
   transition: transform var(--transition-fast), opacity var(--transition-fast), box-shadow var(--transition-fast);

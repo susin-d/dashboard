@@ -45,6 +45,10 @@ function clampTooltipX(x) {
   return Math.min(window.innerWidth - 180, Math.max(8, x + 12))
 }
 
+function getTrendTooltipTop(y) {
+  return Math.max(8, y - 170)
+}
+
 export function UsagePage() {
   const [days, setDays] = useState(30)
   const [activityMode, setActivityMode] = useState('Daily')
@@ -319,7 +323,7 @@ export function UsagePage() {
               {trendTip ? (
                 <div
                   className="usage-tooltip"
-                  style={{ left: clampTooltipX(trendTip.x), top: trendTip.y - 72, position: 'fixed' }}
+                  style={{ left: clampTooltipX(trendTip.x), top: getTrendTooltipTop(trendTip.y), position: 'fixed' }}
                 >
                   <div style={{ fontWeight: 700, fontSize: 12, marginBottom: 6 }}>{trendTip.date}</div>
                   {trendTip.values.map((v) => (

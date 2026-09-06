@@ -67,6 +67,10 @@
 }
 
 @media (max-width: 768px) {
+  .calendar-page {
+    padding: var(--space-sm) var(--space-sm) var(--space-md);
+  }
+
   .app-breadcrumbs {
     margin-top: calc(var(--space-3xs) * -1);
   }

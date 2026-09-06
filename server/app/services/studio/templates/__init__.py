@@ -18,7 +18,7 @@ _TEMPLATE_METADATA = {
     "react-vite": {"category": "web", "tags": ["React", "Vite", "Frontend"], "featured": True, "sort_order": 10},
     "react-saas": {"category": "product", "tags": ["SaaS", "Dashboard", "Auth"], "featured": True, "sort_order": 20},
     "fastapi-api": {"category": "backend", "tags": ["FastAPI", "Python", "API"], "featured": False, "sort_order": 30},
-    "express-api": {"category": "backend", "tags": ["Express", "Node.js", "API"], "featured": False, "sort_order": 40},
+    "node-express-api": {"category": "backend", "tags": ["Express", "Node.js", "API"], "featured": False, "sort_order": 40},
     "fullstack-react-fastapi": {"category": "fullstack", "tags": ["React", "FastAPI", "SQLite"], "featured": True, "sort_order": 50},
     "static-site": {"category": "web", "tags": ["HTML", "CSS", "Static"], "featured": False, "sort_order": 60},
 }

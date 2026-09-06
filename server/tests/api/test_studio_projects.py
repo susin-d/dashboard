@@ -47,6 +47,8 @@ class TestStudioProjects(unittest.TestCase):
         project = self._create("Habit Tracker")
         self.assertEqual(project["type"], "studio")
         self.assertEqual(project["db_preference"], "sqlite")
+        self.assertEqual(project["preview_status"], "unavailable")
+        self.assertEqual(project["last_activity"]["type"], "created")
         projects = list_projects(USER)
         self.assertEqual(len(projects), 1)
         self.assertEqual(projects[0]["name"], "Habit Tracker")
@@ -122,6 +124,9 @@ class TestStudioProjects(unittest.TestCase):
         ids = {t["id"] for t in templates}
         self.assertIn("react-vite", ids)
         self.assertIn("fullstack-react-fastapi", ids)
+        react_vite = next(template for template in templates if template["id"] == "react-vite")
+        self.assertTrue(react_vite["featured"])
+        self.assertIn("React", react_vite["tags"])
 
 
 if __name__ == "__main__":

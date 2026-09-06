@@ -91,6 +91,16 @@
   width: 100% !important;
 }
 
+/* Keep fullscreen route content stretched beneath the app header. */
+.content:has(.whatsapp-page) > .app-page-enter {
+  display: flex !important;
+  flex: 1 1 auto !important;
+  flex-direction: column !important;
+  min-height: 0 !important;
+  height: 100% !important;
+  width: 100% !important;
+}
+
 .content:has(.eve-page-container) .eve-page-container {
   display: flex !important;
   flex-direction: column !important;

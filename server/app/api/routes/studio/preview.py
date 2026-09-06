@@ -1,6 +1,7 @@
 """Studio preview routes — single responsibility: preview URLs and static file serving."""
 
 import asyncio
+from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Response
 from app.db import SqlClient, get_firestore
@@ -37,7 +38,7 @@ async def start_preview(
             "last_activity": {
                 "type": "preview_started",
                 "label": "Preview opened",
-                "occurred_at": __import__("datetime").datetime.now(__import__("datetime").timezone.utc).isoformat(),
+                "occurred_at": datetime.now(timezone.utc).isoformat(),
             },
         },
     )
