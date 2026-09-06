@@ -5,6 +5,12 @@ Historical implementation log extracted from `context.md`. `context.md` now hold
 ## 2026-09-06 — Loading screen redesign (from prior commit f81e6b0)
 - Branded WaveLoader card (orbit ring + wave bars + progress) and matching LoadingState (`components/WaveLoader.jsx`, `components/ui/LoadingState.jsx`, `wave-loader.css`, `loading-state.css`).
 
+## 2026-09-06 — Wave D: Eve, Calls, Avatar, Compete
+- `eve.css` (2507) split into 10 scoped files (shell/messages/thoughts/composer/composer-box/skills/subpages/schedules/call-stage/call-live) wired via `EvePage`.
+- `EveChatSection` (652) split into feed/composer/thought-history + shell facade; unused imports removed.
+- `calls.css` (1274) split into 6 files (page/layout/scheduled/overlay/eve-call-ui/schedules-card) wired per component (page, CallScreen, overlay, scheduler, Eve call section, schedules card).
+- Calls accent edge on `.call-screen`; new `compete.css` shell (section rhythm + tab placement).
+
 ## 2026-09-06 — Wave C: Studio, Jobs, Hackathons
 - `JobsPage` (512) split: `pages/jobs/` package (timeline, modals with shared field builder); eyebrow → Create; growth accent on job cards.
 - `studio.css` (1641) split into 7 scoped files (shared/hero/gallery/builder/stage/planning/questions) wired per page; StudioTabs already cross-link all three surfaces.

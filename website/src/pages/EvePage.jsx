@@ -1,4 +1,13 @@
-import "../styles/pages/eve.css"
+import "../styles/pages/eve-shell.css"
+import "../styles/pages/eve-messages.css"
+import "../styles/pages/eve-thoughts.css"
+import "../styles/pages/eve-composer.css"
+import "../styles/pages/eve-composer-box.css"
+import "../styles/pages/eve-skills.css"
+import "../styles/pages/eve-subpages.css"
+import "../styles/pages/eve-schedules.css"
+import "../styles/pages/eve-call-stage.css"
+import "../styles/pages/eve-call-live.css"
 import { useEffect, useRef, useState } from 'react'
 import {
   createEveMemory,

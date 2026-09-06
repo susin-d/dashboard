@@ -1,3 +1,4 @@
+import '../styles/pages/compete.css'
 import { useEffect, useState } from 'react'
 import { ChartNoAxesCombined, Trophy } from 'lucide-react'
 import { PageHeader, TabNav } from '../components/ui'

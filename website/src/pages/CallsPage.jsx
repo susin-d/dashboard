@@ -1,4 +1,5 @@
-import "../styles/pages/calls.css"
+import "../styles/pages/calls-page.css"
+import "../styles/pages/calls-layout.css"
 import { useCallback, useEffect, useState } from 'react'
 import { AlertCircle, Bot, Loader, Phone, PhoneCall, PhoneIncoming, RefreshCw, Video } from 'lucide-react'
 import { CallScreen } from '../components/calls/CallScreen'
