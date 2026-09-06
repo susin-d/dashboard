@@ -1,5 +1,3 @@
-import "../styles/pages/dashboard.css"
-import "../styles/pages/dashboard-customize.css"
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { ResponsiveGridLayout, useContainerWidth } from 'react-grid-layout'
 import {
@@ -175,6 +173,37 @@ export function DashboardPage({
   const visibleWidgets = dashboardWidgets.filter(
     ({ id }) => !hiddenWidgetIds.includes(id),
   )
+  const activityFeed = useMemo(() => {
+    const entries = [
+      ...documents.map((document) => ({
+        id: `document-${document.id}`,
+        title: document.name,
+        meta: `${document.type} · ${document.size}`,
+        date: document.modifiedAt,
+        destination: 'documents',
+      })),
+      ...projects.map((project) => ({
+        id: `project-${project.id}`,
+        title: project.name,
+        meta: `Project · ${project.progress}%`,
+        date: project.updatedAt,
+        destination: 'project-detail',
+        destinationId: project.id,
+      })),
+      ...jobs.map((job) => ({
+        id: `job-${job.id}`,
+        title: job.role,
+        meta: job.company,
+        date: job.appliedDate,
+        destination: 'jobs',
+      })),
+    ]
+    return entries
+      .filter(({ date }) => date && !Number.isNaN(new Date(date).getTime()))
+      .sort((a, b) => new Date(b.date) - new Date(a.date))
+      .slice(0, 3)
+      .map(({ date, ...entry }) => ({ ...entry, badge: formatDate(date) }))
+  }, [documents, projects, jobs])
   const openTasks = tasks.filter((task) => !task.completed)
   const unreadCount = notifications.filter((notification) => notification.unread).length
   const nextContest = contests[0] ?? null
@@ -338,14 +367,7 @@ export function DashboardPage({
       }))} onNavigate={onNavigate} />,
     },
     documents: {
-      total: documents.length,
-      body: <RecordList items={[...documents].sort((a, b) => new Date(b.modifiedAt) - new Date(a.modifiedAt)).slice(0, 3).map((document) => ({
-        id: document.id,
-        title: document.name,
-        meta: `${document.type} · ${document.size}`,
-        badge: formatDate(document.modifiedAt),
-        destination: 'documents',
-      }))} onNavigate={onNavigate} />,
+      body: <RecordList items={activityFeed} empty="No recent activity." onNavigate={onNavigate} />,
     },
     notifications: {
       total: notifications.filter((notification) => notification.unread).length,

@@ -1,9 +1,9 @@
 import {
+  Activity,
   Bell,
   BriefcaseBusiness,
   CalendarDays,
   CheckSquare2,
-  FileText,
   FolderKanban,
   Gauge,
   Rocket,
@@ -23,7 +23,7 @@ export const dashboardWidgets = [
   { id: 'hackathons', title: 'Hackathons', icon: Rocket, destination: 'hackathons', module: 'growth' },
   { id: 'projects', title: 'Project progress', icon: FolderKanban, destination: 'projects', module: 'projects' },
   { id: 'jobs', title: 'Job applications', icon: BriefcaseBusiness, destination: 'jobs', module: 'growth' },
-  { id: 'documents', title: 'Recent documents', icon: FileText, destination: 'documents', module: 'documents' },
+  { id: 'documents', title: 'Recent activity', icon: Activity, destination: 'documents', module: 'documents' },
   { id: 'notifications', title: 'Notifications', icon: Bell, destination: null, module: 'comm' },
 ]
 

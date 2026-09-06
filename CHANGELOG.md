@@ -2,6 +2,10 @@
 
 Historical implementation log extracted from `context.md`. `context.md` now holds the **current snapshot** only; this file preserves the full chronological history for audit.
 
+## 2026-09-06 — Recent documents widget converted to Recent activity
+- Full-width card now shows the 3 most recent items across documents (`modifiedAt`) + projects (`updatedAt`) + jobs (`appliedDate`), each deep-linking to its page; title `Recent activity`, `Activity` icon, sky-blue accent kept. Slot id `documents` unchanged so saved layouts/hidden prefs survive; big count omitted, footer still opens Documents.
+- Prior snapshot: Dashboard widgets bolder (solid accent top bar + saturated icon chips).
+
 ## 2026-09-06 — Dashboard widgets bolder multi-color
 - Widget top edge is now a solid full-width 3px accent bar (was transparent-fade 2px gradient); icon chips are saturated (`--widget-accent` fill + `--on-fill` glyph, active-pill shadow). Per-module hues unchanged.
 - Prior snapshot: Home sidebar accent follows primary crimson (ADR 0031).
