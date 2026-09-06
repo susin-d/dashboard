@@ -172,7 +172,10 @@
   display: grid;
   justify-items: start;
   gap: 0;
-  padding: var(--space-2xs) 0 var(--space-sm);
+  padding: var(--space-lg);
+  border: 1px dashed var(--border-color);
+  border-radius: var(--radius-lg);
+  background: var(--bg-surface);
   color: var(--text-primary);
 }
 

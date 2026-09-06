@@ -10,8 +10,18 @@
 
 .todo-page > .empty-state {
   flex: 1 1 auto;
-  min-height: 480px;
+  min-height: clamp(280px, 42vh, 420px);
   height: 100%;
+  padding: var(--space-xl) var(--space-lg);
+  background: var(--bg-surface);
+  border: 1px dashed var(--border-color);
+  border-radius: var(--radius-lg);
+  box-shadow: none;
+}
+
+.todo-page > .empty-state .empty-icon {
+  background: var(--bg-card);
+  box-shadow: none;
 }
 
 .todo-add-trigger {
@@ -240,4 +250,3 @@
     padding-bottom: 4px;
   }
 }
-
