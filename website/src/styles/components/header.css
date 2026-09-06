@@ -177,6 +177,7 @@
   border-radius: var(--radius-sm);
   border: none !important;
   box-shadow: none !important;
+  object-fit: cover;
   user-select: none;
   -webkit-user-select: none;
   -webkit-user-drag: none;

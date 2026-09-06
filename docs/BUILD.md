@@ -80,7 +80,7 @@ $env:TAURI_SIGNING_PRIVATE_KEY_PASSWORD = "optionalIfEncrypted"
 
 - `tauri.conf.json` `bundle.createUpdaterArtifacts=v1Compatible` emits `latest.json` with sigs.
 - If `TAURI_SIGNING_PRIVATE_KEY` missing → build still succeeds but updater disabled (warn).
-- Icons auto-generated from `public/starwaves-logo.png` via `npx tauri icon` if `src-tauri/icons/icon.png` missing.
+- Icons auto-generated from `public/logo.png` via `npx tauri icon` if `src-tauri/icons/icon.png` missing.
 - `Bundler` `msi|nsis|both` (default `both`).
 
 **Bash:**

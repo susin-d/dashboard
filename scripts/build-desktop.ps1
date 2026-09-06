@@ -80,10 +80,10 @@ if ($viteUrl) { $env:VITE_API_URL = $viteUrl }
 
 # --- Icons ---
 if (-not (Test-Path -LiteralPath "website/src-tauri/icons/icon.png") -or -not (Test-Path -LiteralPath "website/src-tauri/icons/icon.ico")) {
-  Write-Step "Generating Tauri icons from public/starwaves-logo.png"
+  Write-Step "Generating Tauri icons from public/logo.png"
   try {
     Push-Location -LiteralPath "website"
-    & npx tauri icon public/starwaves-logo.png 2>&1 | Out-String | Write-Host
+    & npx tauri icon public/logo.png 2>&1 | Out-String | Write-Host
     Pop-Location
   } catch { Write-Warn "Icon generation failed: $_ — using existing icons" }
 }

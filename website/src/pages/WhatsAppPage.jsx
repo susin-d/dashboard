@@ -163,7 +163,7 @@ export function WhatsAppPage() {
               const body = incomingMsg.content || (incomingMsg.media ? `[${incomingMsg.media.type}]` : 'New message')
               new Notification(`WhatsApp: ${sender}`, {
                 body,
-                icon: '/favicon.ico',
+                icon: '/logo.png',
               })
             }
           }
