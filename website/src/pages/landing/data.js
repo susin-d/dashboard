@@ -23,27 +23,53 @@ export const navLinks = [
   { label: 'Showcase', href: '#showcase' },
   { label: 'Eve AI', href: '#eve' },
   { label: 'Workflow', href: '#workflow' },
+  { label: 'FAQ', href: '#faq' },
+]
+
+export const heroProof = [
+  'Board → Calendar → List',
+  'ICS + Google sync',
+  'Monaco inside',
+  'Eve is workspace-aware',
+]
+
+export const marqueeModules = [
+  'Tasks',
+  'Calendar',
+  'Code Workspace',
+  'Eve AI',
+  'Projects',
+  'Jobs',
+  'Hackathons',
+  'Documents',
+  'Mail',
+  'WhatsApp',
+  'Calls',
+  'Contests',
 ]
 
 export const manifesto = [
   {
-    kicker: 'Act I — Consolidate',
+    numeral: '01',
+    kicker: 'Signal — Code',
     title: 'One calm surface\nfor everything',
-    body: 'Tasks, calendars, contests, hackathons, jobs, projects, docs, mail and chat — stitched into a single sharp black canvas so you never lose the thread.',
+    body: 'Tasks, calendars, contests, hackathons, jobs, projects, docs, mail and chat — stitched into a single deep-crimson canvas so the thread never snaps.',
     icon: Layers,
     accent: 'work',
   },
   {
-    kicker: 'Act II — Accelerate',
+    numeral: '02',
+    kicker: 'Build — Create',
     title: 'Velocity without\nthe noise',
-    body: 'Monaco workspace, modular dashboard, live contest radar and pipeline tracking. Built for deep work, not dashboards that shout.',
+    body: 'A real Monaco workspace, a modular dashboard and a live contest radar. Deep-work tooling that stays out of the frame until you need it.',
     icon: Orbit,
     accent: 'studio',
   },
   {
-    kicker: 'Act III — Remember',
+    numeral: '03',
+    kicker: 'Become — Evolve',
     title: 'An assistant that\nlives in your work',
-    body: 'Eve reads your files, remembers every decision, browses the web, manages WhatsApp and calls you when it matters.',
+    body: 'Eve reads your files, remembers every decision, browses the web, triages WhatsApp and calls you when it matters — not a tab, a cast member.',
     icon: Brain,
     accent: 'eve',
   },
@@ -55,8 +81,8 @@ export const showcaseScenes = [
     label: 'Dashboard',
     icon: LayoutDashboard,
     headline: 'Your command center',
-    copy: 'Drag, resize, curate. Presets for builder, competitor and job-seeker archetypes — all in one live grid.',
-    bullets: ['12 widget types', 'Grid memory per user', 'Keyboard command palette'],
+    copy: 'Drag, resize, curate. Layouts for builder, competitor and job-seeker modes — every widget live, every arrangement remembered.',
+    bullets: ['Widget layouts per mode', 'Arrangement memory per user', 'Command palette everywhere'],
     color: 'var(--module-work)',
   },
   {
@@ -64,8 +90,8 @@ export const showcaseScenes = [
     label: 'Code Workspace',
     icon: MonitorPlay,
     headline: 'A real editor, inside',
-    copy: 'Monaco, file tree, search, breadcrumbs and Eve file tools. No mock IDE — the actual one.',
-    bullets: ['Monaco Editor + minimap', 'File sync to projects', 'Eve writes & reads files'],
+    copy: 'Monaco with file tree, search and breadcrumbs — plus Eve file tools that read and write alongside you. No mock IDE.',
+    bullets: ['Monaco Editor + minimap', 'File tree + search', 'Eve reads & writes files'],
     color: 'var(--module-workspace)',
   },
   {
@@ -73,7 +99,7 @@ export const showcaseScenes = [
     label: 'Calendar',
     icon: CalendarDays,
     headline: 'One timeline to rule them',
-    copy: 'Tasks, Google Calendar, contest dates, interviews and hackathons merged into an ICS-aware unified calendar.',
+    copy: 'Tasks, Google Calendar, contest dates, interviews and hackathons merged into a single ICS-aware timeline with reminders.',
     bullets: ['Google sync + ICS import', 'Reminder engine', 'Contest auto-feed'],
     color: 'var(--module-calendar)',
   },
@@ -82,59 +108,73 @@ export const showcaseScenes = [
     label: 'Eve AI',
     icon: Bot,
     headline: 'Chat. Voice. Memory.',
-    copy: 'Six providers, streaming replies, persistent sessions and semantic memory via pgvector.',
-    bullets: ['Sessions + vector recall', 'Voice calls with captions', 'Cron schedules'],
+    copy: 'Streaming replies across six providers, persistent sessions and semantic memory — schedules and calls included.',
+    bullets: ['Sessions + vector recall', 'Voice calls with captions', 'Schedules that run alone'],
     color: 'var(--module-eve)',
   },
+]
+
+export const eveTerminalLines = [
+  'list_workspace_files({ workspace: "starwaves" })',
+  'search_workspace_files({ query: "auth callback" })',
+  'browse_web({ query: "serverless cron schedules" })',
+  'create_eve_schedule({ cron: "0 9 * * 1", action: "call" })',
+]
+
+export const eveDemoMessages = [
+  { from: 'you', text: 'Review my week and nudge me Monday 9am if the pipeline slips.' },
+  { from: 'eve', text: 'Schedule armed — cron Mon 9am, action: call. I\'ll bring the pipeline summary.' },
+  { from: 'you', text: 'Draft follow-ups for the teams I met this week.' },
+  { from: 'eve', text: 'Three drafts ready in Documents — review, then I\'ll send on your word.' },
 ]
 
 export const eveCapabilities = [
   {
     icon: Sparkles,
     title: 'Conversational memory',
-    desc: 'OpenAI, Anthropic, Gemini and OpenRouter via one tool loop. Sessions persist, memories are embedded with pgvector and surfaced when relevant.',
-    points: ['Tool-aware workspace search', 'Web browsing built-in', 'Auto-remember key facts'],
+    desc: 'One tool loop across six providers. Sessions persist, memories embed with pgvector and resurface exactly when relevant.',
+    points: ['Workspace-aware search', 'Web browsing built-in', 'Auto-remember key facts'],
     tone: 'eve',
   },
   {
     icon: PhoneCall,
     title: 'Voice that calls you',
-    desc: 'Bidirectional WebRTC calls. Browser STT/TTS or server Groq Whisper + Google TTS. Live captions, echo guard and a pulse visualizer.',
+    desc: 'Bidirectional WebRTC with live captions and an echo guard. Browser speech instantly, server Whisper + TTS when you want quality.',
     points: ['Hold-to-talk + transcripts', 'Eve can trigger calls', 'Waveform + captions'],
     tone: 'voice',
   },
   {
     icon: CalendarDays,
     title: 'Schedules that run alone',
-    desc: 'One-time and cron prompts or voice calls — executed by Vercel cron every 15 minutes even when you are away.',
+    desc: 'One-time and cron prompts or voice calls — executed every 15 minutes by serverless cron, even while you sleep.',
     points: ['Cron + one-time', 'Prompt or call', 'Schedule via chat'],
     tone: 'schedule',
   },
 ]
 
 export const features = [
-  { icon: CheckCircle2, title: 'Tasks', desc: 'Priorities, filters and focus modes that stay out of your way.', tone: 'todo' },
-  { icon: CalendarDays, title: 'Unified Calendar', desc: 'Merged Google, ICS and contest timelines with reminders.', tone: 'calendar' },
-  { icon: Code2, title: 'Competitive Hub', desc: 'Codeforces, LeetCode, CodeChef ratings and upcoming rounds.', tone: 'growth' },
-  { icon: FolderKanban, title: 'Projects', desc: 'Lifecycle phases idea → maintain with tech stacks and links.', tone: 'projects' },
-  { icon: Rocket, title: 'Jobs & Hackathons', desc: 'Pipelines for applications, interviews, submissions and docs.', tone: 'growth' },
-  { icon: LayoutDashboard, title: 'Dashboard', desc: 'Reorderable grid with live widgets for your current mode.', tone: 'work' },
-  { icon: FileText, title: 'Documents', desc: 'Project-linked docs with Monaco preview and Drive import.', tone: 'documents' },
-  { icon: MessageCircle, title: 'Mail & Chat', desc: 'Gmail tabs, WhatsApp bridge and persistent chats.', tone: 'mail' },
+  { icon: CheckCircle2, title: 'Tasks', desc: 'Priorities, filters and focus modes that stay out of your way.', tone: 'todo', size: 'large' },
+  { icon: CalendarDays, title: 'Unified Calendar', desc: 'Merged Google, ICS and contest timelines with reminders.', tone: 'calendar', size: 'standard' },
+  { icon: Code2, title: 'Competitive Hub', desc: 'Ratings and upcoming rounds across Codeforces, LeetCode, CodeChef.', tone: 'growth', size: 'standard' },
+  { icon: FolderKanban, title: 'Projects', desc: 'Lifecycle phases idea → maintain with stacks and links.', tone: 'projects', size: 'standard' },
+  { icon: Rocket, title: 'Jobs & Hackathons', desc: 'Pipelines for applications, interviews and submissions.', tone: 'growth', size: 'large' },
+  { icon: LayoutDashboard, title: 'Dashboard', desc: 'Reorderable grid with live widgets for your current mode.', tone: 'work', size: 'standard' },
+  { icon: FileText, title: 'Documents', desc: 'Project-linked docs with Monaco preview and Drive import.', tone: 'documents', size: 'standard' },
+  { icon: MessageCircle, title: 'Mail & Chat', desc: 'Gmail tabs, WhatsApp bridge and persistent chats.', tone: 'mail', size: 'standard' },
 ]
 
 export const workflow = [
   {
     step: '01',
     title: 'Land & connect',
-    text: 'Create account, link Google, import ICS, add coding handles. Your sources pour into one timeline in under a minute.',
+    text: 'Create an account, link Google, import ICS, add coding handles. Sources pour into one timeline in under a minute.',
     icon: ShieldCheck,
     tone: 'work',
   },
   {
     step: '02',
     title: 'Shape your stage',
-    text: 'Arrange the modular dashboard, pick a theme, spin up a workspace folder. Eve learns your context as you work.',
+    text: 'Arrange the dashboard, pick a theme, open a workspace folder. Eve learns your context as you work.',
     icon: Layers,
     tone: 'studio',
   },
@@ -150,26 +190,26 @@ export const workflow = [
 export const faqs = [
   {
     q: 'What is StarWaves exactly?',
-    a: 'A personal productivity workspace for developers and builders. It merges tasks, projects, jobs, hackathons, coding stats, calendar, documents, mail, WhatsApp and an AI assistant into one cohesive dark canvas.',
+    a: 'A personal operating system for builders: tasks, projects, jobs, hackathons, coding signal, calendar, documents, mail, WhatsApp and the Eve AI assistant — one canvas, three lights: Code, Create, Evolve.',
   },
   {
     q: 'Which integrations are first-class?',
-    a: 'Google Calendar (live sync + ICS), Gmail (tabs + compose), Drive, Google Chat, GitHub, Codeforces / LeetCode / CodeChef contests, and WhatsApp via the Go bridge.',
+    a: 'Google Calendar (live sync + ICS), Gmail, Drive, GitHub, Codeforces / LeetCode / CodeChef contest feeds, and WhatsApp via the Go bridge. Connect or revoke each one in Settings.',
   },
   {
     q: 'What can Eve do beyond chat?',
-    a: 'Eve searches your workspace, reads and writes files, browses the web, summarizes WhatsApp chats, manages schedules and initiates voice calls. All tools run through the same six-provider engine.',
+    a: 'Search and edit workspace files, browse the web, summarize WhatsApp threads, create schedules and initiate voice calls — all through one six-provider tool loop with persistent memory.',
   },
   {
     q: 'Is my data private?',
-    a: 'Yes. Workspace data is isolated per user, scoped by auth, and least-privilege per integration. Disconnect any service in Settings. No data is sold or used for training.',
+    a: 'Yes. Data is isolated per user and scoped by auth with least-privilege integrations. Nothing is sold or used for training. Disconnect any service anytime.',
   },
   {
     q: 'How does voice work?',
-    a: 'Browser Web Speech for instant use, plus optional server Groq Whisper STT and Google Cloud / OpenRouter TTS. Captions stream live during calls with an echo guard.',
+    a: 'Browser speech works instantly with zero setup. Optionally add server Groq Whisper STT and Google Cloud TTS for quality, with live captions and echo guard on every call.',
   },
   {
     q: 'What about Google data usage?',
-    a: 'Calendar (readonly) for events, Gmail (readonly/modify/send) only after you connect, Drive (metadata + files you open), and openid/email/profile for sign-in. Revoke anytime.',
+    a: 'Calendar (readonly) for events, Gmail (readonly/modify/send) only after you connect, Drive (files you open), and openid/email/profile for sign-in. Revoke anytime in Settings.',
   },
 ]

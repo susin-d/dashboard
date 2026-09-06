@@ -8,7 +8,10 @@ import { Features } from './sections/Features'
 import { Workflow } from './sections/Workflow'
 import { FAQ } from './sections/FAQ'
 import { Finale, Footer } from './sections/Finale'
-import './cinema.css'
+import './cinema-base.css'
+import './cinema-hero.css'
+import './cinema-sections.css'
+import './cinema-motion.css'
 
 export function LandingPage({ user, onNavigate }) {
   const reduce = useReducedMotion()
@@ -26,7 +29,7 @@ export function LandingPage({ user, onNavigate }) {
         <Eve onNavigate={onNavigate} />
         <Features />
         <Workflow />
-        <FAQ />
+        <FAQ onNavigate={onNavigate} />
         <Finale onNavigate={onNavigate} />
         <Footer onNavigate={onNavigate} />
       </main>

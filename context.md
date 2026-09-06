@@ -2,7 +2,7 @@
 
 Living snapshot for AI agents. `AGENTS.md` holds permanent rules; this file holds the **current state**. See `CHANGELOG.md` for history and `PROJECT_MAP.md` for the file index.
 
-Last updated: 2026-09-06 - Crimson Noir default dark theme + landing hero scenery (planet, wisps, ridges) (ADR 0023)
+Last updated: 2026-09-06 — Landing bold experimental redesign: Code/Create/Evolve arc, rich cinematic motion, cinema CSS split (ADR 0024)
 
 ## Contents
 1. [Overview](#1-overview) · 2. [Repository structure](#2-repository-structure) · 3. [Backend](#3-backend) · 4. [Frontend](#4-frontend) · 5. [Design system](#5-design-system) · 6. [Current snapshot](#6-current-snapshot) · 7. [Limitations](#7-limitations) · 8. [Verification](#8-verification)
@@ -72,7 +72,8 @@ For full maps see `PROJECT_MAP.md`. Keep this section brief; expand there.
   - EVE: multi-provider + live `/v1/models`; `openai_compat` flat→nested `function` (ADR 0002); SSE `delta`/`thinking`/`tool`/`done`+RAG+auto-remember (capped 3); tools: workspace files, web, WhatsApp, browser, schedule, UI (`ui-preferences`); `ModelSelectorDropdown` + `openrouter/free` default.
   - Voice: `voice_fast.py` Groq 8b-instant + `POST /eve/voice/stream` + Twilio `ConversationRelay`; STT browser/Groq/Deepgram; TTS Google/OpenRouter Fish.
   - Calls: `in_app` WebRTC vs Twilio PSTN + `CallWSManager` multi + `BroadcastChannel`.
-  - Search: `⌘K` palette + Landing cinema.
+   - Search: `⌘K` palette + Landing cinema (bold experimental: display type, orb, tilt stage, marquee, bento, pinned dolly Showcase/Workflow, typewriter Eve terminal, magnetic CTAs; `cinema-{base,hero,sections,motion}.css`).
+   - Crimson Noir landing scenery (planet, wisps, ridges) per ADR 0023 retained under new Hero.
   - Security/Infra: RLS `SET LOCAL`, `10r/s burst 60` + CORS via `$cors_allow_*` + `RateLimitMiddleware`, `pickle→json`, allowlist + `SECURITY.md`; compose e2-micro lean, Nginx + Gzip, Vercel cron + 308 canonical (ADR 0006).
   - Process: no sub-agents + tiered `context.md` <15k + ADRs + no demo/mock + no temp fixes.
 

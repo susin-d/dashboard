@@ -2,6 +2,10 @@
 
 Historical implementation log extracted from `context.md`. `context.md` now holds the **current snapshot** only; this file preserves the full chronological history for audit.
 
+## 2026-09-06 — Landing bold experimental redesign (ADR 0024)
+- `pages/landing/`: Code/Create/Evolve narrative (`data.js` rewrite, generic illustrative minis), display type + word reveal + mouse orb + 3D-tilt stage + proof marquee (Hero), numerals + rule draw (Manifesto), dolly zoom + layoutId tab pill + 6s auto-advance (Showcase), typewriter terminal + looping chat demo (Eve), bento + spotlight hover (Features), parallax ghost numerals (Workflow), sticky split FAQ, rings + magnetic CTAs + module marquee + columnar footer (Finale), progress bar + floating pill + mobile drawer (Nav), `useMagnetic.js` hook.
+- `cinema.css` (524 lines) split into `cinema-{base,hero,sections,motion}.css` (all <400 lines, still `.cinema`-scoped); `LandingPage.jsx` imports four modules; Crimson Noir scenery retained.
+
 ## 2026-09-06 — Multi-color redesign: module accent theming, vibrant semantic tokens, monochrome retirement (ADR 0019)
 - Base light/dark themes default to Electric Indigo primary + Sky/Emerald/Amber/Rose/Purple semantics; `PALETTE_GROUPS` restructured to spectrum + vibrant duo; Sidebar/Dashboard/Badge module accent coding.
 
