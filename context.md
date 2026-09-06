@@ -2,7 +2,7 @@
 
 Living snapshot for AI agents. `AGENTS.md` holds permanent rules; this file holds the **current state**. See `CHANGELOG.md` for history and `PROJECT_MAP.md` for the file index.
 
-Last updated: 2026-09-06 — WaveLoader restyled to cinematic landing ref (hero glow/grid/grain, frame top-bar, gradient title, eve wave, rail progress)
+Last updated: 2026-09-06 — WaveLoader stripped to music-bar equalizer on cinematic backdrop (screen-reader label kept)
 
 ## Contents
 1. [Overview](#1-overview) · 2. [Repository structure](#2-repository-structure) · 3. [Backend](#3-backend) · 4. [Frontend](#4-frontend) · 5. [Design system](#5-design-system) · 6. [Current snapshot](#6-current-snapshot) · 7. [Limitations](#7-limitations) · 8. [Verification](#8-verification)
@@ -75,7 +75,7 @@ For full maps see `PROJECT_MAP.md`. Keep this section brief; expand there.
    - Search: `⌘K` palette + Landing cinema (bold experimental: display type, orb, tilt stage, marquee, bento, pinned dolly Showcase/Workflow, typewriter Eve terminal, magnetic CTAs; `cinema-{base,hero,sections,motion}.css`).
    - Crimson Noir landing scenery (planet, wisps, ridges) per ADR 0023 retained under new Hero.
   - Security/Infra: RLS `SET LOCAL`, `10r/s burst 60` + CORS via `$cors_allow_*` + `RateLimitMiddleware`, `pickle→json`, allowlist + `SECURITY.md`; compose e2-micro lean, Nginx + Gzip, Vercel cron + 308 canonical (ADR 0006).
-  - Loading: `WaveLoader` cinematic stage (landing hero ref: radial glows + 48px grid + grain, `cinema-frame` top-bar with dots/live, eyebrow + gradient-accent display title, eve-gradient 7-bar wave + 2px rail progress, `detail` prop, reduced-motion safe) + `LoadingState` ring icon + animated dots (token-only).
+  - Loading: `WaveLoader` music-bar equalizer (24 eve-gradient bars, staggered bounce, cinematic glow/grid/grain backdrop, screen-reader-only `label`/`detail`, reduced-motion safe) + `LoadingState` ring icon + animated dots (token-only).
   - Process: no sub-agents + tiered `context.md` <15k + ADRs + no demo/mock + no temp fixes.
 
 ## 7. Limitations
