@@ -253,6 +253,7 @@ nav {
   --nav-accent-light: var(--color-primary-light);
 }
 
+.nav-item[data-module="home"] { --nav-accent: var(--color-primary); --nav-accent-light: var(--color-primary-light); }
 .nav-item[data-module="work"] { --nav-accent: var(--module-work); --nav-accent-light: var(--module-work-light); }
 .nav-item[data-module="todo"] { --nav-accent: var(--module-todo); --nav-accent-light: var(--module-todo-light); }
 .nav-item[data-module="projects"] { --nav-accent: var(--module-projects); --nav-accent-light: var(--module-projects-light); }
@@ -270,6 +271,7 @@ nav {
 .nav-item[data-module="account"] { --nav-accent: var(--module-account); --nav-accent-light: var(--module-account-light); }
 
 /* Thematic group headers */
+.sidebar-nav-group[data-group="home"] .sidebar-nav-group-label { color: var(--color-primary); }
 .sidebar-nav-group[data-group="work"] .sidebar-nav-group-label { color: var(--module-work); }
 .sidebar-nav-group[data-group="studio"] .sidebar-nav-group-label { color: var(--module-studio); }
 .sidebar-nav-group[data-group="eve"] .sidebar-nav-group-label { color: var(--module-eve); }

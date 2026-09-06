@@ -2,6 +2,10 @@
 
 Historical implementation log extracted from `context.md`. `context.md` now holds the **current snapshot** only; this file preserves the full chronological history for audit.
 
+## 2026-09-06 — Home sidebar accent follows primary (ADR 0031)
+- Dashboard nav item + Home group remapped `work→home` (`navigation.js`); new sidebar `home` mapping consumes `var(--color-primary)` so HOME label + Dashboard pill are crimson in both themes. Code group keeps Work indigo.
+- Prior snapshot: Light primary unified to Crimson Noir #a83b59 (ADR 0030).
+
 ## 2026-09-06 — Crimson primary in light theme (ADR 0030)
 - Prior light primary Electric Indigo `#4f46e5` superseded by Crimson Noir `#a83b59` (hover `#8c2f4b`, tint `#fbe8ed`); tokens glow/gradients + landing light variant follow. Work/Chats stay indigo, `prism` keeps indigo.
 - Prior snapshot: WaveLoader stripped to music-bar equalizer on cinematic backdrop (screen-reader label kept).

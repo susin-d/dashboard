@@ -26,7 +26,7 @@ import {
 // Order here is the sidebar section order. Ids are routing contracts —
 // renames/merges need redirects (see ADR 0027 pending merges).
 export const navigationItems = [
-  { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, group: 'Home', module: 'work' },
+  { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, group: 'Home', module: 'home' },
   { id: 'workspace', label: 'Workspace', icon: SquareTerminal, group: 'Code', module: 'workspace' },
   { id: 'projects', label: 'Projects', icon: FolderKanban, group: 'Code', module: 'projects' },
   { id: 'documents', label: 'Documents', icon: Files, group: 'Code', module: 'documents' },
@@ -50,7 +50,7 @@ export const navigationItems = [
 ]
 
 export const GROUP_MODULE_MAP = {
-  Home: 'work',
+  Home: 'home',
   Code: 'work',
   Create: 'studio',
   Evolve: 'eve',

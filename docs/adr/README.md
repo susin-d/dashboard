@@ -41,6 +41,7 @@
 | [0029](0029-shell-mobile-tabbar-ask-eve.md) | Shell: mobile bottom tab bar + sidebar Ask Eve + palette event bridge | Accepted | 2026-09-06 |
 | [0022](0022-single-source-color-palette.md) | Single-source color palette in tokens.css — var() everywhere, dead legacy landing CSS removed | Accepted | 2026-09-06 |
 | [0030](0030-crimson-primary-light-theme.md) | Crimson primary in light theme — unify with dark/landing, keep Work/Chats indigo | Accepted | 2026-09-06 |
+| [0031](0031-home-sidebar-accent-follows-primary.md) | Home sidebar accent follows primary — Dashboard/HOME crimson, Code keeps Work indigo | Accepted | 2026-09-06 |
 | [0023](0023-crimson-noir-default-dark-theme.md) | Crimson Noir default dark theme + landing planet/mountain SVG scenery | Accepted | 2026-09-06 |
 | [0024](0024-landing-bold-experimental-redesign.md) | Landing bold experimental redesign — Code/Create/Evolve arc, rich cinematic motion, CSS split | Accepted | 2026-09-06 |
 
