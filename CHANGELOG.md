@@ -2,6 +2,9 @@
 
 Historical implementation log extracted from `context.md`. `context.md` now holds the **current snapshot** only; this file preserves the full chronological history for audit.
 
+## 2026-09-06 — Auth pinned to landing theme (ADR 0026)
+- `auth-split.css` pins `.auth-cinematic` to Crimson Noir tokens (canvas/card/maroon primary/rose focus/Eve accents, glow, gradient, shadows) via doubled-class scope that beats `html.dark-theme`; form pane uses `--bg-primary` against the brand panel's `--bg-card`. No markup changes — all auth styles already consume tokens.
+
 ## 2026-09-06 — Auth split-screen with brand panel (ADR 0025, supersedes 0021)
 - `AuthShell` renders brand `aside` (logo, per-mode headline/body, triad) + form pane inside `auth-cinematic` root; `panel` prop with recovery-neutral defaults; `AuthPage` (login/signup/reset) and `ForgotPasswordPage` pass mode copy, forms untouched.
 - New `styles/pages/auth-split.css` (~200 lines): split grid, perspective floor grid (`rotateX` plane, 7s drift loop, horizon glow, mask fade), entrance rise, ≤900px stacked banner, reduced-motion freeze.
