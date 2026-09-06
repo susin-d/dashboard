@@ -167,7 +167,16 @@ export function ForgotPasswordPage({ onNavigate }) {
   }
 
   return (
-    <AuthShell backLabel="Back to log in" onBack={() => onNavigate('/login')} onHome={() => onNavigate('/')}>
+    <AuthShell
+      backLabel="Back to log in"
+      onBack={() => onNavigate('/login')}
+      onHome={() => onNavigate('/')}
+      panel={{
+        kicker: 'Account recovery',
+        title: 'Locked out? Let\u2019s fix that.',
+        body: 'Identify your account, verify the emailed code, then choose a new password.',
+      }}
+    >
 
           {/* Stepper Progress Bar */}
           <div className="auth-stepper" aria-label="Password recovery steps">

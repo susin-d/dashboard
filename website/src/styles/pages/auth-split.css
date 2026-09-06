@@ -1,0 +1,204 @@
+/* ═══════════════════════════════════════════════════════════
+   Auth — Split Screen (ADR 0025, supersedes ADR 0021 card)
+   Brand panel (left, minimal + perspective floor grid) + form pane
+   (right). Token-only, no image assets. Imported by AuthShell.jsx.
+   ═══════════════════════════════════════════════════════════ */
+
+.auth-split {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: 1fr 1.05fr;
+  width: min(1040px, 100%);
+  min-height: 620px;
+  overflow: hidden;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-xl);
+  background: var(--bg-card);
+  box-shadow: var(--shadow-lg), var(--glow-primary);
+  animation: auth-split-rise 480ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes auth-split-rise {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* — Brand panel — */
+.auth-split__brand {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: var(--space-sm);
+  min-width: 0;
+  padding: clamp(24px, 4vw, 40px);
+  overflow: hidden;
+  background:
+    radial-gradient(ellipse 90% 55% at 50% 108%, color-mix(in srgb, var(--module-eve) 20%, transparent), transparent 70%),
+    radial-gradient(ellipse 80% 45% at 50% -8%, color-mix(in srgb, var(--color-primary) 16%, transparent), transparent 70%),
+    var(--bg-card);
+}
+
+.auth-split__floor {
+  position: absolute;
+  top: 42%;
+  right: -25%;
+  bottom: -14%;
+  left: -25%;
+  pointer-events: none;
+  background-image:
+    linear-gradient(color-mix(in srgb, var(--color-primary) 42%, transparent) 1px, transparent 1px),
+    linear-gradient(90deg, color-mix(in srgb, var(--color-primary) 42%, transparent) 1px, transparent 1px);
+  background-size: 56px 56px;
+  transform: rotateX(62deg) scale(1.7);
+  transform-origin: center top;
+  animation: auth-grid-drift 7s linear infinite;
+  mask-image: linear-gradient(to bottom, transparent, black 42%);
+  -webkit-mask-image: linear-gradient(to bottom, transparent, black 42%);
+}
+
+@keyframes auth-grid-drift {
+  from { background-position-y: 0; }
+  to { background-position-y: 56px; }
+}
+
+.auth-split__horizon {
+  position: absolute;
+  top: 42%;
+  right: 8%;
+  left: 8%;
+  height: 1px;
+  pointer-events: none;
+  background: linear-gradient(90deg, transparent, var(--color-primary), transparent);
+  opacity: 0.65;
+  filter: blur(0.4px);
+}
+
+.auth-split__brand-row {
+  position: absolute;
+  top: clamp(20px, 3vw, 28px);
+  left: clamp(24px, 4vw, 40px);
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 4px;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-primary);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  cursor: pointer;
+}
+
+.auth-split__brand-row:focus-visible {
+  outline: 1.5px solid var(--border-focus);
+  outline-offset: 2px;
+}
+
+.auth-split__kicker {
+  position: relative;
+  z-index: 1;
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 10px;
+  font-weight: 850;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.auth-split__title {
+  position: relative;
+  z-index: 1;
+  margin: 0;
+  color: var(--text-primary);
+  font-size: clamp(28px, 3.4vw, 40px);
+  font-weight: 850;
+  letter-spacing: -0.04em;
+  line-height: 1.02;
+  text-wrap: balance;
+}
+
+.auth-split__body {
+  position: relative;
+  z-index: 1;
+  margin: 0;
+  max-width: 36ch;
+  color: var(--text-secondary);
+  font-size: 13.5px;
+  line-height: 1.65;
+}
+
+.auth-split__triad {
+  position: relative;
+  z-index: 1;
+  margin: var(--space-sm) 0 0;
+  color: var(--text-muted);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+/* — Form pane — */
+.auth-split__form {
+  min-width: 0;
+  padding: clamp(24px, 4vw, 40px);
+  background: var(--bg-card);
+}
+
+.auth-split__top {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  margin-bottom: var(--space-md);
+  min-height: 44px;
+}
+
+/* — Stacked layout — */
+@media (max-width: 900px) {
+  .auth-split {
+    grid-template-columns: 1fr;
+    min-height: 0;
+  }
+
+  .auth-split__brand {
+    justify-content: flex-start;
+    gap: 6px;
+    padding: 20px 20px 18px;
+  }
+
+  .auth-split__floor,
+  .auth-split__horizon {
+    display: none;
+  }
+
+  .auth-split__brand-row {
+    position: static;
+  }
+
+  .auth-split__title {
+    font-size: 24px;
+  }
+
+  .auth-split__body,
+  .auth-split__triad {
+    display: none;
+  }
+}
+
+/* — Reduced motion: freeze the floor on its first frame — */
+@media (prefers-reduced-motion: reduce) {
+  .auth-split {
+    animation: none;
+  }
+
+  .auth-split__floor {
+    animation: none;
+  }
+}

@@ -33,7 +33,8 @@
 | [0018](0018-optimize-all-lucide-pixi-themes.md) | Optimize all: lucide 1.40 (icons 469→43 kB), single-pixi override, theme leaf (index →113 kB), drop drei/fiber | Accepted | 2026-09-04 |
 | [0019](0019-multi-color-redesign-and-module-theming.md) | Multi-color redesign, module accent theming, and monochrome retirement | Accepted | 2026-09-06 |
 | [0020](0020-landing-cinematic-module-theming.md) | Landing cinematic module theming — ADR 0019 accents + light variant, full section theming | Accepted | 2026-09-06 |
-| [0021](0021-auth-cinematic-centered-card.md) | Auth cinematic centered card — shared AuthShell for login/signup/forgot-password | Accepted | 2026-09-06 |
+| [0021](0021-auth-cinematic-centered-card.md) | Auth cinematic centered card — shared AuthShell for login/signup/forgot-password | Superseded by 0025 | 2026-09-06 |
+| [0025](0025-auth-split-screen-brand-panel.md) | Auth split-screen — minimal brand panel + perspective grid floor, form right, all flows | Accepted | 2026-09-06 |
 | [0022](0022-single-source-color-palette.md) | Single-source color palette in tokens.css — var() everywhere, dead legacy landing CSS removed | Accepted | 2026-09-06 |
 | [0023](0023-crimson-noir-default-dark-theme.md) | Crimson Noir default dark theme + landing planet/mountain SVG scenery | Accepted | 2026-09-06 |
 | [0024](0024-landing-bold-experimental-redesign.md) | Landing bold experimental redesign — Code/Create/Evolve arc, rich cinematic motion, CSS split | Accepted | 2026-09-06 |

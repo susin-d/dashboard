@@ -293,44 +293,7 @@
   -webkit-mask-image: radial-gradient(ellipse 65% 55% at 50% 40%, black 50%, transparent 80%);
 }
 
-.auth-cinematic__card {
-  position: relative;
-  z-index: 1;
-  width: min(440px, 100%);
-  padding: clamp(24px, 4vw, 32px);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-xl);
-  background: var(--bg-card);
-  box-shadow: var(--shadow-lg), var(--glow-primary);
-}
-
-.auth-cinematic__top {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-xs);
-  margin-bottom: var(--space-md);
-}
-
-.auth-cinematic__brand {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  min-height: 44px;
-  padding: 0 4px;
-  border: 0;
-  border-radius: var(--radius-sm);
-  background: transparent;
-  color: var(--text-primary);
-  font: inherit;
-  font-size: 14px;
-  font-weight: 800;
-  letter-spacing: -0.02em;
-  cursor: pointer;
-}
-
-.auth-cinematic__brand:focus-visible,
-.auth-cinematic__card .auth-back:focus-visible {
+.auth-split__form .auth-back:focus-visible {
   outline: 1.5px solid var(--border-focus);
   outline-offset: 2px;
 }
@@ -949,9 +912,8 @@
     overflow-x: hidden;
   }
 
-  .auth-cinematic__card {
-    width: 100%;
-    max-width: 400px;
+  .auth-split__form {
+    padding: 24px 20px;
   }
 
   .auth-heading {
@@ -994,10 +956,12 @@
     padding: 20px 14px calc(20px + env(safe-area-inset-bottom));
   }
 
-  .auth-cinematic__card {
-    max-width: 100%;
-    padding: 22px 18px;
+  .auth-split {
     border-radius: var(--radius-lg);
+  }
+
+  .auth-split__form {
+    padding: 22px 18px;
   }
 
   .auth-heading h2 {

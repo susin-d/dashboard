@@ -85,8 +85,26 @@ export function AuthPage({ mode, onNavigate, onAuthenticate, resetToken }) {
     }
   }
 
+  const panel = resetting
+    ? {
+        kicker: 'Reset password',
+        title: 'Choose a fresh password.',
+        body: 'Set a new password to get back into your workspace.',
+      }
+    : signup
+      ? {
+          kicker: 'Create an account',
+          title: 'Build your workspace.',
+          body: 'Tasks, calendar, code, contests and Eve AI on one canvas — free to start.',
+        }
+      : {
+          kicker: 'Welcome back',
+          title: 'Pick up where you left off.',
+          body: 'Your tasks, calendar, code and Eve — exactly as you left them.',
+        }
+
   return (
-    <AuthShell backLabel="Back home" onBack={() => onNavigate('/')} onHome={() => onNavigate('/')}>
+    <AuthShell backLabel="Back home" onBack={() => onNavigate('/')} onHome={() => onNavigate('/')} panel={panel}>
           <div className="auth-heading">
             <p>{resetting ? 'Reset your password' : signup ? 'Create an account' : 'Welcome back'}</p>
             <h2>{resetting ? 'Set a new password' : signup ? 'Build your workspace' : 'Log in to StarWaves'}</h2>

@@ -2,6 +2,11 @@
 
 Historical implementation log extracted from `context.md`. `context.md` now holds the **current snapshot** only; this file preserves the full chronological history for audit.
 
+## 2026-09-06 — Auth split-screen with brand panel (ADR 0025, supersedes 0021)
+- `AuthShell` renders brand `aside` (logo, per-mode headline/body, triad) + form pane inside `auth-cinematic` root; `panel` prop with recovery-neutral defaults; `AuthPage` (login/signup/reset) and `ForgotPasswordPage` pass mode copy, forms untouched.
+- New `styles/pages/auth-split.css` (~200 lines): split grid, perspective floor grid (`rotateX` plane, 7s drift loop, horizon glow, mask fade), entrance rise, ≤900px stacked banner, reduced-motion freeze.
+- `landing-auth.css`: retired dead `__card/__top/__brand` rules, retargeted ≤900/480px queries at split panes.
+
 ## 2026-09-06 — Landing bold experimental redesign (ADR 0024)
 - `pages/landing/`: Code/Create/Evolve narrative (`data.js` rewrite, generic illustrative minis), display type + word reveal + mouse orb + 3D-tilt stage + proof marquee (Hero), numerals + rule draw (Manifesto), dolly zoom + layoutId tab pill + 6s auto-advance (Showcase), typewriter terminal + looping chat demo (Eve), bento + spotlight hover (Features), parallax ghost numerals (Workflow), sticky split FAQ, rings + magnetic CTAs + module marquee + columnar footer (Finale), progress bar + floating pill + mobile drawer (Nav), `useMagnetic.js` hook.
 - `cinema.css` (524 lines) split into `cinema-{base,hero,sections,motion}.css` (all <400 lines, still `.cinema`-scoped); `LandingPage.jsx` imports four modules; Crimson Noir scenery retained.
