@@ -485,6 +485,18 @@
 @keyframes cinema-halo-breathe { 0%, 100% { opacity: 0.8; } 50% { opacity: 1; } }
 .cinema-svg-crescent { stroke: var(--cinema-eve); stroke-opacity: 0.4; stroke-linecap: round; }
 .cinema-svg-crescent--core { stroke: var(--on-fill); stroke-opacity: 0.8; stroke-linecap: round; }
+.cinema-svg-tide {
+  stroke: var(--cinema-primary); stroke-opacity: 0.14; stroke-linecap: round;
+  animation: cinema-tide-drift 22s ease-in-out infinite alternate;
+}
+.cinema-svg-tide--eve {
+  stroke: var(--cinema-eve); stroke-opacity: 0.10;
+  animation-duration: 29s;
+}
+@keyframes cinema-tide-drift {
+  from { transform: translateX(-70px); opacity: 0.75; }
+  to { transform: translateX(70px); opacity: 1; }
+}
 
 /* reduced motion */
 @media (prefers-reduced-motion: reduce) {

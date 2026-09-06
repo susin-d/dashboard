@@ -48,7 +48,24 @@ export function Hero({ onNavigate }) {
             <filter id="cinema-soft" x="-40%" y="-40%" width="180%" height="180%">
               <feGaussianBlur stdDeviation="6" />
             </filter>
+            <filter id="cinema-tide-soft" x="-40%" y="-60%" width="180%" height="220%">
+              <feGaussianBlur stdDeviation="28" />
+            </filter>
           </defs>
+          <g filter="url(#cinema-tide-soft)">
+            <path
+              d="M-160,560 C350,480 600,660 1000,560 S1350,500 1600,580"
+              fill="none"
+              className="cinema-svg-tide"
+              strokeWidth="110"
+            />
+            <path
+              d="M-160,710 C400,620 700,770 1100,685 S1400,640 1600,705"
+              fill="none"
+              className="cinema-svg-tide cinema-svg-tide--eve"
+              strokeWidth="150"
+            />
+          </g>
           <g filter="url(#cinema-soft)">
             <path
               d="M-40,620 C250,560 350,680 600,610 S950,540 1200,600"
