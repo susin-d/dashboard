@@ -271,7 +271,7 @@ export function MailsPage({ onNavigate }) {
     return (
       <div className="mail-page-container">
         <PageHeader
-          eyebrow="Communication"
+          eyebrow="Connect"
           title="Mails"
           description="Centralize your Gmail accounts, organize threads, and compose messages."
         />
@@ -430,7 +430,7 @@ export function MailsPage({ onNavigate }) {
 
       {/* Page Heading & Search Toolbar */}
       <PageHeader
-        eyebrow="Communication"
+        eyebrow="Connect"
         title="Mails"
         className="mail-page-heading"
         actions={

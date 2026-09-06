@@ -36,6 +36,7 @@
 | [0021](0021-auth-cinematic-centered-card.md) | Auth cinematic centered card — shared AuthShell for login/signup/forgot-password | Superseded by 0025 | 2026-09-06 |
 | [0025](0025-auth-split-screen-brand-panel.md) | Auth split-screen — minimal brand panel + perspective grid floor, form right, all flows | Accepted | 2026-09-06 |
 | [0026](0026-auth-pinned-landing-theme.md) | Auth pinned to landing Crimson Noir theme in both app themes | Accepted | 2026-09-06 |
+| [0027](0027-app-ia-nav-regroup.md) | App IA regroup Phase 0 — Home/Code/Create/Evolve/Connect/You, merges pending | Proposed | 2026-09-06 |
 | [0022](0022-single-source-color-palette.md) | Single-source color palette in tokens.css — var() everywhere, dead legacy landing CSS removed | Accepted | 2026-09-06 |
 | [0023](0023-crimson-noir-default-dark-theme.md) | Crimson Noir default dark theme + landing planet/mountain SVG scenery | Accepted | 2026-09-06 |
 | [0024](0024-landing-bold-experimental-redesign.md) | Landing bold experimental redesign — Code/Create/Evolve arc, rich cinematic motion, CSS split | Accepted | 2026-09-06 |

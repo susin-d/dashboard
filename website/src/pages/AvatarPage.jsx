@@ -161,7 +161,7 @@ export function AvatarPage({ onNavigate }) {
   return (
     <div className="avatar-page">
       <PageHeader
-        eyebrow="Eve AI"
+        eyebrow="Evolve"
         title="Avatar Studio"
         description="Live2D + 3D VRM — global floating companion + inline on Eve pages. Auto picks VRM on desktop and Live2D on mobile. Upload your own .vrm / .glb / .model3.json (.zip)."
         actions={

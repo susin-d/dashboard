@@ -90,7 +90,7 @@ export function CallsPage({ callCenter, user }) {
   return (
     <section className="calls-page">
       <PageHeader
-        eyebrow="Communication"
+        eyebrow="Connect"
         title="Calls"
         actions={
           <>

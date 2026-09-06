@@ -43,7 +43,7 @@ export function ContactsPage({ callCenter, onNavigate }) {
   return (
     <main className="contacts-page">
       <PageHeader
-        eyebrow="Communication"
+        eyebrow="Connect"
         title="Contacts"
         description="Manage your personal and professional network, phone directory, and communication links."
         actions={

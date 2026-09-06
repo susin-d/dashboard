@@ -141,7 +141,7 @@ export function ChatsPage({ onNavigate: _onNavigate }) {
   return (
     <section className="chats-page">
       <PageHeader
-        eyebrow="Communication"
+        eyebrow="Connect"
         title="Chats"
         actions={
           <>

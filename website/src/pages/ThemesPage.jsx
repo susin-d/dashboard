@@ -75,7 +75,7 @@ export function ThemesPage() {
   return (
     <section className="themes-page">
       <PageHeader
-        eyebrow="Account"
+        eyebrow="You"
         title="UI & UX Customization Studio"
         actions={
           <div className="themes-header-actions">

@@ -2,6 +2,12 @@
 
 Historical implementation log extracted from `context.md`. `context.md` now holds the **current snapshot** only; this file preserves the full chronological history for audit.
 
+## 2026-09-06 — Loading screen redesign (from prior commit f81e6b0)
+- Branded WaveLoader card (orbit ring + wave bars + progress) and matching LoadingState (`components/WaveLoader.jsx`, `components/ui/LoadingState.jsx`, `wave-loader.css`, `loading-state.css`).
+
+## 2026-09-06 — Phase 0 IA regroup (ADR 0027 Proposed)
+- `config/navigation.js`: 29 items regrouped Home/Code/Create/Evolve/Connect/You (display-only, ids frozen, order = sidebar order); `GROUP_MODULE_MAP` repointed with existing module keys (no CSS changes); `Chat`→`Eve` label. Search badges + page eyebrows realigned. Route merges (Eve tabs, Compete page, Chats3, Studio children) documented as pending sign-off.
+
 ## 2026-09-06 — Auth full-bleed split (amends ADR 0025)
 - Outer card removed: `.auth-split` fills `100dvh` edge-to-edge, hairline split border, form column centers content capped at 440px (`.auth-split__form-inner`, foot tagline beneath), brand floor rescaled to `55%`, obsolete light-theme block deleted (tokens pinned dark).
 
