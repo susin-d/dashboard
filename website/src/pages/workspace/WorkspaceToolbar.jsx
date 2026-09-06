@@ -1,3 +1,4 @@
+import '../../styles/pages/workspace-toolbar.css'
 import { useEffect, useRef, useState } from 'react'
 import {
   FolderOpen,

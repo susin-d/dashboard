@@ -1,3 +1,4 @@
+import '../../styles/pages/workspace-overview.css'
 import {
   Clock3,
   Edit2,

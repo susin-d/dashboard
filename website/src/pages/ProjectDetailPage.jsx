@@ -1,4 +1,5 @@
-import "../styles/pages/projects.css"
+import "../styles/pages/project-detail.css"
+import "../styles/pages/project-lifecycle.css"
 import { useState } from 'react'
 import {
   ArrowLeft,
@@ -130,30 +131,7 @@ export function ProjectDetailPage({ project, onBack, onSave }) {
     }
   }
 
-  const renderAvatarStack = (membersCount) => {
-    const count = Math.min(membersCount || 1, 4)
-    const avatars = []
-    const prefixes = ['JD', 'AB', 'SK', 'ML']
-    for (let i = 0; i < count; i++) {
-      avatars.push(
-        <span key={i} className="project-avatar-bubble">
-          {prefixes[i % prefixes.length]}
-        </span>,
-      )
-    }
-    if (membersCount > 4) {
-      avatars.push(
-        <span key="more" className="project-avatar-bubble more">
-          +{membersCount - 4}
-        </span>,
-      )
-    }
-    return (
-      <div className="project-avatar-stack" title={`${membersCount} team members`}>
-        {avatars}
-      </div>
-    )
-  }
+  const memberCount = Number(project.members) || 0
 
   return (
     <section className="project-page">
@@ -275,8 +253,8 @@ export function ProjectDetailPage({ project, onBack, onSave }) {
           <div className="project-page-details">
             <div>
               <Users size={17} />
-              <span>Team ({project.members})</span>
-              {renderAvatarStack(project.members)}
+              <span>Team</span>
+              <strong>{memberCount} {memberCount === 1 ? 'member' : 'members'}</strong>
             </div>
             <div>
               <CalendarClock size={17} />

@@ -1,4 +1,6 @@
 /** Projects page — single responsibility: orchestrate project list, filters and dialogs. */
+import '../../styles/pages/projects-list.css'
+import '../../styles/pages/project-cards.css'
 import { useState } from 'react'
 import { FolderKanban, LayoutGrid, List, Search, SlidersHorizontal } from 'lucide-react'
 import { createProject, deleteProject, updateProject } from '../../lib/workspaceApi'
@@ -93,7 +95,7 @@ export function ProjectsPage({ projects, setProjects, onOpenProject, canLoadMore
   return (
     <section className="projects-page">
       <PageHeader
-        eyebrow="Work & build"
+        eyebrow="Code"
         title="Projects"
         description="Turn ideas into momentum with a clear view of what is moving."
         actions={

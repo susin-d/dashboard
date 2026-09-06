@@ -1,3 +1,4 @@
+import '../../styles/pages/workspace-eve.css'
 import { useEffect, useRef, useState } from 'react'
 import { Bot, Send, PanelRightClose, PanelRightOpen, Square, Wrench } from 'lucide-react'
 import { useEveAgentChat } from './useEveAgentChat'

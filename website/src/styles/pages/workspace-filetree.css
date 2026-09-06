@@ -1,0 +1,208 @@
+/* Workspace File Tree — split from workspace.css (Wave B) */
+/* Three-Panel Layout */
+.workspace-layout {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--bg-primary, #f4f4f5);
+  gap: 0;
+}
+
+/* File Tree Panel — Redesign */
+.workspace-file-tree {
+  width: 280px;
+  min-width: 220px;
+  max-width: 360px;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid var(--border-color, #e4e4e7);
+  background: var(--bg-card, #ffffff);
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.file-tree-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--text-secondary, #71717a);
+  border-bottom: 1px solid var(--border-light, #e4e4e7);
+  flex-shrink: 0;
+  background: var(--bg-card, #ffffff);
+}
+
+.file-tree-actions {
+  display: inline-flex;
+  gap: 4px;
+}
+
+.file-tree-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: 1px solid transparent;
+  background: none;
+  cursor: pointer;
+  border-radius: 6px;
+  color: var(--text-secondary, #71717a);
+  transition: background 150ms, border-color 150ms, color 150ms;
+}
+
+.file-tree-action:hover {
+  background: var(--bg-tertiary, #f4f4f5);
+  border-color: var(--border-color, #e4e4e7);
+  color: var(--text-primary, #09090b);
+}
+
+.file-tree-content {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 6px 0;
+}
+
+.file-tree-empty {
+  padding: 24px 16px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--text-secondary, #71717a);
+}
+
+.file-tree-empty-v2 {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 28px 18px;
+  text-align: center;
+}
+
+.file-tree-empty-illustration {
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  border-radius: 16px;
+  background: var(--bg-tertiary, #f4f4f5);
+  border: 1px solid var(--border-color, #e4e4e7);
+  color: var(--text-muted, #71717a);
+}
+
+.file-tree-empty-v2 h4 {
+  margin: 4px 0 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary, #09090b);
+}
+
+.file-tree-empty-v2 p {
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--text-secondary, #71717a);
+  max-width: 240px;
+}
+
+.file-tree-empty-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.file-tree-empty-actions .primary-button.small,
+.file-tree-empty-actions .secondary-button.small {
+  height: 28px;
+  padding: 0 12px;
+  font-size: 12px;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.file-tree-empty-hint {
+  font-size: 11px;
+  color: var(--text-muted, #71717a);
+  background: var(--bg-tertiary, #f4f4f5);
+  border: 1px solid var(--border-light, #e4e4e7);
+  padding: 6px 8px;
+  border-radius: 6px;
+  max-width: 240px;
+}
+
+.file-tree-empty-hint code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 11px;
+  color: var(--text-primary, #09090b);
+}
+
+.tree-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  padding: 5px 8px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 13px;
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: background 100ms, color 100ms;
+  border-radius: 6px;
+  margin: 0 6px;
+  width: calc(100% - 12px);
+}
+
+.tree-item:hover {
+  background: var(--bg-tertiary, #f4f4f5);
+}
+
+.tree-item.active {
+  background: var(--text-primary, #09090b);
+  color: var(--text-inverse, #ffffff);
+}
+
+.tree-item.active .tree-folder-icon,
+.tree-item.active .tree-file-icon {
+  color: var(--text-inverse, #ffffff);
+}
+
+.tree-item-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+}
+
+.tree-folder-icon {
+  color: var(--text-secondary, #71717a);
+  flex-shrink: 0;
+}
+
+.tree-file-icon {
+  display: grid;
+  place-items: center;
+  color: var(--text-muted, #71717a);
+  flex-shrink: 0;
+}
+
+.tree-directory {
+  color: var(--text-primary, #09090b);
+  font-weight: 500;
+}
+
+.tree-file {
+  color: var(--text-secondary, #3f3f46);
+}
+

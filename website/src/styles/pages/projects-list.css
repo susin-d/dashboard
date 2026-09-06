@@ -1,0 +1,205 @@
+/* Projects List Page — split from projects.css (Wave B) */
+/* Projects & Project Detail Page Styles */
+
+/* Page header — side-by-side title + actions (shared .page-heading has no
+   global display rule, so scope the flex layout here). */
+.projects-page .page-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-md);
+  padding-bottom: var(--space-md);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.projects-page .page-heading > div:first-child {
+  min-width: 0;
+  flex: 1 1 auto;
+  display: grid;
+  gap: 4px;
+}
+
+.projects-page .page-heading-description {
+  display: block;
+  margin-top: 8px;
+  color: var(--text-secondary);
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.projects-page .page-heading-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: var(--space-2xs);
+}
+
+.project-summary {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 11px;
+  color: var(--text-secondary);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  font-size: 11px;
+  font-weight: 650;
+}
+
+.project-list {
+  width: 100%;
+  display: grid;
+  gap: 14px;
+}
+
+.project-insight-grid {
+  margin: 0;
+  padding-top: 0;
+}
+
+/* Project toolbar inherits the shared .filter-bar tokens — no page overrides
+   so spacing stays consistent with every other filtered list. */
+
+.project-empty-state {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  padding: 48px 20px;
+  color: var(--text-muted);
+  background: var(--bg-card);
+  border: 1px dashed var(--border-color);
+  border-radius: 12px;
+  text-align: center;
+}
+
+.project-empty-state strong { color: var(--text-primary); font-size: 13px; }
+.project-empty-state span { font-size: 10px; }
+.project-empty-state button { margin-top: 5px; }
+
+.project-list-card .contest-site-logo svg {
+  color: var(--text-inverse);
+}
+
+.project-list-card {
+  overflow: hidden;
+  border-radius: var(--radius-lg);
+}
+
+.project-list-card .contest-site-header {
+  min-height: 76px;
+  padding: 14px 16px;
+}
+
+.project-list-card .contest-site-copy {
+  gap: 5px;
+}
+
+.project-list-card .contest-site-copy strong {
+  font-size: 13px;
+}
+
+.project-list-card .contest-site-copy small {
+  max-width: 760px;
+  overflow: hidden;
+  color: var(--text-secondary);
+  font-size: 11px;
+  line-height: 1.45;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.project-status {
+  padding: 4px 9px;
+  color: var(--text-secondary);
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-full);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.project-status.status-active {
+  color: var(--text-inverse);
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+}
+
+.project-status.status-planning {
+  color: var(--text-primary);
+  background: var(--bg-card);
+  border: 1px dashed var(--border-heavy);
+}
+
+.project-status.status-on-hold {
+  color: var(--text-muted);
+  background: var(--bg-tertiary);
+  border-color: var(--border-color);
+}
+
+.project-status.status-completed {
+  color: var(--text-primary);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-heavy);
+}
+
+/* Status Filter Chips Bar — shared .filter-pills owns layout; keep this hook
+   margin-free so the parent page gap sets the rhythm. */
+.project-status-chips {
+  margin: 0;
+  padding: 2px 0;
+}
+
+/* View Mode Switcher Toggle */
+.project-view-toggle {
+  display: flex;
+  align-items: center;
+  padding: 2px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+}
+
+.project-view-btn {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  color: var(--text-muted);
+  background: transparent;
+  border: 0;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.project-view-btn:hover {
+  color: var(--text-primary);
+}
+
+.project-view-btn.active {
+  color: var(--text-primary);
+  background: var(--bg-card);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+/* Clickable Insight Cards */
+.workspace-insight-card.clickable {
+  cursor: pointer;
+  transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.workspace-insight-card.clickable:hover {
+  border-color: var(--border-heavy);
+  transform: translateY(-1px);
+}
+
+.workspace-insight-card.clickable.active-stat-filter {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 1px var(--color-primary);
+}
+

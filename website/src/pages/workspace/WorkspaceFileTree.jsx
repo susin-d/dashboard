@@ -1,3 +1,4 @@
+import '../../styles/pages/workspace-filetree.css'
 import { useState, useMemo } from 'react'
 import {
   ChevronRight,

@@ -27,6 +27,25 @@
   margin: 0;
 }
 
+.document-search-bar {
+  margin-bottom: 4px;
+}
+
+.document-list-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.document-list-card::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--module-documents), transparent);
+  opacity: 0.85;
+  pointer-events: none;
+}
+
 .document-list-card .contest-site-logo svg {
   color: var(--text-inverse);
 }

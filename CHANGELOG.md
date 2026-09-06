@@ -5,6 +5,11 @@ Historical implementation log extracted from `context.md`. `context.md` now hold
 ## 2026-09-06 — Loading screen redesign (from prior commit f81e6b0)
 - Branded WaveLoader card (orbit ring + wave bars + progress) and matching LoadingState (`components/WaveLoader.jsx`, `components/ui/LoadingState.jsx`, `wave-loader.css`, `loading-state.css`).
 
+## 2026-09-06 — Wave B: Workspace, Projects, Documents
+- `workspace.css` (1839) split into 7 scoped files (toolbar/filetree/editor/panels/eve/dialogs/overview) wired per component; overview header rhythm + workspace-amber card accents.
+- Removed fake avatar initials (§1.8) from project grid + detail cards (real member counts); dropped dead avatar CSS in the split; `projects.css` (1094) split into list/cards/detail/lifecycle; grid-card projects accent; Projects eyebrow → Code.
+- Documents list search (name/desc/tags/category) + filtered empty state; eyebrow → Code; documents accent edge.
+
 ## 2026-09-06 — Wave A: Dashboard, Todos, Calendar
 - Dashboard command header (greeting + date + live focus summary); widget module-accent top edge; `dashboard.css` (759) split into `dashboard.css` + `dashboard-customize.css`.
 - Todo progress bar (done % + overdue count), overdue flags + danger styling.

@@ -20,7 +20,7 @@ import {
   uploadGoogleDriveFile,
 } from '../lib/googleDriveApi'
 import { deleteDocument, persistDocument } from '../lib/documentsApi'
-import { ConfirmDialog, Modal, PageHeader, SearchBar } from '../components/ui'
+import { ConfirmDialog, EmptyState, Modal, PageHeader, SearchBar } from '../components/ui'
 
 const emptyDocument = {
   name: '',
@@ -51,6 +51,18 @@ export function DocumentsPage({ documents, setDocuments, createIntent, onOpenDoc
   const [documentSaving, setDocumentSaving] = useState(false)
   const [documentSaveError, setDocumentSaveError] = useState('')
   const [deleteId, setDeleteId] = useState(null)
+  const [query, setQuery] = useState('')
+
+  const visibleDocuments = useMemo(() => {
+    const search = query.trim().toLowerCase()
+    if (!search) return documents
+    return documents.filter((document) =>
+      document.name.toLowerCase().includes(search) ||
+      (document.description ?? '').toLowerCase().includes(search) ||
+      (document.category ?? '').toLowerCase().includes(search) ||
+      (document.tags ?? []).some((tag) => tag.toLowerCase().includes(search)),
+    )
+  }, [documents, query])
 
   const handleDeleteDocument = async (documentId) => {
     setDeleteId(documentId)
@@ -255,7 +267,7 @@ export function DocumentsPage({ documents, setDocuments, createIntent, onOpenDoc
   return (
     <section className="documents-page">
       <PageHeader
-        eyebrow="Files & resources"
+        eyebrow="Code"
         title="Documents"
         actions={
           <button className="primary-button document-upload-button" onClick={openUpload}>
@@ -279,8 +291,16 @@ export function DocumentsPage({ documents, setDocuments, createIntent, onOpenDoc
         </div>
       </section>
 
+      <SearchBar
+        value={query}
+        onChange={setQuery}
+        placeholder="Search documents by name, tag, or category"
+        ariaLabel="Search documents"
+        className="document-search-bar"
+      />
+
       <div className="document-list">
-        {documents.map((document) => {
+        {visibleDocuments.map((document) => {
           const isOpen = openDocuments.has(document.id)
           const modifiedAt = new Date(document.modifiedAt)
 
@@ -381,6 +401,14 @@ export function DocumentsPage({ documents, setDocuments, createIntent, onOpenDoc
         })}
       </div>
 
+
+      {!visibleDocuments.length && documents.length > 0 && (
+        <EmptyState
+          icon={FileText}
+          title="No documents match"
+          description={`Nothing matches “${query.trim()}”. Try a different search.`}
+        />
+      )}
 
       {!documents.length && (
         <section className="document-empty-state">

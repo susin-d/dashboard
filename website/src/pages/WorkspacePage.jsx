@@ -1,4 +1,4 @@
-import "../styles/pages/workspace.css"
+import "../styles/pages/workspace-dialogs.css"
 import { useCallback, useEffect, useState } from 'react'
 import { useWorkspace } from './workspace/useWorkspace'
 import { WorkspaceToolbar } from './workspace/WorkspaceToolbar'
