@@ -1,4 +1,5 @@
 import "../styles/pages/dashboard.css"
+import "../styles/pages/dashboard-customize.css"
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { ResponsiveGridLayout, useContainerWidth } from 'react-grid-layout'
 import {

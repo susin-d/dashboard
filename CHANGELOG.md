@@ -5,6 +5,12 @@ Historical implementation log extracted from `context.md`. `context.md` now hold
 ## 2026-09-06 — Loading screen redesign (from prior commit f81e6b0)
 - Branded WaveLoader card (orbit ring + wave bars + progress) and matching LoadingState (`components/WaveLoader.jsx`, `components/ui/LoadingState.jsx`, `wave-loader.css`, `loading-state.css`).
 
+## 2026-09-06 — Wave A: Dashboard, Todos, Calendar
+- Dashboard command header (greeting + date + live focus summary); widget module-accent top edge; `dashboard.css` (759) split into `dashboard.css` + `dashboard-customize.css`.
+- Todo progress bar (done % + overdue count), overdue flags + danger styling.
+- `CalendarPage` (705) split into `pages/calendar/` package (toolbar/month/detail/utils + barrel, shell 188 lines); `calendar.css` (762) split into toolbar/grid/detail; new Today-jump button.
+- Canonical `compete` destinations (dashboard config/widgets, header notifications, calendar + stats links); widget ids frozen so saved layouts survive.
+
 ## 2026-09-06 — Phase 2 shell additions (ADR 0029)
 - New `MobileTabBar` (Home/Search/Eve/Studio/You, fixed ≤900px, safe-area, module-accent actives); `starwaves:open-search` event bridge to the header palette; content bottom clearance.
 - Sidebar footer `Ask Eve` button (Eve accent, 44px collapsed, tooltip-wired) opening the lazy `EveAssistantModal`; `onWorkspaceChanged` threaded via `AppLayout`. Shell audit found the rail/header mature — no visual churn.
