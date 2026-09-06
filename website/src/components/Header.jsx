@@ -195,14 +195,13 @@ export function Header({
 
   const currentNav = navigationItems.find((item) => item.id === activePage) || {
     label: activePage ? activePage.charAt(0).toUpperCase() + activePage.slice(1) : 'Dashboard',
-    module: 'work',
   }
 
   return (
     <>
       <header className="topbar">
         <div className="topbar-left">
-          <span className="breadcrumb-current" data-module={currentNav.module || 'work'} aria-current="page">{currentNav.label}</span>
+          <span className="topbar-page-title" aria-current="page">{currentNav.label}</span>
         </div>
 
         <div className="header-actions">
