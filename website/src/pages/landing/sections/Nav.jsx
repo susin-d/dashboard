@@ -8,6 +8,7 @@ export function Nav({ onNavigate }) {
   const reduce = useReducedMotion()
   const [scrolled, setScrolled] = useState(false)
   const [open, setOpen] = useState(false)
+  const [active, setActive] = useState('')
   const { scrollYProgress } = useScroll()
   const progress = useSpring(scrollYProgress, { stiffness: 140, damping: 26, mass: 0.4 })
   const magnetic = useMagnetic()
@@ -17,6 +18,23 @@ export function Nav({ onNavigate }) {
     onScroll()
     window.addEventListener('scroll', onScroll, { passive: true })
     return () => window.removeEventListener('scroll', onScroll)
+  }, [])
+
+  useEffect(() => {
+    const sections = navLinks
+      .map((l) => document.getElementById(l.href.replace('#', '')))
+      .filter(Boolean)
+    if (!sections.length) return undefined
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) setActive(`#${entry.target.id}`)
+        })
+      },
+      { rootMargin: '-38% 0px -55% 0px' },
+    )
+    sections.forEach((s) => observer.observe(s))
+    return () => observer.disconnect()
   }, [])
 
   useEffect(() => {
@@ -38,16 +56,13 @@ export function Nav({ onNavigate }) {
     <motion.nav
       className={`cinema-nav${scrolled ? ' is-scrolled' : ''}`}
       aria-label="Primary"
-      initial={reduce ? false : { y: -18, opacity: 0 }}
+      initial={reduce ? false : { y: -24, opacity: 0 }}
       animate={reduce ? {} : { y: 0, opacity: 1 }}
       transition={reduce ? {} : { duration: 0.6, ease: [0.16, 1, 0.3, 1], delay: 0.1 }}
     >
       <button type="button" className="cinema-nav__brand" onClick={() => onNavigate('/')} aria-label="StarWaves home">
         <img src="/logo.png" alt="" aria-hidden="true" className="cinema-nav__mark" />
         <span>StarWaves</span>
-        <span className="cinema-nav__triad" aria-hidden="true">
-          Code · Create · Evolve
-        </span>
       </button>
 
       <div className="cinema-nav__links" role="list">
@@ -56,6 +71,8 @@ export function Nav({ onNavigate }) {
             key={l.href}
             href={l.href}
             role="listitem"
+            aria-current={active === l.href ? 'true' : undefined}
+            className={active === l.href ? 'is-active' : undefined}
             onClick={(e) => {
               e.preventDefault()
               scrollTo(l.href)
@@ -99,15 +116,17 @@ export function Nav({ onNavigate }) {
           <motion.div
             id="cinema-mobile-menu"
             className="cinema-nav__drawer"
-            initial={reduce ? false : { opacity: 0, y: -8 }}
-            animate={reduce ? {} : { opacity: 1, y: 0 }}
-            exit={reduce ? {} : { opacity: 0, y: -8 }}
+            initial={reduce ? false : { opacity: 0, y: -8, scale: 0.98 }}
+            animate={reduce ? {} : { opacity: 1, y: 0, scale: 1 }}
+            exit={reduce ? {} : { opacity: 0, y: -8, scale: 0.98 }}
             transition={reduce ? {} : { duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
           >
             {navLinks.map((l) => (
               <a
                 key={l.href}
                 href={l.href}
+                aria-current={active === l.href ? 'true' : undefined}
+                className={active === l.href ? 'is-active' : undefined}
                 onClick={(e) => {
                   e.preventDefault()
                   scrollTo(l.href)

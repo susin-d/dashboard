@@ -35,10 +35,8 @@
   .cinema-faq__inner--split { grid-template-columns: 1fr; }
   .cinema-faq__side { position: static; justify-items: center; text-align: center; }
 }
-@media (max-width: 640px) {
-  .cinema-nav { padding: 0 14px; height: 56px; }
+@media (max-width: 900px) {
   .cinema-nav__links { display: none; }
-  .cinema-nav__triad { display: none; }
   .cinema-nav__login { display: none; }
   .cinema-nav__menu { display: grid; }
   .cinema-scenery { opacity: 0.55; }
@@ -56,7 +54,10 @@
   .cinema-footer__giant { font-size: clamp(40px, 12.5vw, 90px); }
   .cinema-footer__brand-block { max-width: 100%; }
 }
-@media (min-width: 641px) {
+@media (max-width: 640px) {
+  .cinema-nav { width: calc(100% - 20px); height: 56px; padding: 0 8px 0 14px; }
+}
+@media (min-width: 901px) {
   .cinema-nav__menu { display: none; }
   .cinema-nav__drawer { display: none; }
 }
