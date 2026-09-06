@@ -28,15 +28,17 @@ export function AuthShell({ backLabel, onBack, onHome, panel, children }) {
           <p className="auth-split__triad">Code · Create · Evolve</p>
         </aside>
         <div className="auth-split__form">
-          <div className="auth-split__top">
-            <button type="button" className="auth-back" onClick={onBack}>
-              <ArrowLeft size={16} /> {backLabel}
-            </button>
+          <div className="auth-split__form-inner">
+            <div className="auth-split__top">
+              <button type="button" className="auth-back" onClick={onBack}>
+                <ArrowLeft size={16} /> {backLabel}
+              </button>
+            </div>
+            {children}
+            <p className="auth-cinematic__foot">Plan clearly. Build consistently.</p>
           </div>
-          {children}
         </div>
       </div>
-      <p className="auth-cinematic__foot">Plan clearly. Build consistently.</p>
     </main>
   )
 }

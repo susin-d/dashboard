@@ -2,6 +2,9 @@
 
 Historical implementation log extracted from `context.md`. `context.md` now holds the **current snapshot** only; this file preserves the full chronological history for audit.
 
+## 2026-09-06 — Auth full-bleed split (amends ADR 0025)
+- Outer card removed: `.auth-split` fills `100dvh` edge-to-edge, hairline split border, form column centers content capped at 440px (`.auth-split__form-inner`, foot tagline beneath), brand floor rescaled to `55%`, obsolete light-theme block deleted (tokens pinned dark).
+
 ## 2026-09-06 — Auth pinned to landing theme (ADR 0026)
 - `auth-split.css` pins `.auth-cinematic` to Crimson Noir tokens (canvas/card/maroon primary/rose focus/Eve accents, glow, gradient, shadows) via doubled-class scope that beats `html.dark-theme`; form pane uses `--bg-primary` against the brand panel's `--bg-card`. No markup changes — all auth styles already consume tokens.
 

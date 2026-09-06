@@ -19,6 +19,7 @@ Reintroduce the split — done properly this time, keeping ADR 0021's wins (one 
 - Chosen approach: `AuthShell` renders a split container (brand `aside` left, form pane right) inside the existing `auth-cinematic` root, so all scoped form overrides (gradient submit, danger error) keep working. New optional props `panelKicker/panelTitle/panelBody` let login/signup/reset/forgot each set brand copy; form markup in both pages is untouched.
 - Brand panel is minimal per request: logo row, one display headline, triad microcopy — plus a perspective floor grid (rotateX plane, slow background-position drift toward viewer, horizon glow, mask-faded under the headline). Token colors only, `aria-hidden` layers, frozen under `prefers-reduced-motion`, hidden in the stacked mobile banner.
 - Scope: `components/auth/AuthShell.jsx`, new `styles/pages/auth-split.css` (~200 lines, starts the ADR 0022 follow-up of splitting 1033-line `landing-auth.css`), panel-copy props in `AuthPage.jsx`/`ForgotPasswordPage.jsx`, dead `__card/__top/__brand` rules retired from `landing-auth.css` with ≤900/480px queries retargeted.
+- Amendment (2026-09-06): the split went full-bleed — outer card removed, `.auth-split` fills `100dvh` edge-to-edge with a hairline split border, form content capped at 440px via `.auth-split__form-inner`, foot tagline under the form column. Same intent, no new trade-offs.
 - Responsive: ≤900px stacks to compact brand banner + full-width form; 16px inputs, 44px+ targets, safe-area rules preserved.
 
 ## Consequences
