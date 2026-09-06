@@ -16,19 +16,19 @@
   --text-disabled: #a1a1aa;
   --text-inverse: #f4f4f5;
 
-  --color-primary: #4f46e5;
-  --color-primary-hover: #4338ca;
-  --color-primary-light: #eef2ff;
+  --color-primary: #a83b59;
+  --color-primary-hover: #8c2f4b;
+  --color-primary-light: #fbe8ed;
   --color-foam: #ffffff;
 
   --border-color: #e2e8f0;
   --border-light: #f1f5f9;
   --border-heavy: #94a3b8;
-  --border-focus: #4f46e5;
+  --border-focus: #a83b59;
 
   --scrollbar-track: #f1f5f9;
   --scrollbar-thumb: #cbd5e1;
-  --scrollbar-thumb-hover: #4f46e5;
+  --scrollbar-thumb-hover: #a83b59;
 
   /* Accents & Status Colors (Multi-Color Semantic System) */
   --color-accent: #0284c7;

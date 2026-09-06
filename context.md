@@ -2,7 +2,7 @@
 
 Living snapshot for AI agents. `AGENTS.md` holds permanent rules; this file holds the **current state**. See `CHANGELOG.md` for history and `PROJECT_MAP.md` for the file index.
 
-Last updated: 2026-09-06 — WaveLoader stripped to music-bar equalizer on cinematic backdrop (screen-reader label kept)
+Last updated: 2026-09-06 — Light primary unified to Crimson Noir #a83b59 (ADR 0030)
 
 ## Contents
 1. [Overview](#1-overview) · 2. [Repository structure](#2-repository-structure) · 3. [Backend](#3-backend) · 4. [Frontend](#4-frontend) · 5. [Design system](#5-design-system) · 6. [Current snapshot](#6-current-snapshot) · 7. [Limitations](#7-limitations) · 8. [Verification](#8-verification)
@@ -55,7 +55,7 @@ For full maps see `PROJECT_MAP.md`. Keep this section brief; expand there.
      - **Config:** `config/navigation.js` (now `avatar` → Avatar Studio in Eve AI group), `config/search/` (7 modules, avatar indexed), `dashboard/dashboardConfig.js`, `themes/` 26 presets (Mono, Duo, Spectrum), `utils/` pure transformers, `styles/` tokens→base→utilities→responsive→components→pages→`layout-symmetry.css` + `components/eve-avatar.css` + `pages/avatar.css` (Vite `avatar-3d`/`avatar-live2d` manualChunks) + `public/avatars/` examples (`vrm/` 10MB anime + `live2d/haru_greeter_t03` 3MB).
 
 ## 5. Design system
-- **Palette:** Multi-color semantic design system (ADR 0019) with domain/module accent theming. Monochrome presets retired. Curated presets across Multi-Color Spectrum (`light`, `dark`, `prism`, `neonGrid`, `botanical`) and 12 Vibrant Duotones (`abyss`, `ember`, `coral`, `azure`, `verdant`, etc.).
+- **Palette:** Multi-color semantic design system (ADR 0019) with domain/module accent theming. Default primary is Crimson Noir `#a83b59` in both themes (ADR 0030; light hover `#8c2f4b`, tint `#fbe8ed`); Work/Chats stay Electric Indigo `#4f46e5` + `prism` preset keeps indigo for wayfinding. Curated presets across Multi-Color Spectrum (`light`, `dark`, `prism`, `neonGrid`, `botanical`) and 12 Vibrant Duotones (`abyss`, `ember`, `coral`, `azure`, `verdant`, etc.).
 - **Module Accent Coding:** Signature colors per feature/group (`--module-work` Electric Indigo, `--module-studio` Vivid Violet, `--module-eve` Luminous Pink, `--module-growth` Emerald, `--module-whatsapp` Brand Green, `--module-mail` Rose, `--module-calendar` Sky Blue, `--module-calls` Purple).
 - **Tokens first:** `styles/tokens.css` CSS vars (8pt scale `--space-3xs`→`--space-3xl`, `--content-max-width` 1440, `--content-gutter` clamp, `--section-gap` clamp, `--card-padding` clamp, `--header-height` 68/62, `--sidebar-collapsed/expanded`, `--glow-primary/accent/success/warning/danger`, `--gradient-primary/accent/success/warning/danger/studio/eve`). Import order `tokens→base→utilities→responsive→components→pages→layout-symmetry` via `App.css`.
 - **One CSS per component/page**, `kebab-case` classes scoped, use vars (`var(--radius-lg)`), dark overrides in `styles/themes/dark.css`.

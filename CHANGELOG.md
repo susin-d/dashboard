@@ -2,6 +2,10 @@
 
 Historical implementation log extracted from `context.md`. `context.md` now holds the **current snapshot** only; this file preserves the full chronological history for audit.
 
+## 2026-09-06 — Crimson primary in light theme (ADR 0030)
+- Prior light primary Electric Indigo `#4f46e5` superseded by Crimson Noir `#a83b59` (hover `#8c2f4b`, tint `#fbe8ed`); tokens glow/gradients + landing light variant follow. Work/Chats stay indigo, `prism` keeps indigo.
+- Prior snapshot: WaveLoader stripped to music-bar equalizer on cinematic backdrop (screen-reader label kept).
+
 ## 2026-09-06 — Loading screen redesign (from prior commit f81e6b0)
 - Branded WaveLoader card (orbit ring + wave bars + progress) and matching LoadingState (`components/WaveLoader.jsx`, `components/ui/LoadingState.jsx`, `wave-loader.css`, `loading-state.css`).
 

@@ -184,15 +184,15 @@
     --cinema-bg: #f4f4f5;
     --cinema-bg-2: #ffffff;
     --cinema-surface: #fafafa;
-    --cinema-surface-2: #eef2ff;
+    --cinema-surface-2: #fbe8ed;
     --cinema-border: #e2e8f0;
     --cinema-border-strong: #94a3b8;
     --cinema-text: #09090b;
     --cinema-muted: #52525b;
     --cinema-dim: #71717a;
     --cinema-faint: #a1a1aa;
-    --cinema-primary: #4f46e5;
-    --cinema-focus: #4f46e5;
+    --cinema-primary: #a83b59;
+    --cinema-focus: #a83b59;
     --cinema-work: #4f46e5;
     --cinema-workspace: #d97706;
     --cinema-todo: #0891b2;
@@ -207,5 +207,5 @@
   }
   .cinema-nav.is-scrolled { background: rgba(244, 244, 245, 0.82); }
   .cinema-nav__drawer { background: rgba(244, 244, 245, 0.97); }
-  .cinema-nav__links a:hover { background: #eef2ff; color: #09090b; }
+  .cinema-nav__links a:hover { background: #fbe8ed; color: #09090b; }
 }
