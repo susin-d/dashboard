@@ -28,6 +28,8 @@ _STUDIO_DEFAULTS = {
     "git_initialized": False,
     "github_repo_url": None,
     "published_template_id": None,
+    "preview_status": "unavailable",
+    "last_activity": None,
 }
 
 
@@ -106,6 +108,8 @@ def create_studio_project(
         "auth_enabled": auth_enabled,
         "created_at": now,
         "updated_at": now,
+        "last_activity": {"type": "created", "label": "Project created", "occurred_at": now},
+        "preview_status": "unavailable",
     }
     workspaces.append(project)
     ws_repo._save_workspaces_metadata(user_id, workspaces)
@@ -130,6 +134,8 @@ def update_studio_project(user_id: str, workspace_id: str, updates: dict) -> dic
         "published_template_id",
         "stack",
         "template_id",
+        "preview_status",
+        "last_activity",
     )
     target = None
     for entry in workspaces:

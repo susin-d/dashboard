@@ -1,6 +1,6 @@
 import "../styles/pages/avatar.css"
 import { useEffect, useRef, useState } from 'react'
-import { Eye, Frame, GlassWater, Heart, Mic, Minus, Monitor, Orbit, Plus, RotateCcw, Save, Settings2, Smartphone, Sparkles, TestTube, Trash2, Upload, Zap } from 'lucide-react'
+import { Eye, Frame, GlassWater, Heart, Mic, Minus, Monitor, Orbit, PanelRight, Plus, RotateCcw, Save, Settings2, Smartphone, Sparkles, TestTube, Trash2, Upload, X, Zap } from 'lucide-react'
 import { EmptyState, CustomDropdown } from '../components/ui'
 import { EveAvatar } from '../components/eve/avatar/EveAvatar'
 import { AVATAR_CATALOG, AVATAR_LIMITS, AVATAR_DEFAULTS, clampUserPan, clampZoom } from '../components/eve/avatar/avatarConstants'
@@ -41,6 +41,8 @@ export function AvatarPage({ onNavigate }) {
   const [previewEmotion, setPreviewEmotion] = useState('idle')
   const [previewSpeaking, setPreviewSpeaking] = useState(false)
   const [viewResetKey, setViewResetKey] = useState(0)
+  const [inspectorOpen, setInspectorOpen] = useState(true)
+  const [controlsHidden, setControlsHidden] = useState(false)
   const fileRef = useRef(null)
   const scaleSaveTimeoutRef = useRef(0)
   const zoomSaveTimeoutRef = useRef(0)
@@ -259,16 +261,33 @@ export function AvatarPage({ onNavigate }) {
   const activeRenderer = prefs?.renderer || 'auto'
 
   return (
-    <div className="avatar-studio">
+    <div className={`avatar-studio ${controlsHidden ? 'is-controls-hidden' : ''} ${!inspectorOpen ? 'is-inspector-closed' : ''}`}>
       {/* ── Stage ── */}
       <div className="avatar-stage">
         {/* Floating top-left badge */}
-        <div className="avatar-studio-badge" aria-hidden="true">
+        {!controlsHidden && <div className="avatar-studio-badge" aria-hidden="true">
           <span className="avatar-studio-badge-title">Avatar Studio</span>
           <span className="avatar-studio-badge-sep">·</span>
           <span className="avatar-studio-badge-model" title={activeModelLabel}>{activeModelLabel}</span>
           <span className="avatar-studio-badge-renderer">{activeRenderer}</span>
-        </div>
+        </div>}
+
+        {!controlsHidden && <div className="avatar-stage-toolbar">
+          <span className="avatar-stage-eyebrow">Live preview</span>
+          <button
+            type="button"
+            className="avatar-inspector-toggle"
+            onClick={() => setInspectorOpen((open) => !open)}
+            aria-expanded={inspectorOpen}
+            aria-controls="avatar-inspector"
+          >
+            <PanelRight size={15} />
+            {inspectorOpen ? 'Hide panel' : 'Show panel'}
+          </button>
+          <button type="button" className="avatar-hide-all" onClick={() => { setControlsHidden(true); setInspectorOpen(false) }} aria-label="Hide all controls" title="Hide all controls">
+            <X size={15} />
+          </button>
+        </div>}
 
         {/* Floating status toast */}
         {(message || error) && (
@@ -298,8 +317,52 @@ export function AvatarPage({ onNavigate }) {
           onToggleRenderer={() => persist({ renderer: prefs?.renderer === 'vrm' ? 'live2d' : prefs?.renderer === 'live2d' ? 'auto' : 'vrm' })}
         />
 
+        {!controlsHidden && <div className="avatar-camera-dock" aria-label="Camera controls">
+          <div className="avatar-camera-dock-header">
+            <div>
+              <span className="avatar-camera-kicker">Camera</span>
+              <strong>Frame your avatar</strong>
+            </div>
+            <span className="avatar-camera-value">{(prefs?.zoom ?? 1).toFixed(2)}×</span>
+          </div>
+          <div className="avatar-camera-controls">
+            <button type="button" className="avatar-zoom-step" onClick={() => handleZoomStep(-ZOOM_STEP)} disabled={busy || (prefs?.zoom ?? 1) <= AVATAR_LIMITS.ZOOM_MIN} aria-label="Zoom out" title="Zoom out">
+              <Minus size={15} />
+            </button>
+            <input
+              className="avatar-zoom-input"
+              type="range"
+              min="0.3"
+              max="3.0"
+              step="0.05"
+              value={prefs?.zoom ?? 1}
+              onChange={(event) => persistZoom(Number(event.target.value))}
+              disabled={busy}
+              aria-label="Camera zoom"
+            />
+            <button type="button" className="avatar-zoom-step" onClick={() => handleZoomStep(ZOOM_STEP)} disabled={busy || (prefs?.zoom ?? 1) >= AVATAR_LIMITS.ZOOM_MAX} aria-label="Zoom in" title="Zoom in">
+              <Plus size={15} />
+            </button>
+          </div>
+          <small>Drag to pan · Scroll to zoom · Double-click to reset</small>
+          <div className="avatar-camera-actions">
+            <button type="button" className="btn-primary" onClick={handleSaveCameraPosition} disabled={busy}>
+              <Save size={14} /> Save position
+            </button>
+            <button type="button" className="btn-ghost" onClick={handleResetView} disabled={busy}>
+              <RotateCcw size={13} /> Reset
+            </button>
+          </div>
+        </div>}
+
+        {controlsHidden && (
+          <button type="button" className="avatar-show-controls" onClick={() => { setControlsHidden(false); setInspectorOpen(true) }} aria-label="Show all controls">
+            <PanelRight size={15} /> Show controls
+          </button>
+        )}
+
         {/* Floating emotion chips at bottom-center */}
-        <div className="avatar-emotion-bar" role="group" aria-label="Preview emotion">
+        {!controlsHidden && <div className="avatar-emotion-bar" role="group" aria-label="Preview emotion">
           {EMOTIONS.map((emo) => (
             <button
               key={emo}
@@ -317,15 +380,25 @@ export function AvatarPage({ onNavigate }) {
               {emo}
             </button>
           ))}
-        </div>
+        </div>}
       </div>
 
       {/* ── HUD Panel — frosted glass, right edge ── */}
-      <aside className="avatar-hud" aria-label="Avatar studio controls">
+      <aside id="avatar-inspector" className={`avatar-inspector ${inspectorOpen && !controlsHidden ? 'is-open' : ''}`} aria-label="Avatar studio controls" aria-hidden={!inspectorOpen || controlsHidden}>
+        <div className="avatar-inspector-header">
+          <div>
+            <span className="avatar-inspector-kicker">Studio controls</span>
+            <h2>Customize Eve</h2>
+          </div>
+          <button type="button" className="avatar-inspector-close" onClick={() => setInspectorOpen(false)} aria-label="Hide studio controls">
+            <X size={16} />
+          </button>
+        </div>
 
         {/* § Models (Primary Selector) */}
-        <div className="avatar-hud-section">
-          <p className="avatar-hud-section-title"><GlassWater size={12} /> Avatar Models</p>
+        <details className="avatar-inspector-section" open>
+          <summary><GlassWater size={14} /> <span>Models</span><small>{allModels.length} available</small></summary>
+          <div className="avatar-hud-section">
           {allModels.length === 0 && <EmptyState title="No models" description="Bundled models failed to load." />}
           <div className="avatar-hud-models-strip">
             {allModels.map((model) => {
@@ -347,11 +420,13 @@ export function AvatarPage({ onNavigate }) {
               )
             })}
           </div>
-        </div>
+          </div>
+        </details>
 
         {/* § Presence */}
-        <div className="avatar-hud-section">
-          <p className="avatar-hud-section-title"><Eye size={12} /> Presence</p>
+        <details className="avatar-inspector-section" open>
+          <summary><Eye size={14} /> <span>Presence</span><small>Visibility & access</small></summary>
+          <div className="avatar-hud-section">
           <div className="avatar-hud-toggle-group">
             <label className="avatar-toggle">
               <input type="checkbox" checked={prefs?.enabled !== false} onChange={(e) => persist({ enabled: e.target.checked })} disabled={busy} />
@@ -403,11 +478,13 @@ export function AvatarPage({ onNavigate }) {
               </div>
             </>
           )}
-        </div>
+          </div>
+        </details>
 
         {/* § Appearance */}
-        <div className="avatar-hud-section">
-          <p className="avatar-hud-section-title"><Sparkles size={12} /> Appearance</p>
+        <details className="avatar-inspector-section" open>
+          <summary><Sparkles size={14} /> <span>Avatar</span><small>Renderer & motion</small></summary>
+          <div className="avatar-hud-section">
 
           <div className="avatar-hud-form-row">
             <span className="avatar-hud-form-label">Renderer</span>
@@ -436,29 +513,6 @@ export function AvatarPage({ onNavigate }) {
             </div>
           </div>
 
-          <div className="avatar-hud-form-row">
-            <span className="avatar-hud-form-label">Zoom</span>
-            <div className="avatar-hud-slider-row">
-              <button type="button" className="avatar-zoom-step" onClick={() => handleZoomStep(-ZOOM_STEP)} disabled={busy || (prefs?.zoom ?? 1) <= AVATAR_LIMITS.ZOOM_MIN} aria-label="Zoom out" title="Zoom out">
-                <Minus size={14} />
-              </button>
-              <input
-                id="avatar-zoom"
-                className="avatar-zoom-input"
-                type="range" min="0.3" max="3.0" step="0.05"
-                value={prefs?.zoom ?? 1}
-                onChange={(e) => persistZoom(Number(e.target.value))}
-                disabled={busy}
-                aria-label="Model zoom"
-              />
-              <button type="button" className="avatar-zoom-step" onClick={() => handleZoomStep(ZOOM_STEP)} disabled={busy || (prefs?.zoom ?? 1) >= AVATAR_LIMITS.ZOOM_MAX} aria-label="Zoom in" title="Zoom in">
-                <Plus size={14} />
-              </button>
-              <span className="avatar-hud-slider-value">{(prefs?.zoom ?? 1).toFixed(2)}×</span>
-            </div>
-            <small className="avatar-hud-form-hint">Moves 3D camera closer; enlarges Live2D.</small>
-          </div>
-
           <div className="avatar-hud-inline-row">
             <label className="avatar-toggle">
               <input type="checkbox" checked={prefs?.autoRotate === true} onChange={(e) => persist({ autoRotate: e.target.checked })} disabled={busy} />
@@ -467,41 +521,35 @@ export function AvatarPage({ onNavigate }) {
           </div>
           <small className="avatar-hud-gesture-hint">Drag to pan · Scroll to zoom · Double-click to reset</small>
 
-          <div style={{ paddingTop: '4px' }}>
-            <button type="button" className="btn-ghost" onClick={() => persist({ scale: 1, renderer: 'auto', motion: 'auto', position: { x: 92, y: 88 } })} disabled={busy} style={{ fontSize: 'var(--text-xs)', padding: '4px 8px' }}>
+          <div className="avatar-reset-layout-row">
+            <button type="button" className="btn-ghost avatar-reset-layout" onClick={() => persist({ scale: 1, renderer: 'auto', motion: 'auto', position: { x: 92, y: 88 } })} disabled={busy}>
               <RotateCcw size={12} /> Reset layout
             </button>
           </div>
-        </div>
+          </div>
+        </details>
 
         {/* § Upload */}
-        <div className="avatar-hud-section">
-          <p className="avatar-hud-section-title"><Upload size={12} /> Upload model</p>
+        <details className="avatar-inspector-section">
+          <summary><Upload size={14} /> <span>Upload</span><small>VRM, GLB, Live2D</small></summary>
+          <div className="avatar-hud-section">
           <small className="avatar-hud-form-hint">.vrm / .glb / .model3.json / .zip — max 12MB</small>
-          <div className="avatar-hud-inline-row" style={{ paddingTop: '4px' }}>
+          <div className="avatar-hud-inline-row avatar-upload-actions">
             <input ref={fileRef} className="avatar-file-input is-hidden" type="file" accept=".vrm,.glb,.gltf,.json,.zip,model3.json" onChange={handleUpload} disabled={busy} aria-label="Upload avatar model" />
             <button type="button" className="btn-secondary" onClick={() => fileRef.current?.click()} disabled={busy}>
               <Upload size={14} /> Choose file
             </button>
             <span className="avatar-hud-form-hint"><Smartphone size={11} /> Mobile + Tauri supported.</span>
           </div>
-        </div>
-
-        {/* § Camera actions — sticky so they remain reachable below the fold */}
-        <div className="avatar-hud-action-bar">
-          <button type="button" className="btn-primary avatar-save-camera" onClick={handleSaveCameraPosition} disabled={busy}>
-            <Save size={14} /> Save camera position
-          </button>
-          <div className="avatar-hud-action-row">
-            <button type="button" className="btn-ghost" onClick={handleResetView} disabled={busy}>
-              <RotateCcw size={12} /> Reset view
-            </button>
-            <button type="button" className="btn-ghost" onClick={handleResetFraming} disabled={busy}>
-              <Frame size={12} /> Reset framing
-            </button>
           </div>
+        </details>
+
+        <div className="avatar-inspector-footer">
+          <button type="button" className="btn-ghost avatar-reset-framing" onClick={handleResetFraming} disabled={busy}>
+            <Frame size={13} /> Reset framing
+          </button>
           <button type="button" className="btn-secondary avatar-settings-button" onClick={() => onNavigate?.('setting')} disabled={busy}>
-            <Settings2 size={12} /> Open Settings
+            <Settings2 size={13} /> Open Settings
           </button>
         </div>
       </aside>

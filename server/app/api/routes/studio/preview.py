@@ -9,6 +9,7 @@ from app.api.routes.studio._shared import require_non_serverless
 from app.core.auth import get_current_user
 from app.schemas.studio import StudioPreviewResponse
 from app.services.studio import preview as studio_preview
+from app.repositories import studio as studio_repo
 
 router = APIRouter(prefix="/studio")
 
@@ -26,6 +27,19 @@ async def start_preview(
     )
     has_build = await asyncio.to_thread(
         studio_preview.has_build_output, user["uid"], workspace_id
+    )
+    await asyncio.to_thread(
+        studio_repo.update_studio_project,
+        user["uid"],
+        workspace_id,
+        {
+            "preview_status": "ready" if has_build else "unavailable",
+            "last_activity": {
+                "type": "preview_started",
+                "label": "Preview opened",
+                "occurred_at": __import__("datetime").datetime.now(__import__("datetime").timezone.utc).isoformat(),
+            },
+        },
     )
     return StudioPreviewResponse(
         preview_url=url_info["preview_url"],

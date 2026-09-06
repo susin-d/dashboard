@@ -16,9 +16,8 @@ import {
 import { usePersistentState } from '../hooks/usePersistentState'
 import { createJob, deleteJob, updateJob } from '../lib/workspaceApi'
 import { ConfirmDialog, CustomDropdown, EmptyState, FilterBar, SearchBar } from '../components/ui'
-import { buildApplicationTimeline } from '../utils/jobTimeline'
 import { JobModals } from './jobs/JobModals'
-import { JobTimeline } from './jobs/JobTimeline'
+import { JobPipelineSummary } from './jobs/JobPipelineSummary'
 
 const emptyJob = {
   company: '',
@@ -80,8 +79,6 @@ export function JobsPage({ jobs, setJobs, documents, createIntent, canLoadMore, 
   }, [jobs, searchQuery, statusFilter, workTypeFilter, sortOrder])
 
   const activeFilters = statusFilter !== 'All' || workTypeFilter !== 'All' || searchQuery
-
-  const { months, max, total } = useMemo(() => buildApplicationTimeline(jobs), [jobs])
 
   const toggleJob = (jobId) => {
     setOpenJobs((current) => {
@@ -171,26 +168,6 @@ export function JobsPage({ jobs, setJobs, documents, createIntent, canLoadMore, 
 
   return (
     <section className="jobs-page">
-      <div className="page-inline-actions">
-        <button
-          className="primary-button jobs-add-button"
-          onClick={() => setFormOpen(true)}
-        >
-          <Plus size={17} />
-          Add job
-        </button>
-      </div>
-
-      <JobTimeline
-        jobs={jobs}
-        jobStatuses={jobStatuses}
-        statusFilter={statusFilter}
-        setStatusFilter={setStatusFilter}
-        months={months}
-        max={max}
-        total={total}
-      />
-
       <FilterBar
         className="jobs-toolbar"
         search={
@@ -228,12 +205,25 @@ export function JobsPage({ jobs, setJobs, documents, createIntent, canLoadMore, 
             />
           </>
         }
+        actions={
+          <button className="primary-button jobs-add-button" type="button" onClick={() => setFormOpen(true)}>
+            <Plus size={17} />
+            Add job
+          </button>
+        }
         isFiltered={Boolean(activeFilters)}
         onReset={() => {
           setSearchQuery('')
           setStatusFilter('All')
           setWorkTypeFilter('All')
         }}
+      />
+
+      <JobPipelineSummary
+        jobs={jobs}
+        jobStatuses={jobStatuses}
+        statusFilter={statusFilter}
+        setStatusFilter={setStatusFilter}
       />
 
       <div className="job-list">
