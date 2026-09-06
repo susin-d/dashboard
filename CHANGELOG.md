@@ -2,6 +2,10 @@
 
 Historical implementation log extracted from `context.md`. `context.md` now holds the **current snapshot** only; this file preserves the full chronological history for audit.
 
+## 2026-09-06 — Dashboard widgets bolder multi-color
+- Widget top edge is now a solid full-width 3px accent bar (was transparent-fade 2px gradient); icon chips are saturated (`--widget-accent` fill + `--on-fill` glyph, active-pill shadow). Per-module hues unchanged.
+- Prior snapshot: Home sidebar accent follows primary crimson (ADR 0031).
+
 ## 2026-09-06 — Home sidebar accent follows primary (ADR 0031)
 - Dashboard nav item + Home group remapped `work→home` (`navigation.js`); new sidebar `home` mapping consumes `var(--color-primary)` so HOME label + Dashboard pill are crimson in both themes. Code group keeps Work indigo.
 - Prior snapshot: Light primary unified to Crimson Noir #a83b59 (ADR 0030).
