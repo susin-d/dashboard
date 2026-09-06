@@ -2,12 +2,13 @@ import "../../styles/pages/studio.css"
 import { useCallback, useEffect, useState } from 'react'
 import { LayoutTemplate } from 'lucide-react'
 import { EmptyState, FormField, LoadingState, Modal, PageHeader } from '../../components/ui'
+import { StudioTabs } from './StudioTabs'
 import {
   listStudioTemplates,
   remixStudioTemplate,
 } from '../../lib/studioApi'
 
-export function StudioTemplatesPage({ onOpenProject }) {
+export function StudioTemplatesPage({ onOpenProject, onNavigate }) {
   const [templates, setTemplates] = useState([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState('')
@@ -65,6 +66,7 @@ export function StudioTemplatesPage({ onOpenProject }) {
           </button>
         }
       />
+      <StudioTabs activeTab="studio-templates" onNavigate={onNavigate} />
 
       {error && (
         <div className="studio-error-banner" role="alert">

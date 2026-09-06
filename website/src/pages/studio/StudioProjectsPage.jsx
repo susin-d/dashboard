@@ -2,10 +2,11 @@ import "../../styles/pages/studio.css"
 import { useState } from 'react'
 import { createStudioProject } from '../../lib/studioApi'
 import { StudioHero } from './StudioHero'
+import { StudioTabs } from './StudioTabs'
 import { deriveProjectName } from './studioConstants'
 import { setStudioBrief } from './studioBrief'
 
-export function StudioProjectsPage({ onOpenProject }) {
+export function StudioProjectsPage({ onOpenProject, onNavigate }) {
   const [isCreatingFromPrompt, setIsCreatingFromPrompt] = useState(false)
   const [promptError, setPromptError] = useState('')
 
@@ -34,6 +35,7 @@ export function StudioProjectsPage({ onOpenProject }) {
 
   return (
     <div className="studio-page">
+      <StudioTabs activeTab="studio" onNavigate={onNavigate} />
       <StudioHero
         isSubmitting={isCreatingFromPrompt}
         onSubmitPrompt={handlePromptSubmit}

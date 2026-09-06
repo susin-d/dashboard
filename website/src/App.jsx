@@ -12,12 +12,11 @@ const ProjectsPage = lazy(() => import('./pages/ProjectsPage').then((m) => ({ de
 const ProjectDetailPage = lazy(() => import('./pages/ProjectDetailPage').then((m) => ({ default: m.ProjectDetailPage })))
 const SettingPage = lazy(() => import('./pages/SettingPage').then((m) => ({ default: m.SettingPage })))
 const ThemesPage = lazy(() => import('./pages/ThemesPage').then((m) => ({ default: m.ThemesPage })))
-const StatsPage = lazy(() => import('./pages/StatsPage').then((m) => ({ default: m.StatsPage })))
+const CompetePage = lazy(() => import('./pages/CompetePage').then((m) => ({ default: m.CompetePage })))
 const TodoPage = lazy(() => import('./pages/TodoPage').then((m) => ({ default: m.TodoPage })))
 const ProfilePage = lazy(() => import('./pages/ProfilePage').then((m) => ({ default: m.ProfilePage })))
 // Heavy pages lazy (Vercel split: monaco, whatsapp 1.3k, WebRTC, Eve)
 const CalendarPage = lazy(() => import('./pages/CalendarPage').then((m) => ({ default: m.CalendarPage })))
-const CompetitiveCodingPage = lazy(() => import('./pages/CompetitiveCodingPage').then((m) => ({ default: m.CompetitiveCodingPage })))
 const EvePage = lazy(() => import('./pages/EvePage').then((m) => ({ default: m.EvePage })))
 const AvatarPage = lazy(() => import('./pages/AvatarPage').then((m) => ({ default: m.AvatarPage })))
 const MailsPage = lazy(() => import('./pages/MailsPage').then((m) => ({ default: m.MailsPage })))
@@ -444,17 +443,38 @@ function App() {
       />
     ),
     avatar: <AvatarPage onNavigate={navigateWorkspace} />,
-    stats: (
-      <StatsPage
-        codingStats={codingStats}
+    compete: (
+      <CompetePage
+        initialTab="contests"
         contestSites={contestSites}
+        codingStats={codingStats}
+        projects={projects}
+        hackathons={hackathons}
+        onNavigate={navigateWorkspace}
+      />
+    ),
+    // Legacy ids resolve to the merged Compete page with the matching tab.
+    stats: (
+      <CompetePage
+        initialTab="stats"
+        contestSites={contestSites}
+        codingStats={codingStats}
         projects={projects}
         hackathons={hackathons}
         onNavigate={navigateWorkspace}
       />
     ),
     todo: <TodoPage tasks={tasks} setTasks={setTasks} createIntent={creationIntent} />,
-    'competitive-coding': <CompetitiveCodingPage contestSites={contestSites} />,
+    'competitive-coding': (
+      <CompetePage
+        initialTab="contests"
+        contestSites={contestSites}
+        codingStats={codingStats}
+        projects={projects}
+        hackathons={hackathons}
+        onNavigate={navigateWorkspace}
+      />
+    ),
     hackathons: (
       <HackathonsPage
         hackathons={hackathons}
@@ -541,6 +561,7 @@ function App() {
     'studio-templates': (
       <StudioTemplatesPage
         onOpenProject={(project) => navigateWorkspace('studio-detail', project.id)}
+        onNavigate={navigateWorkspace}
       />
     ),
     'document-opener': (
@@ -680,9 +701,18 @@ function App() {
                 ? 'documents'
                 : activePage === 'studio-detail'
                   ? 'studio'
-                  : activePage.startsWith('custom-')
-                    ? activePage
-                    : activePage
+                  : activePage === 'studio-apps' || activePage === 'studio-templates'
+                    ? 'studio'
+                    : activePage === 'eve-sessions' ||
+                        activePage === 'eve-memory' ||
+                        activePage === 'eve-call' ||
+                        activePage === 'eve-schedules'
+                      ? 'eve'
+                      : activePage === 'stats' || activePage === 'competitive-coding'
+                        ? 'compete'
+                        : activePage.startsWith('custom-')
+                          ? activePage
+                          : activePage
         }
         onNavigate={navigateWorkspace}
         onCreate={requestCreation}

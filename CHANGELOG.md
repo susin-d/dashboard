@@ -5,6 +5,12 @@ Historical implementation log extracted from `context.md`. `context.md` now hold
 ## 2026-09-06 — Loading screen redesign (from prior commit f81e6b0)
 - Branded WaveLoader card (orbit ring + wave bars + progress) and matching LoadingState (`components/WaveLoader.jsx`, `components/ui/LoadingState.jsx`, `wave-loader.css`, `loading-state.css`).
 
+## 2026-09-06 — IA merges implemented (ADR 0027 Accepted)
+- `EvePage` TabNav (Chat/Sessions/Memory/Voice/Schedules, URL-synced both ways); sidebar keeps one `Eve`; `AppLayout` highlights parent ids.
+- New `CompetePage` (Contests/Stats tabs over existing pages); `compete` nav entry + router id; `competitive-coding`/`stats` render it with matching tab (dashboard widgets, calendar links, `/app/competitive` URL unaffected).
+- `StudioTabs` (Builder/Apps/Templates) on all three Studio pages; sidebar keeps one `Studio`.
+- `Chats`→`Team Chats` (nav + palette). Old ids all still resolve; no dead routes.
+
 ## 2026-09-06 — Phase 0 IA regroup (ADR 0027 Proposed)
 - `config/navigation.js`: 29 items regrouped Home/Code/Create/Evolve/Connect/You (display-only, ids frozen, order = sidebar order); `GROUP_MODULE_MAP` repointed with existing module keys (no CSS changes); `Chat`→`Eve` label. Search badges + page eyebrows realigned. Route merges (Eve tabs, Compete page, Chats3, Studio children) documented as pending sign-off.
 

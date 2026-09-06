@@ -2,7 +2,7 @@
 
 ## Status
 
-Proposed — group regroup applied; route merges below need sign-off
+Accepted — merges approved and implemented (2026-09-06)
 
 - Date: 2026-09-06
 - Deciders: user (pending merge approval)
@@ -27,14 +27,16 @@ Applied now (display-only, zero routing change — ids are frozen contracts, sid
 - **Negative / Cost:** Evolve is heavy (9 entries) until Eve collapses to tabs; group rename touches badges/eyebrows that rebuild waves will revisit anyway.
 - **Follow-up:** needs sign-off — see pending merges.
 
-## Pending sign-off (do NOT implement yet)
+## Merges — approved and implemented (2026-09-06)
 
-| Merge | Change | Needs |
-|-------|--------|-------|
-| Eve subpages → tabs | `eve`, `eve-sessions`, `eve-memory`, `eve-call`, `eve-schedules` become one `eve` entry with in-page tabs; old ids redirect | Eve rebuild wave (D) |
-| Compete page | `competitive-coding` + `stats` merge into one `compete` surface (contests + ratings tabs); old ids redirect | Wave A/C boundary |
-| Chats3 | Clarify `chats` vs Eve chat vs WhatsApp (merge, retitle, or scope note) | Wave E |
-| Studio children | `studio-apps`/`studio-templates` demote to tabs under `studio` with redirects | Wave C |
+Old ids stay resolvable (deep links, dashboard widgets, palette entries keep working); sidebar shows the merged entries only.
+
+| Merge | Implementation |
+|-------|----------------|
+| Eve subpages → tabs | `EvePage` gained a `TabNav` (Chat/Sessions/Memory/Voice/Schedules) synced both ways with the `eve*` ids; sidebar keeps one `Eve` entry; `AppLayout` highlights `eve` for all sub-ids |
+| Compete page | New `CompetePage` (Contests/Stats tabs over existing pages); `compete` in nav + router; `competitive-coding`/`stats` ids render it with the matching tab |
+| Chats3 | `Chats` retitled `Team Chats` (nav + palette) to disambiguate from Eve chat; WhatsApp/Eve scopes untouched |
+| Studio children | New `StudioTabs` (Builder/Apps/Templates) on all three Studio pages; sidebar keeps one `Studio` entry |
 
 ## Alternatives Considered
 

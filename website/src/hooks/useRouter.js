@@ -18,6 +18,7 @@ const workspacePages = new Set([
   'calls',
   'contacts',
   'competitive-coding',
+  'compete',
   'hackathons',
   'projects',
   'jobs',

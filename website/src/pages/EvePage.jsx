@@ -17,9 +17,27 @@ import { EveSessionsSection } from './eve/EveSessionsSection'
 import { EveMemorySection } from './eve/EveMemorySection'
 import { EveSchedulesSection } from './eve/EveSchedulesSection'
 import { EveCallSection } from './eve/EveCallSection'
+import { Brain, CalendarClock, History, MessageSquare, PhoneCall } from 'lucide-react'
 import { EveInlineAvatar } from '../components/eve/avatar/EveInlineAvatar'
 import { useEveAvatar } from '../components/eve/avatar/EveAvatarProvider'
 import { useThemeCustomizer } from '../hooks/useThemeCustomizer'
+import { TabNav } from '../components/ui'
+
+const EVE_TABS = [
+  { id: 'chat', label: 'Chat', icon: MessageSquare },
+  { id: 'sessions', label: 'Sessions', icon: History },
+  { id: 'memory', label: 'Memory', icon: Brain },
+  { id: 'call', label: 'Voice Call', icon: PhoneCall },
+  { id: 'schedules', label: 'Schedules', icon: CalendarClock },
+]
+
+const TAB_PAGE_ID = {
+  chat: 'eve',
+  sessions: 'eve-sessions',
+  memory: 'eve-memory',
+  call: 'eve-call',
+  schedules: 'eve-schedules',
+}
 
 const STARTER_MESSAGES = [
   {
@@ -515,8 +533,14 @@ export function EvePage({
     import('../lib/eveAvatarApi').then(({ saveAvatarPreferences }) => { saveAvatarPreferences({ ...avatarPrefs, renderer: next }).catch(() => {}) }).catch(() => {})
   }
 
+  const switchTab = (tabId) => {
+    setActiveTab(tabId)
+    onNavigate?.(TAB_PAGE_ID[tabId])
+  }
+
   return (
     <div className="eve-page-container">
+      <TabNav tabs={EVE_TABS} activeTab={activeTab} onChange={switchTab} ariaLabel="Eve sections" />
       {activeTab === 'chat' && avatarPrefs?.inlineEnabled !== false && avatarPrefs?.enabled !== false && (
         <div className="eve-inline-avatar-wrap" data-eve-target="eve-inline-avatar">
           <EveInlineAvatar
