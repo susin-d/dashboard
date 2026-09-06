@@ -74,10 +74,15 @@ export function Footer({ onNavigate }) {
   return (
     <footer className="cinema-footer" aria-label="Footer">
       <div className="cinema-footer__inner">
-        <div className="cinema-footer__brand">
-          <img src="/logo.png" alt="" aria-hidden="true" className="cinema-nav__mark" />
-          <span className="cinema-footer__word">StarWaves</span>
-          <span className="cinema-footer__copy">© {new Date().getFullYear()} — Code · Create · Evolve</span>
+        <div className="cinema-footer__brand-block">
+          <div className="cinema-footer__brand">
+            <img src="/logo.png" alt="" aria-hidden="true" className="cinema-nav__mark" />
+            <span className="cinema-footer__word">StarWaves</span>
+            <span className="cinema-footer__copy">© {new Date().getFullYear()}</span>
+          </div>
+          <p className="cinema-footer__tag">
+            One canvas for tasks, code, contests — and Eve AI. Code · Create · Evolve.
+          </p>
         </div>
 
         <nav className="cinema-footer__cols" aria-label="Footer sections">

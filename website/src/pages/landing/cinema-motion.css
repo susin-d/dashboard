@@ -53,7 +53,8 @@
   .cinema-workflow__sticky { top: 56px; min-height: auto; }
   .cinema-finale__title { font-size: clamp(38px, 11vw, 52px); }
   .cinema-finale__ctas { flex-direction: column; width: 100%; }
-  .cinema-footer__giant { font-size: clamp(48px, 17vw, 90px); }
+  .cinema-footer__giant { font-size: clamp(40px, 12.5vw, 90px); }
+  .cinema-footer__brand-block { max-width: 100%; }
 }
 @media (min-width: 641px) {
   .cinema-nav__menu { display: none; }
