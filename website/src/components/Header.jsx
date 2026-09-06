@@ -26,14 +26,12 @@ import { clearAuthSession } from '../lib/authApi'
 import { deleteNotification, markAllNotificationsRead } from '../lib/workspaceApi'
 import { CALENDAR_REMINDER_PREFIX } from '../utils/calendarReminders'
 import { getNotificationPermission, requestNotificationPermission } from '../utils/browserNotifications'
-import { navigationItems } from '../config/navigation'
 // Interaction-only modals — fetched on first open so the search index,
 // Eve modal, and Markdown renderer stay out of the initial shell.
 const EveAssistantModal = lazy(() => import('./EveAssistantModal').then((m) => ({ default: m.EveAssistantModal })))
 const AdvancedSearchModal = lazy(() => import('./search/AdvancedSearchModal').then((m) => ({ default: m.AdvancedSearchModal })))
 
 export function Header({
-  activePage,
   onMenuOpen,
   navigationExpanded,
   onNavigate,
@@ -197,11 +195,6 @@ export function Header({
     )
   }
 
-  const currentNav = navigationItems.find((item) => item.id === activePage) || {
-    label: activePage ? activePage.charAt(0).toUpperCase() + activePage.slice(1) : 'Dashboard',
-    group: 'Workspace',
-  }
-
   return (
     <>
       <header className="topbar">
@@ -219,11 +212,6 @@ export function Header({
           >
             {navigationExpanded ? <PanelLeftClose size={18} /> : <PanelLeftOpen size={18} />}
           </button>
-          <div className="topbar-breadcrumb">
-            <span className="breadcrumb-group">{currentNav.group}</span>
-            <span className="breadcrumb-sep">/</span>
-            <span className="breadcrumb-current" data-module={currentNav.module || 'work'} aria-current="page">{currentNav.label}</span>
-          </div>
         </div>
 
         <div className="header-actions">
