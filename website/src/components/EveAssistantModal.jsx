@@ -1,7 +1,8 @@
 import { useEffect, useId, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { Bot, Maximize2, Play, Plus, Send, ShieldCheck, X } from 'lucide-react'
+import { Bot, Maximize2, Play, Send, ShieldCheck, X } from 'lucide-react'
 import { ConfirmDialog } from './ui/ConfirmDialog'
+import { EveModalSessions } from './eve/EveModalSessions'
 import {
   createEveSession,
   deleteEveSession,
@@ -341,49 +342,14 @@ export function EveAssistantModal({ isOpen, onClose, onNavigate, onWorkspaceChan
               </div>
             </header>
 
-            {/* ── Sessions Bar ── */}
-            <div className="eve-sessions-bar" aria-label="Eve conversations">
-              <button
-                className={`eve-session-new ${activeSessionId === null ? 'active' : ''}`}
-                type="button"
-                onClick={startNewChat}
-                aria-pressed={activeSessionId === null}
-              >
-                <Plus size={14} />
-                <span>New chat</span>
-              </button>
-              <div className="eve-session-tabs" role="tablist" aria-label="Saved Eve conversations">
-                {isLoadingSessions ? (
-                  <span className="eve-session-loading">Loading conversations…</span>
-                ) : (
-                  sessions.map((session) => (
-                    <div
-                      className={`eve-session-tab ${session.id === activeSessionId ? 'active' : ''}`}
-                      key={session.id}
-                    >
-                      <button
-                        className="eve-session-tab-select"
-                        type="button"
-                        role="tab"
-                        aria-selected={session.id === activeSessionId}
-                        onClick={() => selectSession(session.id)}
-                        title={session.title}
-                      >
-                        <span>{session.title}</span>
-                      </button>
-                      <button
-                        className="eve-session-tab-delete"
-                        type="button"
-                        onClick={() => setSessionToDelete(session)}
-                        aria-label={`Delete conversation ${session.title}`}
-                      >
-                        <X size={12} />
-                      </button>
-                    </div>
-                  ))
-                )}
-              </div>
-            </div>
+            <EveModalSessions
+              sessions={sessions}
+              activeSessionId={activeSessionId}
+              isLoadingSessions={isLoadingSessions}
+              onNewChat={startNewChat}
+              onSelectSession={selectSession}
+              onDeleteSession={setSessionToDelete}
+            />
 
             {/* ── Context Banner ── */}
             <div className="eve-context-banner" aria-label="Eve workspace access">

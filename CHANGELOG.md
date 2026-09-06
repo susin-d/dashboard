@@ -9,7 +9,8 @@ Historical implementation log extracted from `context.md`. `context.md` now hold
 - `settings.css` (1954) → 8 scoped files; `themes.css` (641) → shell/controls/customizer; `landing-auth.css` (997) → public-shell/auth-forms/auth-onboarding/auth-recovery; `header.css` (1728) → 7 files (topbar/eve-shell/eve-messages/eve-composer/search/notifications/profile).
 - `EvePage` (642) → constants + `EveActiveView` + `useEveLibrary` hook (471); `DocumentsPage` → documents package (editor + drive-import modals, 453); `previewFor` shared to `utils/evePreview.js`.
 - Hardening: `.auth-back` 44px target; gates clean (no demo/mock/hack content).
-- Known exceptions (split deferred — session-critical, need authenticated QA): `App.jsx` (762), `useEveVoice` (551), `EveAssistantModal` (532).
+- Closeout: `App.jsx` pages map → `appPages.jsx` (prop parity script-verified 41=41; App 762→517); modal sessions bar → `EveModalSessions` (498).
+- Known exception (split deferred — real-time audio coordination, needs call QA): `useEveVoice` (551).
 
 ## 2026-09-06 — Wave E: Mail, WhatsApp, Team Chats, Contacts
 - `MailsPage` (631) → `pages/mail/` package (utils/connect/folders/list/reader/composer + shell); `mails.css` (899) → shell/folders/list/connect/reader.
