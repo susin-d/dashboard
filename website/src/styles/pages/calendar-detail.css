@@ -201,6 +201,9 @@
 }
 
 .calendar-detail-body .calendar-detail-no-contests {
+  display: flex;
+  align-items: center;
+  min-height: 48px;
   padding: var(--space-md);
   border: 1px dashed var(--border-color);
   border-radius: var(--radius-md);

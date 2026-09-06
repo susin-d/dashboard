@@ -5,7 +5,7 @@
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
   grid-template-rows: 32px repeat(6, minmax(62px, 1fr));
-  overflow: hidden;
+  overflow: visible;
   border: 1px solid var(--border-color);
   border-radius: var(--radius-lg);
 }
