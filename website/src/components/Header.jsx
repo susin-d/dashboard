@@ -30,6 +30,8 @@ import { navigationItems } from '../config/navigation'
 const EveAssistantModal = lazy(() => import('./EveAssistantModal').then((m) => ({ default: m.EveAssistantModal })))
 const AdvancedSearchModal = lazy(() => import('./search/AdvancedSearchModal').then((m) => ({ default: m.AdvancedSearchModal })))
 
+import { applyThemeVariables, THEME_PRESETS } from '../themes/presets'
+
 export function Header({
   activePage,
   onNavigate,
@@ -60,10 +62,6 @@ export function Header({
     }
   }
   const [eveOpen, setEveOpen] = useState(false)
-  const [darkTheme, setDarkTheme] = useState(() => {
-    const stored = localStorage.getItem('starwaves.theme')
-    return stored ? stored === 'dark' : true
-  })
   const [permissionStatus, setPermissionStatus] = useState(() => getNotificationPermission())
 
   const handleToggleNotifications = () => {
@@ -85,9 +83,11 @@ export function Header({
       setPermissionStatus(getNotificationPermission())
     }
   }
-  const unreadCount = notifications.filter(
+
+  const unreadCount = (notifications || []).filter(
     (notification) => notification.unread,
   ).length
+
   const notificationIcons = {
     calendar: CalendarDays,
     contest: Trophy,
@@ -98,6 +98,7 @@ export function Header({
     call_missed: PhoneMissed,
     call_declined: PhoneOff,
   }
+
   const notificationDestinations = {
     calendar: 'calendar',
     contest: 'compete',
@@ -111,10 +112,32 @@ export function Header({
     call_declined: 'calls',
   }
 
-  useEffect(() => {
-    document.documentElement.classList.toggle('dark-theme', darkTheme)
-    localStorage.setItem('starwaves.theme', darkTheme ? 'dark' : 'light')
-  }, [darkTheme])
+  const handleToggleTheme = () => {
+    const isCurrentlyDark = document.documentElement.classList.contains('dark-theme')
+    const nextMode = isCurrentlyDark ? 'light' : 'dark'
+    const nextPreset = nextMode
+    const presetData = THEME_PRESETS[nextPreset]
+    if (!presetData) return
+
+    let currentConfig = {}
+    try {
+      const saved = localStorage.getItem('starwaves.custom_theme')
+      if (saved) currentConfig = JSON.parse(saved) || {}
+    } catch {}
+
+    const nextState = {
+      ...currentConfig,
+      preset: nextPreset,
+      mode: nextMode,
+      colors: presetData.colors,
+    }
+
+    applyThemeVariables(nextState)
+    try {
+      localStorage.setItem('starwaves.custom_theme', JSON.stringify(nextState))
+    } catch {}
+    window.dispatchEvent(new CustomEvent('starwaves:theme-change', { detail: nextState }))
+  }
 
   useEffect(() => {
     const handleShortcut = (event) => {
@@ -415,8 +438,8 @@ export function Header({
             onNavigate={onNavigate}
             onCreate={onCreate}
             callCenter={callCenter}
-            darkTheme={darkTheme}
-            setDarkTheme={setDarkTheme}
+            toggleTheme={handleToggleTheme}
+            setDarkTheme={handleToggleTheme}
             setEveOpen={setEveOpen}
             setNotificationsOpen={setNotificationsOpen}
             onEveNewChat={onEveNewChat}

@@ -29,6 +29,7 @@ export function EveChatSection({
     <main className="eve-chat-section">
       <EveMessageFeed
         messages={messages}
+        draft={draft}
         isSending={isSending}
         streamText={streamText}
         thinkingText={thinkingText}

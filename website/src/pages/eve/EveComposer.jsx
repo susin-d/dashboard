@@ -344,7 +344,7 @@ export function EveComposer({
                 ? 'Add a prompt about the attached files (or press Enter to send)…'
                 : '@ for files/agents; / for commands and skills; ! for shell; # for snippets'
             }
-            rows={2}
+            rows={4}
             maxLength={MAX_CHARS}
           />
 
@@ -426,11 +426,6 @@ export function EveComposer({
               )}
             </div>
           </div>
-
-          <div
-            className="eve-progress-indicator"
-            style={{ width: `${charProgress * 100}%` }}
-          />
         </div>
       </form>
     </div>

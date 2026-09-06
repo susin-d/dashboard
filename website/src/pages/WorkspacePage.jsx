@@ -9,6 +9,7 @@ import { WorkspaceTerminal } from './workspace/WorkspaceTerminal'
 import { WorkspaceBrowser } from './workspace/WorkspaceBrowser'
 import { WorkspaceEvePanel } from './workspace/WorkspaceEvePanel'
 import { Modal, ConfirmDialog, FormField } from '../components/ui'
+import { Cloud, Monitor, Save, Circle } from 'lucide-react'
 
 export function WorkspacePage() {
   const workspace = useWorkspace()
@@ -252,6 +253,36 @@ export function WorkspacePage() {
               onFilesChanged={workspace.refreshTree}
               onAction={handleEveAction}
             />
+          </div>
+
+          {/* VS Code-style status bar — spans full width below all panels */}
+          <div className="workspace-statusbar">
+            <div className="workspace-statusbar-left">
+              <span className="workspace-statusbar-item workspace-statusbar-branch">
+                {workspace.isTauri ? <Monitor size={12} /> : <Cloud size={12} />}
+                {workspace.isTauri ? 'Local' : 'Cloud'}
+              </span>
+              {workspace.activeWorkspace && (
+                <span className="workspace-statusbar-item">
+                  {workspace.activeWorkspace.name}
+                </span>
+              )}
+            </div>
+            <div className="workspace-statusbar-right">
+              {workspace.activeTab && (
+                <>
+                  {workspace.isFileDirty(workspace.activeTab) ? (
+                    <span className="workspace-statusbar-item">
+                      <Circle size={8} fill="currentColor" /> Unsaved
+                    </span>
+                  ) : (
+                    <span className="workspace-statusbar-item workspace-statusbar-saved">
+                      <Save size={11} /> Saved
+                    </span>
+                  )}
+                </>
+              )}
+            </div>
           </div>
 
           <Modal isOpen={newFilePrompt} onClose={() => setNewFilePrompt(false)} title="New File" subtitle="Creates inside the current workspace folder. Use folder/file.ext to nest.">

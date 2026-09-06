@@ -257,6 +257,30 @@ export function applyThemeVariables(data) {
     })
   }
 
+  // Determine dark / light mode
+  const lightPresets = ['light', 'prism', 'coral', 'honey', 'azure', 'meadow', 'lilac', 'citrus']
+  let isDark = true
+  if (data.mode === 'light' || data.mode === 'dark') {
+    isDark = data.mode === 'dark'
+  } else if (data.preset) {
+    isDark = !lightPresets.includes(data.preset)
+  } else {
+    const stored = localStorage.getItem('starwaves.theme')
+    isDark = stored ? stored === 'dark' : true
+  }
+
+  root.classList.toggle('dark-theme', isDark)
+  try {
+    localStorage.setItem('starwaves.theme', isDark ? 'dark' : 'light')
+  } catch {}
+
+  // Update theme-color meta tag for browser/mobile status bar
+  const bgPrimary = data.colors?.['--bg-primary'] || (isDark ? '#0d080a' : '#f4f4f5')
+  const metaThemeColor = document.querySelector('meta[name="theme-color"]')
+  if (metaThemeColor) {
+    metaThemeColor.setAttribute('content', bgPrimary)
+  }
+
   // Apply Font
   if (data.fontFamily) {
     const fontOpt = FONT_OPTIONS.find((f) => f.id === data.fontFamily)

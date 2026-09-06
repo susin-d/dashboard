@@ -1,16 +1,23 @@
 /* Todo Page Styles */
 
+.todo-page {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 100%;
+  gap: var(--section-gap);
+}
+
+.todo-page > .empty-state {
+  flex: 1 1 auto;
+  min-height: 480px;
+  height: 100%;
+}
+
 .todo-add-trigger {
   display: inline-flex;
   align-items: center;
   gap: 7px;
-}
-
-.todo-container {
-  width: 100%;
-  display: grid;
-  gap: var(--space-sm);
-  align-content: start;
 }
 
 .todo-filters {

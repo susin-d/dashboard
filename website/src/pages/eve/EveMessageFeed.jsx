@@ -16,6 +16,7 @@ import { EveThoughtHistory } from './EveThoughtHistory'
 
 export function EveMessageFeed({
   messages,
+  draft = '',
   isSending,
   streamText = '',
   thinkingText = '',
@@ -175,7 +176,7 @@ export function EveMessageFeed({
         )
       })()}
 
-      {messages.length <= 1 && (
+      {messages.length <= 1 && !draft?.trim() && (
         <div className="eve-starter-prompts">
           <p className="eve-starter-title">Quick prompts to get started:</p>
           <div className="eve-starter-grid">

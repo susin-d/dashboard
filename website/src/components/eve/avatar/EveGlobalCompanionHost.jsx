@@ -3,6 +3,11 @@ import { useThemeCustomizer } from '../../../hooks/useThemeCustomizer'
 import { EveGlobalCompanion } from './EveGlobalCompanion'
 import { useEveAvatar } from './EveAvatarProvider'
 
+// Returns true when running inside Tauri desktop shell
+function isTauri() {
+  try { return typeof window !== 'undefined' && !!window.__TAURI__ } catch { return false }
+}
+
 // Host mounts inside providers and feeds Eve live state if available via window events.
 // Keeps global companion decoupled from AppLayout.
 export function EveGlobalCompanionHost() {
@@ -44,6 +49,10 @@ export function EveGlobalCompanionHost() {
       })
     } catch {}
   }
+
+  // On Tauri desktop, the overlay window takes over floating companion duties.
+  // Suppress the in-app companion to avoid spawning two WebGL renderers simultaneously.
+  if (isTauri() && prefs?.enabled !== false) return null
 
   return (
     <EveGlobalCompanion

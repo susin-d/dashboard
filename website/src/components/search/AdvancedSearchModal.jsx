@@ -23,6 +23,7 @@ export function AdvancedSearchModal({
   onNavigate,
   onCreate,
   callCenter,
+  toggleTheme,
   setDarkTheme,
   setEveOpen,
   setNotificationsOpen,
@@ -199,7 +200,9 @@ export function AdvancedSearchModal({
           }
           break
         case 'toggle-theme':
-          if (setDarkTheme) {
+          if (toggleTheme) {
+            toggleTheme()
+          } else if (setDarkTheme) {
             setDarkTheme((current) => !current)
           }
           break

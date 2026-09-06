@@ -16,6 +16,8 @@ const CustomPage = lazy(() => import('./pages/CustomPage').then((m) => ({ defaul
 // Global companion overlay lazy — pulls EveAvatar + useThemeCustomizer; not
 // needed for first paint, mounts quietly once loaded.
 const EveGlobalCompanionHost = lazy(() => import('./components/eve/avatar/EveGlobalCompanionHost').then((m) => ({ default: m.EveGlobalCompanionHost })))
+const AvatarOverlayManager = lazy(() => import('./components/eve/avatar/AvatarOverlayManager').then((m) => ({ default: m.AvatarOverlayManager })))
+const AvatarOverlayPage = lazy(() => import('./pages/AvatarOverlayPage').then((m) => ({ default: m.AvatarOverlayPage })))
 import { updateNotification } from './lib/workspaceApi'
 import { confirmEmailVerification } from './lib/emailApi'
 import { clearAuthSession, verifyAccountCombine } from './lib/authApi'
@@ -207,10 +209,15 @@ function App() {
         const parsed = JSON.parse(savedTheme)
         if (parsed && typeof parsed === 'object') {
           applyThemeVariables(parsed)
+          return
         }
       } catch (err) {
         console.error('Could not load custom theme:', err)
       }
+    }
+    const stored = localStorage.getItem('starwaves.theme')
+    if (stored === 'light') {
+      applyThemeVariables({ preset: 'light', mode: 'light' })
     }
   }, [])
 
@@ -436,6 +443,18 @@ function App() {
     }
     return publicRoute(<OnboardingPage user={activeUser} onComplete={completeOnboarding} />)
   }
+  // Tauri overlay window — served to the transparent secondary window.
+  // No auth guard needed: it reads state via BroadcastChannel from the main window.
+  if (route === '/app/avatar-overlay') {
+    return (
+      <EveAvatarProvider>
+        <Suspense fallback={null}>
+          <AvatarOverlayPage />
+        </Suspense>
+      </EveAvatarProvider>
+    )
+  }
+
   if (!authReady) {
     return <WaveLoader />
   }
@@ -507,6 +526,9 @@ function App() {
         <EveUiBanner />
         <Suspense fallback={null}>
           <EveGlobalCompanionHost />
+        </Suspense>
+        <Suspense fallback={null}>
+          <AvatarOverlayManager />
         </Suspense>
       </AppLayout>
     </EveAvatarProvider>

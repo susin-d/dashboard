@@ -44,11 +44,14 @@
 .eve-chat-bubble.user {
   align-self: flex-end;
   align-items: flex-end;
-  max-width: min(75%, 560px);
+  max-width: min(78%, 620px);
 }
 
 .eve-chat-bubble.assistant {
-  align-self: stretch;
+  align-self: flex-start;
+  align-items: flex-start;
+  max-width: min(85%, 760px);
+  width: fit-content;
 }
 
 .eve-bubble-text {
@@ -60,20 +63,22 @@
 }
 
 .eve-chat-bubble.assistant .eve-bubble-text {
-  background: transparent;
-  border: 0;
-  padding: 0;
+  background: var(--bg-card, #1c1917);
+  border: 1px solid var(--border-color, #27272a);
+  border-radius: 18px 18px 18px 4px;
+  padding: 0.85rem 1.25rem;
   color: var(--text-primary, #ffffff);
+  box-shadow: var(--shadow-sm);
 }
 
 .eve-chat-bubble.user .eve-bubble-text {
   background: var(--bg-tertiary, #18181b);
   border: 1px solid var(--border-color, #27272a);
   color: var(--text-primary, #ffffff);
-  border-radius: 16px;
-  border-bottom-right-radius: 6px;
-  padding: 0.65rem 1rem;
-  font-weight: 450;
+  border-radius: 18px 18px 4px 18px;
+  padding: 0.75rem 1.15rem;
+  font-weight: 500;
+  box-shadow: var(--shadow-sm);
 }
 
 .eve-bubble-text.eve-bubble-markdown {

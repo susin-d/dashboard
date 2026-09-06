@@ -172,7 +172,92 @@
   border-color: var(--glass-border-card);
 }
 
-/* ── 12. Reduced-motion: strip blur, keep alpha ───────────────────────────── */
+/* ── 12. Inputs & Form Controls ───────────────────────────────────────────── */
+
+input:not([type]):not(.search-bar-input),
+input[type="text"]:not(.search-bar-input),
+input[type="email"],
+input[type="password"],
+input[type="search"]:not(.search-bar-input),
+input[type="url"],
+input[type="number"],
+input[type="date"],
+input[type="file"],
+select,
+textarea:not(.eve-composer-textarea):not(.studio-prompt-textarea):not(.whatsapp-composer-input),
+.modal form input,
+.modal form select,
+.modal form textarea,
+.project-edit-form input,
+.project-edit-form select,
+.project-edit-form textarea {
+  background: var(--glass-bg-input);
+  border: 1px solid var(--glass-border-input);
+  backdrop-filter: blur(12px) var(--glass-saturation);
+  -webkit-backdrop-filter: blur(12px) var(--glass-saturation);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05), 0 1px 0 var(--glass-border-subtle);
+}
+
+input:not([type]):not(.search-bar-input):focus,
+input[type="text"]:not(.search-bar-input):focus,
+input[type="email"]:focus,
+input[type="password"]:focus,
+input[type="search"]:not(.search-bar-input):focus,
+input[type="url"]:focus,
+input[type="number"]:focus,
+input[type="date"]:focus,
+input[type="file"]:focus,
+select:focus,
+textarea:not(.eve-composer-textarea):not(.studio-prompt-textarea):not(.whatsapp-composer-input):focus,
+.modal form input:focus,
+.modal form select:focus,
+.modal form textarea:focus,
+.project-edit-form input:focus,
+.project-edit-form select:focus,
+.project-edit-form textarea:focus {
+  background: var(--glass-bg-input-focus);
+  border-color: var(--border-focus);
+  box-shadow: 0 0 0 3px var(--color-primary-light), inset 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+/* Frameless embedded inputs/textareas inside cards and composers must stay shadowless and transparent */
+.search-bar-input,
+.search-bar input,
+.eve-composer textarea,
+.eve-composer-textarea,
+.eve-composer-field textarea,
+.studio-prompt-textarea,
+.whatsapp-composer textarea,
+.whatsapp-composer-input,
+.whatsapp-message-composer textarea {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+input[type="file"]::file-selector-button {
+  background: var(--glass-bg-card);
+  border: 1px solid var(--glass-border-card);
+  border-radius: var(--radius-sm);
+  padding: 4px 12px;
+  margin-right: 10px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-primary);
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04), inset 0 1px 0 var(--glass-border-subtle);
+  transition: background var(--transition-fast), border-color var(--transition-fast);
+}
+
+input[type="file"]::file-selector-button:hover {
+  background: var(--glass-bg-input-focus);
+  border-color: var(--border-focus);
+}
+
+/* ── 13. Reduced-motion: strip blur, keep alpha ───────────────────────────── */
 
 @media (prefers-reduced-motion: reduce) {
   .topbar,
@@ -201,7 +286,10 @@
   .metric-card,
   .alert,
   .eve-panel,
-  .tab-nav {
+  .tab-nav,
+  input,
+  select,
+  textarea {
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
   }

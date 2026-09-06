@@ -14,7 +14,6 @@ import { WhatsAppSummaryModal } from '../components/whatsapp/WhatsAppSummaryModa
 import { useWhatsAppMessageActions } from './whatsapp/useWhatsAppMessageActions'
 import { useWhatsAppPairing } from './whatsapp/useWhatsAppPairing'
 import { WhatsAppEmptyPane } from './whatsapp/WhatsAppEmptyPane'
-import { WhatsAppSyncState } from './whatsapp/WhatsAppSyncState'
 import '../styles/pages/whatsapp-shell.css'
 import '../styles/pages/whatsapp-sync.css'
 import '../styles/pages/whatsapp-polish.css'
@@ -35,12 +34,6 @@ export function WhatsAppPage() {
   const [summaryModalText, setSummaryModalText] = useState(null)
   const [isTyping, setIsTyping] = useState(false)
   const [typingText, setTypingText] = useState('')
-
-  // Sync / Health states: 'syncing' | 'ready' | 'error'
-  const [syncStatus, setSyncStatus] = useState('syncing')
-  const [syncProgress, setSyncProgress] = useState(15)
-  const [syncStepText, setSyncStepText] = useState('Checking WhatsApp server gateway...')
-  const [syncError, setSyncError] = useState(null)
 
   const [hasMoreMessages, setHasMoreMessages] = useState(true)
   const [isLoadingMore, setIsLoadingMore] = useState(false)
@@ -90,37 +83,17 @@ export function WhatsAppPage() {
     }
   }, [])
 
-  // Sync and load initial status and chats with progressive loading bar — pages after loading all new messages
-  const runFullSync = async () => {
-    setSyncStatus('syncing')
-    setSyncProgress(20)
-    setSyncStepText('Connecting to WhatsApp Gateway...')
-    setSyncError(null)
-
+  const loadInitialData = async () => {
     try {
-      // Step 1: Health & Connection check
-      setSyncProgress(40)
-      setSyncStepText('Verifying gateway connection and session status...')
-      const stat = await fetchWhatsAppStatus().catch((err) => {
-        throw new Error(`Unable to reach WhatsApp gateway: ${err.message || 'Server offline'}`)
-      })
+      const stat = await fetchWhatsAppStatus().catch(() => ({ connected: false }))
       setStatus(stat)
 
-      // Step 2: Sync chats and contacts (server syncs new chats BEFORE returning)
-      setSyncProgress(60)
-      setSyncStepText('Syncing conversations and contacts...')
-      const chatList = await fetchWhatsAppChats().catch((err) => {
-        throw new Error(`Failed to sync chat history: ${err.message || 'Database error'}`)
-      })
-
+      const chatList = await fetchWhatsAppChats().catch(() => [])
       setChats(chatList)
       const initialChatId = chatList.length > 0 ? chatList[0].id : null
       setSelectedChatId((current) => current || initialChatId)
 
-      // Step 3: Sync latest messages for initial chat BEFORE paging to ready — ensures pagination reflects all new messages
       if (initialChatId) {
-        setSyncProgress(85)
-        setSyncStepText('Syncing latest messages...')
         try {
           const initialMsgs = await fetchWhatsAppMessages(initialChatId, 50)
           const cleanSelected = initialChatId.replace(/@s\.whatsapp\.net|@g\.us|@lid/g, '')
@@ -130,30 +103,20 @@ export function WhatsAppPage() {
             return cleanMsg === cleanSelected || m.chat_id === initialChatId
           })
           setMessages(validMsgs)
-          // Page only if full page returned — otherwise no more older messages
           setHasMoreMessages(validMsgs.length >= 50)
           markWhatsAppChatRead(initialChatId).catch(() => {})
         } catch {
-          // Non-fatal: messages will be loaded by effect after sync
+          // Non-fatal: messages will be loaded by effect
         }
       }
-
-      // Step 4: Complete — page to app only after all new messages synced
-      setSyncProgress(100)
-      setSyncStepText('WhatsApp is synced and ready.')
-      setTimeout(() => {
-        setSyncStatus('ready')
-      }, 400)
     } catch (err) {
-      console.error('WhatsApp sync error:', err)
-      setSyncStatus('error')
-      setSyncError(err.message || 'Server connection failed')
+      console.error('WhatsApp initial load error:', err)
     }
   }
 
   useEffect(() => {
     let mounted = true
-    runFullSync()
+    loadInitialData()
 
     // Subscribe to WebSocket
     const unsubscribe = whatsappSocket.subscribe((event) => {
@@ -434,18 +397,6 @@ export function WhatsAppPage() {
     } finally {
       setIsLoadingMore(false)
     }
-  }
-
-  if (syncStatus !== 'ready') {
-    return (
-      <WhatsAppSyncState
-        status={syncStatus}
-        progress={syncProgress}
-        stepText={syncStepText}
-        error={syncError}
-        onRetry={runFullSync}
-      />
-    )
   }
 
   const selectedChat = chats.find((c) => c.id === selectedChatId)

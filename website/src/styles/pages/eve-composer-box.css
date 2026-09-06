@@ -120,8 +120,8 @@
   outline: none;
   box-shadow: none !important;
   padding: 0;
-  min-height: 48px;
-  max-height: 180px;
+  min-height: 88px;
+  max-height: 220px;
 }
 
 .eve-composer-textarea::placeholder {
@@ -331,15 +331,5 @@
   opacity: 0.35;
   cursor: not-allowed;
   transform: none;
-}
-
-.eve-progress-indicator {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  height: 2px;
-  background: var(--color-primary, #ffffff);
-  transition: width 0.1s ease;
-  border-radius: 0 0 14px 14px;
 }
 

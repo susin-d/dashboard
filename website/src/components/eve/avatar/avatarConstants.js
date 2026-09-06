@@ -1,6 +1,7 @@
 // Single source of truth for Eve avatar — tokens, limits, catalog.
 export const AVATAR_STORAGE_KEY = 'starwaves:eve-avatar:v1'
 export const AVATAR_BC_CHANNEL = 'starwaves-avatar'
+export const AVATAR_OVERLAY_BC_CHANNEL = 'starwaves-avatar-overlay'
 export const AVATAR_CACHE_KEY = 'starwaves.ui.cache'
 
 export const AVATAR_EMOTIONS = ['idle', 'listening', 'thinking', 'speaking', 'tool', 'error']
@@ -41,6 +42,8 @@ export const AVATAR_DEFAULTS = {
   motion: AVATAR_MOTION.AUTO,
   inlineEnabled: true,
   orbFallback: true,
+  overlayPosition: null,
+  overlaySize: { w: 320, h: 480 },
 }
 
 export const ALLOWED_EXTS = ['.vrm', '.glb', '.gltf', '.model3.json', '.zip']

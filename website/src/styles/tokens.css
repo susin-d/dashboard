@@ -67,8 +67,11 @@
   --glass-bg-sidebar: rgba(245, 245, 247, 0.68);
   --glass-bg-topbar: rgba(250, 250, 252, 0.78);
   --glass-bg-dropdown: rgba(255, 255, 255, 0.78);
+  --glass-bg-input: rgba(0, 0, 0, 0.08);
+  --glass-bg-input-focus: rgba(0, 0, 0, 0.12);
   --glass-border: rgba(255, 255, 255, 0.72);
   --glass-border-card: rgba(255, 255, 255, 0.50);
+  --glass-border-input: rgba(0, 0, 0, 0.16);
   --glass-border-subtle: rgba(255, 255, 255, 0.28);
   --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.10), 0 2px 8px rgba(0, 0, 0, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.80);
   --glass-shadow-lifted: 0 20px 60px rgba(0, 0, 0, 0.13), 0 6px 16px rgba(0, 0, 0, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.80);

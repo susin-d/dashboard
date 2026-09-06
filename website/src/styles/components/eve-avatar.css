@@ -372,96 +372,253 @@
 }
 .eve-avatar-orb.is-speaking { animation: eve-orb-speaking-pulse 0.85s ease-in-out infinite alternate; border-color: var(--eve-avatar-accent, var(--border-heavy)); }
 
-/* Global companion */
+/* /* Global companion — transparent background 3D overlay on all apps */
 .eve-global-companion {
   position: fixed;
-  z-index: 40;
-  width: min(360px, 92vw);
-  max-width: 360px;
+  z-index: 999;
+  width: 280px;
+  max-width: 280px;
   display: flex;
   flex-direction: column;
-  gap: 0;
-  pointer-events: auto;
+  align-items: center;
+  gap: 4px;
+  pointer-events: none;
+  user-select: none;
+  transition: opacity var(--transition-fast);
 }
 
-.eve-global-companion.is-docked { width: auto; max-width: none; }
-.eve-global-companion.is-dragging { cursor: grabbing; }
+.eve-global-companion.is-docked {
+  width: auto;
+  max-width: none;
+}
+
+.eve-global-companion.is-dragging {
+  cursor: grabbing;
+}
+
+/* Ensure interactive child elements capture pointer events */
+.eve-global-companion .eve-global-header,
+.eve-global-companion .eve-global-docked-btn,
+.eve-global-companion .eve-vrm-mount,
+.eve-global-companion .eve-live2d-mount {
+  pointer-events: auto;
+}
 
 .eve-global-header {
   display: flex;
   align-items: center;
   gap: var(--space-2xs);
-  padding: 6px 8px;
+  padding: 5px 10px;
   border-radius: var(--radius-full);
-  background: var(--glass-bg-overlay);
-  border: 1px solid var(--glass-border);
+  background: color-mix(in srgb, var(--bg-card) 78%, transparent);
+  border: 1px solid var(--glass-border-card);
   backdrop-filter: blur(var(--glass-blur)) var(--glass-saturation);
-  box-shadow: var(--glass-shadow);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) var(--glass-saturation);
+  box-shadow: var(--glass-shadow), 0 4px 14px rgba(0, 0, 0, 0.08);
   cursor: grab;
   user-select: none;
+  transition: background var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast);
 }
 
-.eve-global-header:active { cursor: grabbing; }
+.eve-global-header:active {
+  cursor: grabbing;
+}
+
+.eve-global-header:hover {
+  background: color-mix(in srgb, var(--bg-card) 92%, transparent);
+  border-color: var(--border-heavy);
+  box-shadow: var(--glass-shadow), 0 6px 20px rgba(0, 0, 0, 0.12);
+}
 
 .eve-global-drag-handle {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 22px; height: 22px;
+  width: 20px;
+  height: 20px;
   border-radius: var(--radius-full);
   background: var(--bg-secondary);
   border: 1px solid var(--border-color);
   color: var(--text-secondary);
 }
 
-.eve-global-title { font-size: var(--text-sm); font-weight: var(--font-weight-semibold); color: var(--text-primary); }
+.eve-global-title {
+  font-size: var(--text-xs);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-primary);
+  letter-spacing: -0.01em;
+}
 
 .eve-global-actions {
-  margin-left: auto;
+  margin-left: 6px;
   display: flex;
   gap: 4px;
 }
 
 .eve-global-icon-btn {
-  width: 26px; height: 26px;
+  width: 24px;
+  height: 24px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   border-radius: var(--radius-full);
-  background: var(--bg-card);
+  background: color-mix(in srgb, var(--bg-secondary) 80%, transparent);
   border: 1px solid var(--border-color);
   color: var(--text-secondary);
   cursor: pointer;
+  transition: color var(--transition-fast), border-color var(--transition-fast), background var(--transition-fast);
 }
-.eve-global-icon-btn:hover { border-color: var(--border-heavy); color: var(--text-primary); }
 
-.eve-global-body { margin-top: 8px; }
+.eve-global-icon-btn:hover {
+  border-color: var(--border-heavy);
+  color: var(--text-primary);
+  background: var(--bg-card);
+}
+
+.eve-global-body {
+  position: relative;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
 
 .eve-global-docked-btn {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 14px;
+  padding: 6px 12px;
   border-radius: var(--radius-full);
-  background: var(--glass-bg-overlay);
-  border: 1px solid var(--glass-border);
-  box-shadow: var(--glass-shadow);
+  background: color-mix(in srgb, var(--bg-card) 78%, transparent);
+  border: 1px solid var(--glass-border-card);
+  box-shadow: var(--glass-shadow), 0 4px 14px rgba(0, 0, 0, 0.08);
   backdrop-filter: blur(var(--glass-blur)) var(--glass-saturation);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) var(--glass-saturation);
   color: var(--text-primary);
-  font-size: var(--text-sm);
+  font-size: var(--text-xs);
   font-weight: var(--font-weight-semibold);
   cursor: pointer;
+  pointer-events: auto;
+  transition: transform var(--transition-fast), background var(--transition-fast), border-color var(--transition-fast);
+}
+
+.eve-global-docked-btn:hover {
+  background: color-mix(in srgb, var(--bg-card) 92%, transparent);
+  border-color: var(--border-heavy);
+  transform: translateY(-1px);
 }
 
 .eve-global-docked-orb {
-  width: 18px; height: 18px;
+  width: 14px;
+  height: 14px;
   border-radius: var(--radius-full);
   background: var(--eve-avatar-accent, var(--color-primary));
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--eve-avatar-accent, var(--color-primary)) 18%, transparent);
-  animation: eve-live-pulse 1.4s infinite ease-in-out;
+  animation: eve-avatar-pulse 1.6s ease-in-out infinite;
 }
 
-.eve-global-docked-label { letter-spacing: -0.01em; }
+.eve-global-docked-label {
+  font-size: var(--text-xs);
+  font-weight: var(--font-weight-semibold);
+}
+
+/* ── 3D Transparent Background Character Overrides ── */
+.eve-global-companion .eve-avatar,
+.eve-global-companion .eve-global-character {
+  width: 260px !important;
+  max-width: 260px !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.eve-global-companion .eve-avatar-card {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  padding: 0 !important;
+  gap: 0 !important;
+  border-radius: 0 !important;
+  overflow: visible !important;
+}
+
+.eve-global-companion .eve-avatar-card-header,
+.eve-global-companion .eve-avatar-card-footer,
+.eve-global-companion .eve-avatar-canvas-overlay {
+  display: none !important;
+}
+
+.eve-global-companion .eve-avatar-canvas {
+  width: 260px !important;
+  height: 320px !important;
+  min-height: 280px !important;
+  aspect-ratio: auto !important;
+  border: none !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  overflow: visible !important;
+  box-shadow: none !important;
+  margin: 0 auto !important;
+}
+
+.eve-global-companion .eve-vrm-real,
+.eve-global-companion .eve-live2d-real,
+.eve-global-companion .eve-vrm-mount,
+.eve-global-companion .eve-live2d-mount {
+  background: transparent !important;
+  border: none !important;
+  border-radius: 0 !important;
+  overflow: visible !important;
+}
+
+.eve-global-companion .eve-vrm-real .eve-vrm-fallback,
+.eve-global-companion .eve-live2d-real .eve-live2d-fallback {
+  background: transparent !important;
+  border: none !important;
+}
+
+.eve-global-companion .eve-vrm-mount canvas,
+.eve-global-companion .eve-live2d-mount canvas {
+  width: 100% !important;
+  height: 100% !important;
+  background: transparent !important;
+  filter: drop-shadow(0 10px 24px rgba(0, 0, 0, 0.25));
+}
+
+.eve-global-companion .eve-vrm-badge,
+.eve-global-companion .eve-live2d-badge {
+  display: none !important;
+}
+
+/* Floating speech bubble */
+.eve-global-speech {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  max-width: 240px;
+  background: color-mix(in srgb, var(--bg-card) 88%, transparent);
+  border: 1px solid var(--glass-border-card);
+  backdrop-filter: blur(var(--glass-blur)) var(--glass-saturation);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) var(--glass-saturation);
+  box-shadow: var(--glass-shadow), 0 4px 16px rgba(0, 0, 0, 0.12);
+  padding: 8px 12px;
+  border-radius: var(--radius-lg);
+  font-size: var(--text-xs);
+  color: var(--text-primary);
+  line-height: 1.4;
+  pointer-events: none;
+  z-index: 1000;
+  animation: eve-avatar-pulse 1.8s ease-in-out infinite;
+}
+
+.eve-global-speech p {
+  margin: 0;
+  word-break: break-word;
+}
 
 /* Inline */
 .eve-inline-avatar { width: 100%; }

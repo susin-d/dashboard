@@ -79,26 +79,70 @@
 .project-empty-state span { font-size: 10px; }
 .project-empty-state button { margin-top: 5px; }
 
+.project-list-card {
+  width: 100%;
+  overflow: hidden;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg, 12px);
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.project-list-card:hover {
+  border-color: var(--border-heavy);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+}
+
+.project-list-card.open {
+  border-color: var(--border-focus);
+  box-shadow: var(--shadow-sm);
+}
+
+.project-list-card .contest-site-header {
+  width: 100%;
+  min-height: 64px;
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm, 14px);
+  padding: 14px 18px;
+  color: var(--text-primary);
+  background: var(--bg-card);
+  border: 0;
+  text-align: left;
+  cursor: pointer;
+  transition: background var(--transition-fast);
+}
+
+.project-list-card .contest-site-header:hover {
+  background: var(--bg-hover-subtle);
+}
+
+.project-list-card .contest-site-logo {
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  color: var(--text-inverse);
+  background: var(--color-primary);
+  border-radius: 10px;
+}
+
 .project-list-card .contest-site-logo svg {
   color: var(--text-inverse);
 }
 
-.project-list-card {
-  overflow: hidden;
-  border-radius: var(--radius-lg);
-}
-
-.project-list-card .contest-site-header {
-  min-height: 76px;
-  padding: 14px 16px;
-}
-
 .project-list-card .contest-site-copy {
-  gap: 5px;
+  min-width: 0;
+  flex: 1 1 auto;
+  display: grid;
+  gap: 3px;
 }
 
 .project-list-card .contest-site-copy strong {
-  font-size: 13px;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--text-primary);
 }
 
 .project-list-card .contest-site-copy small {
@@ -109,6 +153,67 @@
   line-height: 1.45;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.project-list-card .contest-site-header > svg {
+  flex-shrink: 0;
+  color: var(--text-muted);
+  transition: transform var(--transition-fast);
+}
+
+.project-list-card.open .contest-site-header > svg {
+  transform: rotate(180deg);
+}
+
+.project-list-card .contest-site-content {
+  padding: 18px 18px 16px;
+  border-top: 1px solid var(--border-color);
+  background: var(--bg-hover-subtle);
+}
+
+/* Phase Dots in List view */
+.project-phase-dots {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.project-phase-dots i {
+  width: 7px;
+  height: 7px;
+  background: var(--border-heavy);
+  border-radius: 50%;
+}
+
+.project-phase-dots i.done {
+  background: var(--color-primary);
+}
+
+.project-phase-dots i.current {
+  background: var(--color-primary);
+  box-shadow: 0 0 0 2px var(--bg-tertiary);
+}
+
+.project-list-phase {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 0;
+  border-top: 1px solid var(--border-color);
+}
+
+.project-list-phase > span {
+  color: var(--text-muted);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.project-list-phase strong {
+  color: var(--text-secondary);
+  font-size: 11px;
+  font-weight: 700;
 }
 
 .project-status {
@@ -145,13 +250,6 @@
   color: var(--text-primary);
   background: var(--bg-secondary);
   border: 1px solid var(--border-heavy);
-}
-
-/* Status Filter Chips Bar — shared .filter-pills owns layout; keep this hook
-   margin-free so the parent page gap sets the rhythm. */
-.project-status-chips {
-  margin: 0;
-  padding: 2px 0;
 }
 
 /* View Mode Switcher Toggle */

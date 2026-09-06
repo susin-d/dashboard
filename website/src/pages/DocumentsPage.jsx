@@ -19,7 +19,7 @@ import {
   uploadGoogleDriveFile,
 } from '../lib/googleDriveApi'
 import { deleteDocument, persistDocument } from '../lib/documentsApi'
-import { ConfirmDialog, EmptyState, SearchBar } from '../components/ui'
+import { ConfirmDialog, EmptyState, FilterBar, SearchBar } from '../components/ui'
 import { DocumentEditorModal } from './documents/DocumentEditorModal'
 import { DriveImportModal } from './documents/DriveImportModal'
 
@@ -267,33 +267,28 @@ export function DocumentsPage({ documents, setDocuments, createIntent, onOpenDoc
 
   return (
     <section className="documents-page">
-      <div className="page-inline-actions">
-        <button className="primary-button document-upload-button" onClick={openUpload}>
-          <Upload size={16} />
-          Upload document
-        </button>
-      </div>
-
-      <section className="document-cloud-tools">
-        <button onClick={connectGoogleDrive}>
-          <span className="google-drive-mark">△</span>
-          <div><strong>Google Drive</strong><small>Import recent files into StarWaves</small></div>
-          <FolderInput size={17} />
-        </button>
-        <div className="workspace-create-tools">
-          <div><strong>Google Workspace</strong><small>Create a new cloud document</small></div>
-          <a href="https://docs.new" target="_blank" rel="noreferrer">Docs</a>
-          <a href="https://sheets.new" target="_blank" rel="noreferrer">Sheets</a>
-          <a href="https://slides.new" target="_blank" rel="noreferrer">Slides</a>
-        </div>
-      </section>
-
-      <SearchBar
-        value={query}
-        onChange={setQuery}
-        placeholder="Search documents by name, tag, or category"
-        ariaLabel="Search documents"
-        className="document-search-bar"
+      <FilterBar
+        className="document-toolbar"
+        search={
+          <SearchBar
+            value={query}
+            onChange={setQuery}
+            placeholder="Search documents by name, tag, or category"
+            ariaLabel="Search documents"
+          />
+        }
+        actions={
+          <>
+            <button className="secondary-button" type="button" onClick={connectGoogleDrive}>
+              <FolderInput size={15} />
+              Import from Drive
+            </button>
+            <button className="primary-button document-upload-button" type="button" onClick={openUpload}>
+              <Upload size={15} />
+              Upload document
+            </button>
+          </>
+        }
       />
 
       <div className="document-list">

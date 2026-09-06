@@ -325,59 +325,6 @@ nav {
   flex-shrink: 0;
 }
 
-.sidebar-ask-eve {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  width: 100%;
-  height: 40px;
-  min-height: 40px;
-  padding: 8px 12px;
-  color: var(--on-fill);
-  background: var(--module-eve);
-  border: 1px solid transparent;
-  border-radius: var(--radius-md);
-  font-size: 13px;
-  font-weight: 700;
-  white-space: nowrap;
-  overflow: hidden;
-  cursor: pointer;
-  box-shadow: 0 4px 14px color-mix(in srgb, var(--module-eve) 35%, transparent);
-  transition:
-    filter var(--transition-fast),
-    transform var(--transition-fast),
-    box-shadow var(--transition-fast);
-}
-
-.sidebar-ask-eve:hover {
-  filter: brightness(1.08);
-  transform: translateY(-1px);
-  box-shadow: 0 6px 18px color-mix(in srgb, var(--module-eve) 45%, transparent);
-}
-
-.sidebar-ask-eve:focus-visible {
-  outline: 2px solid var(--module-eve);
-  outline-offset: 2px;
-}
-
-.sidebar-ask-eve svg {
-  flex: 0 0 auto;
-}
-
-.sidebar:not(.expanded) .sidebar-ask-eve {
-  width: 44px;
-  height: 44px;
-  min-height: 44px;
-  padding: 0;
-  justify-content: center;
-  margin: 0 auto;
-  border-radius: var(--radius-lg);
-}
-
-.sidebar:not(.expanded) .sidebar-ask-eve span {
-  display: none;
-}
-
 .sidebar:not(.expanded) .sidebar-footer {
   justify-content: center;
 }

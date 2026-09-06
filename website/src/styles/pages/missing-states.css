@@ -82,16 +82,6 @@
   font-weight: 500;
 }
 
-/* Dashboard shell lives in styles/pages/dashboard.css (single source). */
-
-.stats-rating-display,
-.stats-solved-heading {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-xs);
-}
-
 .landing-hero-copy {
   min-width: 0;
 }
@@ -228,111 +218,6 @@
 
 .stats-wide-card {
   grid-column: 1 / -1;
-}
-
-.stats-four-values,
-.stats-leetcode-values {
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-}
-
-.stats-rating-display,
-.stats-solved-heading {
-  align-items: flex-end;
-  padding: 18px 0;
-}
-
-.stats-rating-display strong,
-.stats-solved-heading strong {
-  display: block;
-  font-size: 32px;
-  line-height: 1;
-}
-
-.stats-rating-display span,
-.stats-solved-heading span {
-  color: var(--text-muted);
-  font-size: 10px;
-}
-
-.stats-rating-display em {
-  color: var(--text-secondary);
-  font-size: 11px;
-  font-style: normal;
-  font-weight: 800;
-}
-
-.stats-progress-row {
-  display: grid;
-  gap: 7px;
-  padding: 9px 0;
-}
-
-.stats-progress-row > div:first-child,
-.stats-project-rows > div,
-.stats-hackathon-list > div {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 11px;
-}
-
-.stats-progress-row > div:first-child {
-  color: var(--text-secondary);
-  font-size: 10px;
-}
-
-.stats-project-rows,
-.stats-hackathon-list {
-  display: grid;
-}
-
-.stats-project-rows > div,
-.stats-hackathon-list > div {
-  min-width: 0;
-  padding: 12px 0;
-  border-top: 1px solid var(--border-color);
-}
-
-.stats-project-rows > div:first-child,
-.stats-hackathon-list > div:first-child {
-  border-top: 0;
-}
-
-.stats-project-rows > div > div,
-.stats-hackathon-list > div > div {
-  min-width: 0;
-  flex: 1;
-  display: grid;
-  gap: 3px;
-}
-
-.stats-project-rows span,
-.stats-hackathon-list span,
-.stats-project-rows em,
-.stats-hackathon-list em {
-  color: var(--text-muted);
-  font-size: 9px;
-  font-style: normal;
-}
-
-.stats-date-box {
-  display: grid;
-  width: 38px;
-  flex: 0 0 auto;
-  padding: 5px;
-  border-radius: 9px;
-  background: var(--bg-tertiary);
-  text-align: center;
-}
-
-.google-calendar-settings-card,
-.github-settings-card,
-.gmail-settings-card {
-  overflow: hidden;
-  border: 1px solid var(--border-color);
-  border-radius: 14px;
-  background: var(--bg-card);
-  box-shadow: var(--shadow-sm);
 }
 
 .google-calendar-settings-body,
@@ -543,11 +428,6 @@
 
   .document-form-row {
     grid-template-columns: 1fr;
-  }
-
-  .stats-four-values,
-  .stats-leetcode-values {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .backdrop {

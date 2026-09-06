@@ -21,38 +21,57 @@ export function EveGlobalCompanion({
   onOpenSettings,
   onToggleRenderer,
 }) {
-  const [expanded, setExpanded] = useState(false)
+  const [expanded, setExpanded] = useState(() => {
+    if (typeof window === 'undefined') return true
+    const saved = localStorage.getItem('starwaves.avatar-companion-expanded')
+    if (saved !== null) return saved === 'true'
+    return true
+  })
   const [dragging, setDragging] = useState(false)
   const rootRef = useRef(null)
-  const pos = prefs?.position || { x: 92, y: 88 }
+  const pos = prefs?.position || { x: 90, y: 80 }
   const posRef = useRef(pos)
   posRef.current = pos
   const enabled = prefs?.enabled !== false
   const inlineVisibleRef = useRef(false)
 
-  // Collapse to docked orb on Avatar Studio so the Studio preview owns the
+  const toggleExpanded = (val) => {
+    const next = typeof val === 'function' ? val(expanded) : val
+    setExpanded(next)
+    try {
+      localStorage.setItem('starwaves.avatar-companion-expanded', String(next))
+    } catch {}
+  }
+
+  // Collapse to docked pill on Avatar Studio so Studio preview owns the
   // single WebGL context — avoids dual VRM + Live2D renderers on low-end PCs.
   useEffect(() => {
-    const isAvatarStudio = typeof window !== 'undefined' && window.location.pathname.includes('/app/avatar')
+    const isAvatarStudio = typeof window !== 'undefined' && window.location.pathname.includes('/avatar')
     if (isAvatarStudio && expanded) setExpanded(false)
   }, [expanded])
 
-  // Auto-minimize when inline avatar in viewport. Inline avatars mount
-  // late (route changes, async prefs), so re-scan on DOM mutations —
-  // a one-time query misses them and the companion overlaps settings.
+  // Auto-minimize when other inline avatars are visible in viewport (e.g. settings page).
+  // CRITICAL: Must exclude our own avatar container to avoid auto-minimizing itself!
   useEffect(() => {
     const observer = new IntersectionObserver((entries) => {
       const visible = entries.some((e) => e.isIntersecting)
       inlineVisibleRef.current = visible
       if (visible && expanded) setExpanded(false)
     }, { threshold: 0.2 })
-    const observeAll = () => {
-      document.querySelectorAll('[data-eve-target="eve-avatar"]').forEach((el) => observer.observe(el))
+
+    const observeOthers = () => {
+      document.querySelectorAll('[data-eve-target="eve-avatar"]').forEach((el) => {
+        if (rootRef.current && rootRef.current.contains(el)) return
+        observer.observe(el)
+      })
     }
-    observeAll()
-    const mutations = new MutationObserver(observeAll)
+    observeOthers()
+    const mutations = new MutationObserver(observeOthers)
     mutations.observe(document.body, { childList: true, subtree: true })
-    return () => { mutations.disconnect(); observer.disconnect() }
+    return () => {
+      mutations.disconnect()
+      observer.disconnect()
+    }
   }, [expanded])
 
   const handlePointerDown = useCallback((event) => {
@@ -88,31 +107,52 @@ export function EveGlobalCompanion({
     transform: 'translate(-50%, -50%)',
   }
 
+  const hasSpeech = (isEveSpeaking && streamText) || (isEveThinking && thinkingText)
+
   return (
-    <div
+    <aside
       ref={rootRef}
       className={`eve-global-companion ${expanded ? 'is-expanded' : 'is-docked'} ${dragging ? 'is-dragging' : ''}`}
       style={style}
       data-eve-target="eve-global-companion"
-      role="complementary"
-      aria-label="Eve global companion"
+      aria-label="Eve 3D desktop companion"
     >
+      {/* Sleek Floating Pill Bar */}
       <div className="eve-global-header" onPointerDown={handlePointerDown} role="toolbar" aria-label="Eve companion controls">
-        <div className="eve-global-drag-handle" aria-hidden="true"><Bot size={14} /></div>
+        <div className="eve-global-drag-handle" aria-hidden="true"><Bot size={13} /></div>
         <span className="eve-global-title">Eve</span>
         <div className="eve-global-actions">
-          <button type="button" className="eve-global-icon-btn" onClick={() => setExpanded((v) => !v)} aria-label={expanded ? 'Minimize companion' : 'Expand companion'} title={expanded ? 'Minimize' : 'Expand'}>
-            {expanded ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
+          <button
+            type="button"
+            className="eve-global-icon-btn"
+            onClick={() => toggleExpanded((v) => !v)}
+            aria-label={expanded ? 'Minimize to pill' : 'Expand 3D Eve'}
+            title={expanded ? 'Minimize' : 'Expand 3D Eve'}
+          >
+            {expanded ? <Minimize2 size={13} /> : <Maximize2 size={13} />}
           </button>
-          <button type="button" className="eve-global-icon-btn" onClick={onOpenSettings} aria-label="Open avatar settings" title="Avatar settings"><Settings2 size={14} /></button>
-          <button type="button" className="eve-global-icon-btn" onClick={() => onPrefsChange?.({ enabled: false })} aria-label="Hide companion" title="Hide"><X size={14} /></button>
+          <button type="button" className="eve-global-icon-btn" onClick={onOpenSettings} aria-label="Open avatar settings" title="Avatar settings">
+            <Settings2 size={13} />
+          </button>
+          <button type="button" className="eve-global-icon-btn" onClick={() => onPrefsChange?.({ enabled: false })} aria-label="Hide companion" title="Hide">
+            <X size={13} />
+          </button>
         </div>
       </div>
 
+      {/* Floating Speech/Thought Bubble when speaking */}
+      {expanded && hasSpeech && (
+        <div className="eve-global-speech" role="status" aria-live="polite">
+          <p>{streamText || thinkingText}</p>
+        </div>
+      )}
+
+      {/* 3D Character Stage (Transparent Background) */}
       <div className="eve-global-body">
         {expanded ? (
           <EveAvatar
             size="md"
+            className="eve-global-character"
             presetId={presetId}
             prefs={prefs}
             activeModel={activeModel}
@@ -129,12 +169,12 @@ export function EveGlobalCompanion({
             onToggleRenderer={onToggleRenderer}
           />
         ) : (
-          <button type="button" className="eve-global-docked-btn" onClick={() => setExpanded(true)} aria-label="Expand Eve companion">
+          <button type="button" className="eve-global-docked-btn" onClick={() => toggleExpanded(true)} aria-label="Expand Eve 3D companion">
             <span className="eve-global-docked-orb" aria-hidden="true" />
             <span className="eve-global-docked-label">Eve</span>
           </button>
         )}
       </div>
-    </div>
+    </aside>
   )
 }

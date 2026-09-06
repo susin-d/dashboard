@@ -98,6 +98,7 @@ export function EveAvatar({
             zoom={zoom}
             idleMotion={!reducedMotion}
             onReady={lifecycle.markReady}
+            onError={lifecycle.markError}
           />
         </Suspense>
       )

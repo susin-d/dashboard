@@ -25,6 +25,22 @@
         "height": 800,
         "minWidth": 800,
         "minHeight": 600
+      },
+      {
+        "label": "eve-overlay",
+        "title": "Eve",
+        "url": "/app/avatar-overlay",
+        "width": 320,
+        "height": 480,
+        "minWidth": 200,
+        "minHeight": 300,
+        "decorations": false,
+        "transparent": true,
+        "alwaysOnTop": true,
+        "skipTaskbar": true,
+        "visible": false,
+        "resizable": true,
+        "focus": false
       }
     ],
     "security": {

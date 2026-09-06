@@ -393,29 +393,31 @@ export function DashboardPage({
 
   return (
     <div className={`dashboard-page dashboard-density-${density}`}>
-      <div className="dashboard-greeting">
-        <p>{todayLabel} · {timeLabel}</p>
-        <h1>{greeting}. Here&apos;s your command center.</h1>
-      </div>
-      <div className="page-inline-actions dashboard-inline-actions">
-        {editing && <span className="dashboard-edit-status"><LayoutGrid size={15} /> Editing layout</span>}
-        <button className="secondary-button" type="button" onClick={() => setCustomizeOpen(true)}>
-          <SlidersHorizontal size={16} /> Customize
-        </button>
-        <div className="dashboard-create" ref={createRef}>
-          <button className="primary-button" type="button" onClick={() => setCreateOpen((open) => !open)}>
-            <Plus size={17} /> Create new <ChevronDown size={15} />
-          </button>
-          {createOpen && (
-            <div className="dashboard-create-menu">
-              <button onClick={() => createAction('todo')}>Add Todo</button>
-              <button onClick={() => createAction('job')}>Add Job</button>
-              <button onClick={() => createAction('document')}>Upload Document</button>
-              <button onClick={() => createAction('calendar')}>Open Calendar</button>
-            </div>
-          )}
+      <header className="dashboard-heading">
+        <div className="dashboard-greeting">
+          <p>{todayLabel} · {timeLabel}</p>
+          <h1>{greeting}. Here&apos;s your command center.</h1>
         </div>
-      </div>
+        <div className="dashboard-heading-actions dashboard-inline-actions">
+          {editing && <span className="dashboard-edit-status"><LayoutGrid size={15} /> Editing layout</span>}
+          <button className="secondary-button" type="button" onClick={() => setCustomizeOpen(true)}>
+            <SlidersHorizontal size={16} /> Customize
+          </button>
+          <div className="dashboard-create" ref={createRef}>
+            <button className="primary-button" type="button" onClick={() => setCreateOpen((open) => !open)}>
+              <Plus size={17} /> Create new <ChevronDown size={15} />
+            </button>
+            {createOpen && (
+              <div className="dashboard-create-menu">
+                <button onClick={() => createAction('todo')}>Add Todo</button>
+                <button onClick={() => createAction('job')}>Add Job</button>
+                <button onClick={() => createAction('document')}>Upload Document</button>
+                <button onClick={() => createAction('calendar')}>Open Calendar</button>
+              </div>
+            )}
+          </div>
+        </div>
+      </header>
 
       <div className="dashboard-grid-shell" ref={containerRef}>
         {mounted && (
