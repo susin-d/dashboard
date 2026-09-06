@@ -69,12 +69,26 @@ export function Hero({ onNavigate }) {
               strokeWidth="2"
             />
           </g>
-          <circle cx="1300" cy="260" r="260" fill="url(#cinema-planet-halo)" />
-          <circle cx="1300" cy="260" r="190" fill="url(#cinema-planet-body)" />
-          <circle cx="1300" cy="260" r="190" fill="none" className="cinema-svg-planet-rim" strokeWidth="3" />
-          <circle cx="1238" cy="215" r="28" className="cinema-svg-crater" />
-          <circle cx="1345" cy="305" r="18" className="cinema-svg-crater" />
-          <circle cx="1288" cy="338" r="11" className="cinema-svg-crater" />
+          <circle cx="1360" cy="260" r="290" fill="url(#cinema-planet-halo)" className="cinema-svg-halo" />
+          <circle cx="1360" cy="260" r="210" fill="url(#cinema-planet-body)" />
+          <circle cx="1360" cy="260" r="210" fill="none" className="cinema-svg-planet-rim" strokeWidth="2" />
+          <g filter="url(#cinema-soft)">
+            <path
+              d="M1225,421 A210,210 0 0 0 1225,99"
+              fill="none"
+              className="cinema-svg-crescent"
+              strokeWidth="11"
+            />
+          </g>
+          <path
+            d="M1225,421 A210,210 0 0 0 1225,99"
+            fill="none"
+            className="cinema-svg-crescent cinema-svg-crescent--core"
+            strokeWidth="2.5"
+          />
+          <circle cx="1310" cy="210" r="30" className="cinema-svg-crater" />
+          <circle cx="1372" cy="328" r="19" className="cinema-svg-crater" />
+          <circle cx="1332" cy="362" r="12" className="cinema-svg-crater" />
           <path
             d="M0,820 L120,740 L260,790 L400,710 L560,800 L720,730 L900,810 L1080,740 L1240,800 L1440,750 L1440,900 L0,900 Z"
             fill="url(#cinema-ridge-fade)"

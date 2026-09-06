@@ -477,13 +477,19 @@
 .cinema-svg-crater { fill: var(--cinema-bg); opacity: 0.55; }
 .cinema-svg-ridge-front { fill: var(--cinema-bg); }
 .cinema-svg-ridge-rim { stroke: var(--cinema-primary); stroke-opacity: 0.4; }
-.cinema-svg-wisp { stroke: var(--cinema-primary); stroke-opacity: 0.32; }
-.cinema-svg-wisp--eve { stroke: var(--cinema-eve); stroke-opacity: 0.24; }
-.cinema-svg-wisp--faint { stroke: var(--cinema-primary); stroke-opacity: 0.16; }
+.cinema-svg-wisp { stroke: var(--cinema-primary); stroke-opacity: 0.32; stroke-dasharray: 260 180; animation: cinema-wisp-drift 14s linear infinite; }
+.cinema-svg-wisp--eve { stroke: var(--cinema-eve); stroke-opacity: 0.24; animation-duration: 19s; animation-direction: reverse; }
+.cinema-svg-wisp--faint { stroke: var(--cinema-primary); stroke-opacity: 0.16; animation-duration: 26s; }
+@keyframes cinema-wisp-drift { to { stroke-dashoffset: -440; } }
+.cinema-svg-halo { animation: cinema-halo-breathe 7s ease-in-out infinite; transform-origin: center; transform-box: fill-box; }
+@keyframes cinema-halo-breathe { 0%, 100% { opacity: 0.8; } 50% { opacity: 1; } }
+.cinema-svg-crescent { stroke: var(--cinema-eve); stroke-opacity: 0.4; stroke-linecap: round; }
+.cinema-svg-crescent--core { stroke: var(--on-fill); stroke-opacity: 0.8; stroke-linecap: round; }
 
 /* reduced motion */
 @media (prefers-reduced-motion: reduce) {
   .cinema * { animation: none !important; transition: none !important; }
+  .cinema-svg-wisp { stroke-dasharray: none; }
 }
 
 /* responsive */
