@@ -137,7 +137,7 @@
   color: var(--cinema-text);
 }
 .cinema-title__accent {
-  background: var(--cinema-gradient-primary);
+  background: linear-gradient(135deg, var(--cinema-primary), var(--cinema-eve));
   -webkit-background-clip: text; background-clip: text; color: transparent;
 }
 .cinema-sub {
@@ -152,7 +152,7 @@
   background: var(--cinema-bg-2); border: 1px solid var(--cinema-border);
   color: var(--cinema-text); font-size: 12px; font-weight: 550; letter-spacing: -0.01em;
 }
-.cinema-chip svg { color: var(--cinema-growth); }
+.cinema-chip svg { color: var(--cinema-primary); }
 
 /* centerpiece — sharp window */
 .cinema-stage { position: relative; width: min(980px, 100%); margin-top: 8px; perspective: 1200px; }
@@ -473,6 +473,9 @@
 .cinema-svg-crater { fill: var(--cinema-bg); opacity: 0.55; }
 .cinema-svg-ridge-front { fill: var(--cinema-bg); }
 .cinema-svg-ridge-rim { stroke: var(--cinema-primary); stroke-opacity: 0.4; }
+.cinema-svg-wisp { stroke: var(--cinema-primary); stroke-opacity: 0.32; }
+.cinema-svg-wisp--eve { stroke: var(--cinema-eve); stroke-opacity: 0.24; }
+.cinema-svg-wisp--faint { stroke: var(--cinema-primary); stroke-opacity: 0.16; }
 
 /* reduced motion */
 @media (prefers-reduced-motion: reduce) {

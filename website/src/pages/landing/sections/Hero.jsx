@@ -45,13 +45,36 @@ export function Hero({ onNavigate }) {
               <stop offset="0%" className="cinema-svg-stop-ridge" />
               <stop offset="100%" className="cinema-svg-stop-bg" />
             </linearGradient>
+            <filter id="cinema-soft" x="-40%" y="-40%" width="180%" height="180%">
+              <feGaussianBlur stdDeviation="6" />
+            </filter>
           </defs>
-          <circle cx="1230" cy="235" r="205" fill="url(#cinema-planet-halo)" />
-          <circle cx="1230" cy="235" r="148" fill="url(#cinema-planet-body)" />
-          <circle cx="1230" cy="235" r="148" fill="none" className="cinema-svg-planet-rim" strokeWidth="3" />
-          <circle cx="1180" cy="200" r="22" className="cinema-svg-crater" />
-          <circle cx="1265" cy="280" r="14" className="cinema-svg-crater" />
-          <circle cx="1215" cy="305" r="9" className="cinema-svg-crater" />
+          <g filter="url(#cinema-soft)">
+            <path
+              d="M-40,620 C250,560 350,680 600,610 S950,540 1200,600"
+              fill="none"
+              className="cinema-svg-wisp"
+              strokeWidth="3"
+            />
+            <path
+              d="M-40,690 C220,650 420,735 700,665 S1050,600 1440,675"
+              fill="none"
+              className="cinema-svg-wisp cinema-svg-wisp--eve"
+              strokeWidth="2"
+            />
+            <path
+              d="M80,300 C300,255 450,330 660,285"
+              fill="none"
+              className="cinema-svg-wisp cinema-svg-wisp--faint"
+              strokeWidth="2"
+            />
+          </g>
+          <circle cx="1300" cy="260" r="260" fill="url(#cinema-planet-halo)" />
+          <circle cx="1300" cy="260" r="190" fill="url(#cinema-planet-body)" />
+          <circle cx="1300" cy="260" r="190" fill="none" className="cinema-svg-planet-rim" strokeWidth="3" />
+          <circle cx="1238" cy="215" r="28" className="cinema-svg-crater" />
+          <circle cx="1345" cy="305" r="18" className="cinema-svg-crater" />
+          <circle cx="1288" cy="338" r="11" className="cinema-svg-crater" />
           <path
             d="M0,820 L120,740 L260,790 L400,710 L560,800 L720,730 L900,810 L1080,740 L1240,800 L1440,750 L1440,900 L0,900 Z"
             fill="url(#cinema-ridge-fade)"
