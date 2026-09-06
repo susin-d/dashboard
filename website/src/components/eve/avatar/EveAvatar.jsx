@@ -48,7 +48,6 @@ export function EveAvatar({
   const scale = effectivePrefs.scale ?? 1
   const zoom = effectivePrefs.zoom ?? 1
   const userPan = effectivePrefs.userPan ?? AVATAR_DEFAULTS.userPan
-  const userZoom = effectivePrefs.userZoom ?? AVATAR_DEFAULTS.userZoom
   const autoRotate = effectivePrefs.autoRotate === true && !reducedMotion
 
   const resolvedRenderer = lifecycle.resolvedRenderer
@@ -100,7 +99,6 @@ export function EveAvatar({
             emotion={emotion}
             zoom={zoom}
             userPan={userPan}
-            userZoom={userZoom}
             resetSignal={resetViewSignal}
             onTransformChange={onTransformChange}
             idleMotion={!reducedMotion}
@@ -120,7 +118,6 @@ export function EveAvatar({
           emotion={emotion}
           zoom={zoom}
           userPan={userPan}
-          userZoom={userZoom}
           autoRotate={autoRotate}
           idleMotion={!reducedMotion}
           resetSignal={resetViewSignal}
@@ -130,7 +127,7 @@ export function EveAvatar({
         />
       </Suspense>
     )
-  }, [autoRotate, emotion, eye.isBlinking, eye.lookAt, lifecycle, lip.mouthOpen, model.url, onTransformChange, reducedMotion, resetViewSignal, resolvedRenderer, userPan, userZoom, zoom])
+  }, [autoRotate, emotion, eye.isBlinking, eye.lookAt, lifecycle, lip.mouthOpen, model.url, onTransformChange, reducedMotion, resetViewSignal, resolvedRenderer, userPan, zoom])
 
   return (
     <div

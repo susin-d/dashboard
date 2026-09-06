@@ -39,7 +39,7 @@ def get_prefs(database: SqlClient, user_id: str) -> dict:
     raw = _read_ui_raw(database, user_id)
     prefs = raw.get(AVATAR_PREF_KEY)
     if not prefs:
-        return {"enabled": True, "renderer": "auto", "modelId": "eve-anime-vrm", "modelUrl": None, "scale": 1.0, "zoom": 1.0, "autoRotate": False, "position": {"x": 92, "y": 88}, "docked": True, "motion": "auto", "inlineEnabled": True, "orbFallback": True}
+        return {"enabled": True, "renderer": "auto", "modelId": "eve-anime-vrm", "modelUrl": None, "scale": 1.0, "zoom": 1.0, "userPan": {"x": 0.0, "y": 0.0}, "autoRotate": False, "position": {"x": 92, "y": 88}, "docked": True, "motion": "auto", "inlineEnabled": True, "orbFallback": True}
     return prefs
 
 def save_prefs(database: SqlClient, user_id: str, patch: dict) -> dict:
@@ -78,9 +78,18 @@ def save_prefs(database: SqlClient, user_id: str, patch: dict) -> dict:
         next_prefs["scale"] = s
     if "zoom" in patch and patch["zoom"] is not None:
         z = float(patch["zoom"])
-        if z < 0.5 or z > 2.0:
-            raise ValueError("zoom must be 0.5..2.0")
+        if z < 0.3 or z > 3.0:
+            raise ValueError("zoom must be 0.3..3.0")
         next_prefs["zoom"] = z
+    if "userPan" in patch and patch["userPan"] is not None:
+        pan = patch["userPan"]
+        if not isinstance(pan, dict) or "x" not in pan or "y" not in pan:
+            raise ValueError("userPan must be {x,y}")
+        x = float(pan["x"])
+        y = float(pan["y"])
+        if not (-1000 <= x <= 1000 and -1000 <= y <= 1000):
+            raise ValueError("userPan values must be -1000..1000")
+        next_prefs["userPan"] = {"x": x, "y": y}
     if "position" in patch and patch["position"] is not None:
         pos = patch["position"]
         if not isinstance(pos, dict) or "x" not in pos or "y" not in pos:

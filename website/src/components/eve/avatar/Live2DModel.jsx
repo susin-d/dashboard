@@ -51,7 +51,6 @@ export function Live2DModel({
   emotion = 'idle',
   zoom = 1,
   userPan = AVATAR_DEFAULTS.userPan,
-  _userZoom = AVATAR_DEFAULTS.userZoom,
   idleMotion = true,
   resetSignal = 0,
   onTransformChange,

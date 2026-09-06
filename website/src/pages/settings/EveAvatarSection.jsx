@@ -237,8 +237,8 @@ export function EveAvatarSection() {
               <label className="form-label">Zoom</label>
               <input
                 type="range"
-                min="0.5"
-                max="2"
+                min="0.3"
+                max="3"
                 step="0.05"
                 value={prefs?.zoom ?? 1}
                 onChange={(e) => persistZoom(Number(e.target.value))}

@@ -1,9 +1,9 @@
 import "../styles/pages/avatar.css"
 import { useEffect, useRef, useState } from 'react'
-import { Eye, Frame, GlassWater, Heart, Mic, Monitor, Orbit, RotateCcw, Settings2, Smartphone, Sparkles, TestTube, Trash2, Upload, Zap } from 'lucide-react'
+import { Eye, Frame, GlassWater, Heart, Mic, Minus, Monitor, Orbit, Plus, RotateCcw, Save, Settings2, Smartphone, Sparkles, TestTube, Trash2, Upload, Zap } from 'lucide-react'
 import { EmptyState, CustomDropdown } from '../components/ui'
 import { EveAvatar } from '../components/eve/avatar/EveAvatar'
-import { AVATAR_CATALOG, AVATAR_LIMITS, AVATAR_DEFAULTS, clampUserPan, clampUserZoom } from '../components/eve/avatar/avatarConstants'
+import { AVATAR_CATALOG, AVATAR_LIMITS, AVATAR_DEFAULTS, clampUserPan, clampZoom } from '../components/eve/avatar/avatarConstants'
 import { useEveAvatar } from '../components/eve/avatar/EveAvatarProvider'
 import { getAvatarPreferences, listAvatarModels, saveAvatarPreferences, uploadAvatarModel, deleteAvatarModel } from '../lib/eveAvatarApi'
 import { useThemeCustomizer } from '../hooks/useThemeCustomizer'
@@ -29,6 +29,7 @@ const UPLOAD_MESSAGE_TIMEOUT_MS = 2200
 const SCALE_SAVE_DEBOUNCE_MS = 350
 const OVERLAY_RESIZE_DEBOUNCE_MS = 400
 const FRAMING_SAVE_DEBOUNCE_MS = 350
+const ZOOM_STEP = 0.1
 
 export function AvatarPage({ onNavigate }) {
   const { prefs, setPrefs, activeModel } = useEveAvatar()
@@ -144,7 +145,7 @@ export function AvatarPage({ onNavigate }) {
 
   const persistFraming = (pan, zoomVal) => {
     const safePan = clampUserPan(pan)
-    const safeZoom = clampUserZoom(zoomVal)
+    const safeZoom = clampZoom(zoomVal)
     const next = { ...prefs, userPan: safePan, zoom: safeZoom }
     setPrefs(next)
     setError('')
@@ -162,7 +163,7 @@ export function AvatarPage({ onNavigate }) {
   const handleTransformChange = (pan, zoomVal) => {
     // Optimistic local update; debounced persistence.
     const safePan = clampUserPan(pan)
-    const safeZoom = clampUserZoom(zoomVal)
+    const safeZoom = clampZoom(zoomVal)
     setPrefs((c) => ({ ...c, userPan: safePan, zoom: safeZoom }))
     window.clearTimeout(framingSaveTimeoutRef.current)
     framingSaveTimeoutRef.current = window.setTimeout(async () => {
@@ -188,6 +189,30 @@ export function AvatarPage({ onNavigate }) {
     persistFraming(AVATAR_DEFAULTS.userPan, 1)
     setMessage('Framing reset.')
     window.setTimeout(() => setMessage(''), SAVE_MESSAGE_TIMEOUT_MS)
+  }
+
+  const handleZoomStep = (amount) => {
+    persistZoom(clampZoom((prefs?.zoom ?? AVATAR_DEFAULTS.zoom) + amount))
+  }
+
+  const handleSaveCameraPosition = async () => {
+    const next = {
+      ...prefs,
+      userPan: clampUserPan(prefs?.userPan),
+      zoom: clampZoom(prefs?.zoom),
+    }
+    setBusy(true)
+    setError('')
+    try {
+      const res = await saveAvatarPreferences(next)
+      if (res?.preferences) setPrefs(res.preferences)
+      setMessage('Camera position saved.')
+      window.setTimeout(() => setMessage(''), SAVE_MESSAGE_TIMEOUT_MS)
+    } catch (err) {
+      setError(err?.message || 'Could not save camera position.')
+    } finally {
+      setBusy(false)
+    }
   }
 
   const handleUpload = async (event) => {
@@ -414,6 +439,9 @@ export function AvatarPage({ onNavigate }) {
           <div className="avatar-hud-form-row">
             <span className="avatar-hud-form-label">Zoom</span>
             <div className="avatar-hud-slider-row">
+              <button type="button" className="avatar-zoom-step" onClick={() => handleZoomStep(-ZOOM_STEP)} disabled={busy || (prefs?.zoom ?? 1) <= AVATAR_LIMITS.ZOOM_MIN} aria-label="Zoom out" title="Zoom out">
+                <Minus size={14} />
+              </button>
               <input
                 id="avatar-zoom"
                 className="avatar-zoom-input"
@@ -423,6 +451,9 @@ export function AvatarPage({ onNavigate }) {
                 disabled={busy}
                 aria-label="Model zoom"
               />
+              <button type="button" className="avatar-zoom-step" onClick={() => handleZoomStep(ZOOM_STEP)} disabled={busy || (prefs?.zoom ?? 1) >= AVATAR_LIMITS.ZOOM_MAX} aria-label="Zoom in" title="Zoom in">
+                <Plus size={14} />
+              </button>
               <span className="avatar-hud-slider-value">{(prefs?.zoom ?? 1).toFixed(2)}×</span>
             </div>
             <small className="avatar-hud-form-hint">Moves 3D camera closer; enlarges Live2D.</small>
@@ -433,12 +464,6 @@ export function AvatarPage({ onNavigate }) {
               <input type="checkbox" checked={prefs?.autoRotate === true} onChange={(e) => persist({ autoRotate: e.target.checked })} disabled={busy} />
               <Orbit size={13} /> Auto-rotate
             </label>
-            <button type="button" className="btn-ghost" onClick={handleResetView} disabled={busy} style={{ fontSize: 'var(--text-xs)', padding: '4px 8px' }}>
-              <RotateCcw size={12} /> Reset view
-            </button>
-            <button type="button" className="btn-ghost" onClick={handleResetFraming} disabled={busy} style={{ fontSize: 'var(--text-xs)', padding: '4px 8px' }}>
-              <Frame size={12} /> Reset framing
-            </button>
           </div>
           <small className="avatar-hud-gesture-hint">Drag to pan · Scroll to zoom · Double-click to reset</small>
 
@@ -462,9 +487,20 @@ export function AvatarPage({ onNavigate }) {
           </div>
         </div>
 
-        {/* § Quick Actions */}
-        <div className="avatar-hud-section">
-          <button type="button" className="btn-secondary" onClick={() => onNavigate?.('setting')} style={{ width: '100%', fontSize: 'var(--text-xs)', padding: '6px 12px' }}>
+        {/* § Camera actions — sticky so they remain reachable below the fold */}
+        <div className="avatar-hud-action-bar">
+          <button type="button" className="btn-primary avatar-save-camera" onClick={handleSaveCameraPosition} disabled={busy}>
+            <Save size={14} /> Save camera position
+          </button>
+          <div className="avatar-hud-action-row">
+            <button type="button" className="btn-ghost" onClick={handleResetView} disabled={busy}>
+              <RotateCcw size={12} /> Reset view
+            </button>
+            <button type="button" className="btn-ghost" onClick={handleResetFraming} disabled={busy}>
+              <Frame size={12} /> Reset framing
+            </button>
+          </div>
+          <button type="button" className="btn-secondary avatar-settings-button" onClick={() => onNavigate?.('setting')} disabled={busy}>
             <Settings2 size={12} /> Open Settings
           </button>
         </div>

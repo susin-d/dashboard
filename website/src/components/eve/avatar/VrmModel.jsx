@@ -47,7 +47,6 @@ export function VrmModel({
   emotion = 'idle',
   zoom = 1,
   userPan = AVATAR_DEFAULTS.userPan,
-  _userZoom = AVATAR_DEFAULTS.userZoom,
   autoRotate = false,
   idleMotion = true,
   resetSignal = 0,
