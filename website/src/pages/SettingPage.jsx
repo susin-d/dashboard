@@ -1,4 +1,11 @@
-import "../styles/pages/settings.css"
+import "../styles/pages/settings-shell.css"
+import "../styles/pages/settings-integrations.css"
+import "../styles/pages/settings-ai.css"
+import "../styles/pages/settings-sources.css"
+import "../styles/pages/settings-account-danger.css"
+import "../styles/pages/settings-account-profile.css"
+import "../styles/pages/settings-whatsapp.css"
+import "../styles/pages/settings-whatsapp-eve.css"
 import { useEffect, useRef, useState } from 'react'
 import { TabNav } from '../components/ui'
 import { AccountSection } from './settings/AccountSection'

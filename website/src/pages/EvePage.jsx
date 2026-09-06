@@ -10,75 +10,21 @@ import "../styles/pages/eve-call-stage.css"
 import "../styles/pages/eve-call-live.css"
 import { useEffect, useRef, useState } from 'react'
 import {
-  createEveMemory,
   createEveSession,
-  deleteEveMemory,
-  deleteEveSession,
   getEveSession,
-  listEveMemories,
-  listEveSessions,
   sendEveMessage,
   streamEveMessage,
 } from '../lib/eveApi'
-import { loadAiModels, saveAiModelPreference } from '../lib/aiModelsApi'
-import { EveChatSection } from './eve/EveChatSection'
-import { EveSessionsSection } from './eve/EveSessionsSection'
-import { EveMemorySection } from './eve/EveMemorySection'
-import { EveSchedulesSection } from './eve/EveSchedulesSection'
-import { EveCallSection } from './eve/EveCallSection'
-import { Brain, CalendarClock, History, MessageSquare, PhoneCall } from 'lucide-react'
-import { EveInlineAvatar } from '../components/eve/avatar/EveInlineAvatar'
+import { useEveLibrary } from './eve/useEveLibrary'
 import { useEveAvatar } from '../components/eve/avatar/EveAvatarProvider'
 import { useThemeCustomizer } from '../hooks/useThemeCustomizer'
-import { TabNav } from '../components/ui'
-
-const EVE_TABS = [
-  { id: 'chat', label: 'Chat', icon: MessageSquare },
-  { id: 'sessions', label: 'Sessions', icon: History },
-  { id: 'memory', label: 'Memory', icon: Brain },
-  { id: 'call', label: 'Voice Call', icon: PhoneCall },
-  { id: 'schedules', label: 'Schedules', icon: CalendarClock },
-]
-
-const TAB_PAGE_ID = {
-  chat: 'eve',
-  sessions: 'eve-sessions',
-  memory: 'eve-memory',
-  call: 'eve-call',
-  schedules: 'eve-schedules',
-}
-
-const STARTER_MESSAGES = [
-  {
-    role: 'assistant',
-    content:
-      'Hello! I’m Eve, your StarWaves AI workspace assistant. I can read, create, update, soft-delete, and restore records across your workspace, help you with code, and browse the open web for up-to-date information and research.',
-  },
-]
-
-const EVE_PRESET_PROMPTS = [
-  { command: 'web', label: 'Search the web', prompt: 'Search the open web for the latest updates and information on: ', description: 'Browse and search external websites' },
-  { command: 'call', label: 'Call me now', prompt: 'Call me right now on voice to review my workspace status.', description: 'Trigger an immediate incoming voice call from Eve' },
-  { command: 'today', label: 'Plan my day', prompt: 'Plan my day by reviewing tasks, upcoming deadlines, and calendar events.', description: 'Review tasks, deadlines, and calendar events' },
-  { command: 'tasks', label: 'Manage tasks & overdue', prompt: 'Find all overdue tasks and suggest next priority actions.', description: 'Audit overdue tasks and list priority items' },
-  { command: 'projects', label: 'Work with projects', prompt: 'Review project progress, stale projects, and next steps.', description: 'Review project progress and stale projects' },
-  { command: 'jobs', label: 'Track applications', prompt: 'Summarize recent job application statuses and upcoming interview dates.', description: 'Find job application status and interview dates' },
-  { command: 'documents', label: 'Search documents', prompt: 'Search workspace documents and summarize key notes.', description: 'Search documents and notes' },
-  { command: 'calendar', label: 'Check calendar & contests', prompt: 'Look up upcoming calendar events, competitive coding contests, and deadlines.', description: 'Look up events, contests, and deadlines' },
-  { command: 'insights', label: 'Workspace overview', prompt: 'Summarize overall workspace dashboard metrics and suggest next actions.', description: 'Generate overall workspace insights' },
-]
-
-const EVE_TOOLS_LIST = [
-  { command: 'web', name: 'web', label: 'Web Browsing & Search Tool', description: 'Search the open web, browse external websites, and read URLs' },
-  { command: 'todos', name: 'todos', label: 'Tasks & Todos Tool', description: 'Read, create, update, or soft-delete task items' },
-  { command: 'projects', name: 'projects', label: 'Projects Tool', description: 'Access project repositories, milestones, and status' },
-  { command: 'jobs', name: 'jobs', label: 'Job Tracker Tool', description: 'Access job applications, interview dates, and contacts' },
-  { command: 'hackathons', name: 'hackathons', label: 'Hackathons Tool', description: 'Access hackathons, schedules, and prize details' },
-  { command: 'documents', name: 'documents', label: 'Documents Tool', description: 'Access notes, project plans, and drive specs' },
-  { command: 'notifications', name: 'notifications', label: 'Notifications Tool', description: 'Access workspace notifications and reminders' },
-  { command: 'search', name: 'search', label: 'Workspace Search Tool', description: 'Search across all local workspace resources' },
-  { command: 'insight', name: 'insight', label: 'Workspace Insights Tool', description: 'Compute deadlines, overdue tasks, or dashboard summary' },
-]
+import { EveActiveView } from './eve/EveActiveView'
+import {
+  EVE_PRESET_PROMPTS,
+  EVE_TOOLS_LIST,
+  STARTER_MESSAGES,
+  TAB_PAGE_ID,
+} from './eve/eveConstants'
 
 export function EvePage({
   activeSubpage = 'chat',
@@ -104,56 +50,25 @@ export function EvePage({
   const abortRef = useRef(null)
   const [error, setError] = useState('')
   const [promptQueue, setPromptQueue] = useState([])
-  const [sessions, setSessions] = useState([])
-  const [activeSessionId, setActiveSessionId] = useState(null)
-  const [memories, setMemories] = useState([])
-  const [memoryDraft, setMemoryDraft] = useState('')
-  const [isAddingMemory, setIsAddingMemory] = useState(false)
-  const [isLoadingSidebar, setIsLoadingSidebar] = useState(true)
-  const [aiProviders, setAiProviders] = useState([])
-  const [activeModel, setActiveModel] = useState({ provider: 'openrouter', model: 'openrouter/free', label: 'Free Models Router' })
   const { prefs: avatarPrefs, activeModel: avatarModel, setPrefs: setAvatarPrefs } = useEveAvatar()
   const { activePreset } = useThemeCustomizer() || {}
-
-  const refreshSidebar = async () => {
-    try {
-      const [sessionData, memoryData, modelsData] = await Promise.all([
-        listEveSessions().catch(() => ({ sessions: [] })),
-        listEveMemories().catch(() => ({ memories: [] })),
-        loadAiModels().catch(() => null),
-      ])
-      setSessions(sessionData.sessions ?? [])
-      setMemories(memoryData.memories ?? [])
-
-      if (modelsData?.providers) {
-        const available = modelsData.providers.filter((p) => p.available)
-        setAiProviders(available)
-        const pref = modelsData.preference
-        const selectedProv = available.find((p) => p.id === (pref?.provider || '')) || available[0]
-        if (selectedProv) {
-          const modelObj = selectedProv.models?.find((m) => m.id === (pref?.model || '')) || selectedProv.models?.[0]
-          setActiveModel({
-            provider: selectedProv.id,
-            model: modelObj?.id || pref?.model || selectedProv.default_model || 'openrouter/free',
-            label: modelObj?.label || modelObj?.id || 'Free Models Router',
-          })
-        }
-      }
-    } catch (sidebarError) {
-      setError(sidebarError.message || 'Could not load Eve sessions and memory.')
-    } finally {
-      setIsLoadingSidebar(false)
-    }
-  }
-
-  const handleSelectAiModel = async (providerId, modelId, modelLabel) => {
-    setActiveModel({ provider: providerId, model: modelId, label: modelLabel })
-    try {
-      await saveAiModelPreference({ provider: providerId, model: modelId })
-    } catch (err) {
-      console.warn('Could not save model preference:', err)
-    }
-  }
+  const {
+    sessions,
+    activeSessionId,
+    setActiveSessionId,
+    memories,
+    memoryDraft,
+    setMemoryDraft,
+    isAddingMemory,
+    isLoadingSidebar,
+    aiProviders,
+    activeModel,
+    refreshSidebar,
+    handleSelectAiModel,
+    removeSession,
+    addMemory,
+    removeMemory,
+  } = useEveLibrary({ notifyError: setError, onActiveSessionDeleted: () => startNewChat() })
 
   useEffect(() => {
     setMessages(STARTER_MESSAGES)
@@ -162,7 +77,7 @@ export function EvePage({
     setPromptQueue([])
     setActiveSessionId(null)
     refreshSidebar()
-  }, [chatResetKey])
+  }, [chatResetKey, refreshSidebar, setActiveSessionId])
 
   const handleActions = (actions) => {
     if (!actions || !Array.isArray(actions)) return
@@ -427,42 +342,6 @@ export function EvePage({
     }
   }
 
-  const removeSession = async (sessionId) => {
-    try {
-      await deleteEveSession(sessionId)
-      if (activeSessionId === sessionId) startNewChat()
-      refreshSidebar()
-    } catch (sessionError) {
-      setError(sessionError.message || 'Could not delete that Eve session.')
-    }
-  }
-
-  const addMemory = async (e) => {
-    e.preventDefault()
-    const content = memoryDraft.trim()
-    if (!content || isAddingMemory) return
-    setIsAddingMemory(true)
-    setError('')
-    try {
-      const memoryData = await createEveMemory(content)
-      setMemories(memoryData.memories ?? [])
-      setMemoryDraft('')
-    } catch (memoryError) {
-      setError(memoryError.message || 'Could not save that memory.')
-    } finally {
-      setIsAddingMemory(false)
-    }
-  }
-
-  const removeMemory = async (memoryId) => {
-    try {
-      await deleteEveMemory(memoryId)
-      setMemories((current) => current.filter((memory) => memory.id !== memoryId))
-    } catch (memoryError) {
-      setError(memoryError.message || 'Could not delete that memory.')
-    }
-  }
-
   const handleSubmit = (e, attachments = []) => {
     e?.preventDefault()
     const content = draft.trim()
@@ -536,107 +415,57 @@ export function EvePage({
     window.dispatchEvent(new CustomEvent('starwaves:eve-state', { detail }))
   }, [isSending, streamText, thinkingText, activeTool, error])
 
-  const handleAvatarToggleRenderer = () => {
-    const next = avatarPrefs?.renderer === 'vrm' ? 'live2d' : avatarPrefs?.renderer === 'live2d' ? 'auto' : 'vrm'
-    setAvatarPrefs({ renderer: next })
-    import('../lib/eveAvatarApi').then(({ saveAvatarPreferences }) => { saveAvatarPreferences({ ...avatarPrefs, renderer: next }).catch(() => {}) }).catch(() => {})
-  }
-
   const switchTab = (tabId) => {
     setActiveTab(tabId)
     onNavigate?.(TAB_PAGE_ID[tabId])
   }
 
   return (
-    <div className="eve-page-container">
-      <TabNav tabs={EVE_TABS} activeTab={activeTab} onChange={switchTab} ariaLabel="Eve sections" />
-      {activeTab === 'chat' && avatarPrefs?.inlineEnabled !== false && avatarPrefs?.enabled !== false && (
-        <div className="eve-inline-avatar-wrap" data-eve-target="eve-inline-avatar">
-          <EveInlineAvatar
-            size="md"
-            presetId={activePreset}
-            prefs={avatarPrefs}
-            activeModel={avatarModel}
-            isSending={isSending}
-            isEveSpeaking={Boolean(streamText) && isSending}
-            isEveThinking={Boolean(thinkingText) && isSending}
-            thinkingText={thinkingText}
-            activeTool={activeTool}
-            streamText={streamText}
-            error={error}
-            onToggleRenderer={handleAvatarToggleRenderer}
-          />
-        </div>
-      )}
-      <div className="eve-active-view-container full-width">
-        {activeTab === 'chat' && (
-          <EveChatSection
-            messages={messages}
-            draft={draft}
-            setDraft={setDraft}
-            isSending={isSending}
-            streamText={streamText}
-            thinkingText={thinkingText}
-            toolCalls={toolCalls}
-            activeTool={activeTool}
-            onStop={stopGenerating}
-            error={error}
-            promptQueue={promptQueue}
-            addToQueue={addToQueue}
-            removeFromQueue={removeFromQueue}
-            clearQueue={clearQueue}
-            runQueue={runQueue}
-            handleSubmit={handleSubmit}
-            matchingTools={matchingTools}
-            matchingPrompts={matchingPrompts}
-            selectTool={selectTool}
-            selectPrompt={selectPrompt}
-            EVE_PRESET_PROMPTS={EVE_PRESET_PROMPTS}
-            aiProviders={aiProviders}
-            activeModel={activeModel}
-            onSelectAiModel={handleSelectAiModel}
-          />
-        )}
-
-        {activeTab === 'call' && (
-          <EveCallSection
-            callCenter={callCenter}
-            avatarPrefs={avatarPrefs}
-            avatarModel={avatarModel}
-            presetId={activePreset}
-            onToggleAvatarRenderer={handleAvatarToggleRenderer}
-          />
-        )}
-
-        {activeTab === 'sessions' && (
-          <EveSessionsSection
-            sessions={sessions}
-            activeSessionId={activeSessionId}
-            isLoading={isLoadingSidebar}
-            onResumeSession={resumeSession}
-            onRemoveSession={removeSession}
-            onStartNewChat={startNewChat}
-            isSending={isSending}
-          />
-        )}
-
-        {activeTab === 'memory' && (
-          <EveMemorySection
-            memories={memories}
-            isLoading={isLoadingSidebar}
-            onAddMemory={addMemory}
-            onRemoveMemory={removeMemory}
-            memoryDraft={memoryDraft}
-            setMemoryDraft={setMemoryDraft}
-            isAddingMemory={isAddingMemory}
-            isSending={isSending}
-          />
-        )}
-
-        {activeTab === 'schedules' && (
-          <EveSchedulesSection onScheduleTriggered={refreshSidebar} />
-        )}
-      </div>
-    </div>
+    <EveActiveView
+      activeTab={activeTab}
+      onTabChange={switchTab}
+      avatarPrefs={avatarPrefs}
+      setAvatarPrefs={setAvatarPrefs}
+      activePreset={activePreset}
+      avatarModel={avatarModel}
+      messages={messages}
+      draft={draft}
+      setDraft={setDraft}
+      isSending={isSending}
+      streamText={streamText}
+      thinkingText={thinkingText}
+      toolCalls={toolCalls}
+      activeTool={activeTool}
+      stopGenerating={stopGenerating}
+      error={error}
+      promptQueue={promptQueue}
+      addToQueue={addToQueue}
+      removeFromQueue={removeFromQueue}
+      clearQueue={clearQueue}
+      runQueue={runQueue}
+      handleSubmit={handleSubmit}
+      matchingTools={matchingTools}
+      matchingPrompts={matchingPrompts}
+      selectTool={selectTool}
+      selectPrompt={selectPrompt}
+      EVE_PRESET_PROMPTS={EVE_PRESET_PROMPTS}
+      aiProviders={aiProviders}
+      activeModel={activeModel}
+      onSelectAiModel={handleSelectAiModel}
+      callCenter={callCenter}
+      sessions={sessions}
+      activeSessionId={activeSessionId}
+      isLoadingSidebar={isLoadingSidebar}
+      resumeSession={resumeSession}
+      removeSession={removeSession}
+      startNewChat={startNewChat}
+      memories={memories}
+      addMemory={addMemory}
+      removeMemory={removeMemory}
+      memoryDraft={memoryDraft}
+      setMemoryDraft={setMemoryDraft}
+      isAddingMemory={isAddingMemory}
+      refreshSidebar={refreshSidebar}
+    />
   )
 }

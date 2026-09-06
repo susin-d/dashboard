@@ -1,4 +1,7 @@
-import "../styles/pages/landing-auth.css"
+import "../styles/pages/public-shell.css"
+import "../styles/pages/auth-forms.css"
+import "../styles/pages/auth-onboarding.css"
+import "../styles/pages/auth-recovery.css"
 import { ArrowRight, CheckCircle2, Eye, EyeOff, LockKeyhole, Mail, RefreshCw } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { requestPasswordReset, resetPassword, verifyResetCode } from '../lib/authApi'

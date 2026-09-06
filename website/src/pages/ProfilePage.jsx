@@ -1,4 +1,5 @@
-import "../styles/pages/settings.css"
+import "../styles/pages/settings-shell.css"
+import "../styles/pages/settings-account-profile.css"
 import { PageHeader } from '../components/ui'
 import { ProfileCard } from '../components/ProfileCard'
 

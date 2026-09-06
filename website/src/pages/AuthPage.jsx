@@ -1,4 +1,7 @@
-import "../styles/pages/landing-auth.css"
+import "../styles/pages/public-shell.css"
+import "../styles/pages/auth-forms.css"
+import "../styles/pages/auth-onboarding.css"
+import "../styles/pages/auth-recovery.css"
 import { ArrowRight, Eye, EyeOff, LockKeyhole, Mail } from 'lucide-react'
 import { useState } from 'react'
 import {

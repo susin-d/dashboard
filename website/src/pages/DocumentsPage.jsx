@@ -10,7 +10,6 @@ import {
   FolderInput,
   HardDrive,
   Pencil,
-  Save,
   Trash2,
   Upload,
 } from 'lucide-react'
@@ -20,7 +19,9 @@ import {
   uploadGoogleDriveFile,
 } from '../lib/googleDriveApi'
 import { deleteDocument, persistDocument } from '../lib/documentsApi'
-import { ConfirmDialog, EmptyState, Modal, PageHeader, SearchBar } from '../components/ui'
+import { ConfirmDialog, EmptyState, PageHeader, SearchBar } from '../components/ui'
+import { DocumentEditorModal } from './documents/DocumentEditorModal'
+import { DriveImportModal } from './documents/DriveImportModal'
 
 const emptyDocument = {
   name: '',
@@ -422,132 +423,29 @@ export function DocumentsPage({ documents, setDocuments, createIntent, onOpenDoc
         </section>
       )}
 
-      <Modal
-        isOpen={editorOpen}
-        onClose={() => setEditorOpen(false)}
-        className="document-modal"
-        subtitle="Documents"
-        title={editingId ? 'Edit document' : 'Upload document'}
-      >
-        <form className="project-edit-form" onSubmit={saveDocument}>
-          <label>
-            File
-            <input
-              type="file"
-              onChange={(event) =>
-                updateField('file', event.target.files?.[0] ?? null)
-              }
-              required={!editingId}
-              disabled={documentSaving}
-            />
-            <small className="document-upload-note">
-              The selected file will be stored in your Google Drive.
-            </small>
-          </label>
-          <div className="project-edit-form-row document-form-row">
-            <label>
-              Document name
-              <input
-                value={form.name}
-                onChange={(event) => updateField('name', event.target.value)}
-                placeholder="Uses the file name if empty"
-              />
-            </label>
-            <label>
-              Category
-              <select
-                value={form.category}
-                onChange={(event) =>
-                  updateField('category', event.target.value)
-                }
-              >
-                <option>General</option>
-                <option>Career</option>
-                <option>Projects</option>
-                <option>Learning</option>
-                <option>Personal</option>
-              </select>
-            </label>
-          </div>
-          <label>
-            Description
-            <textarea
-              rows="3"
-              value={form.description}
-              onChange={(event) =>
-                updateField('description', event.target.value)
-              }
-            />
-          </label>
-          <label>
-            Tags
-            <input
-              value={form.tags}
-              onChange={(event) => updateField('tags', event.target.value)}
-              placeholder="Resume, Career, Application"
-            />
-          </label>
-          {documentSaveError && (
-            <div className="document-save-error" role="alert">
-              {documentSaveError}
-            </div>
-          )}
-          <div className="todo-modal-actions">
-            <button
-              className="secondary-button"
-              type="button"
-              onClick={() => setEditorOpen(false)}
-              disabled={documentSaving}
-            >
-              Cancel
-            </button>
-            <button
-              className="primary-button document-save-button"
-              type="submit"
-              disabled={documentSaving}
-            >
-              {editingId ? <Save size={16} /> : <Upload size={16} />}
-              {documentSaving
-                ? 'Uploading to Drive…'
-                : editingId
-                  ? 'Save changes'
-                  : 'Upload to Drive'}
-            </button>
-          </div>
-        </form>
-      </Modal>
-
-      <Modal
-        isOpen={driveOpen}
-        onClose={() => setDriveOpen(false)}
-        className="drive-modal"
-        subtitle="Google Drive"
-        title="Import a document"
-      >
-        {!driveLoading && !driveError && driveFiles.length > 0 && (
-          <SearchBar
-            value={driveQuery}
-            onChange={setDriveQuery}
-            placeholder="Search Drive files"
-            ariaLabel="Search Google Drive files"
-            className="drive-search-bar"
-            data-modal-initial-focus
-          />
-        )}
-        <div className="drive-file-list">
-          {driveLoading && <div className="drive-state">Loading your recent Drive files…</div>}
-          {driveError && <div className="drive-state error"><strong>Could not load Drive</strong><span>{driveError}</span><div><button onClick={connectGoogleDrive}>Try again</button>{driveError.includes('disabled or blocked') && <a href={`https://console.cloud.google.com/apis/library/drive.googleapis.com?project=${import.meta.env.VITE_FIREBASE_PROJECT_ID}`} target="_blank" rel="noreferrer">Enable Drive API</a>}</div></div>}
-          {!driveLoading && !driveError && !driveFiles.length && <div className="drive-state">No recent files found.</div>}
-          {!driveLoading && !driveError && driveQuery && !filteredDriveFiles.length && <div className="drive-state">No files match “{driveQuery}”.</div>}
-          {!driveLoading && !driveError && filteredDriveFiles.map((file) => (
-            <button key={file.id} className="drive-file-item" onClick={() => importDriveFile(file)}>
-              <span><FileText size={17} /></span>
-              <div><strong>{file.name}</strong><small>{file.mimeType.replace('application/vnd.google-apps.', 'Google ')}</small></div>
-              <FolderInput size={16} />
-            </button>
-          ))}
-        </div>
-      </Modal>
+      <DocumentEditorModal
+        editorOpen={editorOpen}
+        setEditorOpen={setEditorOpen}
+        editingId={editingId}
+        form={form}
+        updateField={updateField}
+        saveDocument={saveDocument}
+        documentSaving={documentSaving}
+        documentSaveError={documentSaveError}
+      />
+      <DriveImportModal
+        driveOpen={driveOpen}
+        setDriveOpen={setDriveOpen}
+        driveLoading={driveLoading}
+        driveError={driveError}
+        driveFiles={driveFiles}
+        filteredDriveFiles={filteredDriveFiles}
+        driveQuery={driveQuery}
+        setDriveQuery={setDriveQuery}
+        onImportFile={importDriveFile}
+        onRetry={connectGoogleDrive}
+        projectId={import.meta.env.VITE_FIREBASE_PROJECT_ID}
+      />
       <ConfirmDialog isOpen={Boolean(deleteId)} message="Are you sure you want to delete this document?" onCancel={() => setDeleteId(null)} onConfirm={confirmDeleteDocument} />
     </section>
   )

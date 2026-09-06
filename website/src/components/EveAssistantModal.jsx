@@ -10,6 +10,7 @@ import {
   sendEveMessage,
 } from '../lib/eveApi'
 import { Markdown } from './ui/Markdown'
+import { previewFor } from '../utils/evePreview'
 
 const STARTER_MESSAGES = [{
   role: 'assistant',
@@ -40,19 +41,6 @@ const EVE_TOOLS_LIST = [
 ]
 
 const MAX_CHARS = 4000
-const MAX_PREVIEW_LENGTH = 60
-
-function previewFor(messages) {
-  for (let index = messages.length - 1; index >= 0; index -= 1) {
-    const content = messages[index].content
-    if (content) {
-      return content.length > MAX_PREVIEW_LENGTH
-        ? `${content.slice(0, MAX_PREVIEW_LENGTH - 1).trimEnd()}\u2026`
-        : content
-    }
-  }
-  return 'New chat'
-}
 
 export function EveAssistantModal({ isOpen, onClose, onNavigate, onWorkspaceChanged }) {
   const [messages, setMessages] = useState(STARTER_MESSAGES)
