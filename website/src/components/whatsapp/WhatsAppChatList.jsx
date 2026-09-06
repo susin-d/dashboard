@@ -1,3 +1,4 @@
+import '../../styles/pages/whatsapp-shell.css'
 import { useMemo, useState, useRef, useEffect } from 'react'
 import { Bot, Pin, User, Users, QrCode, Archive, BellOff, CheckCheck, Trash2 } from 'lucide-react'
 import { SearchBar } from '../ui'

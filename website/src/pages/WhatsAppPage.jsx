@@ -1,18 +1,9 @@
-import "../styles/pages/whatsapp.css"
 import { useEffect, useRef, useState } from 'react'
 import {
   fetchWhatsAppStatus,
   fetchWhatsAppChats,
   fetchWhatsAppMessages,
-  sendWhatsAppMessage,
   markWhatsAppChatRead,
-  initiateWhatsAppPairing,
-  confirmWhatsAppPairing,
-  generateEveWhatsAppDraft,
-  summarizeWhatsAppChat,
-  reactToWhatsAppMessage,
-  starWhatsAppMessage,
-  deleteWhatsAppMessage,
   whatsappSocket,
 } from '../lib'
 import { WhatsAppChatList } from '../components/whatsapp/WhatsAppChatList'
@@ -20,7 +11,13 @@ import { WhatsAppConversation } from '../components/whatsapp/WhatsAppConversatio
 import { WhatsAppQrModal } from '../components/whatsapp/WhatsAppQrModal'
 import { WhatsAppInfoDrawer } from '../components/whatsapp/WhatsAppInfoDrawer'
 import { WhatsAppSummaryModal } from '../components/whatsapp/WhatsAppSummaryModal'
-import { MessageSquare, QrCode, RefreshCw, WifiOff, Loader2 } from 'lucide-react'
+import { useWhatsAppMessageActions } from './whatsapp/useWhatsAppMessageActions'
+import { useWhatsAppPairing } from './whatsapp/useWhatsAppPairing'
+import { WhatsAppEmptyPane } from './whatsapp/WhatsAppEmptyPane'
+import { WhatsAppSyncState } from './whatsapp/WhatsAppSyncState'
+import '../styles/pages/whatsapp-shell.css'
+import '../styles/pages/whatsapp-sync.css'
+import '../styles/pages/whatsapp-polish.css'
 
 export function WhatsAppPage() {
   const [status, setStatus] = useState({ connected: false })
@@ -32,7 +29,6 @@ export function WhatsAppPage() {
   const [messages, setMessages] = useState([])
   const [searchQuery, setSearchQuery] = useState('')
   const [isQrModalOpen, setIsQrModalOpen] = useState(false)
-  const [pairingData, setPairingData] = useState({ qr_code: null, pairing_code: null })
   const [isInfoDrawerOpen, setIsInfoDrawerOpen] = useState(false)
   const [isDrafting, setIsDrafting] = useState(false)
   const [isSummarizing, setIsSummarizing] = useState(false)
@@ -48,6 +44,44 @@ export function WhatsAppPage() {
 
   const [hasMoreMessages, setHasMoreMessages] = useState(true)
   const [isLoadingMore, setIsLoadingMore] = useState(false)
+
+  const {
+    handleSendMessage,
+    handleGenerateEveDraft,
+    handleSummarizeChat,
+    handleReactToMessage,
+    handleStarMessage,
+    handleDeleteMessage,
+    handleTogglePinChat,
+    handleToggleMuteChat,
+    handleToggleArchiveChat,
+    handleDeleteChat,
+    handleMarkChatRead,
+  } = useWhatsAppMessageActions({
+    setMessages,
+    setChats,
+    setSelectedChatId,
+    selectedChatId,
+    setSummaryModalText,
+    setIsDrafting,
+    setIsSummarizing,
+  })
+
+  const {
+    pairingData,
+    isQrLoading,
+    handleQrUpdate,
+    handleOpenQrModal,
+    handleRequestPairingCode,
+    handleCheckStatus,
+  } = useWhatsAppPairing({
+    status,
+    setStatus,
+    setChats,
+    setSelectedChatId,
+    isQrModalOpen,
+    setIsQrModalOpen,
+  })
 
   // Request browser notifications permission on mount
   useEffect(() => {
@@ -145,17 +179,14 @@ export function WhatsAppPage() {
           setSelectedChatId((curr) => curr || (list.length > 0 ? list[0].id : null))
         }).catch(() => {})
       } else if (event.type === 'qr_update') {
-        setPairingData({
-          qr_code: event.qr_code,
-          pairing_code: event.pairing_code,
-        })
+        handleQrUpdate(event.qr_code, event.pairing_code)
       } else if (event.type === 'new_message') {
         const incomingMsg = event.message
         if (incomingMsg) {
           const currentSelected = selectedChatIdRef.current
           const cleanSelected = currentSelected?.replace(/@s\.whatsapp\.net|@g\.us|@lid/g, '')
           const cleanMsgChat = incomingMsg.chat_id?.replace(/@s\.whatsapp\.net|@g\.us|@lid/g, '')
-          
+
           // Browser Push Notification if page hidden or unfocused
           if (!incomingMsg.is_from_me && typeof window !== 'undefined' && 'Notification' in window) {
             if (Notification.permission === 'granted' && document.hidden) {
@@ -279,7 +310,7 @@ export function WhatsAppPage() {
       mounted = false
       unsubscribe()
     }
-  }, [])
+  }, [handleQrUpdate])
 
   useEffect(() => {
     if (!chats.length) {
@@ -405,284 +436,15 @@ export function WhatsAppPage() {
     }
   }
 
-  const [isQrLoading, setIsQrLoading] = useState(false)
-
-  // Auto-poll status when QR modal is open to detect scan instantly or fetch QR if missing
-  useEffect(() => {
-    if (!isQrModalOpen || status.connected) return
-
-    const timer = setInterval(async () => {
-      try {
-        const stat = await fetchWhatsAppStatus()
-        if (stat.connected) {
-          setStatus(stat)
-          setIsQrModalOpen(false)
-          const chatList = await fetchWhatsAppChats().catch(() => [])
-          setChats(chatList)
-          if (chatList.length > 0) setSelectedChatId((curr) => curr || chatList[0].id)
-        } else if (!pairingData.qr_code && !pairingData.pairing_code) {
-          const pair = await initiateWhatsAppPairing().catch(() => null)
-          if (pair?.qr_code || pair?.pairing_code) {
-            setPairingData(pair)
-          }
-        }
-      } catch {
-        // ignore polling errors
-      }
-    }, 2000)
-
-    return () => clearInterval(timer)
-  }, [isQrModalOpen, status.connected, pairingData.qr_code, pairingData.pairing_code])
-
-  const handleOpenQrModal = async () => {
-    setIsQrModalOpen(true)
-    setIsQrLoading(true)
-    try {
-      const pair = await initiateWhatsAppPairing()
-      setPairingData(pair)
-    } catch (err) {
-      console.error('Pairing error:', err)
-    } finally {
-      setIsQrLoading(false)
-    }
-  }
-
-  const handleRequestPairingCode = async (phoneNumber) => {
-    try {
-      const pair = await initiateWhatsAppPairing(phoneNumber)
-      setPairingData((prev) => ({
-        ...prev,
-        pairing_code: pair.pairing_code,
-        qr_code: pair.qr_code || prev.qr_code,
-      }))
-      return pair
-    } catch (err) {
-      console.error('Request pairing code error:', err)
-      throw err
-    }
-  }
-
-  const handleCheckStatus = async () => {
-    setIsQrLoading(true)
-    try {
-      const stat = await fetchWhatsAppStatus()
-      setStatus(stat)
-      if (stat.connected) {
-        setIsQrModalOpen(false)
-        const chatList = await fetchWhatsAppChats().catch(() => [])
-        setChats(chatList)
-        if (chatList.length > 0) setSelectedChatId((curr) => curr || chatList[0].id)
-      } else {
-        const pair = await initiateWhatsAppPairing()
-        setPairingData(pair)
-      }
-    } catch (err) {
-      console.error('Check status error:', err)
-    } finally {
-      setIsQrLoading(false)
-    }
-  }
-
-  const _handleConfirmPairing = async (phoneNumber, pushName) => {
-    try {
-      const updated = await confirmWhatsAppPairing(phoneNumber, pushName)
-      setStatus(updated)
-      setIsQrModalOpen(false)
-      const chatList = await fetchWhatsAppChats()
-      setChats(chatList)
-      if (chatList.length > 0) setSelectedChatId(chatList[0].id)
-    } catch (err) {
-      console.error('Confirm pairing error:', err)
-    }
-  }
-
-  const handleSendMessage = async ({ chatId, content, media, replyToMessageId }) => {
-    try {
-      // Optimistic update
-      const tempId = `temp-${Date.now()}`
-      const optimisticMsg = {
-        id: tempId,
-        chat_id: chatId,
-        sender_id: 'me',
-        sender_name: 'Me',
-        is_from_me: true,
-        is_eve: false,
-        content,
-        timestamp: new Date().toISOString(),
-        status: 'pending',
-        media,
-      }
-      setMessages((prev) => [...prev, optimisticMsg])
-
-      const sentMsg = await sendWhatsAppMessage({ chatId, content, media, replyToMessageId })
-      setMessages((prev) => {
-        // If WebSocket already replaced or added the sent message, remove any leftover tempId
-        const hasRealMessage = prev.some((m) => m.id === sentMsg.id)
-        if (hasRealMessage) {
-          return prev.filter((m) => m.id !== tempId)
-        }
-        return prev.map((m) => (m.id === tempId ? sentMsg : m))
-      })
-
-      setChats((prev) =>
-        prev.map((c) =>
-          c.id === chatId ? { ...c, last_message: sentMsg, updated_at: sentMsg.timestamp } : c,
-        ),
-      )
-    } catch (err) {
-      console.error('Failed to send WhatsApp message:', err)
-    }
-  }
-
-  const handleGenerateEveDraft = async (chatId) => {
-    try {
-      setIsDrafting(true)
-      const res = await generateEveWhatsAppDraft(chatId)
-      return res.draft
-    } catch (err) {
-      console.error('Failed to draft with Eve:', err)
-      return null
-    } finally {
-      setIsDrafting(false)
-    }
-  }
-
-  const handleSummarizeChat = async (chatId) => {
-    setIsSummarizing(true)
-    try {
-      const res = await summarizeWhatsAppChat(chatId)
-      setSummaryModalText(res.summary)
-    } catch {
-      alert('Could not summarize conversation at this time.')
-    } finally {
-      setIsSummarizing(false)
-    }
-  }
-
-  const handleReactToMessage = async (chatId, messageId, emoji) => {
-    // Optimistic update
-    setMessages((prev) =>
-      prev.map((m) => {
-        if (m.id !== messageId) return m
-        const existing = (m.reactions || []).filter((r) => r.sender !== 'me')
-        if (emoji) existing.push({ emoji, sender: 'me', count: 1 })
-        return { ...m, reactions: existing }
-      }),
-    )
-    try {
-      await reactToWhatsAppMessage(chatId, messageId, emoji)
-    } catch (err) {
-      console.error('Failed to react to message:', err)
-    }
-  }
-
-  const handleStarMessage = async (chatId, messageId, isStarred) => {
-    setMessages((prev) =>
-      prev.map((m) => (m.id === messageId ? { ...m, is_starred: isStarred } : m)),
-    )
-    try {
-      await starWhatsAppMessage(chatId, messageId, isStarred)
-    } catch (err) {
-      console.error('Failed to star message:', err)
-    }
-  }
-
-  const handleDeleteMessage = async (chatId, messageId) => {
-    setMessages((prev) => prev.filter((m) => m.id !== messageId))
-    try {
-      await deleteWhatsAppMessage(chatId, messageId)
-    } catch (err) {
-      console.error('Failed to delete message:', err)
-    }
-  }
-
-  const handleTogglePinChat = (chatId, pinned) => {
-    setChats((prev) =>
-      prev.map((c) => (c.id === chatId ? { ...c, pinned } : c)),
-    )
-  }
-
-  const handleToggleMuteChat = (chatId, isMuted) => {
-    setChats((prev) =>
-      prev.map((c) => (c.id === chatId ? { ...c, is_muted: isMuted } : c)),
-    )
-  }
-
-  const handleToggleArchiveChat = (chatId, isArchived) => {
-    setChats((prev) =>
-      prev.map((c) => (c.id === chatId ? { ...c, is_archived: isArchived } : c)),
-    )
-    if (isArchived && selectedChatId === chatId) {
-      setSelectedChatId(null)
-    }
-  }
-
-  const handleDeleteChat = (chatId) => {
-    setChats((prev) => prev.filter((c) => c.id !== chatId))
-    if (selectedChatId === chatId) {
-      setSelectedChatId(null)
-    }
-  }
-
-  const handleMarkChatRead = (chatId) => {
-    markWhatsAppChatRead(chatId).catch(() => {})
-    setChats((prev) =>
-      prev.map((c) => (c.id === chatId ? { ...c, unread_count: 0 } : c)),
-    )
-  }
-
-  if (syncStatus === 'syncing') {
+  if (syncStatus !== 'ready') {
     return (
-      <div className="whatsapp-sync-loading-container">
-        <div className="whatsapp-sync-loading-card">
-          <div className="whatsapp-sync-logo-wrapper">
-            <MessageSquare size={36} className="whatsapp-sync-logo-icon" />
-          </div>
-          <h2 className="whatsapp-sync-title">Starwaves WhatsApp</h2>
-          <p className="whatsapp-sync-step">{syncStepText}</p>
-
-          <div className="whatsapp-sync-progress-bar-bg">
-            <div
-              className="whatsapp-sync-progress-bar-fill"
-              style={{ '--progress': `${syncProgress}%` }}
-            />
-          </div>
-
-          <div className="whatsapp-sync-footer">
-            <div className="whatsapp-sync-footer-status">
-              <Loader2 size={13} className="spin" />
-              <span>Syncing encrypted session & conversations</span>
-            </div>
-            <span className="whatsapp-sync-footer-percent">{syncProgress}%</span>
-          </div>
-        </div>
-      </div>
-    )
-  }
-
-  if (syncStatus === 'error') {
-    return (
-      <div className="whatsapp-sync-loading-container">
-        <div className="whatsapp-sync-loading-card is-error">
-          <div className="whatsapp-sync-logo-wrapper is-error">
-            <WifiOff size={36} />
-          </div>
-          <h2 className="whatsapp-sync-title">WhatsApp Gateway Unavailable</h2>
-          <p className="whatsapp-sync-error-desc">
-            {syncError || 'The WhatsApp backend server or worker is currently unreachable.'}
-          </p>
-
-          <div className="whatsapp-sync-actions">
-            <button
-              type="button"
-              className="primary-button whatsapp-sync-retry-btn"
-              onClick={runFullSync}
-            >
-              <RefreshCw size={16} /> Retry Synchronization
-            </button>
-          </div>
-        </div>
-      </div>
+      <WhatsAppSyncState
+        status={syncStatus}
+        progress={syncProgress}
+        stepText={syncStepText}
+        error={syncError}
+        onRetry={runFullSync}
+      />
     )
   }
 
@@ -691,7 +453,6 @@ export function WhatsAppPage() {
   return (
     <>
       <div className="whatsapp-page">
-        {/* Chat List Sidebar */}
         <WhatsAppChatList
           chats={chats}
           selectedChatId={selectedChatId}
@@ -707,7 +468,6 @@ export function WhatsAppPage() {
           onSearchChange={setSearchQuery}
         />
 
-        {/* Conversation View */}
         {selectedChat ? (
           <WhatsAppConversation
             key={selectedChat.id}
@@ -731,36 +491,9 @@ export function WhatsAppPage() {
             typingText={typingText}
           />
         ) : (
-          <div className="whatsapp-main-empty">
-            <div className="whatsapp-empty-badge-icon">
-              <MessageSquare size={28} strokeWidth={1.75} />
-            </div>
-
-            <h3 className="whatsapp-empty-title">
-              {status.connected ? 'Select a conversation' : 'WhatsApp is not connected'}
-            </h3>
-
-            <p className="whatsapp-empty-lead">
-              {status.connected
-                ? 'Choose a chat from the sidebar to view and send messages.'
-                : 'Link your device to start sending and receiving messages in Starwaves.'}
-            </p>
-
-            {!status.connected && (
-              <div className="whatsapp-empty-actions">
-                <button
-                  type="button"
-                  className="primary-button"
-                  onClick={handleOpenQrModal}
-                >
-                  <QrCode size={16} /> Link WhatsApp Account
-                </button>
-              </div>
-            )}
-          </div>
+          <WhatsAppEmptyPane connected={status.connected} onLink={handleOpenQrModal} />
         )}
 
-        {/* Info Drawer */}
         {isInfoDrawerOpen && selectedChat && (
           <WhatsAppInfoDrawer
             chat={selectedChat}
@@ -776,7 +509,6 @@ export function WhatsAppPage() {
         )}
       </div>
 
-      {/* QR Pairing Modal */}
       <WhatsAppQrModal
         isOpen={isQrModalOpen}
         onClose={() => setIsQrModalOpen(false)}
@@ -788,7 +520,6 @@ export function WhatsAppPage() {
         loading={isQrLoading}
       />
 
-      {/* Interactive Summary & Eve Chat Modal */}
       <WhatsAppSummaryModal
         isOpen={Boolean(summaryModalText)}
         onClose={() => setSummaryModalText(null)}

@@ -1,3 +1,4 @@
+import '../../styles/pages/whatsapp-qr.css'
 import { useState } from 'react'
 import { Modal } from '../ui/Modal'
 import { RefreshCw, Smartphone, Copy, Check, Radio } from 'lucide-react'

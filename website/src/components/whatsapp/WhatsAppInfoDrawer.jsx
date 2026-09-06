@@ -1,3 +1,4 @@
+import '../../styles/pages/whatsapp-drawer.css'
 import { useState, useMemo } from 'react'
 import { X, Bot, Image as ImageIcon, FileText, Sparkles, Star, Users, User, ShieldCheck, Download } from 'lucide-react'
 

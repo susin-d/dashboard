@@ -5,6 +5,12 @@ Historical implementation log extracted from `context.md`. `context.md` now hold
 ## 2026-09-06 — Loading screen redesign (from prior commit f81e6b0)
 - Branded WaveLoader card (orbit ring + wave bars + progress) and matching LoadingState (`components/WaveLoader.jsx`, `components/ui/LoadingState.jsx`, `wave-loader.css`, `loading-state.css`).
 
+## 2026-09-06 — Wave E: Mail, WhatsApp, Team Chats, Contacts
+- `MailsPage` (631) → `pages/mail/` package (utils/connect/folders/list/reader/composer + shell); `mails.css` (899) → shell/folders/list/connect/reader.
+- `WhatsAppPage` (801) → hooks (message actions, pairing with live QR updates) + sync/empty states; removed dead confirm-pairing handler; `whatsapp.css` (3043) → 12 scoped files wired per component.
+- `chats.css` (569) → shell/thread; `contacts.css` (657) → shell/grid/modals; Chats title → Team Chats.
+- Connect accents: mail unread edge, WA active-chat edge, contact card edge.
+
 ## 2026-09-06 — Wave D: Eve, Calls, Avatar, Compete
 - `eve.css` (2507) split into 10 scoped files (shell/messages/thoughts/composer/composer-box/skills/subpages/schedules/call-stage/call-live) wired via `EvePage`.
 - `EveChatSection` (652) split into feed/composer/thought-history + shell facade; unused imports removed.

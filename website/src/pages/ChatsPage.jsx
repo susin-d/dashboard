@@ -1,4 +1,5 @@
-import "../styles/pages/chats.css"
+import "../styles/pages/chats-shell.css"
+import "../styles/pages/chats-thread.css"
 import { useEffect, useState, useMemo, useCallback } from 'react'
 import {
   MessageSquare,
@@ -142,7 +143,7 @@ export function ChatsPage({ onNavigate: _onNavigate }) {
     <section className="chats-page">
       <PageHeader
         eyebrow="Connect"
-        title="Chats"
+        title="Team Chats"
         actions={
           <>
             {accounts.length > 0 ? (
