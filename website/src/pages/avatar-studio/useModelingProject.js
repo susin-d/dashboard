@@ -28,12 +28,21 @@ export function useModelingProject(activeModel) {
     return () => { cancelled = true }
   }, [])
 
-  const setScene = useCallback((nextScene) => {
+  const setScene = useCallback((nextScene, options = {}) => {
     setSceneState((current) => {
       const next = typeof nextScene === 'function' ? nextScene(current) : nextScene
       return normalizeSceneProject(next, activeModel)
     })
-    setDirty(true)
+    setDirty(options.markDirty !== false)
+  }, [activeModel])
+
+  const resetLocalScene = useCallback(() => {
+    setProjectId(null)
+    setProjectName('Untitled avatar scene')
+    setSceneState(createSceneProject(activeModel))
+    setDirty(false)
+    setStatus('local')
+    setError('')
   }, [activeModel])
 
   const openProject = useCallback(async (id) => {
@@ -92,6 +101,7 @@ export function useModelingProject(activeModel) {
     setScene,
     setProjectName,
     openProject,
+    resetLocalScene,
     saveProject,
     importAsset,
     getAssetBlob,

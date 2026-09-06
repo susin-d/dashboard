@@ -27,7 +27,11 @@ function themeColor(name) {
   return color
 }
 
-export const SceneViewport = forwardRef(function SceneViewport({ source, nodes = [], selectedNodeId, tool, showGrid = true, showAxes = true, onSceneGraph, onSelectNode, onNodeTransform, onMaterialChange, onCameraChange, resetSignal, onStatus }, ref) {
+function createNodeId() {
+  return globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random()}`
+}
+
+export const SceneViewport = forwardRef(function SceneViewport({ source, nodes = [], camera: savedCamera = null, selectedNodeId, tool, showGrid = true, showAxes = true, onSceneGraph, onSelectNode, onNodeTransform, onMaterialChange, onCameraChange, resetSignal, onStatus }, ref) {
   const containerRef = useRef(null)
   const sceneRef = useRef(null)
   const cameraRef = useRef(null)
@@ -36,15 +40,28 @@ export const SceneViewport = forwardRef(function SceneViewport({ source, nodes =
   const transformRef = useRef(null)
   const rootRef = useRef(null)
   const nodeMapRef = useRef(new Map())
+  const nodesRef = useRef(nodes)
   const selectedNodeIdRef = useRef(selectedNodeId)
   const toolRef = useRef(tool)
   const statusRef = useRef(onStatus)
+  const savedCameraRef = useRef(savedCamera)
+  const selectedMaterialsRef = useRef(new Map())
 
+  nodesRef.current = nodes
+  savedCameraRef.current = savedCamera
   selectedNodeIdRef.current = selectedNodeId
   toolRef.current = tool
   statusRef.current = onStatus
 
-  useImperativeHandle(ref, () => ({
+  useImperativeHandle(ref, () => {
+    const serializeSceneGraph = () => [...nodeMapRef.current.values()].map((object) => ({ id: object.userData.nodeId, name: object.name, type: object.type, visible: object.visible, position: toArray(object.position), rotation: toArray(object.rotation), scale: toArray(object.scale), parentId: object.parent?.userData?.nodeId || null, materialColor: object.material?.color ? `#${object.material.color.getHexString()}` : null, metalness: object.material?.metalness ?? 0, roughness: object.material?.roughness ?? 0.5 }))
+    const disposeObject = (object) => object.traverse((child) => {
+      child.geometry?.dispose()
+      const materials = Array.isArray(child.material) ? child.material : [child.material]
+      materials.forEach((material) => material?.dispose?.())
+    })
+
+    return ({
     addPrimitive: (type = 'box') => {
       const editorScene = sceneRef.current
       if (!editorScene) return null
@@ -58,13 +75,44 @@ export const SceneViewport = forwardRef(function SceneViewport({ source, nodes =
       const material = new THREE.MeshStandardMaterial({ color: themeColor('--color-primary'), roughness: 0.45, metalness: 0.15 })
       const mesh = new THREE.Mesh(geometry, material)
       mesh.name = `${type[0].toUpperCase()}${type.slice(1)} primitive`
-      mesh.userData.nodeId = crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`
+      mesh.userData.nodeId = createNodeId()
       mesh.position.set(0, 0.5, 0)
       root.add(mesh)
       nodeMapRef.current.set(mesh.userData.nodeId, mesh)
-      onSceneGraph?.([...nodeMapRef.current.values()].map((object) => ({ id: object.userData.nodeId, name: object.name, type: object.type, visible: object.visible, position: toArray(object.position), rotation: toArray(object.rotation), scale: toArray(object.scale), parentId: object.parent?.userData?.nodeId || null, materialColor: object.material?.color ? `#${object.material.color.getHexString()}` : null, metalness: object.material?.metalness ?? 0, roughness: object.material?.roughness ?? 0.5 })))
+      onSceneGraph?.(serializeSceneGraph())
       onSelectNode?.(mesh.userData.nodeId)
       return mesh.userData.nodeId
+    },
+    duplicateNode: (nodeId) => {
+      const object = nodeMapRef.current.get(nodeId)
+      if (!object?.parent) return null
+      const clone = object.clone(true)
+      const idMap = new Map()
+      clone.traverse((child) => {
+        const nextId = createNodeId()
+        idMap.set(child, nextId)
+        child.userData = { ...child.userData, nodeId: nextId }
+        nodeMapRef.current.set(nextId, child)
+      })
+      clone.position.x += 0.25
+      object.parent.add(clone)
+      onSceneGraph?.(serializeSceneGraph())
+      onSelectNode?.(idMap.get(clone))
+      return idMap.get(clone)
+    },
+    deleteNode: (nodeId) => {
+      const object = nodeMapRef.current.get(nodeId)
+      if (!object?.parent) return false
+      const removed = []
+      object.traverse((child) => {
+        if (child.userData?.nodeId) removed.push(child.userData.nodeId)
+      })
+      object.parent.remove(object)
+      disposeObject(object)
+      removed.forEach((id) => nodeMapRef.current.delete(id))
+      onSceneGraph?.(serializeSceneGraph())
+      onSelectNode?.(null)
+      return true
     },
     exportScene: async (format = 'glb') => {
       const root = rootRef.current
@@ -79,7 +127,8 @@ export const SceneViewport = forwardRef(function SceneViewport({ source, nodes =
       const blob = new Blob([isBinary ? result : JSON.stringify(result)], { type: isBinary ? 'model/gltf-binary' : 'model/gltf+json' })
       return { blob, filename: `avatar-scene.${format === 'vrm' ? 'vrm' : format}` }
     },
-  }), [onSceneGraph, onSelectNode])
+    })
+  }, [onSceneGraph, onSelectNode])
 
   useEffect(() => {
     nodes.forEach((node) => {
@@ -210,13 +259,19 @@ export const SceneViewport = forwardRef(function SceneViewport({ source, nodes =
   }, [resetSignal])
 
   useEffect(() => {
+    selectedMaterialsRef.current.forEach((color, material) => material.emissive?.copy(color))
+    selectedMaterialsRef.current.clear()
     const root = rootRef.current
     if (!root || !selectedNodeId) return
     const object = nodeMapRef.current.get(selectedNodeId)
     if (object) object.traverse((child) => {
       if (!child.isMesh) return
       const materials = Array.isArray(child.material) ? child.material : [child.material]
-      materials.forEach((material) => { material.emissive?.setHex(0x202c55) })
+      materials.forEach((material) => {
+        if (!material?.emissive) return
+        selectedMaterialsRef.current.set(material, material.emissive.clone())
+        material.emissive.copy(themeColor('--color-primary'))
+      })
     })
   }, [selectedNodeId])
 
@@ -256,10 +311,20 @@ export const SceneViewport = forwardRef(function SceneViewport({ source, nodes =
           if (!root) throw new Error('The model did not contain a scene.')
           root.userData.vrm = gltf.userData?.vrm || null
           root.userData.originalGltfExtensions = gltf.parser?.json?.extensions || null
+          const persistedNodes = nodesRef.current
+          const usedPersistedIds = new Set()
           root.traverse((object) => {
             if (!object.name) object.name = object.type
-            const nodeId = crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`
+            const persistedNode = persistedNodes.find((node) => !usedPersistedIds.has(node.id) && node.name === object.name && node.type === object.type)
+            const nodeId = persistedNode?.id || createNodeId()
+            if (persistedNode) usedPersistedIds.add(persistedNode.id)
             object.userData.nodeId = nodeId
+            if (persistedNode) {
+              object.visible = persistedNode.visible !== false
+              if (Array.isArray(persistedNode.position)) object.position.set(...persistedNode.position)
+              if (Array.isArray(persistedNode.rotation)) object.rotation.set(...persistedNode.rotation)
+              if (Array.isArray(persistedNode.scale)) object.scale.set(...persistedNode.scale)
+            }
             object.castShadow = true
             object.receiveShadow = true
             nodeMapRef.current.set(nodeId, object)
@@ -271,8 +336,16 @@ export const SceneViewport = forwardRef(function SceneViewport({ source, nodes =
           const size = box.getSize(new THREE.Vector3())
           const radius = Math.max(size.x, size.y, size.z, 1)
           root.position.sub(new THREE.Vector3(center.x, box.min.y, center.z))
-          cameraRef.current.position.set(0, Math.max(1, radius * 0.8), radius * 2.8)
-          controlsRef.current.target.set(0, Math.max(0.5, size.y * 0.45), 0)
+          const savedCamera = savedCameraRef.current
+          const targetY = Math.max(0.5, size.y * 0.45)
+          const framingDistance = radius / (2 * Math.tan(THREE.MathUtils.degToRad(cameraRef.current.fov / 2))) * 1.15
+          if (Array.isArray(savedCamera?.position) && Array.isArray(savedCamera?.target)) {
+            cameraRef.current.position.fromArray(savedCamera.position)
+            controlsRef.current.target.fromArray(savedCamera.target)
+          } else {
+            cameraRef.current.position.set(0, targetY, Math.max(1.5, framingDistance))
+            controlsRef.current.target.set(0, targetY, 0)
+          }
           controlsRef.current.update()
           const nodes = []
           root.traverse((object) => {
@@ -280,7 +353,7 @@ export const SceneViewport = forwardRef(function SceneViewport({ source, nodes =
             const material = object.isMesh ? (Array.isArray(object.material) ? object.material[0] : object.material) : null
             nodes.push({ id: object.userData.nodeId, name: object.name, type: object.type, visible: object.visible, position: toArray(object.position), rotation: toArray(object.rotation), scale: toArray(object.scale), parentId: object.parent?.userData?.nodeId || null, materialColor: material?.color ? `#${material.color.getHexString()}` : null, metalness: material?.metalness ?? 0, roughness: material?.roughness ?? 0.5 })
           })
-          onSceneGraph?.(nodes)
+          onSceneGraph?.(nodes, { initial: true })
           statusRef.current?.('ready')
           objectUrls.forEach((url) => URL.revokeObjectURL(url))
         }

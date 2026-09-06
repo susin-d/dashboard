@@ -1,6 +1,34 @@
 import { Box, ChevronDown, Download, FolderOpen, Redo2, Save, Undo2, Upload } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
 
-export function StudioTopBar({ project, projects, onOpen, onSave, onImport, onExport, onCreatePrimitive, onUndo, onRedo, canUndo, canRedo }) {
+const MENU_ITEMS = {
+  File: [{ label: 'Save project', action: 'save' }, { label: 'Export GLB', action: 'export-glb' }],
+  Edit: [{ label: 'Undo', action: 'undo' }, { label: 'Redo', action: 'redo' }],
+  View: [{ label: 'Toggle grid', action: 'grid' }, { label: 'Toggle axes', action: 'axes' }, { label: 'Reset camera', action: 'reset-camera' }, { label: 'Fullscreen viewport', action: 'fullscreen' }],
+  Create: [{ label: 'Add cube', action: 'add-cube' }],
+  Modeling: [{ label: 'Select tool', action: 'tool-select' }, { label: 'Move tool', action: 'tool-move' }, { label: 'Rotate tool', action: 'tool-rotate' }, { label: 'Scale tool', action: 'tool-scale' }],
+  Sculpting: [{ label: 'Activate sculpt tool', action: 'tool-sculpt' }],
+  'UV Editing': [{ label: 'Activate paint tool', action: 'tool-paint' }],
+  'Texture Paint': [{ label: 'Activate paint tool', action: 'tool-paint' }],
+  Shading: [{ label: 'Open properties inspector', action: 'inspector' }],
+  Animation: [{ label: 'Play or pause timeline', action: 'timeline' }],
+  Rendering: [{ label: 'Export GLB', action: 'export-glb' }],
+}
+
+export function StudioTopBar({ project, projects, onOpen, onSave, onImport, onExport, onCreatePrimitive, onUndo, onRedo, onMenuAction, canUndo, canRedo }) {
+  const [openMenu, setOpenMenu] = useState(null)
+  const menuRef = useRef(null)
+
+  useEffect(() => {
+    const closeMenu = (event) => { if (!menuRef.current?.contains(event.target)) setOpenMenu(null) }
+    const closeOnEscape = (event) => { if (event.key === 'Escape') setOpenMenu(null) }
+    document.addEventListener('pointerdown', closeMenu)
+    document.addEventListener('keydown', closeOnEscape)
+    return () => { document.removeEventListener('pointerdown', closeMenu); document.removeEventListener('keydown', closeOnEscape) }
+  }, [])
+
+  const runMenuAction = (action) => { setOpenMenu(null); onMenuAction?.(action) }
+
   return (
     <header className="modeling-topbar">
       <div className="modeling-brand-mark" aria-hidden="true">A</div>
@@ -8,9 +36,9 @@ export function StudioTopBar({ project, projects, onOpen, onSave, onImport, onEx
         <strong>Avatar Studio</strong>
         <span>{project.name}{project.dirty ? ' · Unsaved changes' : ''}</span>
       </div>
-      <nav className="modeling-menu" aria-label="Studio menu">
-        {['File', 'Edit', 'View', 'Create', 'Modeling', 'Sculpting', 'UV Editing', 'Texture Paint', 'Shading', 'Animation', 'Rendering'].map((item) => (
-          <button type="button" key={item} className="modeling-menu-item">{item}<ChevronDown size={11} /></button>
+      <nav className="modeling-menu" aria-label="Studio menu" ref={menuRef}>
+        {Object.keys(MENU_ITEMS).map((item) => (
+          <div className="modeling-menu-group" key={item}><button type="button" className="modeling-menu-item" aria-haspopup="menu" aria-expanded={openMenu === item} onClick={() => setOpenMenu((current) => current === item ? null : item)}>{item}<ChevronDown size={11} /></button>{openMenu === item && <div className="modeling-menu-dropdown" role="menu">{MENU_ITEMS[item].map(({ label, action }) => <button type="button" role="menuitem" key={action} onClick={() => runMenuAction(action)}>{label}</button>)}</div>}</div>
         ))}
       </nav>
       <div className="modeling-top-actions">

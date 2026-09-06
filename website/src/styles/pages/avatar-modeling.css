@@ -14,9 +14,9 @@
 }
 
 .modeling-studio {
-  --modeling-panel: color-mix(in srgb, var(--color-surface, var(--bg-primary, #10131a)) 92%, var(--color-primary) 8%);
-  --modeling-panel-strong: color-mix(in srgb, var(--color-surface, var(--bg-primary, #10131a)) 84%, var(--color-primary) 16%);
-  --modeling-stage: color-mix(in srgb, var(--color-background, var(--bg-primary, #10131a)) 96%, var(--color-primary) 4%);
+  --modeling-panel: color-mix(in srgb, var(--color-surface, var(--bg-primary)) 92%, var(--color-primary) 8%);
+  --modeling-panel-strong: color-mix(in srgb, var(--color-surface, var(--bg-primary)) 84%, var(--color-primary) 16%);
+  --modeling-stage: color-mix(in srgb, var(--color-background, var(--bg-primary)) 96%, var(--color-primary) 4%);
   display: flex;
   flex-direction: column;
   width: 100%;
@@ -64,9 +64,13 @@
 .modeling-brand-copy strong { font-size: var(--text-md); }
 .modeling-brand-copy span { max-width: 180px; color: var(--text-secondary); font-size: var(--text-xs); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
-.modeling-menu { display: flex; align-items: center; gap: 2px; flex: 1; overflow: auto; scrollbar-width: none; }
+.modeling-menu { display: flex; align-items: center; gap: 2px; flex: 1; min-width: 0; overflow: auto; scrollbar-width: none; }
+.modeling-menu-group { position: relative; flex: 0 0 auto; }
 .modeling-menu-item { display: inline-flex; align-items: center; gap: 3px; padding: 7px 8px; border: 0; border-radius: var(--radius-sm); color: var(--text-secondary); background: transparent; white-space: nowrap; cursor: pointer; }
 .modeling-menu-item:hover { color: var(--text-primary); background: var(--color-primary-light); }
+.modeling-menu-dropdown { position: absolute; top: calc(100% + 4px); left: 0; display: grid; min-width: 180px; padding: 5px; border: 1px solid var(--border-color); border-radius: var(--radius-md); background: var(--glass-bg-dropdown); box-shadow: var(--shadow-lg); z-index: 12; }
+.modeling-menu-dropdown button { padding: 8px 9px; border: 0; border-radius: var(--radius-sm); color: var(--text-primary); background: transparent; text-align: left; white-space: nowrap; cursor: pointer; }
+.modeling-menu-dropdown button:hover { background: var(--color-primary-light); }
 
 .modeling-top-actions { display: flex; align-items: center; gap: 6px; }
 .modeling-action-button,
@@ -137,6 +141,8 @@
 .modeling-viewport-actions button:hover,
 .modeling-viewport-actions button.is-active { border-color: var(--border-color); color: var(--text-primary); background: var(--color-primary-light); }
 .modeling-viewport-content { position: relative; min-height: 0; overflow: hidden; background: radial-gradient(circle at 50% 35%, color-mix(in srgb, var(--color-primary) 12%, transparent), transparent 48%), var(--modeling-stage); }
+.modeling-viewport-shell:fullscreen { display: grid; grid-template-rows: 40px minmax(0, 1fr); background: var(--modeling-stage); }
+.modeling-viewport-shell:fullscreen .modeling-viewport-content { min-height: 0; }
 .modeling-viewport-canvas { position: absolute; inset: 0; }
 .modeling-live2d-avatar { position: absolute; inset: 0; display: grid; place-items: center; }
 .modeling-viewport-hint { position: absolute; left: var(--space-sm); bottom: var(--space-sm); display: inline-flex; align-items: center; gap: 6px; padding: 7px 10px; border: 1px solid var(--border-color); border-radius: var(--radius-full); color: var(--text-secondary); background: var(--glass-bg-card); backdrop-filter: blur(var(--glass-blur)); font-size: var(--text-xs); pointer-events: none; }
@@ -150,11 +156,13 @@
 
 .modeling-outliner { min-height: 0; overflow: auto; border-bottom: 1px solid var(--border-color); }
 .modeling-outliner-tree { display: grid; gap: 2px; padding: 0 var(--space-xs) var(--space-xs); }
-.modeling-outliner-node { display: grid; grid-template-columns: 14px 16px 1fr 18px; align-items: center; gap: 5px; min-width: 0; padding: 7px; border: 0; border-radius: var(--radius-sm); color: var(--text-secondary); background: transparent; text-align: left; cursor: pointer; }
-.modeling-outliner-node span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.modeling-outliner-node { display: grid; grid-template-columns: minmax(0, 1fr) 24px; align-items: center; gap: 4px; min-width: 0; padding: 2px 4px 2px 7px; border-radius: var(--radius-sm); color: var(--text-secondary); }
+.modeling-outliner-select { display: grid; grid-template-columns: 14px 16px minmax(0, 1fr); align-items: center; gap: 5px; min-width: 0; padding: 5px 3px; border: 0; color: inherit; background: transparent; text-align: left; cursor: pointer; }
+.modeling-outliner-select span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .modeling-outliner-node:hover,
 .modeling-outliner-node.is-selected { color: var(--text-primary); background: var(--color-primary-light); }
-.modeling-node-visibility { display: grid; place-items: center; }
+.modeling-node-visibility { display: grid; place-items: center; width: 24px; height: 24px; border: 0; border-radius: var(--radius-xs); color: inherit; background: transparent; cursor: pointer; }
+.modeling-node-visibility:hover { color: var(--text-primary); background: var(--color-primary-light); }
 .modeling-muted-copy { margin: 0; color: var(--text-secondary); font-size: var(--text-xs); line-height: var(--leading-normal); }
 
 .modeling-properties { min-height: 0; overflow: auto; border-bottom: 1px solid var(--border-color); }
@@ -172,7 +180,11 @@
 .modeling-property-row { display: grid; grid-template-columns: 1fr minmax(80px, 1fr) auto; align-items: center; gap: 8px; color: var(--text-secondary); font-size: var(--text-xs); }
 .modeling-property-row input[type='color'] { width: 34px; height: 24px; padding: 0; border: 1px solid var(--border-color); border-radius: var(--radius-xs); }
 .modeling-property-row output { color: var(--text-primary); }
+.modeling-property-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+.modeling-property-name { grid-template-columns: 70px minmax(0, 1fr); }
+.modeling-property-name input { min-width: 0; padding: 6px 7px; border: 1px solid var(--border-color); border-radius: var(--radius-sm); color: var(--text-primary); background: var(--glass-bg-input); }
 .modeling-secondary-button { padding: 7px; border: 1px solid var(--border-color); border-radius: var(--radius-sm); color: var(--text-primary); background: transparent; cursor: pointer; }
+.modeling-secondary-button:hover { border-color: var(--border-focus); background: var(--color-primary-light); }
 
 .modeling-render-card { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: var(--space-sm); background: var(--modeling-panel-strong); }
 .modeling-render-card > div { display: grid; gap: 3px; min-width: 0; }

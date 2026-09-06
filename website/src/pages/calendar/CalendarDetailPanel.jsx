@@ -115,20 +115,8 @@ export function CalendarDetailPanel({ selectedDate, eventsByDate, onClose, onNav
               ))}
             </div>
           ) : (
-            <div
-              className={`calendar-detail-empty ${
-                selectedContests.length ||
-                selectedHackathons.length ||
-                selectedProjects.length ||
-                selectedJobs.length ||
-                selectedGoogleEvents.length
-                  ? 'compact'
-                  : ''
-              }`}
-            >
-              <CalendarDays size={22} />
-              <h3>No tasks for this day</h3>
-              <p>Dated todo items will appear here.</p>
+            <div className="calendar-detail-no-tasks">
+              <strong>No todo created.</strong>
             </div>
           )}
 
