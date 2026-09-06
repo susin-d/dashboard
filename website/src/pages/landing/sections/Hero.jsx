@@ -1,6 +1,6 @@
 import { motion, useMotionValue, useReducedMotion, useScroll, useSpring, useTransform } from 'framer-motion'
 import { useRef } from 'react'
-import { ArrowRight, Check, ChevronDown, Play, Sparkles } from 'lucide-react'
+import { ArrowRight, Check, ChevronDown, Play } from 'lucide-react'
 import { heroProof, marqueeModules } from '../data'
 import { useMagnetic } from './useMagnetic'
 
@@ -113,12 +113,6 @@ export function Hero({ onNavigate }) {
         animate={reduce ? undefined : 'show'}
         style={reduce ? undefined : { opacity: fade, y: ySlow }}
       >
-        <motion.div variants={reduce ? undefined : item} className="cinema-kicker" aria-label="Live workspace">
-          <i aria-hidden="true" />
-          Code · Create · Evolve — live workspace
-          <Sparkles size={12} aria-hidden="true" className="cinema-kicker__spark" />
-        </motion.div>
-
         <motion.h1 id="hero-title" className="cinema-title cinema-title--display" variants={reduce ? undefined : item}>
           <span className="cinema-title__line" aria-label="Your work and growth,">
             {HEADLINE_A.map((w, i) => (

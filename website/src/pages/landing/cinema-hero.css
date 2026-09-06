@@ -49,14 +49,6 @@
   position: relative; z-index: 1; width: min(1100px, 100%);
   display: grid; gap: 28px; text-align: center; justify-items: center;
 }
-.cinema-kicker {
-  display: inline-flex; align-items: center; gap: 8px;
-  padding: 6px 10px; border-radius: 999px;
-  background: var(--cinema-bg-2); border: 1px solid var(--cinema-border);
-  color: var(--cinema-muted); font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
-}
-.cinema-kicker i { width: 5px; height: 5px; border-radius: 50%; background: var(--cinema-primary); box-shadow: 0 0 8px var(--cinema-primary); }
-.cinema-kicker__spark { opacity: 0.9; color: var(--cinema-studio); }
 .cinema-title {
   margin: 0; font-size: clamp(36px, 6vw, 72px); line-height: 0.95; letter-spacing: -0.06em; font-weight: 800;
   color: var(--cinema-text);
