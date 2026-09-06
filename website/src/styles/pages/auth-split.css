@@ -29,7 +29,7 @@
   position: relative;
   display: flex;
   flex-direction: column;
-  justify-content: flex-end;
+  justify-content: flex-start;
   gap: var(--space-sm);
   min-width: 0;
   padding: clamp(24px, 4vw, 40px);
@@ -42,7 +42,7 @@
 
 .auth-split__floor {
   position: absolute;
-  top: 42%;
+  top: 60%;
   right: -25%;
   bottom: -14%;
   left: -25%;
@@ -65,7 +65,7 @@
 
 .auth-split__horizon {
   position: absolute;
-  top: 42%;
+  top: 60%;
   right: 8%;
   left: 8%;
   height: 1px;
@@ -76,11 +76,9 @@
 }
 
 .auth-split__brand-row {
-  position: absolute;
-  top: clamp(20px, 3vw, 28px);
-  left: clamp(24px, 4vw, 40px);
   z-index: 1;
   display: inline-flex;
+  align-self: flex-start;
   align-items: center;
   gap: 8px;
   min-height: 44px;
@@ -104,7 +102,7 @@
 .auth-split__kicker {
   position: relative;
   z-index: 1;
-  margin: 0;
+  margin: var(--space-md) 0 0;
   color: var(--text-muted);
   font-size: 10px;
   font-weight: 850;
@@ -137,7 +135,8 @@
 .auth-split__triad {
   position: relative;
   z-index: 1;
-  margin: var(--space-sm) 0 0;
+  margin: auto 0 0;
+  padding-top: var(--space-md);
   color: var(--text-muted);
   font-size: 10px;
   font-weight: 800;
@@ -189,6 +188,26 @@
   .auth-split__body,
   .auth-split__triad {
     display: none;
+  }
+}
+
+/* — Light theme: the floor needs more ink on white — */
+@media (prefers-color-scheme: light) {
+  .auth-split__brand {
+    background:
+      radial-gradient(ellipse 90% 55% at 50% 108%, color-mix(in srgb, var(--module-eve) 26%, transparent), transparent 70%),
+      radial-gradient(ellipse 80% 45% at 50% -8%, color-mix(in srgb, var(--color-primary) 22%, transparent), transparent 70%),
+      var(--bg-card);
+  }
+
+  .auth-split__floor {
+    background-image:
+      linear-gradient(color-mix(in srgb, var(--color-primary) 58%, transparent) 1px, transparent 1px),
+      linear-gradient(90deg, color-mix(in srgb, var(--color-primary) 58%, transparent) 1px, transparent 1px);
+  }
+
+  .auth-split__horizon {
+    opacity: 0.85;
   }
 }
 
