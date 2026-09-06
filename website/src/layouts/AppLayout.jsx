@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Header } from '../components/Header'
 import { Sidebar } from '../components/Sidebar'
+import { MobileTabBar } from '../components/MobileTabBar'
 import { NetworkStatus } from '../components/NetworkStatus'
 import '../App.css'
 
@@ -59,6 +60,7 @@ export function AppLayout({
         onNavigate={onNavigate}
         onClose={() => setSidebarOpen(false)}
         onToggleExpand={() => setSidebarExpanded((expanded) => !expanded)}
+        onWorkspaceChanged={onWorkspaceChanged}
       />
       <div className="app-main-wrapper">
         <Header
@@ -89,6 +91,7 @@ export function AppLayout({
         >
           {children}
         </main>
+        <MobileTabBar activePage={activePage} onNavigate={onNavigate} />
       </div>
     </div>
   )

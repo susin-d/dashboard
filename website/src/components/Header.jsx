@@ -129,9 +129,14 @@ export function Header({
       if (event.key === 'Escape') setNotificationsOpen(false)
     }
 
+    // Mobile tab bar search entry point (decoupled via event).
+    const handleOpenSearchEvent = () => setSearchOpen(true)
+
     document.addEventListener('keydown', handleShortcut)
+    window.addEventListener('starwaves:open-search', handleOpenSearchEvent)
     return () => {
       document.removeEventListener('keydown', handleShortcut)
+      window.removeEventListener('starwaves:open-search', handleOpenSearchEvent)
     }
   }, [setNotificationsOpen])
 

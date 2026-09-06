@@ -30,6 +30,7 @@
 @import './styles/components/badge.css';
 @import './styles/components/filter-pills.css';
 @import './styles/components/loading-state.css';
+@import './styles/components/mobile-tabbar.css';
 
 /* Component Styles — Avatar (glass, must load before page overrides) */
 @import './styles/components/eve-avatar.css';

@@ -1,7 +1,9 @@
-import { useRef, useState } from 'react'
-import { PanelLeftClose, PanelLeftOpen, X } from 'lucide-react'
+import { lazy, Suspense, useRef, useState } from 'react'
+import { Bot, PanelLeftClose, PanelLeftOpen, X } from 'lucide-react'
 import { getGroupModuleKey, navigationItems } from '../config/navigation'
 import { StarWavesLogo } from './StarWavesLogo'
+
+const EveAssistantModal = lazy(() => import('./EveAssistantModal').then((m) => ({ default: m.EveAssistantModal })))
 
 export function Sidebar({
   activePage,
@@ -10,10 +12,12 @@ export function Sidebar({
   onClose,
   onNavigate,
   onToggleExpand,
+  onWorkspaceChanged,
 }) {
   const sidebarRef = useRef(null)
   const itemRefs = useRef(new Map())
   const [hoveredItem, setHoveredItem] = useState(null)
+  const [eveOpen, setEveOpen] = useState(false)
   const navigationGroups = Array.from(new Set(navigationItems.map(({ group }) => group)))
 
   const setItemRef = (id) => (node) => {
@@ -123,6 +127,20 @@ export function Sidebar({
         <div className="sidebar-footer">
           <button
             type="button"
+            className="sidebar-ask-eve"
+            onClick={() => setEveOpen(true)}
+            onMouseEnter={(e) => handleMouseEnter(e, 'Ask Eve')}
+            onMouseLeave={() => setHoveredItem(null)}
+            onFocus={(e) => handleFocus(e, 'Ask Eve')}
+            onBlur={() => setHoveredItem(null)}
+            aria-label="Ask Eve"
+            title={!isExpanded ? 'Ask Eve' : undefined}
+          >
+            <Bot size={18} />
+            {isExpanded && <span>Ask Eve</span>}
+          </button>
+          <button
+            type="button"
             className="sidebar-footer-toggle"
             onClick={onToggleExpand}
             onMouseEnter={(e) => handleMouseEnter(e, isExpanded ? 'Collapse navigation' : 'Expand navigation')}
@@ -154,6 +172,17 @@ export function Sidebar({
           onClick={onClose}
           aria-label="Close navigation"
         />
+      )}
+
+      {eveOpen && (
+        <Suspense fallback={null}>
+          <EveAssistantModal
+            isOpen={eveOpen}
+            onClose={() => setEveOpen(false)}
+            onNavigate={onNavigate}
+            onWorkspaceChanged={onWorkspaceChanged}
+          />
+        </Suspense>
       )}
     </>
   )
