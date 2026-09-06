@@ -5,8 +5,6 @@ import { MobileTabBar } from '../components/MobileTabBar'
 import { NetworkStatus } from '../components/NetworkStatus'
 import '../App.css'
 
-const MOBILE_NAV_BREAKPOINT = 900
-
 export function AppLayout({
   activePage,
   children,
@@ -41,14 +39,6 @@ export function AppLayout({
     localStorage.setItem('starwaves.sidebar-expanded', String(sidebarExpanded))
   }, [sidebarExpanded])
 
-  const toggleNavigation = () => {
-    if (window.innerWidth <= MOBILE_NAV_BREAKPOINT) {
-      setSidebarOpen(true)
-      return
-    }
-    setSidebarExpanded((expanded) => !expanded)
-  }
-
   return (
     <div className={`app-shell ${isSidebarExpanded ? 'sidebar-expanded' : ''}`}>
       <a className="skip-link" href="#main-content">Skip to main content</a>
@@ -65,8 +55,6 @@ export function AppLayout({
       <div className="app-main-wrapper">
         <Header
           activePage={activePage}
-          onMenuOpen={toggleNavigation}
-          navigationExpanded={isSidebarExpanded}
           onNavigate={onNavigate}
           onCreate={onCreate}
           callCenter={callCenter}
