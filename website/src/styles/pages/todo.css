@@ -17,6 +17,58 @@
   margin: 0;
 }
 
+.todo-progress {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  background: var(--bg-card);
+  box-shadow: var(--shadow-sm);
+}
+
+.todo-progress-track {
+  flex: 1;
+  height: 6px;
+  border-radius: var(--radius-full);
+  background: var(--bg-tertiary);
+  overflow: hidden;
+}
+
+.todo-progress-track i {
+  display: block;
+  height: 100%;
+  width: var(--progress, 0%);
+  border-radius: var(--radius-full);
+  background: var(--gradient-primary);
+  transition: width var(--transition-normal);
+}
+
+.todo-progress span {
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.todo-item.is-overdue {
+  box-shadow: inset 2px 0 0 var(--color-danger);
+}
+
+.todo-item.is-overdue .todo-item-copy small {
+  color: var(--color-danger);
+}
+
+.todo-overdue-flag {
+  font-style: normal;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-danger);
+}
+
 .todo-list {
   overflow: hidden;
   border: 1px solid var(--border-color);

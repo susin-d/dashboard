@@ -28,6 +28,35 @@
   white-space: nowrap;
 }
 
+.dashboard-greeting {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.dashboard-greeting p {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.dashboard-greeting h1 {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: clamp(22px, 2.6vw, 30px);
+  font-weight: 850;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+}
+
+.dashboard-greeting span {
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+
 .dashboard-edit-status {
   display: inline-flex;
   align-items: center;
@@ -89,6 +118,7 @@
 .dashboard-widget {
   --widget-accent: var(--color-primary);
   --widget-accent-light: var(--color-primary-light);
+  position: relative;
   display: flex;
   height: 100%;
   min-height: 0;
@@ -98,6 +128,16 @@
   border-radius: var(--radius-xl);
   background: var(--bg-card);
   transition: border-color 180ms ease, box-shadow 180ms ease;
+}
+
+.dashboard-widget::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--widget-accent), transparent);
+  opacity: 0.85;
+  pointer-events: none;
 }
 
 .dashboard-widget[data-widget="today"],

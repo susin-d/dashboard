@@ -19,7 +19,7 @@ export const dashboardWidgets = [
   { id: 'today', title: 'Today overview', icon: Gauge, destination: 'calendar', module: 'work' },
   { id: 'todo', title: 'Todo list', icon: CheckSquare2, destination: 'todo', module: 'todo' },
   { id: 'calendar', title: 'Upcoming events', icon: CalendarDays, destination: 'calendar', module: 'calendar' },
-  { id: 'competitive-coding', title: 'Competitive coding', icon: Trophy, destination: 'competitive-coding', module: 'growth' },
+  { id: 'competitive-coding', title: 'Competitive coding', icon: Trophy, destination: 'compete', module: 'growth' },
   { id: 'hackathons', title: 'Hackathons', icon: Rocket, destination: 'hackathons', module: 'growth' },
   { id: 'projects', title: 'Project progress', icon: FolderKanban, destination: 'projects', module: 'projects' },
   { id: 'jobs', title: 'Job applications', icon: BriefcaseBusiness, destination: 'jobs', module: 'growth' },

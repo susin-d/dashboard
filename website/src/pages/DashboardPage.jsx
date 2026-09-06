@@ -34,7 +34,7 @@ const formatDate = (value, options = {}) =>
 
 const calendarEventDestinations = {
   task: 'todo',
-  contest: 'competitive-coding',
+  contest: 'compete',
   hackathon: 'hackathons',
   project: 'projects',
   job: 'jobs',
@@ -174,6 +174,17 @@ export function DashboardPage({
   const visibleWidgets = dashboardWidgets.filter(
     ({ id }) => !hiddenWidgetIds.includes(id),
   )
+  const openTasks = tasks.filter((task) => !task.completed)
+  const unreadCount = notifications.filter((notification) => notification.unread).length
+  const nextContest = contests[0] ?? null
+  const greetingHour = new Date().getHours()
+  const greeting =
+    greetingHour < 5 ? 'Up late' : greetingHour < 12 ? 'Good morning' : greetingHour < 18 ? 'Good afternoon' : 'Good evening'
+  const todayLabel = new Date().toLocaleDateString(undefined, {
+    weekday: 'long',
+    month: 'long',
+    day: 'numeric',
+  })
 
   useEffect(() => {
     localStorage.setItem(
@@ -272,7 +283,7 @@ export function DashboardPage({
         title: contest.name,
         meta: contest.site,
         badge: formatDate(contest.startsAt),
-        destination: 'competitive-coding',
+        destination: 'compete',
       }))} onNavigate={onNavigate} />,
     },
     hackathons: {
@@ -350,6 +361,15 @@ export function DashboardPage({
   return (
     <div className={`dashboard-page dashboard-density-${density}`}>
       <div className="page-heading dashboard-heading is-toolbar">
+        <div className="dashboard-greeting">
+          <p>{todayLabel}</p>
+          <h1>{greeting}. Here&apos;s your command center.</h1>
+          <span>
+            {openTasks.length} open {openTasks.length === 1 ? 'task' : 'tasks'} · {upcomingEvents.length} upcoming {upcomingEvents.length === 1 ? 'event' : 'events'}
+            {unreadCount > 0 && <> · {unreadCount} unread</>}
+            {nextContest && <> · Next up: {nextContest.name}</>}
+          </span>
+        </div>
         <div className="dashboard-heading-actions">
           {editing && <span className="dashboard-edit-status"><LayoutGrid size={15} /> Editing layout</span>}
           <button className="secondary-button" type="button" onClick={() => setCustomizeOpen(true)}>

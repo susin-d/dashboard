@@ -104,7 +104,7 @@ export function Header({
   }
   const notificationDestinations = {
     calendar: 'calendar',
-    contest: 'competitive-coding',
+    contest: 'compete',
     project: 'projects',
     job: 'jobs',
     hackathon: 'hackathons',

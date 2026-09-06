@@ -472,9 +472,9 @@ export function CalendarPage({ eventsByDate, onNavigate }) {
                         data-record-id={contest.id}
                         role="link"
                         tabIndex={0}
-                        onClick={() => onNavigate('competitive-coding')}
+                        onClick={() => onNavigate('compete')}
                         onKeyDown={(event) =>
-                          navigateFromKey(event, 'competitive-coding')
+                          navigateFromKey(event, 'compete')
                         }
                       >
                         <div className="calendar-detail-contest-logo">

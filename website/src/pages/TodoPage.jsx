@@ -30,6 +30,13 @@ export function TodoPage({ tasks, setTasks, createIntent }) {
     return tasks
   }, [filter, tasks])
 
+  const now = new Date()
+  const todayKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
+  const isOverdue = (task) => !task.completed && Boolean(task.dueDate) && task.dueDate < todayKey
+  const doneCount = tasks.filter((task) => task.completed).length
+  const overdueCount = tasks.filter(isOverdue).length
+  const donePercent = tasks.length ? Math.round((doneCount / tasks.length) * 100) : 0
+
   const addTask = async (event) => {
     event.preventDefault()
     const title = newTask.trim()
@@ -137,11 +144,23 @@ export function TodoPage({ tasks, setTasks, createIntent }) {
           onChange={setFilter}
         />
 
+        {tasks.length > 0 && (
+          <div className="todo-progress" role="status">
+            <div className="todo-progress-track">
+              <i style={{ '--progress': `${donePercent}%` }} />
+            </div>
+            <span>
+              {doneCount} of {tasks.length} done
+              {overdueCount > 0 && ` · ${overdueCount} overdue`}
+            </span>
+          </div>
+        )}
+
         {visibleTasks.length ? (
           <div className="todo-list">
             {visibleTasks.map((task) => (
               <div
-                className={`todo-item ${task.completed ? 'completed' : ''}`}
+                className={`todo-item ${task.completed ? 'completed' : ''} ${isOverdue(task) ? 'is-overdue' : ''}`}
                 data-record-id={task.id}
                 key={task.id}
               >
@@ -155,6 +174,7 @@ export function TodoPage({ tasks, setTasks, createIntent }) {
                 </button>
                 <div className="todo-item-copy">
                   <span>{task.title}</span>
+                  {isOverdue(task) && <em className="todo-overdue-flag">Overdue</em>}
                   {task.dueDate && (
                     <small>
                       <CalendarDays size={12} />

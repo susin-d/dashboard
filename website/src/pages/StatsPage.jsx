@@ -125,7 +125,7 @@ export function StatsPage({
           <header>
             <span><Code2 size={19} /></span>
             <div><p>Competitive coding</p><h2>Codeforces</h2></div>
-            <button onClick={() => onNavigate('competitive-coding')} aria-label="Open competitive coding"><ArrowUpRight size={17} /></button>
+            <button onClick={() => onNavigate('compete')} aria-label="Open competitive coding"><ArrowUpRight size={17} /></button>
           </header>
           <div className="stats-rating-display">
             <div><strong>{stat(codeforces.rating)}</strong><span>Current rating</span></div>
@@ -142,7 +142,7 @@ export function StatsPage({
           <header>
             <span><Trophy size={19} /></span>
             <div><p>Competitive coding</p><h2>CodeChef</h2></div>
-            <button onClick={() => onNavigate('competitive-coding')} aria-label="Open competitive coding"><ArrowUpRight size={17} /></button>
+            <button onClick={() => onNavigate('compete')} aria-label="Open competitive coding"><ArrowUpRight size={17} /></button>
           </header>
           <div className="stats-rating-display">
             <div><strong>{stat(codechef.rating)}</strong><span>Current rating</span></div>
