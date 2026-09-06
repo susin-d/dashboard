@@ -102,6 +102,29 @@
 .cinema-nav__links a:hover { color: var(--cinema-text); background: var(--cinema-surface); }
 .cinema-nav__links a.is-active { color: var(--cinema-text); background: var(--cinema-surface); box-shadow: inset 0 0 0 1px var(--cinema-border); }
 .cinema-nav__actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+
+/* — Nav CTAs: quiet login + gradient join — */
+.cinema-nav__login {
+  border-color: transparent;
+  border-radius: 12px;
+  color: var(--cinema-muted);
+}
+.cinema-nav__login:hover { background: var(--cinema-surface); border-color: transparent; color: var(--cinema-text); }
+.cinema-nav__actions .cinema-cta--primary {
+  position: relative; overflow: hidden; border-radius: 12px;
+  background: linear-gradient(135deg, var(--cinema-primary), var(--cinema-eve));
+  box-shadow: 0 4px 20px color-mix(in srgb, var(--cinema-eve) 35%, transparent);
+}
+.cinema-nav__actions .cinema-cta--primary:hover { filter: brightness(1.1); }
+.cinema-nav__actions .cinema-cta--primary::after {
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(105deg, transparent 40%, color-mix(in srgb, var(--on-fill) 35%, transparent) 50%, transparent 60%);
+  transform: translateX(-120%);
+  transition: transform 600ms ease;
+}
+.cinema-nav__actions .cinema-cta--primary:hover::after { transform: translateX(120%); }
+.cinema-nav__actions .cinema-cta--primary svg { transition: transform 160ms ease; }
+.cinema-nav__actions .cinema-cta--primary:hover svg { transform: translateX(3px); }
 .cinema-nav__menu {
   display: none; width: 44px; height: 44px; border-radius: 12px; place-items: center;
   background: var(--cinema-bg-2); border: 1px solid var(--cinema-border); color: var(--cinema-text); cursor: pointer;
