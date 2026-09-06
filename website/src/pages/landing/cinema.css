@@ -247,7 +247,7 @@
   color: var(--cinema-muted); font-size:12px; font-weight:600; cursor:pointer;
   transition: background 120ms ease, border-color 120ms ease, color 120ms ease;
 }
-.cinema-tab[aria-selected="true"] { background: var(--cinema-scene, var(--cinema-primary)); color:var(--on-fill); border-color: transparent; box-shadow: 0 0 16px color-mix(in srgb, var(--cinema-scene, var(--cinema-primary)) 45%, transparent); }
+.cinema-tab[aria-selected="true"] { background: var(--cinema-scene, var(--cinema-primary)); background-image: none; color:var(--on-fill); border-color: transparent; box-shadow: none; }
 .cinema-tab:hover { border-color: var(--cinema-border-strong); color: var(--cinema-text); }
 .cinema-reel {
   display:grid; grid-template-columns: 1.05fr 1.2fr; gap:14px; align-items:stretch;
