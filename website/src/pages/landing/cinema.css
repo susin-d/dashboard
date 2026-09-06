@@ -57,11 +57,8 @@
 .cinema-nav__brand:focus-visible, .cinema-nav__links a:focus-visible,
 .cinema-cta:focus-visible, .cinema-tab:focus-visible { outline: 1.5px solid var(--cinema-focus); outline-offset: 2px; }
 .cinema-nav__mark {
-  width: 28px; height: 28px; border-radius: 6px;
-  background: var(--cinema-gradient-primary);   color: var(--on-fill);
-  display: grid; place-items: center; font-weight: 900; font-size: 13px; letter-spacing: -0.05em;
-  border: 1px solid transparent;
-  box-shadow: var(--cinema-glow-primary);
+  width: 28px; height: 28px; border-radius: 6px; object-fit: cover;
+  display: block; border: 1px solid var(--cinema-border);
 }
 .cinema-nav__links { display: flex; align-items: center; gap: 2px; }
 .cinema-nav__links a {

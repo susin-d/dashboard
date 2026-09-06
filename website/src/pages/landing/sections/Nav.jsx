@@ -18,7 +18,7 @@ export function Nav({ onNavigate }) {
       transition={reduce ? {} : { duration: 0.6, ease: [0.16, 1, 0.3, 1], delay: 0.1 }}
     >
       <button type="button" className="cinema-nav__brand" onClick={() => onNavigate('/')} aria-label="StarWaves home">
-        <span className="cinema-nav__mark" aria-hidden="true">S</span>
+        <img src="/logo.png" alt="" aria-hidden="true" className="cinema-nav__mark" />
         <span>StarWaves</span>
       </button>
 

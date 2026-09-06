@@ -42,9 +42,7 @@ export function Footer({ onNavigate }) {
     <footer className="cinema-footer" aria-label="Footer">
       <div className="cinema-footer__inner">
         <div className="cinema-footer__brand">
-          <span className="cinema-nav__mark" aria-hidden="true">
-            S
-          </span>
+          <img src="/logo.png" alt="" aria-hidden="true" className="cinema-nav__mark" />
           StarWaves
           <span className="cinema-footer__copy">© {new Date().getFullYear()} — All rights reserved</span>
         </div>
