@@ -106,7 +106,7 @@ def stream_voice_reply(
     from app.services.ai_models import get_provider_client  # local to avoid cycle
 
     user_uid = (user or {}).get("uid")
-    cfg = resolve_voice_config(database, user_uid if isinstance(database, Client) else None)
+    cfg = resolve_voice_config(database, user_uid if isinstance(database, SqlClient) else None)
 
     # Build minimal conversation — last prompt only, no history for speed (optionally include last 2)
     conversation = [{"role": "user", "content": prompt_text[:2000]}]
@@ -192,7 +192,7 @@ def voice_reply_blocking(
 ) -> str:
     """One-shot fast voice reply (no tools, no RAG) — used by Twilio TwiML where
     the whole reply must be known before rendering XML. ~300-600ms with groq 8b."""
-    cfg = resolve_voice_config(database if isinstance(database, Client) else None, (user or {}).get("uid"))
+    cfg = resolve_voice_config(database if isinstance(database, SqlClient) else None, (user or {}).get("uid"))
     conversation = [{"role": "user", "content": prompt_text[:2000]}]
     try:
         from app.services.ai_models import get_provider_client, run_tool_loop
