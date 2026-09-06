@@ -7,7 +7,7 @@
   gap: var(--space-2xs);
   min-height: 40px;
   padding: var(--space-2xs) var(--space-sm);
-  color: #ffffff;
+  color: var(--on-fill);
   background: var(--color-primary);
   border: 1px solid var(--color-primary);
   border-radius: var(--radius-md);
@@ -48,7 +48,7 @@
   gap: var(--space-2xs);
   min-height: 40px;
   padding: var(--space-2xs) var(--space-sm);
-  color: #ffffff;
+  color: var(--on-fill);
   background: var(--color-accent);
   border: 1px solid var(--color-accent);
   border-radius: var(--radius-md);
@@ -130,7 +130,7 @@
 }
 
 .danger-button:hover {
-  color: #ffffff;
+  color: var(--on-fill);
   background: var(--color-danger);
   border-color: var(--color-danger);
   box-shadow: 0 4px 14px color-mix(in srgb, var(--color-danger) 35%, transparent);

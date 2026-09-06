@@ -132,8 +132,8 @@
 }
 
 .dashboard-widget[data-widget="hackathons"] {
-  --widget-accent: #f97316;
-  --widget-accent-light: rgba(249, 115, 22, 0.15);
+  --widget-accent: var(--palette-ember);
+  --widget-accent-light: color-mix(in srgb, var(--palette-ember) 15%, transparent);
 }
 
 .dashboard-widget[data-widget="documents"],

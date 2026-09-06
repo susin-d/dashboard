@@ -1110,7 +1110,7 @@
   border-radius: 32px;
   overflow: hidden;
   box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35);
-  background: #ffffff;
+  background: var(--canvas-white);
 }
 
 .aistudio-stage-canvas .studio-preview-frame {
@@ -1118,7 +1118,7 @@
   width: 100%;
   height: 100%;
   border: none;
-  background: #ffffff;
+  background: var(--canvas-white);
 }
 
 /* Code Layout Inside Stage */
@@ -1502,7 +1502,7 @@
 }
 
 .studio-choice-btn.selected .studio-choice-tag {
-  background: rgba(255, 255, 255, 0.2);
+  background: color-mix(in srgb, var(--on-fill) 20%, transparent);
   color: var(--text-inverse);
   border-color: transparent;
 }

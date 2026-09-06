@@ -4,14 +4,17 @@ import { RefreshCw } from 'lucide-react'
 import { EmptyState, LoadingState } from '../components/ui'
 import { getUsageSummary, getUsageLogs } from '../lib/usageApi'
 
+// Series colors resolve from the single palette in styles/tokens.css
+// (--chart-1..6). var() works in HTML inline styles and in SVG via the
+// CSS `stroke` property (see trend path below), so charts follow themes.
 const MODEL_COLORS = {
-  'GLM-5.3': '#3b82f6',
-  'GLM-5-Turbo': '#22c55e',
-  'glm-5.3': '#3b82f6',
-  'glm-5-turbo': '#22c55e',
+  'GLM-5.3': 'var(--chart-1)',
+  'GLM-5-Turbo': 'var(--chart-2)',
+  'glm-5.3': 'var(--chart-1)',
+  'glm-5-turbo': 'var(--chart-2)',
 }
 
-const PALETTE = ['#3b82f6', '#22c55e', '#a78bfa', '#f59e0b', '#ef4444', '#06b6d4']
+const PALETTE = ['var(--chart-1)', 'var(--chart-2)', 'var(--chart-3)', 'var(--chart-4)', 'var(--chart-5)', 'var(--chart-6)']
 
 function getModelColor(name, idx) {
   if (MODEL_COLORS[name]) return MODEL_COLORS[name]
@@ -258,7 +261,7 @@ export function UsagePage() {
           {heatmapMonths.map((m, i) => <span key={`${m}-${i}`}>{m}</span>)}
         </div>
         {!hasHeatmapData && !loading ? <div style={{ color: 'var(--text-secondary)', fontSize: 12, marginTop: 10 }}>No activity in this period — chat with Eve to generate usage.</div> : null}
-        {error ? <div style={{ color: '#f87171', fontSize: 12, marginTop: 8 }}>{error}</div> : null}
+        {error ? <div style={{ color: 'var(--color-danger)', fontSize: 12, marginTop: 8 }}>{error}</div> : null}
       </div>
 
       <div className="usage-time-row">
@@ -307,7 +310,7 @@ export function UsagePage() {
                     const cx = (prevX + x) / 2
                     return `C ${cx} ${prevY}, ${cx} ${y}, ${x} ${y}`
                   }).join(' ')
-                  return <path key={s.name} d={smooth} fill="none" stroke={s.color} strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" />
+                  return <path key={s.name} d={smooth} fill="none" style={{ stroke: s.color }} strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" />
                 })}
                 {trendTip ? (
                   <line x1={(trend.labels.findIndex((l) => l.key === trendTip.key) / Math.max(1, trend.labels.length - 1)) * 700} x2={(trend.labels.findIndex((l) => l.key === trendTip.key) / Math.max(1, trend.labels.length - 1)) * 700} y1="10" y2="140" stroke="var(--border-color)" strokeWidth="1" strokeDasharray="4 4" opacity="0.7" />
@@ -325,7 +328,7 @@ export function UsagePage() {
                       {v.name}: <span className="usage-tooltip-value">{formatFull(v.value)} tokens</span>
                     </div>
                   ))}
-                  <div style={{ fontSize: 11, color: '#a1a1aa', marginTop: 4 }}>{formatFull(trendTip.values.reduce((a, b) => a + b.value, 0))} total</div>
+                  <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>{formatFull(trendTip.values.reduce((a, b) => a + b.value, 0))} total</div>
                 </div>
               ) : null}
             </div>

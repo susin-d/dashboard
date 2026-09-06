@@ -1066,7 +1066,7 @@ input.workspace-browser-url:focus-visible {
   width: 100%;
   min-height: 0;
   border: 0;
-  background: #ffffff;
+  background: var(--canvas-white);
 }
 
 .workspace-browser-empty {

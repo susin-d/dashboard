@@ -34,7 +34,7 @@ export function Showcase({ onNavigate }) {
     <section id="showcase" ref={outerRef} className="cinema-showcase" aria-labelledby="showcase-title" style={{ height: reduce ? 'auto' : '260vh' }}>
       <div className="cinema-showcase__sticky">
         <div className="cinema-showcase__bg" aria-hidden="true" />
-        <div className="cinema-showcase__inner" style={{ '--cinema-scene': scene.color, '--cinema-scene-glow': `${scene.color}29` }}>
+        <div className="cinema-showcase__inner" style={{ '--cinema-scene': scene.color }}>
           <div className="cinema-showcase__intro">
             <p className="cinema-eyebrow">The reel — product showcase</p>
             <h2 id="showcase-title" className="cinema-h2">

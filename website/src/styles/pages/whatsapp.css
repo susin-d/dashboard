@@ -671,9 +671,9 @@
 }
 
 .whatsapp-message-wrapper.outgoing .whatsapp-message-bubble .markdown-renderer .md-code-block {
-  background: rgba(0, 0, 0, 0.08);
-  border-color: rgba(0, 0, 0, 0.15);
-  color: #000000;
+  background: color-mix(in srgb, currentColor 8%, transparent);
+  border-color: color-mix(in srgb, currentColor 15%, transparent);
+  color: var(--bg-primary);
 }
 
 .whatsapp-message-bubble .markdown-renderer a {
@@ -837,7 +837,7 @@
   width: 200px;
   height: 200px;
   padding: 12px;
-  background: #ffffff;
+  background: var(--canvas-white);
   border: 1px solid var(--border-color, #27272a);
   border-radius: var(--radius-lg, 12px);
   display: flex;
@@ -862,7 +862,7 @@
   align-items: center;
   justify-content: center;
   gap: 8px;
-  color: #000000;
+  color: var(--canvas-ink);
   font-size: 0.8125rem;
   font-weight: 550;
 }
@@ -1127,7 +1127,7 @@
 .whatsapp-bubble-menu-btn {
   background: rgba(0, 0, 0, 0.55);
   border: none;
-  color: #ffffff;
+  color: var(--on-fill);
   width: 22px;
   height: 22px;
   min-width: 22px;
@@ -1146,7 +1146,7 @@
 
 .whatsapp-message-wrapper.outgoing .whatsapp-bubble-menu-btn {
   background: rgba(0, 0, 0, 0.18);
-  color: #000000;
+  color: var(--bg-primary);
 }
 
 .whatsapp-bubble-menu-btn:hover {
@@ -1156,7 +1156,7 @@
 
 .whatsapp-context-menu {
   position: absolute;
-  background: rgba(233, 230, 225, 0.98);
+  background: var(--menu-surface);
   border: 1px solid rgba(24, 24, 27, 0.12);
   border-radius: 14px;
   padding: 10px 8px;
@@ -1219,7 +1219,7 @@
   padding: 10px 12px;
   background: transparent;
   border: none;
-  color: #111111;
+  color: var(--menu-text);
   font-size: 0.9375rem;
   font-weight: 500;
   text-align: left;
@@ -1238,15 +1238,15 @@
 }
 
 .whatsapp-context-item.danger {
-  color: #d11a2a;
+  color: var(--menu-danger);
   border-top: 1px solid rgba(24, 24, 27, 0.12);
   margin-top: 4px;
   padding-top: 10px;
 }
 
 .whatsapp-context-item.danger:hover {
-  background: rgba(209, 26, 42, 0.06);
-  color: #b70f20;
+  background: color-mix(in srgb, var(--menu-danger) 6%, transparent);
+  color: var(--menu-danger-hover);
 }
 
 .whatsapp-context-item.eve-action {
@@ -1416,7 +1416,7 @@
   bottom: 8px;
   left: 8px;
   background: rgba(0, 0, 0, 0.75);
-  color: #ffffff;
+  color: var(--on-fill);
   font-size: 0.68rem;
   font-weight: 700;
   padding: 2px 6px;
@@ -1436,7 +1436,7 @@
   background: rgba(0, 0, 0, 0.6);
   display: grid;
   place-items: center;
-  color: #ffffff;
+  color: var(--on-fill);
   pointer-events: none;
 }
 
@@ -1973,7 +1973,7 @@
 }
 
 .whatsapp-summary-text-body strong {
-  color: #ffffff;
+  color: var(--text-primary);
   font-weight: 600;
 }
 
@@ -2061,7 +2061,7 @@
 
 .whatsapp-summary-chip:hover {
   background: var(--bg-hover, #27272a);
-  border-color: #3f3f46;
+  border-color: var(--border-heavy);
 }
 
 .whatsapp-summary-chat-feed {
@@ -2151,7 +2151,7 @@
 
 .whatsapp-summary-msg-row.is-user .whatsapp-summary-msg-bubble {
   background: var(--text-primary, #ffffff);
-  color: #000000;
+  color: var(--bg-primary);
   border-bottom-right-radius: 2px;
 }
 
@@ -2242,7 +2242,7 @@
   height: 34px;
   border-radius: 8px;
   background: var(--text-primary, #ffffff);
-  color: #000000;
+  color: var(--bg-primary);
   border: none;
   cursor: pointer;
   transition: opacity 0.15s ease, transform 0.1s ease;
@@ -2353,7 +2353,7 @@
   justify-content: center;
   padding: 16px;
   max-height: calc(90vh - 70px);
-  background: #000000;
+  background: var(--media-stage);
   overflow: auto;
 }
 
@@ -2420,7 +2420,7 @@
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background: #22c55e;
+  background: var(--module-whatsapp);
   display: inline-block;
 }
 
@@ -2572,9 +2572,9 @@
 }
 
 .whatsapp-sync-logo-wrapper.is-error {
-  color: #ef4444;
-  border-color: rgba(239, 68, 68, 0.3);
-  background: rgba(239, 68, 68, 0.08);
+  color: var(--palette-red);
+  border-color: color-mix(in srgb, var(--palette-red) 30%, transparent);
+  background: color-mix(in srgb, var(--palette-red) 8%, transparent);
 }
 
 .whatsapp-sync-title {
@@ -2595,7 +2595,7 @@
 .whatsapp-sync-error-desc {
   margin: 0 0 24px 0;
   font-size: 0.84rem;
-  color: #ef4444;
+  color: var(--palette-red);
   line-height: 1.45;
 }
 
@@ -2834,7 +2834,7 @@
   aspect-ratio: 1;
   border-radius: var(--radius-sm);
   overflow: hidden;
-  background: #000;
+  background: var(--media-stage);
   cursor: pointer;
   border: 1px solid var(--border-color);
   padding: 0;

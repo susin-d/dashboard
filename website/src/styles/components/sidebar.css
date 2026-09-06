@@ -292,19 +292,19 @@ nav {
 }
 
 .nav-item.active {
-  color: #ffffff;
+  color: var(--on-fill);
   background: var(--nav-accent);
   box-shadow: 0 4px 14px color-mix(in srgb, var(--nav-accent) 35%, transparent);
 }
 
 .nav-item.active:hover {
-  color: #ffffff;
+  color: var(--on-fill);
   background: var(--nav-accent);
   transform: none;
 }
 
 .nav-item.active svg {
-  color: #ffffff;
+  color: var(--on-fill);
   transform: scale(1.05);
 }
 

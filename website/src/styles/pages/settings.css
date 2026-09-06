@@ -457,8 +457,8 @@
 }
 
 .ics-upload-button:hover {
-  background: #18181b;
-  color: #ffffff;
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
 }
 
 .mail-account-select {
@@ -849,8 +849,8 @@
   height: 40px;
   flex: 0 0 auto;
   border-radius: 10px;
-  background: #000000;
-  color: #ffffff;
+  background: var(--text-primary);
+  color: var(--bg-primary);
   font-size: 13px;
   font-weight: 800;
   letter-spacing: 0.02em;

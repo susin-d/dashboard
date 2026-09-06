@@ -25,7 +25,7 @@
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: #ffffff;
+  background: var(--text-primary);
 }
 
 .chats-container {
@@ -58,7 +58,7 @@
   font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: var(--text-tertiary, #71717a);
+  color: var(--text-muted);
   font-weight: 600;
 }
 
@@ -82,7 +82,7 @@
 
 .select-input:focus {
   outline: none;
-  border-color: #ffffff;
+  border-color: var(--text-primary);
 }
 
 .select-wrapper .select-icon {
@@ -102,7 +102,7 @@
 .chats-search-bar .search-icon {
   position: absolute;
   left: 26px;
-  color: var(--text-tertiary, #71717a);
+  color: var(--text-muted);
 }
 
 .chats-search-bar .search-input {
@@ -117,7 +117,7 @@
 
 .chats-search-bar .search-input:focus {
   outline: none;
-  border-color: #ffffff;
+  border-color: var(--text-primary);
 }
 
 .chats-filter-chips {
@@ -140,14 +140,14 @@
 }
 
 .chats-filter-chips .chip:hover {
-  color: #ffffff;
-  border-color: #52525b;
+  color: var(--text-primary);
+  border-color: var(--text-disabled);
 }
 
 .chats-filter-chips .chip.active {
-  background: #ffffff;
-  color: #000000;
-  border-color: #ffffff;
+  background: var(--text-primary);
+  color: var(--bg-primary);
+  border-color: var(--text-primary);
 }
 
 .chats-list {
@@ -160,7 +160,7 @@
 .empty-chats {
   padding: 24px;
   text-align: center;
-  color: var(--text-tertiary, #71717a);
+  color: var(--text-muted);
   font-size: 13px;
 }
 
@@ -183,16 +183,16 @@
 }
 
 .chat-item.active {
-  background: #18181b;
-  border-left: 3px solid #ffffff;
+  background: var(--bg-tertiary);
+  border-left: 3px solid var(--text-primary);
 }
 
 .chat-item-avatar {
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  background: #27272a;
-  color: #ffffff;
+  background: var(--border-color);
+  color: var(--text-primary);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -224,7 +224,7 @@
 
 .chat-item-time {
   font-size: 11px;
-  color: var(--text-tertiary, #71717a);
+  color: var(--text-muted);
 }
 
 .chat-item-footer {
@@ -244,8 +244,8 @@
 }
 
 .unread-badge {
-  background: #ffffff;
-  color: #000000;
+  background: var(--text-primary);
+  color: var(--bg-primary);
   font-size: 11px;
   font-weight: 700;
   padding: 1px 6px;
@@ -254,7 +254,7 @@
 
 .chat-item-account-tag {
   font-size: 10px;
-  color: var(--text-tertiary, #71717a);
+  color: var(--text-muted);
   margin-top: 2px;
   white-space: nowrap;
   overflow: hidden;
@@ -288,8 +288,8 @@
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  background: #27272a;
-  color: #ffffff;
+  background: var(--border-color);
+  color: var(--text-primary);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -307,12 +307,12 @@
 }
 
 .chat-header-title .meta-icon {
-  color: var(--text-tertiary, #71717a);
+  color: var(--text-muted);
 }
 
 .chat-header-sub {
   font-size: 12px;
-  color: var(--text-tertiary, #71717a);
+  color: var(--text-muted);
   margin: 2px 0 0;
 }
 
@@ -344,8 +344,8 @@
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background: #27272a;
-  color: #ffffff;
+  background: var(--border-color);
+  color: var(--text-primary);
   font-size: 11px;
   font-weight: 600;
   display: flex;
@@ -362,7 +362,7 @@
 
 .message-sender-name {
   font-size: 11px;
-  color: var(--text-tertiary, #71717a);
+  color: var(--text-muted);
   font-weight: 500;
   margin-left: 2px;
 }
@@ -380,9 +380,9 @@
 }
 
 .chat-message-row.other .message-bubble {
-  background: #18181b;
-  color: #ffffff;
-  border: 1px solid #27272a;
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
   border-top-left-radius: 2px;
 }
 
@@ -399,7 +399,7 @@
   justify-content: flex-end;
   gap: 4px;
   font-size: 11px;
-  color: var(--text-tertiary, #71717a);
+  color: var(--text-muted);
   margin-top: 2px;
 }
 
@@ -415,7 +415,7 @@
 
 .quick-reply-label {
   font-size: 11px;
-  color: var(--text-tertiary, #71717a);
+  color: var(--text-muted);
   white-space: nowrap;
   font-weight: 500;
 }
@@ -423,9 +423,9 @@
 .quick-chip {
   padding: 4px 10px;
   border-radius: 9999px;
-  background: #18181b;
-  border: 1px solid #27272a;
-  color: #ffffff;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
   font-size: 12px;
   cursor: pointer;
   white-space: nowrap;
@@ -433,8 +433,8 @@
 }
 
 .quick-chip:hover {
-  background: #27272a;
-  border-color: #3f3f46;
+  background: var(--border-color);
+  border-color: var(--border-heavy);
 }
 
 .chat-composer {
@@ -452,13 +452,13 @@
   background: var(--bg-tertiary, #18181b);
   border: 1px solid var(--border-color, #27272a);
   border-radius: var(--radius-md, 8px);
-  color: #ffffff;
+  color: var(--text-primary);
   font-size: 14px;
 }
 
 .composer-input:focus {
   outline: none;
-  border-color: #ffffff;
+  border-color: var(--text-primary);
 }
 
 .composer-send-button {
@@ -467,8 +467,8 @@
   gap: 8px;
   padding: 12px 20px;
   border-radius: var(--radius-md, 8px);
-  background: #ffffff;
-  color: #000000;
+  background: var(--text-primary);
+  color: var(--bg-primary);
   font-weight: 600;
   border: none;
   cursor: pointer;

@@ -105,6 +105,60 @@
   --gradient-eve: linear-gradient(135deg, #db2777 0%, #f97316 100%);
   --gradient-surface: linear-gradient(180deg, rgba(255, 255, 255, 0.04) 0%, rgba(255, 255, 255, 0) 100%);
 
+  /* ── Palette — single source of truth ─────────────────────────
+     Edit colors here. Every stylesheet and component must consume
+     these via var(--…); no bare hex/rgb literals outside this file,
+     per-theme presets (styles/themes/), and scoped defaults that
+     intentionally pin a surface (cinema/auth-cinematic dark base).
+     Dark-mode values live in styles/themes/dark.css. */
+
+  /* Text on colored fills (primary buttons, active nav, badges) — always white */
+  --on-fill: #ffffff;
+
+  /* Canvases that must stay white in both themes (email body, QR, device previews) */
+  --canvas-white: #ffffff;
+
+  /* Public nav surface */
+  --nav-bg: rgba(255, 255, 255, 0.92);
+
+  /* Usage trend-chart series */
+  --chart-1: #3b82f6;
+  --chart-2: #22c55e;
+  --chart-3: #a78bfa;
+  --chart-4: #f59e0b;
+  --chart-5: #ef4444;
+  --chart-6: #06b6d4;
+
+  /* Usage heatmap intensity scale */
+  --heat-1: #93c5fd;
+  --heat-2: #3b82f6;
+  --heat-3: #2563eb;
+  --heat-4: #1d4ed8;
+
+  /* Chart/tooltip surfaces — near-black reference tooltip in both themes */
+  --tooltip-bg: #171717;
+  --tooltip-border: #262626;
+  --tooltip-text: #ffffff;
+  --tooltip-muted: #a1a1aa;
+
+  /* Ember orange (hackathon widget accent, Eve gradient stop) */
+  --palette-ember: #f97316;
+
+  /* Sync/error red (WhatsApp pairing states) */
+  --palette-red: #ef4444;
+
+  /* Ink on white canvases (QR code captions) — always black */
+  --canvas-ink: #000000;
+
+  /* Media stage (lightbox body, media thumbs) — always black */
+  --media-stage: #000000;
+
+  /* Light paper context menu (WhatsApp-style) — pinned in both themes */
+  --menu-surface: rgba(233, 230, 225, 0.98);
+  --menu-text: #111111;
+  --menu-danger: #d11a2a;
+  --menu-danger-hover: #b70f20;
+
   /* Mobile Safe Area Insets */
   --safe-area-top: env(safe-area-inset-top, 0px);
   --safe-area-bottom: env(safe-area-inset-bottom, 0px);

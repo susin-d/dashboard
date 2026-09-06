@@ -57,7 +57,7 @@ export const showcaseScenes = [
     headline: 'Your command center',
     copy: 'Drag, resize, curate. Presets for builder, competitor and job-seeker archetypes — all in one live grid.',
     bullets: ['12 widget types', 'Grid memory per user', 'Keyboard command palette'],
-    color: '#6366f1',
+    color: 'var(--module-work)',
   },
   {
     id: 'workspace',
@@ -66,7 +66,7 @@ export const showcaseScenes = [
     headline: 'A real editor, inside',
     copy: 'Monaco, file tree, search, breadcrumbs and Eve file tools. No mock IDE — the actual one.',
     bullets: ['Monaco Editor + minimap', 'File sync to projects', 'Eve writes & reads files'],
-    color: '#fbbf24',
+    color: 'var(--module-workspace)',
   },
   {
     id: 'calendar',
@@ -75,7 +75,7 @@ export const showcaseScenes = [
     headline: 'One timeline to rule them',
     copy: 'Tasks, Google Calendar, contest dates, interviews and hackathons merged into an ICS-aware unified calendar.',
     bullets: ['Google sync + ICS import', 'Reminder engine', 'Contest auto-feed'],
-    color: '#38bdf8',
+    color: 'var(--module-calendar)',
   },
   {
     id: 'eve',
@@ -84,7 +84,7 @@ export const showcaseScenes = [
     headline: 'Chat. Voice. Memory.',
     copy: 'Six providers, streaming replies, persistent sessions and semantic memory via pgvector.',
     bullets: ['Sessions + vector recall', 'Voice calls with captions', 'Cron schedules'],
-    color: '#f43f5e',
+    color: 'var(--module-eve)',
   },
 ]
 

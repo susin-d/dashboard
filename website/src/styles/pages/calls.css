@@ -182,8 +182,8 @@ html.dark-theme .call-screen-stage {
 }
 
 .call-control-end:hover {
-  background: #09090b;
-  border-color: #09090b;
+  background: var(--color-primary-hover);
+  border-color: var(--color-primary-hover);
 }
 
 .call-control-dismiss {
@@ -795,8 +795,8 @@ html.dark-theme .calls-scheduled-footer {
 }
 
 .incoming-call-accept:hover {
-  background: #09090b;
-  border-color: #09090b;
+  background: var(--color-primary-hover);
+  border-color: var(--color-primary-hover);
 }
 
 @keyframes incoming-call-pulse {
@@ -1112,8 +1112,8 @@ html.dark-theme .eve-text-fallback-row input {
 }
 
 .eve-text-fallback-row button:hover:not(:disabled) {
-  background: #09090b;
-  border-color: #09090b;
+  background: var(--color-primary-hover);
+  border-color: var(--color-primary-hover);
 }
 
 .eve-text-fallback-row button:disabled {

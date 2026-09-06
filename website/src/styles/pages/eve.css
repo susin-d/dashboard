@@ -536,7 +536,7 @@
 }
 
 .eve-thought-header:hover {
-  background: rgba(255, 255, 255, 0.03);
+  background: color-mix(in srgb, var(--text-primary) 3%, transparent);
   color: var(--text-primary, #ffffff);
 }
 
@@ -562,7 +562,7 @@
   color: var(--text-secondary, #a1a1aa);
   font-size: 0.78rem;
   line-height: 1.5;
-  background: rgba(0, 0, 0, 0.15);
+  background: color-mix(in srgb, var(--text-primary) 15%, transparent);
   max-height: 280px;
   overflow-y: auto;
 }
@@ -2016,7 +2016,7 @@
   height: 74px;
   border-radius: 50%;
   background: var(--color-primary, #18181b);
-  color: var(--text-inverse, #ffffff);
+  color: var(--text-inverse);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2041,7 +2041,7 @@
 
 .eve-call-circle-stage.speaking .eve-call-orb-core {
   animation: eve-orb-speaking-pulse 0.85s ease-in-out infinite alternate;
-  box-shadow: 0 0 30px rgba(255, 255, 255, 0.25), 0 6px 24px rgba(0, 0, 0, 0.4);
+  box-shadow: var(--glow-primary), 0 6px 24px rgba(0, 0, 0, 0.4);
 }
 
 @keyframes eve-orb-speaking-pulse {
@@ -2050,7 +2050,7 @@
 }
 
 .eve-call-circle-stage.thinking .eve-call-orb-core {
-  box-shadow: 0 0 20px rgba(255, 255, 255, 0.2);
+  box-shadow: var(--glow-accent);
 }
 
 .eve-call-spin-icon {

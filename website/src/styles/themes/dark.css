@@ -73,6 +73,19 @@ html.dark-theme {
   --module-account: #94a3b8;
   --module-account-light: rgba(148, 163, 184, 0.16);
 
+  /* Palette overrides — single source lives in styles/tokens.css */
+  --nav-bg: rgba(12, 12, 14, 0.92);
+
+  --heat-1: #1e3a5f;
+  --heat-2: #3b82f6;
+  --heat-3: #3b82f6;
+  --heat-4: #60a5fa;
+  --heat-empty: #1e1e1e;
+  --heat-empty-border: #2a2a2a;
+
+  --tooltip-bg: #0a0a0a;
+  --tooltip-border: #2a2a2a;
+
   /* Glassmorphism — dark overrides */
   --glass-bg: rgba(18, 18, 18, 0.52);
   --glass-bg-card: rgba(14, 14, 14, 0.48);

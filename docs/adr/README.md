@@ -34,6 +34,7 @@
 | [0019](0019-multi-color-redesign-and-module-theming.md) | Multi-color redesign, module accent theming, and monochrome retirement | Accepted | 2026-09-06 |
 | [0020](0020-landing-cinematic-module-theming.md) | Landing cinematic module theming — ADR 0019 accents + light variant, full section theming | Accepted | 2026-09-06 |
 | [0021](0021-auth-cinematic-centered-card.md) | Auth cinematic centered card — shared AuthShell for login/signup/forgot-password | Accepted | 2026-09-06 |
+| [0022](0022-single-source-color-palette.md) | Single-source color palette in tokens.css — var() everywhere, dead legacy landing CSS removed | Accepted | 2026-09-06 |
 
 ## How to add a new ADR
 
