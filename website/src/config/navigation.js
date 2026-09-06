@@ -3,6 +3,7 @@ import {
   Bot,
   BriefcaseBusiness,
   CalendarDays,
+  ChartNoAxesCombined,
   Contact,
   Files,
   FolderKanban,
