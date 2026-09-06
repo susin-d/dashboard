@@ -2016,7 +2016,7 @@
   height: 74px;
   border-radius: 50%;
   background: var(--color-primary, #18181b);
-  color: var(--text-inverse);
+  color: var(--on-fill);
   display: flex;
   align-items: center;
   justify-content: center;

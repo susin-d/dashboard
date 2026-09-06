@@ -29,6 +29,45 @@ export function Hero({ onNavigate }) {
       <motion.div className="cinema-hero__glow" aria-hidden="true" style={reduce ? undefined : { y: ySlow }} />
       <motion.div className="cinema-hero__glow" aria-hidden="true" style={reduce ? undefined : { y: yFast, scale: 0.9, left: '72%' }} />
       <div className="cinema-hero__vignette" aria-hidden="true" />
+      <motion.div className="cinema-scenery" aria-hidden="true" style={reduce ? undefined : { y: yFast }}>
+        <svg viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice" focusable="false">
+          <defs>
+            <radialGradient id="cinema-planet-body" cx="38%" cy="34%" r="75%">
+              <stop offset="0%" className="cinema-svg-stop-surface" />
+              <stop offset="55%" className="cinema-svg-stop-card" />
+              <stop offset="100%" className="cinema-svg-stop-bg" />
+            </radialGradient>
+            <radialGradient id="cinema-planet-halo" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" className="cinema-svg-stop-halo" />
+              <stop offset="100%" stopColor="#000000" stopOpacity="0" />
+            </radialGradient>
+            <linearGradient id="cinema-ridge-fade" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" className="cinema-svg-stop-ridge" />
+              <stop offset="100%" className="cinema-svg-stop-bg" />
+            </linearGradient>
+          </defs>
+          <circle cx="1230" cy="235" r="205" fill="url(#cinema-planet-halo)" />
+          <circle cx="1230" cy="235" r="148" fill="url(#cinema-planet-body)" />
+          <circle cx="1230" cy="235" r="148" fill="none" className="cinema-svg-planet-rim" strokeWidth="3" />
+          <circle cx="1180" cy="200" r="22" className="cinema-svg-crater" />
+          <circle cx="1265" cy="280" r="14" className="cinema-svg-crater" />
+          <circle cx="1215" cy="305" r="9" className="cinema-svg-crater" />
+          <path
+            d="M0,820 L120,740 L260,790 L400,710 L560,800 L720,730 L900,810 L1080,740 L1240,800 L1440,750 L1440,900 L0,900 Z"
+            fill="url(#cinema-ridge-fade)"
+          />
+          <path
+            d="M0,870 L180,810 L360,860 L540,800 L760,870 L950,815 L1150,865 L1300,830 L1440,860 L1440,900 L0,900 Z"
+            className="cinema-svg-ridge-front"
+          />
+          <polyline
+            points="0,870 180,810 360,860 540,800 760,870 950,815 1150,865 1300,830 1440,860"
+            fill="none"
+            className="cinema-svg-ridge-rim"
+            strokeWidth="1.5"
+          />
+        </svg>
+      </motion.div>
 
       <motion.div
         className="cinema-hero__inner"
