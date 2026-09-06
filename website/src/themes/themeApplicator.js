@@ -229,6 +229,19 @@ export const COLOR_VARIABLE_GROUPS = [
       { key: '--color-purple', label: 'Special / Category Tag' },
     ],
   },
+  {
+    title: 'Domain & Module Accents',
+    variables: [
+      { key: '--module-work', label: 'Work & Projects Accent' },
+      { key: '--module-workspace', label: 'Workspace & Terminal Accent' },
+      { key: '--module-studio', label: 'Studio & Apps Accent' },
+      { key: '--module-eve', label: 'Eve AI Accent' },
+      { key: '--module-growth', label: 'Growth & Stats Accent' },
+      { key: '--module-whatsapp', label: 'WhatsApp Accent' },
+      { key: '--module-mail', label: 'Mail Accent' },
+      { key: '--module-calls', label: 'Voice & Calls Accent' },
+    ],
+  },
 ]
 
 export function applyThemeVariables(data) {

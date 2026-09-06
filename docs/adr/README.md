@@ -23,7 +23,7 @@
 | [0008](0008-oauth-deep-link-mobile-auth.md) | OAuth deep-link for native + mobile login layout | Accepted | 2026-08-31 |
 | [0009](0009-ui-ux-design-system-and-routing-hardening.md) | UI/UX design system and routing hardening (modal dedup, delete redirect, navigateWorkspace, LoadingState, CustomDropdown search, inline style cleanup) | Accepted | 2026-09-01 |
 | [0010](0010-glassmorphism-design-system.md) | Glassmorphism design system — frosted-glass tokens, background mesh, 12 surface categories, reduced-motion support | Accepted | 2026-09-01 |
-| [0011](0011-spectrum-color-role-system.md) | Spectrum color role system — per-element unique hue assignment replacing monochrome rule; light/dark/stone preserved | Accepted | 2026-09-01 |
+| [0011](0011-spectrum-color-role-system.md) | Spectrum color role system — per-element unique hue assignment replacing monochrome rule; light/dark/stone preserved | Superseded by 0019 | 2026-09-01 |
 | [0012](0012-eve-avatar-live2d-3d.md) | Eve Avatar — Live2D + 3D VRM dual renderer, global + inline, auto-theme, upload + examples | Accepted | 2026-09-01 |
 | [0013](0013-default-openrouter-free-and-ui-strict-fix.md) | Default to OpenRouter Free Router and fix UI tool strict schema | Accepted | 2026-09-01 |
 | [0014](0014-eve-provider-quota-fallback-and-streaming.md) | Eve provider quota fallback and streaming text animation | Accepted | 2026-09-01 |
@@ -31,6 +31,8 @@
 | [0016](0016-modular-avatar-engine-chunks.md) | Modular avatar engine chunks (three-core/vrm-loader/pixi/live2d); all chunks < 600 kB, zero build warnings | Accepted | 2026-09-04 |
 | [0017](0017-sub-100kb-shell-modals-keep-vendor-whole.md) | Sub-100 kB pass: defer shell modals (index 152→107 kB); vendor/icons stay whole with evidence | Accepted | 2026-09-04 |
 | [0018](0018-optimize-all-lucide-pixi-themes.md) | Optimize all: lucide 1.40 (icons 469→43 kB), single-pixi override, theme leaf (index →113 kB), drop drei/fiber | Accepted | 2026-09-04 |
+| [0019](0019-multi-color-redesign-and-module-theming.md) | Multi-color redesign, module accent theming, and monochrome retirement | Accepted | 2026-09-06 |
+| [0020](0020-landing-cinematic-module-theming.md) | Landing cinematic module theming — ADR 0019 accents + light variant, full section theming | Accepted | 2026-09-06 |
 
 ## How to add a new ADR
 

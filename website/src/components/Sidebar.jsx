@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react'
 import { PanelLeftClose, PanelLeftOpen, X } from 'lucide-react'
-import { navigationItems } from '../config/navigation'
+import { getGroupModuleKey, navigationItems } from '../config/navigation'
 import { StarWavesLogo } from './StarWavesLogo'
 
 export function Sidebar({
@@ -93,15 +93,16 @@ export function Sidebar({
 
         <nav aria-label="Main navigation">
           {navigationGroups.map((group) => (
-            <div className="sidebar-nav-group" key={group}>
+            <div className="sidebar-nav-group" key={group} data-group={getGroupModuleKey(group)}>
               <span className="sidebar-nav-group-label">{group}</span>
               {navigationItems
                 .filter((item) => item.group === group)
-                .map(({ id, label, icon: Icon }) => (
+                .map(({ id, label, icon: Icon, module: itemModule }) => (
                   <button
                     key={id}
                     ref={setItemRef(id)}
                     className={`nav-item ${activePage === id ? 'active' : ''}`}
+                    data-module={itemModule || id}
                     onClick={() => handleNavigate(id)}
                     onMouseEnter={(e) => handleMouseEnter(e, label)}
                     onMouseLeave={() => setHoveredItem(null)}

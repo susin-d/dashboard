@@ -12,10 +12,12 @@ export function useThemeCustomizer() {
     const saved = localStorage.getItem(STORAGE_KEY)
     if (saved) {
       try {
-        const parsed = JSON.parse(saved)
+        const isDark = localStorage.getItem('starwaves.theme') === 'dark'
+        const fallbackPreset = isDark ? 'dark' : 'light'
+        const activePreset = parsed.preset && THEME_PRESETS[parsed.preset] ? parsed.preset : fallbackPreset
         return {
-          preset: parsed.preset || 'custom',
-          colors: parsed.colors || THEME_PRESETS.dark.colors,
+          preset: activePreset,
+          colors: (parsed.preset === 'custom' && parsed.colors) ? parsed.colors : THEME_PRESETS[activePreset].colors,
           fontFamily: parsed.fontFamily || 'inter',
           radius: parsed.radius || 'modern',
           density: parsed.density || 'default',

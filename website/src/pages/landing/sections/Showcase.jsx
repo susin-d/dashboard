@@ -34,8 +34,8 @@ export function Showcase({ onNavigate }) {
     <section id="showcase" ref={outerRef} className="cinema-showcase" aria-labelledby="showcase-title" style={{ height: reduce ? 'auto' : '260vh' }}>
       <div className="cinema-showcase__sticky">
         <div className="cinema-showcase__bg" aria-hidden="true" />
-        <div className="cinema-showcase__inner">
-          <div style={{ textAlign: 'center' }}>
+        <div className="cinema-showcase__inner" style={{ '--cinema-scene': scene.color, '--cinema-scene-glow': `${scene.color}29` }}>
+          <div className="cinema-showcase__intro">
             <p className="cinema-eyebrow">The reel — product showcase</p>
             <h2 id="showcase-title" className="cinema-h2">
               Four scenes. One stage.
@@ -60,8 +60,8 @@ export function Showcase({ onNavigate }) {
 
           <div className="cinema-reel">
             <div className="cinema-reel__copy">
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, fontSize: 11, fontWeight: 850, letterSpacing: '0.08em', textTransform: 'uppercase', color: scene.color }}>
-                <span style={{ width: 8, height: 8, borderRadius: 999, background: scene.color, display: 'inline-block' }} aria-hidden="true" />
+              <span className="cinema-scene-label">
+                <span aria-hidden="true" />
                 Scene {String(active + 1).padStart(2, '0')} — {scene.label}
               </span>
               <h3>{scene.headline}</h3>
@@ -76,13 +76,13 @@ export function Showcase({ onNavigate }) {
                   </li>
                 ))}
               </ul>
-              <div style={{ marginTop: 6 }}>
+              <div className="cinema-reel__cta">
                 <button type="button" className="cinema-cta cinema-cta--primary cinema-cta--small" onClick={() => onNavigate('/signup')}>
                   Open {scene.label} <ArrowRight size={14} aria-hidden="true" />
                 </button>
               </div>
               {!reduce && (
-                <div className="cinema-progress" aria-hidden="true" style={{ marginTop: 10 }}>
+                <div className="cinema-progress cinema-progress--spaced" aria-hidden="true">
                   <motion.i style={{ width: progressWidth }} />
                 </div>
               )}
@@ -104,7 +104,7 @@ export function Showcase({ onNavigate }) {
                         <strong>Today • 4 events</strong>
                         <span>2 tasks • 1 contest • 1 interview</span>
                       </div>
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                      <div className="cinema-art__split">
                         <div className="cinema-mini">
                           <strong>78% sprint</strong>
                           <span>12 active tasks</span>
@@ -114,7 +114,7 @@ export function Showcase({ onNavigate }) {
                           <span>Codeforces +42</span>
                         </div>
                       </div>
-                      <div className="cinema-mini" style={{ background: 'linear-gradient(135deg, rgba(124,92,255,0.18), rgba(6,182,214,0.12))' }}>
+                      <div className="cinema-mini cinema-mini--palette">
                         <strong>Command palette ⌘K</strong>
                         <span>22 pages + deep settings + Eve tools</span>
                       </div>
@@ -126,8 +126,8 @@ export function Showcase({ onNavigate }) {
                         <strong>Explorer — starwaves/</strong>
                         <span>src/ • app.js • eve/ • sql/ — 42 files</span>
                       </div>
-                      <div className="cinema-mini" style={{ fontFamily: 'ui-monospace, monospace', fontSize: 12 }}>
-                        <strong style={{ fontFamily: 'inherit' }}>monaco editor</strong>
+                      <div className="cinema-mini cinema-mini--mono">
+                        <strong>monaco editor</strong>
                         <span>// Eve just wrote this file via tool call</span>
                       </div>
                       <div className="cinema-mini">
@@ -138,11 +138,11 @@ export function Showcase({ onNavigate }) {
                   )}
                   {scene.id === 'calendar' && (
                     <>
-                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 6 }}>
+                      <div className="cinema-week">
                         {['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((d, k) => (
-                          <div key={`${d}-${k}`} className="cinema-mini" style={{ textAlign: 'center', padding: 10, background: k === 2 ? '#fff' : undefined, color: k === 2 ? '#0A0A0A' : undefined }}>
-                            <strong style={{ color: 'inherit' }}>{d}</strong>
-                            <span style={{ color: k === 2 ? '#475569' : undefined }}>{20 + k}</span>
+                          <div key={`${d}-${k}`} className={`cinema-mini cinema-mini--day${k === 2 ? ' cinema-mini--active-day' : ''}`}>
+                            <strong>{d}</strong>
+                            <span>{20 + k}</span>
                           </div>
                         ))}
                       </div>
@@ -162,7 +162,7 @@ export function Showcase({ onNavigate }) {
                         <strong>you → eve</strong>
                         <span>“Review my pipeline and call me Mon 9am if I miss it”</span>
                       </div>
-                      <div className="cinema-mini" style={{ background: 'linear-gradient(135deg, rgba(124,92,255,0.22), rgba(225,29,72,0.14))' }}>
+                      <div className="cinema-mini cinema-mini--eve">
                         <strong>eve → schedule created</strong>
                         <span>cron 0 9 * * 1 • action: call • saved + notified</span>
                       </div>
@@ -177,7 +177,7 @@ export function Showcase({ onNavigate }) {
             </div>
           </div>
 
-          {reduce && <p style={{ textAlign: 'center', color: '#64748B', fontSize: 11, margin: 0 }}>Tap a scene above to switch (reduced motion)</p>}
+          {reduce && <p className="cinema-reduced-note">Tap a scene above to switch (reduced motion)</p>}
         </div>
       </div>
     </section>

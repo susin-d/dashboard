@@ -214,7 +214,9 @@ export function Header({
             {navigationExpanded ? <PanelLeftClose size={18} /> : <PanelLeftOpen size={18} />}
           </button>
           <div className="topbar-breadcrumb">
-            <span className="breadcrumb-current" aria-current="page">{currentNav.label}</span>
+            <span className="breadcrumb-group">{currentNav.group}</span>
+            <span className="breadcrumb-sep">/</span>
+            <span className="breadcrumb-current" data-module={currentNav.module || 'work'} aria-current="page">{currentNav.label}</span>
           </div>
         </div>
 

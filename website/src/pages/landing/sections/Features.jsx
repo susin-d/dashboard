@@ -19,14 +19,14 @@ export function Features() {
         {features.map((f, i) => (
           <motion.article
             key={f.title}
-            className="cinema-feat"
+            className={`cinema-feat cinema-feat--${f.tone ?? 'work'}`}
             initial={reduce ? false : { opacity: 0, y: 16, filter: 'blur(6px)' }}
             whileInView={reduce ? undefined : { opacity: 1, y: 0, filter: 'blur(0px)' }}
             viewport={{ once: true, margin: '-60px' }}
             transition={reduce ? {} : { duration: 0.5, delay: i * 0.04, ease: [0.16, 1, 0.3, 1] }}
             whileHover={reduce ? undefined : { y: -2 }}
           >
-            <div className="cinema-feat__icon" style={{ background: f.tint }} aria-hidden="true">
+            <div className="cinema-feat__icon" aria-hidden="true">
               <f.icon size={18} />
             </div>
             <h3>{f.title}</h3>

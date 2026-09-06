@@ -92,7 +92,11 @@ function RecordList({ items, empty = 'Nothing to show.', onNavigate, onOpenNotif
 function WidgetCard({ definition, editing, children, total, onOpen }) {
   const Icon = definition.icon
   return (
-    <article className={`dashboard-widget ${editing ? 'is-editing' : ''}`}>
+    <article
+      className={`dashboard-widget ${editing ? 'is-editing' : ''}`}
+      data-widget={definition.id}
+      data-module={definition.module || 'work'}
+    >
       <header className="dashboard-widget-header dashboard-widget-drag-handle">
         <span className="dashboard-widget-icon"><Icon size={17} /></span>
         <div>

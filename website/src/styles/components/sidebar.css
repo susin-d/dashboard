@@ -247,10 +247,44 @@ nav {
   display: none;
 }
 
+/* Dynamic Module Accent Mappings */
+.nav-item {
+  --nav-accent: var(--color-primary);
+  --nav-accent-light: var(--color-primary-light);
+}
+
+.nav-item[data-module="work"] { --nav-accent: var(--module-work); --nav-accent-light: var(--module-work-light); }
+.nav-item[data-module="todo"] { --nav-accent: var(--module-todo); --nav-accent-light: var(--module-todo-light); }
+.nav-item[data-module="projects"] { --nav-accent: var(--module-projects); --nav-accent-light: var(--module-projects-light); }
+.nav-item[data-module="documents"] { --nav-accent: var(--module-documents); --nav-accent-light: var(--module-documents-light); }
+.nav-item[data-module="workspace"] { --nav-accent: var(--module-workspace); --nav-accent-light: var(--module-workspace-light); }
+.nav-item[data-module="studio"] { --nav-accent: var(--module-studio); --nav-accent-light: var(--module-studio-light); }
+.nav-item[data-module="eve"] { --nav-accent: var(--module-eve); --nav-accent-light: var(--module-eve-light); }
+.nav-item[data-module="growth"] { --nav-accent: var(--module-growth); --nav-accent-light: var(--module-growth-light); }
+.nav-item[data-module="calendar"] { --nav-accent: var(--module-calendar); --nav-accent-light: var(--module-calendar-light); }
+.nav-item[data-module="mail"] { --nav-accent: var(--module-mail); --nav-accent-light: var(--module-mail-light); }
+.nav-item[data-module="whatsapp"] { --nav-accent: var(--module-whatsapp); --nav-accent-light: var(--module-whatsapp-light); }
+.nav-item[data-module="chats"] { --nav-accent: var(--module-chats); --nav-accent-light: var(--module-chats-light); }
+.nav-item[data-module="calls"] { --nav-accent: var(--module-calls); --nav-accent-light: var(--module-calls-light); }
+.nav-item[data-module="contacts"] { --nav-accent: var(--module-account); --nav-accent-light: var(--module-account-light); }
+.nav-item[data-module="account"] { --nav-accent: var(--module-account); --nav-accent-light: var(--module-account-light); }
+
+/* Thematic group headers */
+.sidebar-nav-group[data-group="work"] .sidebar-nav-group-label { color: var(--module-work); }
+.sidebar-nav-group[data-group="studio"] .sidebar-nav-group-label { color: var(--module-studio); }
+.sidebar-nav-group[data-group="eve"] .sidebar-nav-group-label { color: var(--module-eve); }
+.sidebar-nav-group[data-group="growth"] .sidebar-nav-group-label { color: var(--module-growth); }
+.sidebar-nav-group[data-group="comm"] .sidebar-nav-group-label { color: var(--module-comm); }
+.sidebar-nav-group[data-group="account"] .sidebar-nav-group-label { color: var(--module-account); }
+
 .nav-item:hover {
   color: var(--text-primary);
-  background: var(--bg-tertiary);
+  background: var(--nav-accent-light);
   transform: translateX(2px);
+}
+
+.nav-item:hover svg {
+  color: var(--nav-accent);
 }
 
 .sidebar:not(.expanded) .nav-item:hover {
@@ -258,17 +292,19 @@ nav {
 }
 
 .nav-item.active {
-  color: var(--text-inverse);
-  background: var(--color-primary);
+  color: #ffffff;
+  background: var(--nav-accent);
+  box-shadow: 0 4px 14px color-mix(in srgb, var(--nav-accent) 35%, transparent);
 }
 
 .nav-item.active:hover {
-  color: var(--text-inverse);
-  background: var(--color-primary);
+  color: #ffffff;
+  background: var(--nav-accent);
   transform: none;
 }
 
 .nav-item.active svg {
+  color: #ffffff;
   transform: scale(1.05);
 }
 

@@ -21,8 +21,8 @@ export function Workflow() {
   return (
     <section id="workflow" ref={outerRef} className="cinema-workflow" aria-labelledby="workflow-title" style={{ height: reduce ? 'auto' : '220vh' }}>
       <div className="cinema-workflow__sticky">
-        <div className="cinema-workflow__inner">
-          <div style={{ textAlign: 'center', maxWidth: 720, margin: '0 auto' }}>
+          <div className="cinema-workflow__inner">
+          <div className="cinema-workflow__intro">
             <p className="cinema-eyebrow">The process — pinned timeline</p>
             <h2 id="workflow-title" className="cinema-h2">
               From scattered tabs
@@ -42,7 +42,7 @@ export function Workflow() {
             {workflow.map((s, i) => (
               <motion.article
                 key={s.step}
-                className={`cinema-step ${active === i ? 'is-active' : ''}`}
+                className={`cinema-step cinema-step--${s.tone ?? 'work'} ${active === i ? 'is-active' : ''}`}
                 initial={reduce ? false : { opacity: 0, y: 12 }}
                 whileInView={reduce ? undefined : { opacity: 1, y: 0 }}
                 viewport={{ once: true, margin: '-60px' }}
@@ -51,20 +51,7 @@ export function Workflow() {
                 <span className="cinema-step__num" aria-hidden="true">
                   {s.step}
                 </span>
-                <div
-                  style={{
-                    width: 36,
-                    height: 36,
-                    borderRadius: 8,
-                    display: 'grid',
-                    placeItems: 'center',
-                    background: '#FFFFFF',
-                    color: '#000000',
-                    border: '1px solid #FFFFFF',
-                    marginBottom: 10,
-                  }}
-                  aria-hidden="true"
-                >
+                <div className="cinema-step__icon" aria-hidden="true">
                   <s.icon size={18} />
                 </div>
                 <h3>{s.title}</h3>
@@ -73,7 +60,7 @@ export function Workflow() {
             ))}
           </div>
 
-          {reduce && <p style={{ textAlign: 'center', color: '#64748B', fontSize: 11, margin: 0 }}>All three steps visible — reduced motion</p>}
+          {reduce && <p className="cinema-reduced-note">All three steps visible — reduced motion</p>}
         </div>
       </div>
     </section>

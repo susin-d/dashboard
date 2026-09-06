@@ -30,15 +30,7 @@ export function LandingPage({ user, onNavigate }) {
         {curtain && (
           <motion.div
             aria-hidden="true"
-              style={{
-              position: 'fixed',
-              inset: 0,
-              zIndex: 80,
-              display: 'grid',
-              placeItems: 'center',
-              background: '#000000',
-              color: '#fff',
-            }}
+            className="cinema-curtain"
             initial={{ y: 0 }}
             exit={{ y: '-100%', transition: { duration: 0.7, ease: [0.76, 0, 0.24, 1] } }}
           >
@@ -46,27 +38,13 @@ export function LandingPage({ user, onNavigate }) {
               initial={{ opacity: 0, scale: 0.98, filter: 'blur(8px)' }}
               animate={{ opacity: 1, scale: 1, filter: 'blur(0px)' }}
               transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-              style={{ textAlign: 'center', display: 'grid', gap: 12, justifyItems: 'center' }}
+              className="cinema-curtain__inner"
             >
-              <span
-                style={{
-                  width: 52,
-                  height: 52,
-                  borderRadius: 10,
-                  display: 'grid',
-                  placeItems: 'center',
-                  background: '#FFFFFF',
-                  color: '#000000',
-                  border: '1px solid #FFFFFF',
-                  fontWeight: 950,
-                  fontSize: 22,
-                  letterSpacing: '-0.04em',
-                }}
-              >
+              <span className="cinema-curtain__mark" aria-hidden="true">
                 S
               </span>
-              <span style={{ fontWeight: 900, letterSpacing: '-0.04em', fontSize: 16, color: '#CBD5E1' }}>STARWAVES</span>
-              <span style={{ fontSize: 10, fontWeight: 850, letterSpacing: '0.18em', textTransform: 'uppercase', color: '#64748B' }}>Feature presentation</span>
+              <span className="cinema-curtain__word">STARWAVES</span>
+              <span className="cinema-curtain__sub">Feature presentation</span>
             </motion.div>
           </motion.div>
         )}

@@ -6,18 +6,63 @@
   border-radius: var(--radius-xl);
   background: var(--bg-card);
   box-shadow: var(--shadow-surface), var(--shadow-inset);
-  transition: box-shadow var(--transition-normal), border-color var(--transition-normal);
+  transition: box-shadow var(--transition-normal), border-color var(--transition-normal), transform var(--transition-normal);
 }
 
-/* Icon wrapper */
+.metric-card:hover {
+  border-color: var(--border-heavy);
+  box-shadow: var(--shadow-lifted), var(--shadow-inset);
+  transform: translateY(-2px);
+}
+
+/* Icon wrapper — vibrant jewel-toned badge with subtle glow */
 .metric-card > span {
   display: grid;
-  width: 38px;
-  height: 38px;
+  width: 40px;
+  height: 40px;
   place-items: center;
-  border-radius: 11px;
-  background: var(--color-primary);
-  color: var(--text-inverse);
+  border-radius: var(--radius-md);
+  background: var(--color-primary-light);
+  color: var(--color-primary);
+  border: 1px solid color-mix(in srgb, var(--color-primary) 24%, transparent);
+  box-shadow: 0 2px 10px color-mix(in srgb, var(--color-primary) 18%, transparent);
+  transition: transform var(--transition-fast), background var(--transition-fast), color var(--transition-fast);
+}
+
+.metric-card:hover > span {
+  transform: scale(1.08);
+}
+
+/* Cycling color variants for multi-metric grids */
+.metric-card:nth-child(2) > span,
+.metric-card.metric-accent > span {
+  background: var(--color-accent-light);
+  color: var(--color-accent);
+  border-color: color-mix(in srgb, var(--color-accent) 24%, transparent);
+  box-shadow: 0 2px 10px color-mix(in srgb, var(--color-accent) 18%, transparent);
+}
+
+.metric-card:nth-child(3) > span,
+.metric-card.metric-success > span {
+  background: var(--color-success-light);
+  color: var(--color-success);
+  border-color: color-mix(in srgb, var(--color-success) 24%, transparent);
+  box-shadow: 0 2px 10px color-mix(in srgb, var(--color-success) 18%, transparent);
+}
+
+.metric-card:nth-child(4) > span,
+.metric-card.metric-warning > span {
+  background: var(--color-warning-light);
+  color: var(--color-warning);
+  border-color: color-mix(in srgb, var(--color-warning) 24%, transparent);
+  box-shadow: 0 2px 10px color-mix(in srgb, var(--color-warning) 18%, transparent);
+}
+
+.metric-card.metric-purple > span {
+  background: var(--color-purple-light);
+  color: var(--color-purple);
+  border-color: color-mix(in srgb, var(--color-purple) 24%, transparent);
+  box-shadow: 0 2px 10px color-mix(in srgb, var(--color-purple) 18%, transparent);
 }
 
 /* Label */

@@ -2,6 +2,9 @@
 
 Historical implementation log extracted from `context.md`. `context.md` now holds the **current snapshot** only; this file preserves the full chronological history for audit.
 
+## 2026-09-06 — Multi-color redesign: module accent theming, vibrant semantic tokens, monochrome retirement (ADR 0019)
+- Base light/dark themes default to Electric Indigo primary + Sky/Emerald/Amber/Rose/Purple semantics; `PALETTE_GROUPS` restructured to spectrum + vibrant duo; Sidebar/Dashboard/Badge module accent coding.
+
 ## 2026-09-04 — Neutral Gray mono theme preset
 - `website/src/styles/themes/gray.css` + `presets.js`: balanced true-neutral gray theme with pure grayscale surfaces (26 presets total).
 

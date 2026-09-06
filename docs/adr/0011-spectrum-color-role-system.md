@@ -1,6 +1,6 @@
 # ADR 0011: Spectrum Color Role System (Supersedes Strict Monochrome Rule)
 
-- **Status**: Accepted
+- **Status**: Superseded by [ADR 0019](./0019-multi-color-redesign-and-module-theming.md)
 - **Date**: 2026-09-01
 - **Deciders**: Starwaves Core Team
 

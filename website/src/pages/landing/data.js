@@ -31,21 +31,21 @@ export const manifesto = [
     title: 'One calm surface\nfor everything',
     body: 'Tasks, calendars, contests, hackathons, jobs, projects, docs, mail and chat — stitched into a single sharp black canvas so you never lose the thread.',
     icon: Layers,
-    accent: 'mono',
+    accent: 'work',
   },
   {
     kicker: 'Act II — Accelerate',
     title: 'Velocity without\nthe noise',
     body: 'Monaco workspace, modular dashboard, live contest radar and pipeline tracking. Built for deep work, not dashboards that shout.',
     icon: Orbit,
-    accent: 'mono',
+    accent: 'studio',
   },
   {
     kicker: 'Act III — Remember',
     title: 'An assistant that\nlives in your work',
     body: 'Eve reads your files, remembers every decision, browses the web, manages WhatsApp and calls you when it matters.',
     icon: Brain,
-    accent: 'mono',
+    accent: 'eve',
   },
 ]
 
@@ -57,7 +57,7 @@ export const showcaseScenes = [
     headline: 'Your command center',
     copy: 'Drag, resize, curate. Presets for builder, competitor and job-seeker archetypes — all in one live grid.',
     bullets: ['12 widget types', 'Grid memory per user', 'Keyboard command palette'],
-    color: '#FFFFFF',
+    color: '#6366f1',
   },
   {
     id: 'workspace',
@@ -66,7 +66,7 @@ export const showcaseScenes = [
     headline: 'A real editor, inside',
     copy: 'Monaco, file tree, search, breadcrumbs and Eve file tools. No mock IDE — the actual one.',
     bullets: ['Monaco Editor + minimap', 'File sync to projects', 'Eve writes & reads files'],
-    color: '#FFFFFF',
+    color: '#fbbf24',
   },
   {
     id: 'calendar',
@@ -75,7 +75,7 @@ export const showcaseScenes = [
     headline: 'One timeline to rule them',
     copy: 'Tasks, Google Calendar, contest dates, interviews and hackathons merged into an ICS-aware unified calendar.',
     bullets: ['Google sync + ICS import', 'Reminder engine', 'Contest auto-feed'],
-    color: '#FFFFFF',
+    color: '#38bdf8',
   },
   {
     id: 'eve',
@@ -84,7 +84,7 @@ export const showcaseScenes = [
     headline: 'Chat. Voice. Memory.',
     copy: 'Six providers, streaming replies, persistent sessions and semantic memory via pgvector.',
     bullets: ['Sessions + vector recall', 'Voice calls with captions', 'Cron schedules'],
-    color: '#FFFFFF',
+    color: '#f43f5e',
   },
 ]
 
@@ -94,30 +94,33 @@ export const eveCapabilities = [
     title: 'Conversational memory',
     desc: 'OpenAI, Anthropic, Gemini and OpenRouter via one tool loop. Sessions persist, memories are embedded with pgvector and surfaced when relevant.',
     points: ['Tool-aware workspace search', 'Web browsing built-in', 'Auto-remember key facts'],
+    tone: 'eve',
   },
   {
     icon: PhoneCall,
     title: 'Voice that calls you',
     desc: 'Bidirectional WebRTC calls. Browser STT/TTS or server Groq Whisper + Google TTS. Live captions, echo guard and a pulse visualizer.',
     points: ['Hold-to-talk + transcripts', 'Eve can trigger calls', 'Waveform + captions'],
+    tone: 'voice',
   },
   {
     icon: CalendarDays,
     title: 'Schedules that run alone',
     desc: 'One-time and cron prompts or voice calls — executed by Vercel cron every 15 minutes even when you are away.',
     points: ['Cron + one-time', 'Prompt or call', 'Schedule via chat'],
+    tone: 'schedule',
   },
 ]
 
 export const features = [
-  { icon: CheckCircle2, title: 'Tasks', desc: 'Priorities, filters and focus modes that stay out of your way.', tint: '#FFFFFF' },
-  { icon: CalendarDays, title: 'Unified Calendar', desc: 'Merged Google, ICS and contest timelines with reminders.', tint: '#FFFFFF' },
-  { icon: Code2, title: 'Competitive Hub', desc: 'Codeforces, LeetCode, CodeChef ratings and upcoming rounds.', tint: '#FFFFFF' },
-  { icon: FolderKanban, title: 'Projects', desc: 'Lifecycle phases idea → maintain with tech stacks and links.', tint: '#FFFFFF' },
-  { icon: Rocket, title: 'Jobs & Hackathons', desc: 'Pipelines for applications, interviews, submissions and docs.', tint: '#FFFFFF' },
-  { icon: LayoutDashboard, title: 'Dashboard', desc: 'Reorderable grid with live widgets for your current mode.', tint: '#FFFFFF' },
-  { icon: FileText, title: 'Documents', desc: 'Project-linked docs with Monaco preview and Drive import.', tint: '#FFFFFF' },
-  { icon: MessageCircle, title: 'Mail & Chat', desc: 'Gmail tabs, WhatsApp bridge and persistent chats.', tint: '#FFFFFF' },
+  { icon: CheckCircle2, title: 'Tasks', desc: 'Priorities, filters and focus modes that stay out of your way.', tone: 'todo' },
+  { icon: CalendarDays, title: 'Unified Calendar', desc: 'Merged Google, ICS and contest timelines with reminders.', tone: 'calendar' },
+  { icon: Code2, title: 'Competitive Hub', desc: 'Codeforces, LeetCode, CodeChef ratings and upcoming rounds.', tone: 'growth' },
+  { icon: FolderKanban, title: 'Projects', desc: 'Lifecycle phases idea → maintain with tech stacks and links.', tone: 'projects' },
+  { icon: Rocket, title: 'Jobs & Hackathons', desc: 'Pipelines for applications, interviews, submissions and docs.', tone: 'growth' },
+  { icon: LayoutDashboard, title: 'Dashboard', desc: 'Reorderable grid with live widgets for your current mode.', tone: 'work' },
+  { icon: FileText, title: 'Documents', desc: 'Project-linked docs with Monaco preview and Drive import.', tone: 'documents' },
+  { icon: MessageCircle, title: 'Mail & Chat', desc: 'Gmail tabs, WhatsApp bridge and persistent chats.', tone: 'mail' },
 ]
 
 export const workflow = [
@@ -126,18 +129,21 @@ export const workflow = [
     title: 'Land & connect',
     text: 'Create account, link Google, import ICS, add coding handles. Your sources pour into one timeline in under a minute.',
     icon: ShieldCheck,
+    tone: 'work',
   },
   {
     step: '02',
     title: 'Shape your stage',
     text: 'Arrange the modular dashboard, pick a theme, spin up a workspace folder. Eve learns your context as you work.',
     icon: Layers,
+    tone: 'studio',
   },
   {
     step: '03',
     title: 'Move at will',
     text: 'Eve remembers, reminds and calls. You stay in flow — no tab cemetery, no scattered state.',
     icon: Zap,
+    tone: 'eve',
   },
 ]
 

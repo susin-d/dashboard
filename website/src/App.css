@@ -27,6 +27,7 @@
 @import './styles/components/pagination.css';
 @import './styles/components/filter-bar.css';
 @import './styles/components/alerts.css';
+@import './styles/components/badge.css';
 @import './styles/components/filter-pills.css';
 @import './styles/components/loading-state.css';
 

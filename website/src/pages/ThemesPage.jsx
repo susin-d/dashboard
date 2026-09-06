@@ -136,7 +136,7 @@ export function ThemesPage() {
       <div className="themes-section">
         <SectionHeading
           title="1. Theme Presets"
-          description="Curated presets grouped by palette — Monochrome, vibrant Two-Color duotones, and multi-hue Spectrum themes with unique per-role colors."
+          description="Curated color presets — vibrant multi-color Spectrum themes with distinct semantic roles, and high-contrast energetic Duotones."
         />
         {PALETTE_GROUPS.map((group) => {
           const presets = getPresetsByPalette(group.id)
@@ -155,6 +155,13 @@ export function ThemesPage() {
                   const cardBg = preset.colors['--bg-card'] || '#1e1e1e'
                   const primaryColor = preset.colors['--color-primary'] || '#ffffff'
                   const textColor = preset.colors['--text-primary'] || '#ffffff'
+                  const roleTokens = [
+                    '--color-primary',
+                    '--color-accent',
+                    '--color-success',
+                    '--color-warning',
+                    '--color-danger',
+                  ]
 
                   return (
                     <button
@@ -178,6 +185,19 @@ export function ThemesPage() {
                           <span className="preset-mini-text" style={{ color: textColor }}>
                             {preset.name}
                           </span>
+                        </div>
+                        <div className="preset-mini-swatches">
+                          {roleTokens.map((tokenKey) => {
+                            const c = preset.colors[tokenKey]
+                            return c ? (
+                              <span
+                                key={tokenKey}
+                                className="preset-mini-swatch"
+                                style={{ backgroundColor: c }}
+                                title={tokenKey}
+                              />
+                            ) : null
+                          })}
                         </div>
                       </div>
                       <div className="preset-info">

@@ -73,7 +73,7 @@ Instructions and guidelines for AI Coding Agents working in the **Starwaves** co
 
 9. **No Easy Fixes / Temp Fixes / Shortcuts — Fix the Root Cause**:
    - **PROHIBITED:** `// temp fix`, `// quick fix`, `// hack`, `// workaround`, `// FIXME later`, `setTimeout` hacks to paper over race conditions, suppressing errors (`try { } catch {}` with empty catch, `// @ts-ignore`, `eslint-disable` without justification), commenting out failing code/tests to make CI pass, hardcoding values to bypass validation, or adding `!important` / inline styles to override layout bugs.
-   - Every fix must address the **root cause** at the correct layer (Routes → Services → Repositories → Core per §5.2; or tokens → base → components → pages per §4.6.2). If the proper fix is larger, split it correctly, add an ADR if architectural (§1.7), and fix it — do not ship a shortcut.
+   - Every fix must address the **root cause** at the correct layer (Routes → Services → Repositories → Core per §5.2; or tokens → base → components → pages per §4.6.1). If the proper fix is larger, split it correctly, add an ADR if architectural (§1.7), and fix it — do not ship a shortcut.
    - If a temporary mitigation is unavoidable (e.g. upstream outage), it must be: (a) behind an explicit flag/env, (b) tracked with a TODO that links to an issue, and (c) approved by the user — never silent.
    - Review checklist before commit: `Grep` for `temp fix|easy fix|quick fix|hack|workaround|TODO.*temp` must be clean; failing tests must be fixed, not skipped or commented out.
 
@@ -405,32 +405,29 @@ website/src/
 
 ### 4.6 CSS & Design System
 
-#### 4.6.1 Color Palette — Monochrome, Duotone & Spectrum Color System
+#### 4.6.1 Color System — Multi-Color Semantic Tokens & Module Accents (ADR 0019)
 
-The design system supports three palette modes: **Monochrome**, **Duotone**, and **Spectrum** (25 presets in `src/themes/presets.js`, ADR 0011):
+The design system uses a **vibrant multi-color architecture** with domain-specific accent coding. Pure monochrome presets are retired:
 
-1. **Monochrome (`mono`)**: Pure black, white, and gray scales (e.g. `light`, `dark`, `oled`, `stone`…). State indicators and accents stay within neutral tonal values.
-2. **Duotone (`duo`)**: Pairs a neutral canvas with **exactly one** curated accent hue (e.g. `abyss`, `ember`, `aurum`…).
-3. **Spectrum (`spectrum`)**: Uses a **per-element / per-role unique color rule**. Each functional element/role owns its own distinct hue on screen:
-   - `--color-primary`: Primary action button / main active element
-   - `--color-accent`: Secondary highlight / navigation indicator / link
-   - `--color-success`: Success indicator / tag
-   - `--color-warning`: Warning indicator / tag
-   - `--color-danger`: Destructive action / error tag
-   - `--color-purple`: Special category badge / AI marker
-   - `--scrollbar-thumb`: Scrollbar tracking accent
-   **Rule for Spectrum themes**: No color is used more than once across distinct semantic roles on screen; only one element/role can have that color. Canvas, cards, text, and base borders remain high-contrast neutrals.
+1. **Semantic Role Tokens**:
+   - `--color-primary`: Electric Indigo (`#4f46e5` light / `#6366f1` dark)
+   - `--color-accent`: Sky Blue (`#0284c7` light / `#38bdf8` dark)
+   - `--color-success`: Emerald Green (`#059669` light / `#10b981` dark)
+   - `--color-warning`: Amber (`#d97706` light / `#f59e0b` dark)
+   - `--color-danger`: Crimson Rose (`#e11d48` light / `#f43f5e` dark)
+   - `--color-purple`: Royal Purple (`#9333ea` light / `#a855f7` dark)
 
-| Role | Allowed Values |
-|------|---------------|
-| Pure/Dark Black | `#000000`, `#09090b`, `#121212`, `#18181b` |
-| Pure/Off White | `#ffffff`, `#fafafa`, `#f4f4f5` |
-| Grayscale Accents / Borders | `#27272a`, `#3f3f46`, `#71717a`, `#e4e4e7` |
-| Core Preserved Mono Themes | `light` (Default Light), `dark` (Default Dark), `stone` (Stone Grey) |
-| Curated Duotone Accents | One accent per duo preset from `presets.js` |
-| Spectrum Semantic Hues | Unique, non-repeating hue per semantic token in spectrum presets (`prism`, `neonGrid`, `botanical`) |
+2. **Domain & Module Accent Identities**:
+   - **Work Group**: `--module-work` (Electric Indigo) with specialized feature accents (`--module-workspace` Amber, `--module-todo` Cyan, `--module-projects` Cobalt, `--module-documents` Sky Blue).
+   - **Studio Group**: `--module-studio` (Vivid Violet).
+   - **Eve AI Group**: `--module-eve` (Luminous Iris/Pink).
+   - **Growth Group**: `--module-growth` (Energetic Emerald).
+   - **Communication Group**: App-specific signatures (`--module-whatsapp` Brand Green, `--module-mail` Rose Red, `--module-calendar` Sky Blue, `--module-calls` Purple, `--module-chats` Indigo).
+   - **Account Group**: `--module-account` (Slate Indigo).
 
-**PROHIBITED**: Arbitrary unconstrained rainbow styling or sharing identical non-neutral accent hues across different semantic roles in Spectrum themes. Core monochrome themes (`light`, `dark`, `stone`) must remain unaltered.
+3. **Preset Palettes**:
+   - **Spectrum (`spectrum`)**: Multi-Color Spectrum where every semantic role owns a distinct hue (`light`, `dark`, `prism`, `neonGrid`, `botanical`).
+   - **Duotone (`duo`)**: High-contrast two-color themes pairing a neutral canvas with one high-energy signature accent (`abyss`, `ember`, `coral`, `azure`, etc.).
 
 #### 4.6.2 CSS Architecture
 
@@ -467,7 +464,7 @@ The design system supports three palette modes: **Monochrome**, **Duotone**, and
 6. **Dark Mode**: Use CSS custom properties defined per theme. Dark overrides
    live in `styles/themes/dark.css`. Never branch in JS to apply dark styles.
 
-#### 4.6.3 Full-Page Layout — Never Cut Off Content
+#### 4.6.2 Full-Page Layout — Never Cut Off Content
 
 - Every page must render as a **complete, full-height layout** where all content
   is fully visible and accessible — no clipped, truncated, or cut-off sections.
@@ -481,7 +478,7 @@ The design system supports three palette modes: **Monochrome**, **Duotone**, and
 - Before declaring a UI task complete, visually confirm that the entire page
   renders without truncation.
 
-#### 4.6.4 Responsive Design
+#### 4.6.3 Responsive Design
 
 - Use the breakpoints and patterns established in `responsive.css`.
 - Mobile-first approach: base styles target mobile, `@media` queries add
@@ -841,7 +838,6 @@ Never declare success without running build/lint/test tools to verify correctnes
 - [ ] Frontend uses existing UI primitives
 - [ ] API client uses `apiRequest()` from `request.js`
 - [ ] CSS uses design tokens, not raw values
-- [ ] Colors adhere to theme presets (Monochrome / Duotone / Spectrum single-color-per-role rule per ADR 0011; light/dark/stone preserved)
 - [ ] Tests added for new backend logic
 - [ ] `context.md` updated with new routes/pages/features
 - [ ] ADR created if architecture/pattern/schema/auth/cache decision (commit with code)

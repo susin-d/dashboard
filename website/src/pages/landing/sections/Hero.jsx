@@ -39,8 +39,8 @@ export function Hero({ onNavigate }) {
       >
         <motion.div variants={reduce ? undefined : item} className="cinema-kicker" aria-label="Live workspace">
           <i aria-hidden="true" />
-          Live workspace • Linear sharp
-          <Sparkles size={12} aria-hidden="true" style={{ opacity: 0.9 }} />
+          Live workspace • Work indigo
+          <Sparkles size={12} aria-hidden="true" className="cinema-kicker__spark" />
         </motion.div>
 
         <motion.h1 id="hero-title" className="cinema-title" variants={reduce ? undefined : item}>
@@ -51,7 +51,7 @@ export function Hero({ onNavigate }) {
 
         <motion.p className="cinema-sub" variants={reduce ? undefined : item}>
           StarWaves brings <strong>tasks, calendars, coding contests, hackathons, projects, jobs, documents, mail, WhatsApp</strong> and{' '}
-          <strong>Eve AI</strong> into one dark, cinematic workspace — so flow never breaks.
+          <strong>Eve AI</strong> into one cinematic workspace — Work, Studio and Eve each lit in their own color, so flow never breaks.
         </motion.p>
 
         <motion.div className="cinema-hero__ctas" variants={reduce ? undefined : item}>
@@ -87,7 +87,7 @@ export function Hero({ onNavigate }) {
                 <i />
               </span>
               <span>starwaves.app — command center • Live</span>
-              <span style={{ color: '#22C55E', fontWeight: 800 }}>● synced</span>
+              <span className="cinema-frame__live">● synced</span>
             </div>
             <div className="cinema-frame__body">
               <div className="cinema-kpis">
@@ -96,12 +96,12 @@ export function Hero({ onNavigate }) {
                   <strong>5 open • 2 done</strong>
                   <span>Next up: Codeforces 14:35 UTC</span>
                 </div>
-                <div className="cinema-kpi">
+                <div className="cinema-kpi cinema-kpi--growth">
                   <small>Pipeline</small>
                   <strong>3 interviewing • 1 offer</strong>
                   <span>Stripe • Anthropic • Vercel</span>
                 </div>
-                <div className="cinema-kpi">
+                <div className="cinema-kpi cinema-kpi--workspace">
                   <small>Workspace</small>
                   <strong>starwaves/src/app.js</strong>
                   <span>Monaco • Eve can edit this file</span>
@@ -112,7 +112,7 @@ export function Hero({ onNavigate }) {
                   <i>
                     <Check size={10} />
                   </i>
-                  Review CF Round #980 solutions — <em style={{ color: '#94A3B8', fontStyle: 'normal' }}>done</em>
+                  Review CF Round #980 solutions — <em className="cinema-task__done-label">done</em>
                 </div>
                 <div className="cinema-task">
                   <i />

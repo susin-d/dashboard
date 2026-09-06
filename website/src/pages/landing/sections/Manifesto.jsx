@@ -11,11 +11,10 @@ const cardVariants = {
   }),
 }
 
-const tints = {
-  mono: '#FFFFFF',
-  violet: '#FFFFFF',
-  amber: '#FFFFFF',
-  cyan: '#FFFFFF',
+const toneClass = {
+  work: 'is-work',
+  studio: 'is-studio',
+  eve: 'is-eve',
 }
 
 export function Manifesto() {
@@ -24,13 +23,13 @@ export function Manifesto() {
     <section id="manifesto" className="cinema-manifesto" aria-labelledby="manifesto-title">
       <div className="cinema-section-head">
         <p className="cinema-eyebrow">The manifesto — three acts</p>
-        <h2 id="manifesto-title" className="cinema-h2" style={{ whiteSpace: 'pre-line' }}>
+        <h2 id="manifesto-title" className="cinema-h2">
           A workspace that feels
           <br />
           like a film set
         </h2>
         <p className="cinema-lead">
-          Every panel placed with intention. No clutter, no rainbow dashboards — just depth, light and velocity.
+          Every panel placed with intention. Work, Studio and Eve each carry their own light — depth without the noise.
         </p>
       </div>
 
@@ -38,18 +37,18 @@ export function Manifesto() {
         {manifesto.map((m, i) => (
           <motion.article
             key={m.kicker}
-            className="cinema-card"
+            className={`cinema-card ${toneClass[m.accent] ?? 'is-work'}`}
             custom={i}
             variants={reduce ? undefined : cardVariants}
             initial={reduce ? false : 'hidden'}
             whileInView={reduce ? undefined : 'show'}
             viewport={{ once: true, margin: '-80px' }}
           >
-            <div className="cinema-card__icon" style={{ background: tints[m.accent] }} aria-hidden="true">
+            <div className="cinema-card__icon" aria-hidden="true">
               <m.icon size={18} />
             </div>
             <p className="cinema-card__kicker">{m.kicker}</p>
-            <h3 style={{ whiteSpace: 'pre-line' }}>{m.title}</h3>
+            <h3>{m.title}</h3>
             <p>{m.body}</p>
           </motion.article>
         ))}

@@ -2,7 +2,7 @@
 
 Living snapshot for AI agents. `AGENTS.md` holds permanent rules; this file holds the **current state**. See `CHANGELOG.md` for history and `PROJECT_MAP.md` for the file index.
 
-Last updated: 2026-09-04 - Full-viewport Avatar Studio layout (stretching preview, merged Appearance card)
+Last updated: 2026-09-06 - Landing cinematic module theming: ADR 0019 accents + light variant, full section theming (ADR 0020)
 
 ## Contents
 1. [Overview](#1-overview) · 2. [Repository structure](#2-repository-structure) · 3. [Backend](#3-backend) · 4. [Frontend](#4-frontend) · 5. [Design system](#5-design-system) · 6. [Current snapshot](#6-current-snapshot) · 7. [Limitations](#7-limitations) · 8. [Verification](#8-verification)
@@ -10,7 +10,7 @@ Last updated: 2026-09-04 - Full-viewport Avatar Studio layout (stretching previe
 ## 1. Overview
 Personal productivity workspace: projects, jobs, tasks, documents, code workspace, calendars, email, WhatsApp, hackathons, competitive programming, and EVE AI assistant.
 
-- **Frontend** (`/website`): React 19 + Vite + Vanilla CSS (monochrome + spectrum) + Monaco Editor. Docker multi-stage + Nginx. `vite define __APP_VERSION__` + updaters (`updatesApi`, `desktopUpdater`, `androidUpdater`, `otaUpdater`, `useAutoUpdater`, `UpdateBanner`, `UpdateSection` in Settings).
+- **Frontend** (`/website`): React 19 + Vite + Vanilla CSS (multi-color semantic tokens, module-level accent theming, spectrum & vibrant duo presets) + Monaco Editor. Docker multi-stage + Nginx. `vite define __APP_VERSION__` + updaters (`updatesApi`, `desktopUpdater`, `androidUpdater`, `otaUpdater`, `useAutoUpdater`, `UpdateBanner`, `UpdateSection` in Settings).
 - **Backend** (`/server`): FastAPI + Supabase PostgreSQL 16 + pgvector + Async SQLAlchemy 2.0. Mount `server/static/updates` at `/updates` (StaticFiles) + `/api/v1/updates` (check/latest/android/ota).
 - **Desktop** (`/website/src-tauri`): Tauri v2 + bundle `msi/nsis` + `tauri-plugin-updater/process` (pubkey in tauri.conf, endpoints `api.starwaves.../updates/latest.json`).
 - **Worker** (`/services/whatsapp-worker`): Go (WhatsMeow) bridge.
@@ -55,8 +55,9 @@ For full maps see `PROJECT_MAP.md`. Keep this section brief; expand there.
      - **Config:** `config/navigation.js` (now `avatar` → Avatar Studio in Eve AI group), `config/search/` (7 modules, avatar indexed), `dashboard/dashboardConfig.js`, `themes/` 26 presets (Mono, Duo, Spectrum), `utils/` pure transformers, `styles/` tokens→base→utilities→responsive→components→pages→`layout-symmetry.css` + `components/eve-avatar.css` + `pages/avatar.css` (Vite `avatar-3d`/`avatar-live2d` manualChunks) + `public/avatars/` examples (`vrm/` 10MB anime + `live2d/haru_greeter_t03` 3MB).
 
 ## 5. Design system
-- **Palette:** 26 presets across Mono, Duo, and Spectrum (ADR 0011). Mono base (`#000`/`#09090b`/`#121212`/`#18181b`, `#fff`/`#fafafa`/`#f4f4f5`, grays `#27272a`/`#3f3f46`/`#71717a`/`#e4e4e7` incl. `light`, `dark`, `stone`); 12 curated duotones (`abyss`, `ember`…); 3 Spectrum themes (`prism`, `neonGrid`, `botanical`) where each semantic role owns a unique hue without on-screen duplicates.
-- **Tokens first:** `styles/tokens.css` CSS vars (8pt scale `--space-3xs`→`--space-3xl`, `--content-max-width` 1440, `--content-gutter` clamp, `--section-gap` clamp, `--card-padding` clamp, `--header-height` 68/62, `--sidebar-collapsed/expanded`). Import order `tokens→base→utilities→responsive→components→pages→layout-symmetry` via `App.css`.
+- **Palette:** Multi-color semantic design system (ADR 0019) with domain/module accent theming. Monochrome presets retired. Curated presets across Multi-Color Spectrum (`light`, `dark`, `prism`, `neonGrid`, `botanical`) and 12 Vibrant Duotones (`abyss`, `ember`, `coral`, `azure`, `verdant`, etc.).
+- **Module Accent Coding:** Signature colors per feature/group (`--module-work` Electric Indigo, `--module-studio` Vivid Violet, `--module-eve` Luminous Pink, `--module-growth` Emerald, `--module-whatsapp` Brand Green, `--module-mail` Rose, `--module-calendar` Sky Blue, `--module-calls` Purple).
+- **Tokens first:** `styles/tokens.css` CSS vars (8pt scale `--space-3xs`→`--space-3xl`, `--content-max-width` 1440, `--content-gutter` clamp, `--section-gap` clamp, `--card-padding` clamp, `--header-height` 68/62, `--sidebar-collapsed/expanded`, `--glow-primary/accent/success/warning/danger`, `--gradient-primary/accent/success/warning/danger/studio/eve`). Import order `tokens→base→utilities→responsive→components→pages→layout-symmetry` via `App.css`.
 - **One CSS per component/page**, `kebab-case` classes scoped, use vars (`var(--radius-lg)`), dark overrides in `styles/themes/dark.css`.
 - **Full-page, no clip:** `min-height:100vh` accounting for chrome, natural scroll. Responsive mobile-first with `clamp()`. Geometry in `layout-symmetry.css`.
 - Icons `lucide-react` only.

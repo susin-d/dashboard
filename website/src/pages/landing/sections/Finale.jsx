@@ -17,7 +17,7 @@ export function Finale({ onNavigate }) {
         <h2 id="finale-title">
           Build a workspace
           <br />
-          that moves with your ambition
+          <span>that moves with your ambition</span>
         </h2>
         <p>
           Join builders, competitors and teams who run their whole operating system on StarWaves. Free to start — your data stays yours.
@@ -41,12 +41,12 @@ export function Footer({ onNavigate }) {
   return (
     <footer className="cinema-footer" aria-label="Footer">
       <div className="cinema-footer__inner">
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, color: '#CBD5E1', fontWeight: 850, letterSpacing: '-0.02em' }}>
-          <span className="cinema-nav__mark" aria-hidden="true" style={{ width: 28, height: 28, fontSize: 12 }}>
+        <div className="cinema-footer__brand">
+          <span className="cinema-nav__mark" aria-hidden="true">
             S
           </span>
           StarWaves
-          <span style={{ color: '#64748B', fontWeight: 600, fontSize: 12, marginLeft: 6 }}>© {new Date().getFullYear()} — All rights reserved</span>
+          <span className="cinema-footer__copy">© {new Date().getFullYear()} — All rights reserved</span>
         </div>
 
         <nav className="cinema-footer__links" aria-label="Footer navigation">

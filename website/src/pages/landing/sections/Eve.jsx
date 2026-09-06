@@ -6,8 +6,8 @@ export function Eve({ onNavigate }) {
   const reduce = useReducedMotion()
   return (
     <section id="eve" className="cinema-eve" aria-labelledby="eve-title">
-      <div className="cinema-eve__inner">
-        <div style={{ textAlign: 'center', maxWidth: 760, margin: '0 auto' }}>
+        <div className="cinema-eve__inner">
+        <div className="cinema-eve__intro">
           <p className="cinema-eyebrow">Spotlight — Eve AI</p>
           <h2 id="eve-title" className="cinema-h2">
             An assistant that lives
@@ -30,16 +30,7 @@ export function Eve({ onNavigate }) {
               transition={reduce ? {} : { duration: 0.5, delay: i * 0.07, ease: [0.16, 1, 0.3, 1] }}
             >
               <div
-                style={{
-                  width: 36,
-                  height: 36,
-                  borderRadius: 8,
-                  display: 'grid',
-                  placeItems: 'center',
-                  background: '#FFFFFF',
-                  color: '#000000',
-                  border: '1px solid #FFFFFF',
-                }}
+                className={`cinema-eve__icon${c.tone === 'voice' ? ' cinema-eve__icon--voice' : ''}${c.tone === 'schedule' ? ' cinema-eve__icon--schedule' : ''}`}
                 aria-hidden="true"
               >
                 <c.icon size={18} />
@@ -81,8 +72,8 @@ create_eve_schedule({ cron: "0 9 * * 1", action: "call" })`}</pre>
           </div>
 
           <div className="cinema-wave" aria-hidden="true">
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, color: '#FFFFFF', fontWeight: 800, fontSize: 13 }}>
-              <span style={{ width: 8, height: 8, borderRadius: 999, background: '#FFFFFF', display: 'inline-block' }} />
+            <div className="cinema-wave__live">
+              <span className="cinema-wave__dot" />
               Eve is speaking — live captions
             </div>
             <div className="cinema-bars" aria-hidden="true">
@@ -95,10 +86,10 @@ create_eve_schedule({ cron: "0 9 * * 1", action: "call" })`}</pre>
                 />
               ))}
             </div>
-            <p style={{ margin: 0, color: '#94A3B8', fontSize: 12, textAlign: 'center' }}>
+            <p className="cinema-wave__quote">
               “Your pipeline review is due. I found 3 interviewing — want me to draft follow-ups?”
             </p>
-            <button type="button" className="cinema-cta cinema-cta--primary cinema-cta--small" onClick={() => onNavigate('/signup')}>
+            <button type="button" className="cinema-cta cinema-cta--eve cinema-cta--small" onClick={() => onNavigate('/signup')}>
               Talk to Eve <ArrowRight size={14} aria-hidden="true" />
             </button>
           </div>

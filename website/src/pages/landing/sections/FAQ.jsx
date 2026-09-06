@@ -10,7 +10,7 @@ export function FAQ() {
   return (
     <section id="faq" className="cinema-faq" aria-labelledby="faq-title">
       <div className="cinema-faq__inner">
-        <div style={{ textAlign: 'center' }}>
+        <div className="cinema-faq__intro">
           <p className="cinema-eyebrow">Q&A — the fine print</p>
           <h2 id="faq-title" className="cinema-h2">
             Everything you need
@@ -45,7 +45,7 @@ export function FAQ() {
                       animate={reduce ? {} : { height: 'auto', opacity: 1 }}
                       exit={reduce ? {} : { height: 0, opacity: 0 }}
                       transition={reduce ? {} : { duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
-                      style={{ overflow: 'hidden' }}
+                      className="cinema-faq__answer-wrap"
                     >
                       <div className="cinema-faq__a">{f.a}</div>
                     </motion.div>
