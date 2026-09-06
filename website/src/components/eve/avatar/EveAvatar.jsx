@@ -27,6 +27,7 @@ export function EveAvatar({
   error = '',
   audioRef = null,
   onToggleRenderer,
+  onTransformChange,
   resetViewSignal = 0,
   className = '',
   style = {},
@@ -46,6 +47,8 @@ export function EveAvatar({
   const tintStyle = avatarCardStyle(presetId, null)
   const scale = effectivePrefs.scale ?? 1
   const zoom = effectivePrefs.zoom ?? 1
+  const userPan = effectivePrefs.userPan ?? AVATAR_DEFAULTS.userPan
+  const userZoom = effectivePrefs.userZoom ?? AVATAR_DEFAULTS.userZoom
   const autoRotate = effectivePrefs.autoRotate === true && !reducedMotion
 
   const resolvedRenderer = lifecycle.resolvedRenderer
@@ -96,6 +99,10 @@ export function EveAvatar({
             isBlinking={eye.isBlinking}
             emotion={emotion}
             zoom={zoom}
+            userPan={userPan}
+            userZoom={userZoom}
+            resetSignal={resetViewSignal}
+            onTransformChange={onTransformChange}
             idleMotion={!reducedMotion}
             onReady={lifecycle.markReady}
             onError={lifecycle.markError}
@@ -112,15 +119,18 @@ export function EveAvatar({
           isBlinking={eye.isBlinking}
           emotion={emotion}
           zoom={zoom}
+          userPan={userPan}
+          userZoom={userZoom}
           autoRotate={autoRotate}
           idleMotion={!reducedMotion}
           resetSignal={resetViewSignal}
+          onTransformChange={onTransformChange}
           onReady={lifecycle.markReady}
           onError={lifecycle.markError}
         />
       </Suspense>
     )
-  }, [autoRotate, emotion, eye.isBlinking, eye.lookAt, lifecycle, lip.mouthOpen, model.url, reducedMotion, resetViewSignal, resolvedRenderer, zoom])
+  }, [autoRotate, emotion, eye.isBlinking, eye.lookAt, lifecycle, lip.mouthOpen, model.url, onTransformChange, reducedMotion, resetViewSignal, resolvedRenderer, userPan, userZoom, zoom])
 
   return (
     <div

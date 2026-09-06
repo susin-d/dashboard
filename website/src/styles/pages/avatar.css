@@ -104,6 +104,17 @@
   display: block !important;
 }
 
+/* Cursor states for in-canvas pan/zoom (Live2D + VRM) */
+.avatar-stage .eve-live2d-mount,
+.avatar-stage .eve-vrm-mount {
+  cursor: grab;
+}
+
+.avatar-stage .eve-live2d-mount.is-panning,
+.avatar-stage .eve-vrm-mount.is-panning {
+  cursor: grabbing;
+}
+
 .avatar-stage .eve-vrm-fallback,
 .avatar-stage .eve-live2d-fallback {
   width: 100% !important;
@@ -371,6 +382,16 @@
 
 .avatar-file-input.is-hidden {
   display: none;
+}
+
+/* ─── Gesture hint (in-canvas pan/zoom) ─────────────────────────── */
+
+.avatar-hud-gesture-hint {
+  display: block;
+  font-size: 11px;
+  line-height: 1.4;
+  color: var(--text-tertiary);
+  padding-top: 2px;
 }
 
 /* ─── Models strip (horizontal scroll inside HUD) ────────────────── */

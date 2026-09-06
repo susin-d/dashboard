@@ -15,6 +15,7 @@ import {
   SRGBColorSpace,
   WebGLRenderer,
 } from 'three'
+import { AVATAR_DEFAULTS, clampUserPan, clampUserZoom } from './avatarConstants'
 
 // GLTF + VRM loader modules are only needed when a model URL actually loads —
 // fetched on demand so the placeholder scene never pays for them. Cached at
@@ -37,8 +38,24 @@ const BASE_CAMERA_DISTANCE = 1.1
 const AUTO_ROTATE_SPEED = 0.35
 // Emotion expression keys cross-faded each frame (module scope: no per-frame alloc).
 const EMOTION_EXPRESSION_KEYS = ['happy', 'angry', 'relaxed']
+const WHEEL_STEP = 1.1 // 10% per notch
 
-export function VrmModel({ url, mouthOpen = 0, lookAt = { x: 0, y: 0 }, isBlinking = false, emotion = 'idle', zoom = 1, autoRotate = false, idleMotion = true, resetSignal = 0, onReady, onError }) {
+export function VrmModel({
+  url,
+  mouthOpen = 0,
+  lookAt = { x: 0, y: 0 },
+  isBlinking = false,
+  emotion = 'idle',
+  zoom = 1,
+  userPan = AVATAR_DEFAULTS.userPan,
+  userZoom = AVATAR_DEFAULTS.userZoom,
+  autoRotate = false,
+  idleMotion = true,
+  resetSignal = 0,
+  onTransformChange,
+  onReady,
+  onError,
+}) {
   const mountRef = useRef(null)
   const sceneRef = useRef(null)
   const rendererRef = useRef(null)
@@ -55,6 +72,14 @@ export function VrmModel({ url, mouthOpen = 0, lookAt = { x: 0, y: 0 }, isBlinki
   const swayTimeRef = useRef(0)
   const hipsBaseYRef = useRef(null)
   const exprRef = useRef({ happy: 0, angry: 0, relaxed: 0 })
+  // User-driven framing (pan + zoom) — refs so gestures don't re-render.
+  const userPanRef = useRef(clampUserPan(userPan))
+  const userZoomRef = useRef(clampUserZoom(userZoom))
+  const baseZoomRef = useRef(1)
+  const sizeRef = useRef({ w: 320, h: 240 })
+  const dragRef = useRef(null)
+  const transformRafRef = useRef(0)
+  const [isPanning, setIsPanning] = useState(false)
   const [status, setStatus] = useState('loading')
   const [loadError, setLoadError] = useState('')
 
@@ -83,6 +108,34 @@ export function VrmModel({ url, mouthOpen = 0, lookAt = { x: 0, y: 0 }, isBlinki
     // still signal ready so outer doesn't stay in timeout
     onReady?.()
   }, [onError, onReady])
+
+  // Apply the current user pan + zoom to the camera. Pan moves the camera in
+  // world XY; zoom scales its distance from the model so the apparent size
+  // changes without distorting perspective.
+  const applyFraming = useCallback(() => {
+    const camera = cameraRef.current
+    if (!camera) return
+    const safeZoom = clampUserZoom(userZoomRef.current)
+    const safePan = clampUserPan(userPanRef.current)
+    // baseZoomRef is the initial zoom from the `zoom` prop (set in its effect).
+    // userZoom multiplies on top, so apparent FOV scale = baseZoom * userZoom.
+    const apparent = (Number(baseZoomRef.current) || 1) * safeZoom
+    camera.position.x = safePan.x * 0.1
+    camera.position.y = 1.35 + safePan.y * 0.1
+    camera.position.z = BASE_CAMERA_DISTANCE / Math.max(0.1, apparent)
+    camera.lookAt(0, 1.35, 0)
+  }, [])
+
+  const scheduleTransformEmit = useCallback(() => {
+    if (transformRafRef.current) return
+    transformRafRef.current = window.requestAnimationFrame(() => {
+      transformRafRef.current = 0
+      onTransformChange?.(
+        clampUserPan(userPanRef.current),
+        clampUserZoom(userZoomRef.current),
+      )
+    })
+  }, [onTransformChange])
 
   useEffect(() => {
     if (!mountRef.current) return undefined
@@ -235,6 +288,7 @@ export function VrmModel({ url, mouthOpen = 0, lookAt = { x: 0, y: 0 }, isBlinki
     const onResize = () => {
       const w = mount.clientWidth || 320
       const h = mount.clientHeight || 240
+      sizeRef.current = { w, h }
       camera.aspect = w / h
       camera.updateProjectionMatrix()
       renderer.setSize(w, h)
@@ -242,29 +296,64 @@ export function VrmModel({ url, mouthOpen = 0, lookAt = { x: 0, y: 0 }, isBlinki
     const ro = new ResizeObserver(onResize)
     ro.observe(mount)
 
-    // Drag-to-rotate: horizontal drag orbits the model so the user can turn
-    // it to face them. Session-only yaw; resets on remount.
+    // Drag-to-pan + wheel-to-zoom + double-click-to-reset.
+    // Session-only pan/zoom; reset on remount or via resetSignal.
     mount.style.touchAction = 'none'
     mount.style.cursor = 'grab'
-    let dragX = null
     const onPointerDown = (event) => {
-      dragX = event.clientX
-      mount.style.cursor = 'grabbing'
+      if (event.button !== 0) return
       try { mount.setPointerCapture(event.pointerId) } catch {}
+      dragRef.current = {
+        pointerId: event.pointerId,
+        startX: event.clientX,
+        startY: event.clientY,
+        startPan: { ...userPanRef.current },
+      }
+      setIsPanning(true)
+      event.preventDefault()
     }
     const onPointerMove = (event) => {
-      if (dragX === null) return
-      yawRef.current += (event.clientX - dragX) * 0.008
-      dragX = event.clientX
+      const drag = dragRef.current
+      if (!drag || drag.pointerId !== event.pointerId) return
+      const dx = event.clientX - drag.startX
+      const dy = event.clientY - drag.startY
+      userPanRef.current = clampUserPan({
+        x: drag.startPan.x + dx,
+        y: drag.startPan.y + dy,
+      })
+      applyFraming()
+      scheduleTransformEmit()
     }
-    const onPointerUp = () => {
-      dragX = null
-      mount.style.cursor = 'grab'
+    const releaseDrag = (event) => {
+      const drag = dragRef.current
+      if (!drag || (event && drag.pointerId !== event.pointerId)) return
+      try { mount.releasePointerCapture(drag.pointerId) } catch {}
+      dragRef.current = null
+      setIsPanning(false)
+    }
+    const onWheel = (event) => {
+      if (event.ctrlKey) return
+      event.preventDefault()
+      const oldZoom = clampUserZoom(userZoomRef.current)
+      const factor = event.deltaY < 0 ? WHEEL_STEP : 1 / WHEEL_STEP
+      const newZoom = clampUserZoom(oldZoom * factor)
+      userZoomRef.current = newZoom
+      applyFraming()
+      scheduleTransformEmit()
+    }
+    const onDoubleClick = (event) => {
+      event.preventDefault()
+      userPanRef.current = { x: 0, y: 0 }
+      userZoomRef.current = AVATAR_DEFAULTS.userZoom
+      applyFraming()
+      onTransformChange?.(clampUserPan(userPanRef.current), clampUserZoom(userZoomRef.current))
     }
     mount.addEventListener('pointerdown', onPointerDown)
     mount.addEventListener('pointermove', onPointerMove)
-    mount.addEventListener('pointerup', onPointerUp)
-    mount.addEventListener('pointercancel', onPointerUp)
+    mount.addEventListener('pointerup', releaseDrag)
+    mount.addEventListener('pointercancel', releaseDrag)
+    mount.addEventListener('wheel', onWheel, { passive: false })
+    mount.addEventListener('dblclick', onDoubleClick)
 
     return () => {
       cancelAnimationFrame(rafRef.current)
@@ -274,8 +363,14 @@ export function VrmModel({ url, mouthOpen = 0, lookAt = { x: 0, y: 0 }, isBlinki
       document.removeEventListener('visibilitychange', onVisibility)
       mount.removeEventListener('pointerdown', onPointerDown)
       mount.removeEventListener('pointermove', onPointerMove)
-      mount.removeEventListener('pointerup', onPointerUp)
-      mount.removeEventListener('pointercancel', onPointerUp)
+      mount.removeEventListener('pointerup', releaseDrag)
+      mount.removeEventListener('pointercancel', releaseDrag)
+      mount.removeEventListener('wheel', onWheel)
+      mount.removeEventListener('dblclick', onDoubleClick)
+      if (transformRafRef.current) {
+        window.cancelAnimationFrame(transformRafRef.current)
+        transformRafRef.current = 0
+      }
       try { mount.removeChild(renderer.domElement) } catch {}
       renderer.dispose()
       if (vrmRef.current) {
@@ -283,21 +378,33 @@ export function VrmModel({ url, mouthOpen = 0, lookAt = { x: 0, y: 0 }, isBlinki
         vrmRef.current = null
       }
     }
+    // applyFraming / scheduleTransformEmit / onTransformChange are stable refs
+    // (useCallback) — intentionally excluded so the WebGL mount effect runs once.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // camera zoom from Studio prefs (0.5 far .. 2.0 close)
+  // camera zoom from Studio prefs (0.5 far .. 2.0 close), composed with userZoom.
   useEffect(() => {
-    const camera = cameraRef.current
-    if (!camera) return
     const z = Number(zoom)
-    const safeZoom = Number.isFinite(z) ? Math.min(2, Math.max(0.5, z)) : 1
-    camera.position.z = BASE_CAMERA_DISTANCE / safeZoom
-  }, [zoom])
+    baseZoomRef.current = Number.isFinite(z) ? Math.min(2, Math.max(0.5, z)) : 1
+    applyFraming()
+  }, [zoom, applyFraming])
 
-  // Studio "Reset view" clears the drag orbit yaw
+  // React to prop changes from the parent (HUD framing reset, persisted state).
   useEffect(() => {
+    userPanRef.current = clampUserPan(userPan)
+    userZoomRef.current = clampUserZoom(userZoom)
+    applyFraming()
+  }, [userPan, userZoom, applyFraming])
+
+  // Studio "Reset view" / "Reset framing" — clear both yaw and user framing.
+  useEffect(() => {
+    if (resetSignal === 0) return
     yawRef.current = 0
-  }, [resetSignal])
+    userPanRef.current = { x: 0, y: 0 }
+    userZoomRef.current = AVATAR_DEFAULTS.userZoom
+    applyFraming()
+  }, [resetSignal, applyFraming])
 
   // load VRM/GLB when url changes
   useEffect(() => {
@@ -400,7 +507,7 @@ export function VrmModel({ url, mouthOpen = 0, lookAt = { x: 0, y: 0 }, isBlinki
       role="img"
       aria-label={`Eve VRM avatar, ${emotion}`}
     >
-      <div ref={mountRef} className="eve-vrm-mount" />
+      <div ref={mountRef} className={`eve-vrm-mount ${isPanning ? 'is-panning' : ''}`} />
       {/* CSS procedural fallback — always visible until VRM ready, ensures the grey bar never appears empty */}
       {showCssFallback && (
         <div

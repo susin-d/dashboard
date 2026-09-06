@@ -45,6 +45,7 @@
 | [0023](0023-crimson-noir-default-dark-theme.md) | Crimson Noir default dark theme + landing planet/mountain SVG scenery | Accepted | 2026-09-06 |
 | [0024](0024-landing-bold-experimental-redesign.md) | Landing bold experimental redesign — Code/Create/Evolve arc, rich cinematic motion, CSS split | Accepted | 2026-09-06 |
 | [0032](0032-eve-desktop-overlay-window.md) | Eve desktop overlay window — transparent Tauri secondary window floating above all apps | Accepted | 2026-09-06 |
+| [0033](0033-avatar-studio-framing-and-pan-zoom.md) | Avatar Studio framing — in-canvas drag-pan, wheel-zoom, dblclick-reset, persisted `userPan`/`userZoom` | Accepted | 2026-09-06 |
 
 ## How to add a new ADR
 

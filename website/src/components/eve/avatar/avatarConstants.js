@@ -23,6 +23,10 @@ export const AVATAR_LIMITS = {
   SCALE_MAX: 1.2,
   ZOOM_MIN: 0.5,
   ZOOM_MAX: 2.0,
+  PAN_MIN: -1000,
+  PAN_MAX: 1000,
+  USER_ZOOM_MIN: 0.4,
+  USER_ZOOM_MAX: 4.0,
   UPLOAD_MAX_BYTES: 12 * 1024 * 1024,
   SINGLE_MAX_BYTES: 8 * 1024 * 1024,
   LOAD_TIMEOUT_MS: 8000,
@@ -36,6 +40,8 @@ export const AVATAR_DEFAULTS = {
   modelId: 'procedural-light',
   scale: 1,
   zoom: 1,
+  userPan: { x: 0, y: 0 },
+  userZoom: 1,
   autoRotate: false,
   position: { x: 92, y: 88 },
   docked: true,
@@ -107,4 +113,16 @@ export function clampZoom(value) {
   const n = Number(value)
   if (Number.isNaN(n)) return AVATAR_DEFAULTS.zoom
   return Math.min(AVATAR_LIMITS.ZOOM_MAX, Math.max(AVATAR_LIMITS.ZOOM_MIN, n))
+}
+
+export function clampUserPan(pan) {
+  const x = Math.min(AVATAR_LIMITS.PAN_MAX, Math.max(AVATAR_LIMITS.PAN_MIN, Number(pan?.x ?? AVATAR_DEFAULTS.userPan.x)))
+  const y = Math.min(AVATAR_LIMITS.PAN_MAX, Math.max(AVATAR_LIMITS.PAN_MIN, Number(pan?.y ?? AVATAR_DEFAULTS.userPan.y)))
+  return { x, y }
+}
+
+export function clampUserZoom(value) {
+  const n = Number(value)
+  if (Number.isNaN(n)) return AVATAR_DEFAULTS.userZoom
+  return Math.min(AVATAR_LIMITS.USER_ZOOM_MAX, Math.max(AVATAR_LIMITS.USER_ZOOM_MIN, n))
 }

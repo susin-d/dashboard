@@ -1,9 +1,9 @@
 import "../styles/pages/avatar.css"
 import { useEffect, useRef, useState } from 'react'
-import { Eye, GlassWater, Heart, Mic, Monitor, Orbit, RotateCcw, Settings2, Smartphone, Sparkles, TestTube, Trash2, Upload, Zap } from 'lucide-react'
+import { Eye, Frame, GlassWater, Heart, Mic, Monitor, Orbit, RotateCcw, Settings2, Smartphone, Sparkles, TestTube, Trash2, Upload, Zap } from 'lucide-react'
 import { EmptyState, CustomDropdown } from '../components/ui'
 import { EveAvatar } from '../components/eve/avatar/EveAvatar'
-import { AVATAR_CATALOG, AVATAR_LIMITS, AVATAR_DEFAULTS } from '../components/eve/avatar/avatarConstants'
+import { AVATAR_CATALOG, AVATAR_LIMITS, AVATAR_DEFAULTS, clampUserPan, clampUserZoom } from '../components/eve/avatar/avatarConstants'
 import { useEveAvatar } from '../components/eve/avatar/EveAvatarProvider'
 import { getAvatarPreferences, listAvatarModels, saveAvatarPreferences, uploadAvatarModel, deleteAvatarModel } from '../lib/eveAvatarApi'
 import { useThemeCustomizer } from '../hooks/useThemeCustomizer'
@@ -28,6 +28,7 @@ const SAVE_MESSAGE_TIMEOUT_MS = 1800
 const UPLOAD_MESSAGE_TIMEOUT_MS = 2200
 const SCALE_SAVE_DEBOUNCE_MS = 350
 const OVERLAY_RESIZE_DEBOUNCE_MS = 400
+const FRAMING_SAVE_DEBOUNCE_MS = 350
 
 export function AvatarPage({ onNavigate }) {
   const { prefs, setPrefs, activeModel } = useEveAvatar()
@@ -43,6 +44,7 @@ export function AvatarPage({ onNavigate }) {
   const scaleSaveTimeoutRef = useRef(0)
   const zoomSaveTimeoutRef = useRef(0)
   const overlayResizeTimeoutRef = useRef(0)
+  const framingSaveTimeoutRef = useRef(0)
 
   useEffect(() => {
     let cancelled = false
@@ -67,6 +69,7 @@ export function AvatarPage({ onNavigate }) {
     window.clearTimeout(scaleSaveTimeoutRef.current)
     window.clearTimeout(zoomSaveTimeoutRef.current)
     window.clearTimeout(overlayResizeTimeoutRef.current)
+    window.clearTimeout(framingSaveTimeoutRef.current)
   }, [])
 
   const persistOverlaySize = (dimension, value) => {
@@ -139,9 +142,52 @@ export function AvatarPage({ onNavigate }) {
     }, SCALE_SAVE_DEBOUNCE_MS)
   }
 
+  const persistFraming = (pan, zoomMul) => {
+    const safePan = clampUserPan(pan)
+    const safeZoom = clampUserZoom(zoomMul)
+    const next = { ...prefs, userPan: safePan, userZoom: safeZoom }
+    setPrefs(next)
+    setError('')
+    window.clearTimeout(framingSaveTimeoutRef.current)
+    framingSaveTimeoutRef.current = window.setTimeout(async () => {
+      try {
+        const res = await saveAvatarPreferences(next)
+        if (res?.preferences) setPrefs(res.preferences)
+      } catch (err) {
+        setError(err?.message || 'Could not save framing.')
+      }
+    }, FRAMING_SAVE_DEBOUNCE_MS)
+  }
+
+  const handleTransformChange = (pan, zoomMul) => {
+    // Optimistic local update; debounced persistence.
+    const safePan = clampUserPan(pan)
+    const safeZoom = clampUserZoom(zoomMul)
+    setPrefs((c) => ({ ...c, userPan: safePan, userZoom: safeZoom }))
+    window.clearTimeout(framingSaveTimeoutRef.current)
+    framingSaveTimeoutRef.current = window.setTimeout(async () => {
+      const next = { ...prefs, userPan: safePan, userZoom: safeZoom }
+      try {
+        const res = await saveAvatarPreferences(next)
+        if (res?.preferences) setPrefs(res.preferences)
+      } catch (err) {
+        setError(err?.message || 'Could not save framing.')
+      }
+    }, FRAMING_SAVE_DEBOUNCE_MS)
+  }
+
   const handleResetView = () => {
     setViewResetKey((key) => key + 1)
-    persist({ zoom: 1 })
+    // Clear user framing + base zoom in one shot.
+    setPrefs((c) => ({ ...c, userPan: AVATAR_DEFAULTS.userPan, userZoom: AVATAR_DEFAULTS.userZoom }))
+    persist({ zoom: 1, userPan: AVATAR_DEFAULTS.userPan, userZoom: AVATAR_DEFAULTS.userZoom })
+  }
+
+  const handleResetFraming = () => {
+    setViewResetKey((key) => key + 1)
+    persistFraming(AVATAR_DEFAULTS.userPan, AVATAR_DEFAULTS.userZoom)
+    setMessage('Framing reset.')
+    window.setTimeout(() => setMessage(''), SAVE_MESSAGE_TIMEOUT_MS)
   }
 
   const handleUpload = async (event) => {
@@ -223,6 +269,7 @@ export function AvatarPage({ onNavigate }) {
           sttStatus={isListening ? 'listening' : 'idle'}
           error={previewEmotion === 'error' ? 'Demo error state' : ''}
           resetViewSignal={viewResetKey}
+          onTransformChange={handleTransformChange}
           onToggleRenderer={() => persist({ renderer: prefs?.renderer === 'vrm' ? 'live2d' : prefs?.renderer === 'live2d' ? 'auto' : 'vrm' })}
         />
 
@@ -389,7 +436,11 @@ export function AvatarPage({ onNavigate }) {
             <button type="button" className="btn-ghost" onClick={handleResetView} disabled={busy} style={{ fontSize: 'var(--text-xs)', padding: '4px 8px' }}>
               <RotateCcw size={12} /> Reset view
             </button>
+            <button type="button" className="btn-ghost" onClick={handleResetFraming} disabled={busy} style={{ fontSize: 'var(--text-xs)', padding: '4px 8px' }}>
+              <Frame size={12} /> Reset framing
+            </button>
           </div>
+          <small className="avatar-hud-gesture-hint">Drag to pan · Scroll to zoom · Double-click to reset</small>
 
           <div style={{ paddingTop: '4px' }}>
             <button type="button" className="btn-ghost" onClick={() => persist({ scale: 1, renderer: 'auto', motion: 'auto', position: { x: 92, y: 88 } })} disabled={busy} style={{ fontSize: 'var(--text-xs)', padding: '4px 8px' }}>

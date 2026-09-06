@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { AVATAR_DEFAULTS, AVATAR_LIMITS, clampUserPan, clampUserZoom } from './avatarConstants'
 
 let PixiModule = null
 let Live2DFactory = null
@@ -40,6 +41,9 @@ async function ensureLive2D() {
   }
 }
 
+const WHEEL_STEP = 1.1 // 10% per notch
+const FIT_MARGIN = 0.92 // leave a small visible margin so the model never touches the edges
+
 export function Live2DModel({
   url,
   mouthOpen = 0,
@@ -47,7 +51,11 @@ export function Live2DModel({
   isBlinking = false,
   emotion = 'idle',
   zoom = 1,
+  userPan = AVATAR_DEFAULTS.userPan,
+  userZoom = AVATAR_DEFAULTS.userZoom,
   idleMotion = true,
+  resetSignal = 0,
+  onTransformChange,
   onReady,
   onError,
 }) {
@@ -55,8 +63,13 @@ export function Live2DModel({
   const appRef = useRef(null)
   const modelRef = useRef(null)
   const baseScaleRef = useRef(1)
+  const sizeRef = useRef({ w: 320, h: 240 })
+
+  // Refs that drive rendering during gestures (avoid re-renders)
   const zoomRef = useRef(zoom)
   zoomRef.current = zoom
+  const userZoomRef = useRef(clampUserZoom(userZoom))
+  const panRef = useRef(clampUserPan(userPan))
   const idleMotionRef = useRef(idleMotion)
   idleMotionRef.current = idleMotion
   const mouthRef = useRef(mouthOpen)
@@ -68,9 +81,14 @@ export function Live2DModel({
   const emotionRef = useRef(emotion)
   emotionRef.current = emotion
   const loadIdRef = useRef(0)
+  const rafRef = useRef(0)
+
+  // Drag state
+  const dragRef = useRef(null)
 
   const [status, setStatus] = useState('loading')
   const [loadError, setLoadError] = useState('')
+  const [isPanning, setIsPanning] = useState(false)
 
   const handleReady = useCallback(() => {
     setStatus('ready')
@@ -83,6 +101,32 @@ export function Live2DModel({
     onError?.(message)
     onReady?.()
   }, [onError, onReady])
+
+  // Apply the current transform (scale + pan) to the model.
+  const applyTransform = useCallback(() => {
+    const m = modelRef.current
+    if (!m) return
+    const { w, h } = sizeRef.current
+    const safeZoom = clampUserZoom(userZoomRef.current)
+    const safePan = clampUserPan(panRef.current)
+    try {
+      m.scale.set(baseScaleRef.current * (Number(zoomRef.current) || 1) * safeZoom)
+      m.x = w / 2 + safePan.x
+      m.y = h / 2 + safePan.y
+    } catch {}
+  }, [])
+
+  // Schedule a single rAF tick to emit transform changes (avoids re-render thrash).
+  const scheduleTransformEmit = useCallback(() => {
+    if (rafRef.current) return
+    rafRef.current = window.requestAnimationFrame(() => {
+      rafRef.current = 0
+      onTransformChange?.(
+        clampUserPan(panRef.current),
+        clampUserZoom(userZoomRef.current),
+      )
+    })
+  }, [onTransformChange])
 
   useEffect(() => {
     if (!mountRef.current) return undefined
@@ -118,6 +162,7 @@ export function Live2DModel({
 
         const initialW = Math.max(120, mount.clientWidth || 320)
         const initialH = Math.max(120, mount.clientHeight || 240)
+        sizeRef.current = { w: initialW, h: initialH }
 
         const app = new PIXI.Application({
           width: initialW,
@@ -139,18 +184,17 @@ export function Live2DModel({
         app.view.style.width = '100%'
         app.view.style.height = '100%'
         app.view.style.display = 'block'
+        app.view.style.touchAction = 'none'
 
         if (!url) {
           handleFail('No Live2D model URL provided')
           return
         }
 
-        // Load the Live2D model with autoInteract: false to prevent Pixi v7 legacy interaction crash
         let model = null
         try {
           model = await Factory.from(url, { autoInteract: false })
           if (model) {
-            // PixiJS v7 eventMode replaces deprecated interactive flag
             model.eventMode = 'none'
             model.interactive = false
           }
@@ -168,19 +212,16 @@ export function Live2DModel({
 
         const w = Math.max(120, mount.clientWidth || 320)
         const h = Math.max(120, mount.clientHeight || 240)
+        sizeRef.current = { w, h }
         app.renderer.resize(w, h)
 
         const mw = model.width || 400
         const mh = model.height || 400
-        const scale = Math.min(w / mw, h / mh) * 0.85
+        // Frame the full model: fit by smaller dimension, generous margin, no vertical bias.
+        const scale = Math.min(w / mw, h / mh) * FIT_MARGIN
         baseScaleRef.current = scale
-        const currentZoom = Number(zoomRef.current) || 1
-        model.scale.set(scale * currentZoom)
-
-        // Center model in the view: anchor at center (0.5, 0.5) and position at (w/2, h/2)
         model.anchor?.set?.(0.5, 0.5)
-        model.x = w / 2
-        model.y = h * 0.52
+        applyTransform()
 
         app.stage.addChild(model)
 
@@ -210,14 +251,13 @@ export function Live2DModel({
           if (!mount || !appRef.current || !modelRef.current) return
           const nw = Math.max(120, mount.clientWidth || 320)
           const nh = Math.max(120, mount.clientHeight || 240)
+          sizeRef.current = { w: nw, h: nh }
           try {
             appRef.current.renderer.resize(nw, nh)
             const m = modelRef.current
-            const mScale = Math.min(nw / (m.width || 400), nh / (m.height || 400)) * 0.85
+            const mScale = Math.min(nw / (m.width || 400), nh / (m.height || 400)) * FIT_MARGIN
             baseScaleRef.current = mScale
-            m.scale.set(mScale * (Number(zoomRef.current) || 1))
-            m.x = nw / 2
-            m.y = nh * 0.52
+            applyTransform()
           } catch {}
         }
         ro = new ResizeObserver(onResize)
@@ -251,24 +291,126 @@ export function Live2DModel({
         appRef.current = null
       }
     }
+    // applyTransform / handleFail / handleReady are stable (useCallback) — exclude from deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [handleFail, handleReady, url])
 
-  // Live update zoom
+  // Gesture handlers (drag-pan, wheel-zoom, dblclick-reset) bound to the mount.
   useEffect(() => {
-    const m = modelRef.current
-    if (!m) return
-    const z = Number(zoom)
-    const safeZoom = Number.isFinite(z) ? Math.min(2, Math.max(0.5, z)) : 1
-    try {
-      m.scale.set(baseScaleRef.current * safeZoom)
-      if (appRef.current && mountRef.current) {
-        const nw = mountRef.current.clientWidth || 320
-        const nh = mountRef.current.clientHeight || 240
-        m.x = nw / 2
-        m.y = nh * 0.52
+    const mount = mountRef.current
+    if (!mount) return undefined
+
+    const onPointerDown = (event) => {
+      // Only react to primary button; ignore right-click etc.
+      if (event.button !== 0) return
+      // Don't grab if the user is interacting with an inner control (e.g. fallback badge)
+      const target = event.target
+      if (target && target !== mount && !mount.contains(target)) return
+      try { mount.setPointerCapture?.(event.pointerId) } catch {}
+      dragRef.current = {
+        pointerId: event.pointerId,
+        startX: event.clientX,
+        startY: event.clientY,
+        startPan: { ...panRef.current },
       }
-    } catch {}
-  }, [zoom])
+      setIsPanning(true)
+      event.preventDefault()
+    }
+
+    const onPointerMove = (event) => {
+      const drag = dragRef.current
+      if (!drag || drag.pointerId !== event.pointerId) return
+      const dx = event.clientX - drag.startX
+      const dy = event.clientY - drag.startY
+      panRef.current = clampUserPan({
+        x: drag.startPan.x + dx,
+        y: drag.startPan.y + dy,
+      })
+      applyTransform()
+      scheduleTransformEmit()
+    }
+
+    const releaseDrag = (event) => {
+      const drag = dragRef.current
+      if (!drag || (event && drag.pointerId !== event.pointerId)) return
+      try { mount.releasePointerCapture?.(drag.pointerId) } catch {}
+      dragRef.current = null
+      setIsPanning(false)
+    }
+
+    const onWheel = (event) => {
+      // Only respond to plain wheel (not pinch) and ignore ctrl+wheel (browser zoom)
+      if (event.ctrlKey) return
+      event.preventDefault()
+      const rect = mount.getBoundingClientRect()
+      const cx = event.clientX - rect.left
+      const cy = event.clientY - rect.top
+      const { w, h } = sizeRef.current
+      // World point currently under the cursor, expressed relative to model center.
+      const worldDx = cx - (w / 2 + panRef.current.x)
+      const worldDy = cy - (h / 2 + panRef.current.y)
+      const factor = event.deltaY < 0 ? WHEEL_STEP : 1 / WHEEL_STEP
+      const oldZoom = clampUserZoom(userZoomRef.current)
+      const newZoom = clampUserZoom(oldZoom * factor)
+      // Keep the world point under the cursor: pan' = pan + worldDelta * (1 - oldZoom/newZoom)
+      const ratio = oldZoom === 0 ? 1 : (1 - oldZoom / newZoom)
+      panRef.current = clampUserPan({
+        x: panRef.current.x + worldDx * ratio,
+        y: panRef.current.y + worldDy * ratio,
+      })
+      userZoomRef.current = newZoom
+      applyTransform()
+      scheduleTransformEmit()
+    }
+
+    const onDoubleClick = (event) => {
+      event.preventDefault()
+      panRef.current = { x: 0, y: 0 }
+      userZoomRef.current = AVATAR_DEFAULTS.userZoom
+      applyTransform()
+      onTransformChange?.(clampUserPan(panRef.current), clampUserZoom(userZoomRef.current))
+    }
+
+    mount.addEventListener('pointerdown', onPointerDown)
+    mount.addEventListener('pointermove', onPointerMove)
+    mount.addEventListener('pointerup', releaseDrag)
+    mount.addEventListener('pointercancel', releaseDrag)
+    mount.addEventListener('wheel', onWheel, { passive: false })
+    mount.addEventListener('dblclick', onDoubleClick)
+
+    return () => {
+      mount.removeEventListener('pointerdown', onPointerDown)
+      mount.removeEventListener('pointermove', onPointerMove)
+      mount.removeEventListener('pointerup', releaseDrag)
+      mount.removeEventListener('pointercancel', releaseDrag)
+      mount.removeEventListener('wheel', onWheel)
+      mount.removeEventListener('dblclick', onDoubleClick)
+      if (rafRef.current) {
+        window.cancelAnimationFrame(rafRef.current)
+        rafRef.current = 0
+      }
+    }
+  }, [applyTransform, onTransformChange, scheduleTransformEmit])
+
+  // React to prop changes from the parent (HUD slider, reset button).
+  useEffect(() => {
+    panRef.current = clampUserPan(userPan)
+    userZoomRef.current = clampUserZoom(userZoom)
+    applyTransform()
+  }, [userPan, userZoom, applyTransform])
+
+  // React to the reset signal (bumped by "Reset framing" / "Reset view").
+  useEffect(() => {
+    if (resetSignal === 0) return
+    panRef.current = { x: 0, y: 0 }
+    userZoomRef.current = AVATAR_DEFAULTS.userZoom
+    applyTransform()
+  }, [resetSignal, applyTransform])
+
+  // Live update on the existing `zoom` slider (multiplies with userZoom).
+  useEffect(() => {
+    applyTransform()
+  }, [zoom, applyTransform])
 
   const showCssFallback = status === 'fallback'
 
@@ -279,7 +421,10 @@ export function Live2DModel({
       role="img"
       aria-label={`Eve Live2D avatar, ${emotion}`}
     >
-      <div ref={mountRef} className="eve-live2d-mount" />
+      <div
+        ref={mountRef}
+        className={`eve-live2d-mount ${isPanning ? 'is-panning' : ''}`}
+      />
 
       {/* Procedural fallback if Live2D cannot render */}
       {showCssFallback && (
@@ -318,3 +463,6 @@ export function Live2DModel({
     </div>
   )
 }
+
+// Keep `AVATAR_LIMITS` reachable for callers that import only Live2DModel
+export { AVATAR_LIMITS }
