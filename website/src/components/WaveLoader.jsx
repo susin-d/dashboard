@@ -15,16 +15,13 @@ export function WaveLoader({ label = 'Loading StarWaves…', detail = 'Preparing
             <i />
             <i />
           </span>
-          <span className="wave-loader-top-label">starwaves.app</span>
+          <span className="wave-loader-top-label">starwaves</span>
           <span className="wave-loader-live">● loading</span>
         </div>
         <div className="wave-loader-body">
           <div className="wave-loader-brand">
             <div className="wave-loader-logo-ring">
               <StarWavesLogo size={52} />
-              <span className="wave-loader-orbit" aria-hidden="true">
-                <span className="wave-loader-orbit-dot" />
-              </span>
             </div>
             <div className="wave-loader-heading">
               <p className="wave-loader-eyebrow">Code • Create • Evolve</p>

@@ -168,25 +168,6 @@
   border-radius: var(--radius-full);
 }
 
-.wave-loader-orbit {
-  position: absolute;
-  inset: -1px;
-  border-radius: var(--radius-full);
-  animation: wave-loader-orbit 2.6s linear infinite;
-}
-
-.wave-loader-orbit-dot {
-  position: absolute;
-  top: -3px;
-  left: 50%;
-  width: 8px;
-  height: 8px;
-  margin-left: -4px;
-  border-radius: var(--radius-full);
-  background: var(--gradient-primary);
-  box-shadow: var(--glow-primary);
-}
-
 .wave-loader-heading {
   display: flex;
   flex-direction: column;
@@ -277,12 +258,6 @@
   line-height: var(--leading-normal);
 }
 
-@keyframes wave-loader-orbit {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
 @keyframes wave-loader-bounce {
   0%,
   100% {
@@ -315,7 +290,6 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .wave-loader-orbit,
   .wave-loader-wave span,
   .wave-loader-progress-bar {
     animation: none;
