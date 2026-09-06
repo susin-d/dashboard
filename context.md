@@ -2,7 +2,7 @@
 # Starwaves Context
 
 Living snapshot for AI agents. `AGENTS.md` holds permanent rules; this file holds the **current state**. See `CHANGELOG.md` for history and `PROJECT_MAP.md` for the file index.
-Last updated: 2026-09-06 — Avatar Studio framing + pan/zoom gestures (ADR 0033): fix Live2D fit math (drop `h*0.52` bias, `0.85`→`0.92` margin) so the full model is visible; in-canvas drag-pan, wheel-zoom (10% per notch), double-click-reset on both Live2D and VRM; persisted via new `prefs.userPan` / `prefs.userZoom` (debounced 350 ms); new HUD **Reset framing** button + gesture hint; VRM drag-to-orbit replaced with pan for parity
+Last updated: 2026-09-06 — Avatar Studio zoom & framing fixes (ADR 0033): unified `zoom` state for Live2D/VRM models; replaced separate `userZoom` with single `zoom`; added smooth exponential wheel zoom (`Math.exp(-delta*0.002)`) with cursor-centered panning; widened zoom limits to 0.3–3.0 (from 0.5–2.0); updated HUD slider to 0.3–3.0; optimized `onTransformChange` persistence; re-added **Reset view** and **Reset framing** buttons; consistent slider ↔ wheel sync.
 
 ## Contents
 1. [Overview](#1-overview) · 2. [Repository structure](#2-repository-structure) · 3. [Backend](#4-backend) · 4. [Frontend](#4-frontend) · 5. [Design system](#5-design-system) · 6. [Current snapshot](#6-current-snapshot) · 7. [Limitations](#7-limitations) · 8. [Verification](#8-verification)

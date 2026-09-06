@@ -142,10 +142,10 @@ export function AvatarPage({ onNavigate }) {
     }, SCALE_SAVE_DEBOUNCE_MS)
   }
 
-  const persistFraming = (pan, zoomMul) => {
+  const persistFraming = (pan, zoomVal) => {
     const safePan = clampUserPan(pan)
-    const safeZoom = clampUserZoom(zoomMul)
-    const next = { ...prefs, userPan: safePan, userZoom: safeZoom }
+    const safeZoom = clampUserZoom(zoomVal)
+    const next = { ...prefs, userPan: safePan, zoom: safeZoom }
     setPrefs(next)
     setError('')
     window.clearTimeout(framingSaveTimeoutRef.current)
@@ -159,14 +159,14 @@ export function AvatarPage({ onNavigate }) {
     }, FRAMING_SAVE_DEBOUNCE_MS)
   }
 
-  const handleTransformChange = (pan, zoomMul) => {
+  const handleTransformChange = (pan, zoomVal) => {
     // Optimistic local update; debounced persistence.
     const safePan = clampUserPan(pan)
-    const safeZoom = clampUserZoom(zoomMul)
-    setPrefs((c) => ({ ...c, userPan: safePan, userZoom: safeZoom }))
+    const safeZoom = clampUserZoom(zoomVal)
+    setPrefs((c) => ({ ...c, userPan: safePan, zoom: safeZoom }))
     window.clearTimeout(framingSaveTimeoutRef.current)
     framingSaveTimeoutRef.current = window.setTimeout(async () => {
-      const next = { ...prefs, userPan: safePan, userZoom: safeZoom }
+      const next = { ...prefs, userPan: safePan, zoom: safeZoom }
       try {
         const res = await saveAvatarPreferences(next)
         if (res?.preferences) setPrefs(res.preferences)
@@ -179,13 +179,13 @@ export function AvatarPage({ onNavigate }) {
   const handleResetView = () => {
     setViewResetKey((key) => key + 1)
     // Clear user framing + base zoom in one shot.
-    setPrefs((c) => ({ ...c, userPan: AVATAR_DEFAULTS.userPan, userZoom: AVATAR_DEFAULTS.userZoom }))
-    persist({ zoom: 1, userPan: AVATAR_DEFAULTS.userPan, userZoom: AVATAR_DEFAULTS.userZoom })
+    setPrefs((c) => ({ ...c, userPan: AVATAR_DEFAULTS.userPan, zoom: 1 }))
+    persist({ zoom: 1, userPan: AVATAR_DEFAULTS.userPan })
   }
 
   const handleResetFraming = () => {
     setViewResetKey((key) => key + 1)
-    persistFraming(AVATAR_DEFAULTS.userPan, AVATAR_DEFAULTS.userZoom)
+    persistFraming(AVATAR_DEFAULTS.userPan, 1)
     setMessage('Framing reset.')
     window.setTimeout(() => setMessage(''), SAVE_MESSAGE_TIMEOUT_MS)
   }
@@ -417,7 +417,7 @@ export function AvatarPage({ onNavigate }) {
               <input
                 id="avatar-zoom"
                 className="avatar-zoom-input"
-                type="range" min="0.5" max="2" step="0.05"
+                type="range" min="0.3" max="3.0" step="0.05"
                 value={prefs?.zoom ?? 1}
                 onChange={(e) => persistZoom(Number(e.target.value))}
                 disabled={busy}

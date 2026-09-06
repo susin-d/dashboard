@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { AVATAR_DEFAULTS, AVATAR_LIMITS, clampUserPan, clampUserZoom } from './avatarConstants'
+import { AVATAR_DEFAULTS, AVATAR_LIMITS, clampUserPan, clampZoom } from './avatarConstants'
 
 let PixiModule = null
 let Live2DFactory = null
@@ -41,7 +41,6 @@ async function ensureLive2D() {
   }
 }
 
-const WHEEL_STEP = 1.1 // 10% per notch
 const FIT_MARGIN = 0.92 // leave a small visible margin so the model never touches the edges
 
 export function Live2DModel({
@@ -52,7 +51,7 @@ export function Live2DModel({
   emotion = 'idle',
   zoom = 1,
   userPan = AVATAR_DEFAULTS.userPan,
-  userZoom = AVATAR_DEFAULTS.userZoom,
+  _userZoom = AVATAR_DEFAULTS.userZoom,
   idleMotion = true,
   resetSignal = 0,
   onTransformChange,
@@ -68,7 +67,6 @@ export function Live2DModel({
   // Refs that drive rendering during gestures (avoid re-renders)
   const zoomRef = useRef(zoom)
   zoomRef.current = zoom
-  const userZoomRef = useRef(clampUserZoom(userZoom))
   const panRef = useRef(clampUserPan(userPan))
   const idleMotionRef = useRef(idleMotion)
   idleMotionRef.current = idleMotion
@@ -107,10 +105,10 @@ export function Live2DModel({
     const m = modelRef.current
     if (!m) return
     const { w, h } = sizeRef.current
-    const safeZoom = clampUserZoom(userZoomRef.current)
+    const safeZoom = clampZoom(zoomRef.current)
     const safePan = clampUserPan(panRef.current)
     try {
-      m.scale.set(baseScaleRef.current * (Number(zoomRef.current) || 1) * safeZoom)
+      m.scale.set(baseScaleRef.current * safeZoom)
       m.x = w / 2 + safePan.x
       m.y = h / 2 + safePan.y
     } catch {}
@@ -123,7 +121,7 @@ export function Live2DModel({
       rafRef.current = 0
       onTransformChange?.(
         clampUserPan(panRef.current),
-        clampUserZoom(userZoomRef.current),
+        clampZoom(zoomRef.current),
       )
     })
   }, [onTransformChange])
@@ -349,16 +347,17 @@ export function Live2DModel({
       // World point currently under the cursor, expressed relative to model center.
       const worldDx = cx - (w / 2 + panRef.current.x)
       const worldDy = cy - (h / 2 + panRef.current.y)
-      const factor = event.deltaY < 0 ? WHEEL_STEP : 1 / WHEEL_STEP
-      const oldZoom = clampUserZoom(userZoomRef.current)
-      const newZoom = clampUserZoom(oldZoom * factor)
+      const delta = event.deltaMode === 1 ? event.deltaY * 40 : event.deltaMode === 2 ? event.deltaY * 800 : event.deltaY
+      const factor = Math.exp(-delta * 0.002)
+      const oldZoom = clampZoom(zoomRef.current)
+      const newZoom = clampZoom(oldZoom * factor)
       // Keep the world point under the cursor: pan' = pan + worldDelta * (1 - oldZoom/newZoom)
       const ratio = oldZoom === 0 ? 1 : (1 - oldZoom / newZoom)
       panRef.current = clampUserPan({
         x: panRef.current.x + worldDx * ratio,
         y: panRef.current.y + worldDy * ratio,
       })
-      userZoomRef.current = newZoom
+      zoomRef.current = newZoom
       applyTransform()
       scheduleTransformEmit()
     }
@@ -366,9 +365,9 @@ export function Live2DModel({
     const onDoubleClick = (event) => {
       event.preventDefault()
       panRef.current = { x: 0, y: 0 }
-      userZoomRef.current = AVATAR_DEFAULTS.userZoom
+      zoomRef.current = 1
       applyTransform()
-      onTransformChange?.(clampUserPan(panRef.current), clampUserZoom(userZoomRef.current))
+      onTransformChange?.(clampUserPan(panRef.current), 1)
     }
 
     mount.addEventListener('pointerdown', onPointerDown)
@@ -395,22 +394,17 @@ export function Live2DModel({
   // React to prop changes from the parent (HUD slider, reset button).
   useEffect(() => {
     panRef.current = clampUserPan(userPan)
-    userZoomRef.current = clampUserZoom(userZoom)
+    if (zoom !== undefined) zoomRef.current = clampZoom(zoom)
     applyTransform()
-  }, [userPan, userZoom, applyTransform])
+  }, [userPan, zoom, applyTransform])
 
   // React to the reset signal (bumped by "Reset framing" / "Reset view").
   useEffect(() => {
     if (resetSignal === 0) return
     panRef.current = { x: 0, y: 0 }
-    userZoomRef.current = AVATAR_DEFAULTS.userZoom
+    zoomRef.current = 1
     applyTransform()
   }, [resetSignal, applyTransform])
-
-  // Live update on the existing `zoom` slider (multiplies with userZoom).
-  useEffect(() => {
-    applyTransform()
-  }, [zoom, applyTransform])
 
   const showCssFallback = status === 'fallback'
 

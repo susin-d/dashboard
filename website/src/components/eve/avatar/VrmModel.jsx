@@ -15,7 +15,7 @@ import {
   SRGBColorSpace,
   WebGLRenderer,
 } from 'three'
-import { AVATAR_DEFAULTS, clampUserPan, clampUserZoom } from './avatarConstants'
+import { AVATAR_DEFAULTS, clampUserPan, clampZoom } from './avatarConstants'
 
 // GLTF + VRM loader modules are only needed when a model URL actually loads —
 // fetched on demand so the placeholder scene never pays for them. Cached at
@@ -38,7 +38,6 @@ const BASE_CAMERA_DISTANCE = 1.1
 const AUTO_ROTATE_SPEED = 0.35
 // Emotion expression keys cross-faded each frame (module scope: no per-frame alloc).
 const EMOTION_EXPRESSION_KEYS = ['happy', 'angry', 'relaxed']
-const WHEEL_STEP = 1.1 // 10% per notch
 
 export function VrmModel({
   url,
@@ -48,7 +47,7 @@ export function VrmModel({
   emotion = 'idle',
   zoom = 1,
   userPan = AVATAR_DEFAULTS.userPan,
-  userZoom = AVATAR_DEFAULTS.userZoom,
+  _userZoom = AVATAR_DEFAULTS.userZoom,
   autoRotate = false,
   idleMotion = true,
   resetSignal = 0,
@@ -74,8 +73,7 @@ export function VrmModel({
   const exprRef = useRef({ happy: 0, angry: 0, relaxed: 0 })
   // User-driven framing (pan + zoom) — refs so gestures don't re-render.
   const userPanRef = useRef(clampUserPan(userPan))
-  const userZoomRef = useRef(clampUserZoom(userZoom))
-  const baseZoomRef = useRef(1)
+  const zoomRef = useRef(clampZoom(zoom))
   const sizeRef = useRef({ w: 320, h: 240 })
   const dragRef = useRef(null)
   const transformRafRef = useRef(0)
@@ -115,14 +113,11 @@ export function VrmModel({
   const applyFraming = useCallback(() => {
     const camera = cameraRef.current
     if (!camera) return
-    const safeZoom = clampUserZoom(userZoomRef.current)
+    const safeZoom = clampZoom(zoomRef.current)
     const safePan = clampUserPan(userPanRef.current)
-    // baseZoomRef is the initial zoom from the `zoom` prop (set in its effect).
-    // userZoom multiplies on top, so apparent FOV scale = baseZoom * userZoom.
-    const apparent = (Number(baseZoomRef.current) || 1) * safeZoom
     camera.position.x = safePan.x * 0.1
     camera.position.y = 1.35 + safePan.y * 0.1
-    camera.position.z = BASE_CAMERA_DISTANCE / Math.max(0.1, apparent)
+    camera.position.z = BASE_CAMERA_DISTANCE / Math.max(0.1, safeZoom)
     camera.lookAt(0, 1.35, 0)
   }, [])
 
@@ -132,7 +127,7 @@ export function VrmModel({
       transformRafRef.current = 0
       onTransformChange?.(
         clampUserPan(userPanRef.current),
-        clampUserZoom(userZoomRef.current),
+        clampZoom(zoomRef.current),
       )
     })
   }, [onTransformChange])
@@ -334,19 +329,20 @@ export function VrmModel({
     const onWheel = (event) => {
       if (event.ctrlKey) return
       event.preventDefault()
-      const oldZoom = clampUserZoom(userZoomRef.current)
-      const factor = event.deltaY < 0 ? WHEEL_STEP : 1 / WHEEL_STEP
-      const newZoom = clampUserZoom(oldZoom * factor)
-      userZoomRef.current = newZoom
+      const delta = event.deltaMode === 1 ? event.deltaY * 40 : event.deltaMode === 2 ? event.deltaY * 800 : event.deltaY
+      const factor = Math.exp(-delta * 0.002)
+      const oldZoom = clampZoom(zoomRef.current)
+      const newZoom = clampZoom(oldZoom * factor)
+      zoomRef.current = newZoom
       applyFraming()
       scheduleTransformEmit()
     }
     const onDoubleClick = (event) => {
       event.preventDefault()
       userPanRef.current = { x: 0, y: 0 }
-      userZoomRef.current = AVATAR_DEFAULTS.userZoom
+      zoomRef.current = 1
       applyFraming()
-      onTransformChange?.(clampUserPan(userPanRef.current), clampUserZoom(userZoomRef.current))
+      onTransformChange?.(clampUserPan(userPanRef.current), 1)
     }
     mount.addEventListener('pointerdown', onPointerDown)
     mount.addEventListener('pointermove', onPointerMove)
@@ -383,26 +379,24 @@ export function VrmModel({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // camera zoom from Studio prefs (0.5 far .. 2.0 close), composed with userZoom.
+  // camera zoom from Studio prefs.
   useEffect(() => {
-    const z = Number(zoom)
-    baseZoomRef.current = Number.isFinite(z) ? Math.min(2, Math.max(0.5, z)) : 1
+    if (zoom !== undefined) zoomRef.current = clampZoom(zoom)
     applyFraming()
   }, [zoom, applyFraming])
 
   // React to prop changes from the parent (HUD framing reset, persisted state).
   useEffect(() => {
     userPanRef.current = clampUserPan(userPan)
-    userZoomRef.current = clampUserZoom(userZoom)
     applyFraming()
-  }, [userPan, userZoom, applyFraming])
+  }, [userPan, applyFraming])
 
   // Studio "Reset view" / "Reset framing" — clear both yaw and user framing.
   useEffect(() => {
     if (resetSignal === 0) return
     yawRef.current = 0
     userPanRef.current = { x: 0, y: 0 }
-    userZoomRef.current = AVATAR_DEFAULTS.userZoom
+    zoomRef.current = 1
     applyFraming()
   }, [resetSignal, applyFraming])
 
