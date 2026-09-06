@@ -9,7 +9,7 @@ import {
   Rocket,
   Trophy,
 } from 'lucide-react'
-import { MetricCard, PageHeader } from '../components/ui'
+import { MetricCard } from '../components/ui'
 
 
 function stat(value) {
@@ -67,12 +67,6 @@ export function StatsPage({
 
   return (
     <section className="stats-page">
-      <PageHeader
-        eyebrow="Performance"
-        title="Stats"
-        actions={<span className="stats-updated">Updated from workspace data</span>}
-      />
-
       <div className="stats-metric-grid">
         <MetricCard icon={Trophy} label="Codeforces rating" value={stat(codeforces.rating)} detail={`${stat(codeforces.rank)} · Max ${stat(codeforces.maxRating)}`} />
         <MetricCard icon={Code2} label="CodeChef rating" value={stat(codechef.rating)} detail={`${stat(codechef.stars)} star · Max ${stat(codechef.maxRating)}`} />

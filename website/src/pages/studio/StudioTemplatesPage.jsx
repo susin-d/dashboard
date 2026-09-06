@@ -2,7 +2,7 @@ import "../../styles/pages/studio-shared.css"
 import "../../styles/pages/studio-gallery.css"
 import { useCallback, useEffect, useState } from 'react'
 import { LayoutTemplate } from 'lucide-react'
-import { EmptyState, FormField, LoadingState, Modal, PageHeader } from '../../components/ui'
+import { EmptyState, FormField, LoadingState, Modal } from '../../components/ui'
 import { StudioTabs } from './StudioTabs'
 import {
   listStudioTemplates,
@@ -58,15 +58,11 @@ export function StudioTemplatesPage({ onOpenProject, onNavigate }) {
 
   return (
     <div className="studio-page">
-      <PageHeader
-        title="Studio Templates"
-        description="Curated starters plus templates you published from your own projects."
-        actions={
-          <button type="button" className="secondary-button" onClick={loadTemplates}>
-            Refresh
-          </button>
-        }
-      />
+      <div className="page-inline-actions">
+        <button type="button" className="secondary-button" onClick={loadTemplates}>
+          Refresh
+        </button>
+      </div>
       <StudioTabs activeTab="studio-templates" onNavigate={onNavigate} />
 
       {error && (

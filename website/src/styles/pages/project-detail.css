@@ -46,14 +46,6 @@
   line-height: var(--leading-normal);
 }
 
-.project-page-header-actions {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  flex-wrap: wrap;
-  gap: var(--space-2xs);
-}
-
 .project-page-links {
   display: flex;
   flex-wrap: wrap;

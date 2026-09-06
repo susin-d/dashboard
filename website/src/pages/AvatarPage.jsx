@@ -1,7 +1,7 @@
 import "../styles/pages/avatar.css"
 import { useEffect, useRef, useState } from 'react'
 import { Bot, Eye, GlassWater, Heart, Mic, Monitor, Move, Orbit, RotateCcw, Settings2, Sparkles, TestTube, Upload, Trash2, Smartphone, Zap } from 'lucide-react'
-import { PageHeader, EmptyState, CustomDropdown } from '../components/ui'
+import { EmptyState, CustomDropdown } from '../components/ui'
 import { SettingsCard } from '../components/ui/SettingsCard'
 import { EveAvatar } from '../components/eve/avatar/EveAvatar'
 import { AVATAR_CATALOG, AVATAR_LIMITS } from '../components/eve/avatar/avatarConstants'
@@ -160,17 +160,12 @@ export function AvatarPage({ onNavigate }) {
 
   return (
     <div className="avatar-page">
-      <PageHeader
-        eyebrow="Evolve"
-        title="Avatar Studio"
-        description="Live2D + 3D VRM — global floating companion + inline on Eve pages. Auto picks VRM on desktop and Live2D on mobile. Upload your own .vrm / .glb / .model3.json (.zip)."
-        actions={
-          <div className="avatar-page-actions">
-            <button type="button" className="btn-secondary" onClick={() => onNavigate?.('setting')}><Settings2 size={14} /> Settings</button>
-            <button type="button" className="btn-primary" onClick={() => { setPreviewEmotion('speaking'); setPreviewSpeaking(true); setTimeout(() => setPreviewSpeaking(false), 3200) }}><Zap size={14} /> Test speak</button>
-          </div>
-        }
-      />
+      <div className="page-inline-actions">
+        <div className="avatar-page-actions">
+          <button type="button" className="btn-secondary" onClick={() => onNavigate?.('setting')}><Settings2 size={14} /> Settings</button>
+          <button type="button" className="btn-primary" onClick={() => { setPreviewEmotion('speaking'); setPreviewSpeaking(true); setTimeout(() => setPreviewSpeaking(false), 3200) }}><Zap size={14} /> Test speak</button>
+        </div>
+      </div>
 
       {(message || error) && (
         <div className={`avatar-banner ${error ? 'is-error' : 'is-success'}`} role={error ? 'alert' : 'status'}>{error || message}</div>

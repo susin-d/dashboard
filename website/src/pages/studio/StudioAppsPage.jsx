@@ -2,7 +2,7 @@ import "../../styles/pages/studio-shared.css"
 import "../../styles/pages/studio-gallery.css"
 import { useState } from 'react'
 import { AppWindow, ExternalLink, FileCode, Play, Plus, RefreshCw } from 'lucide-react'
-import { ConfirmDialog, EmptyState, LoadingState, PageHeader, SectionHeading } from '../../components/ui'
+import { ConfirmDialog, EmptyState, LoadingState, SectionHeading } from '../../components/ui'
 import { startPreview } from '../../lib/studioApi'
 import { ProjectCard } from './ProjectCard'
 import { StudioTabs } from './StudioTabs'
@@ -52,26 +52,20 @@ export function StudioAppsPage({ onOpenProject, onNavigate }) {
 
   return (
     <div className="studio-page">
-      <PageHeader
-        title="Studio Apps"
-        description="Apps Eve has finished building — jump back in or run them anytime."
-        actions={
-          <>
-            <button
-              type="button"
-              className="secondary-button"
-              onClick={() => onNavigate?.('studio')}
-            >
-              <Plus size={15} />
-              New App
-            </button>
-            <button type="button" className="secondary-button" onClick={refresh}>
-              <RefreshCw size={15} />
-              Refresh
-            </button>
-          </>
-        }
-      />
+      <div className="page-inline-actions">
+        <button
+          type="button"
+          className="secondary-button"
+          onClick={() => onNavigate?.('studio')}
+        >
+          <Plus size={15} />
+          New App
+        </button>
+        <button type="button" className="secondary-button" onClick={refresh}>
+          <RefreshCw size={15} />
+          Refresh
+        </button>
+      </div>
       <StudioTabs activeTab="studio-apps" onNavigate={onNavigate} />
       {(error || runError) && (
         <div className="studio-error-banner" role="alert">

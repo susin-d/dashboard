@@ -1,3 +1,5 @@
+import "../styles/pages/dashboard.css"
+import "../styles/pages/dashboard-customize.css"
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { ResponsiveGridLayout, useContainerWidth } from 'react-grid-layout'
 import {
@@ -204,16 +206,24 @@ export function DashboardPage({
       .slice(0, 3)
       .map(({ date, ...entry }) => ({ ...entry, badge: formatDate(date) }))
   }, [documents, projects, jobs])
-  const openTasks = tasks.filter((task) => !task.completed)
-  const unreadCount = notifications.filter((notification) => notification.unread).length
-  const nextContest = contests[0] ?? null
-  const greetingHour = new Date().getHours()
+  const [now, setNow] = useState(() => new Date())
+
+  useEffect(() => {
+    const timer = setInterval(() => setNow(new Date()), 15000)
+    return () => clearInterval(timer)
+  }, [])
+
+  const greetingHour = now.getHours()
   const greeting =
-    greetingHour < 5 ? 'Up late' : greetingHour < 12 ? 'Good morning' : greetingHour < 18 ? 'Good afternoon' : 'Good evening'
-  const todayLabel = new Date().toLocaleDateString(undefined, {
+    greetingHour < 5 ? 'Up late' : greetingHour < 12 ? 'Good morning' : greetingHour < 17 ? 'Good afternoon' : greetingHour < 22 ? 'Good evening' : 'Good night'
+  const todayLabel = now.toLocaleDateString(undefined, {
     weekday: 'long',
     month: 'long',
     day: 'numeric',
+  })
+  const timeLabel = now.toLocaleTimeString(undefined, {
+    hour: 'numeric',
+    minute: '2-digit',
   })
 
   useEffect(() => {
@@ -383,34 +393,27 @@ export function DashboardPage({
 
   return (
     <div className={`dashboard-page dashboard-density-${density}`}>
-      <div className="page-heading dashboard-heading is-toolbar">
-        <div className="dashboard-greeting">
-          <p>{todayLabel}</p>
-          <h1>{greeting}. Here&apos;s your command center.</h1>
-          <span>
-            {openTasks.length} open {openTasks.length === 1 ? 'task' : 'tasks'} · {upcomingEvents.length} upcoming {upcomingEvents.length === 1 ? 'event' : 'events'}
-            {unreadCount > 0 && <> · {unreadCount} unread</>}
-            {nextContest && <> · Next up: {nextContest.name}</>}
-          </span>
-        </div>
-        <div className="dashboard-heading-actions">
-          {editing && <span className="dashboard-edit-status"><LayoutGrid size={15} /> Editing layout</span>}
-          <button className="secondary-button" type="button" onClick={() => setCustomizeOpen(true)}>
-            <SlidersHorizontal size={16} /> Customize
+      <div className="dashboard-greeting">
+        <p>{todayLabel} · {timeLabel}</p>
+        <h1>{greeting}. Here&apos;s your command center.</h1>
+      </div>
+      <div className="page-inline-actions dashboard-inline-actions">
+        {editing && <span className="dashboard-edit-status"><LayoutGrid size={15} /> Editing layout</span>}
+        <button className="secondary-button" type="button" onClick={() => setCustomizeOpen(true)}>
+          <SlidersHorizontal size={16} /> Customize
+        </button>
+        <div className="dashboard-create" ref={createRef}>
+          <button className="primary-button" type="button" onClick={() => setCreateOpen((open) => !open)}>
+            <Plus size={17} /> Create new <ChevronDown size={15} />
           </button>
-          <div className="dashboard-create" ref={createRef}>
-            <button className="primary-button" type="button" onClick={() => setCreateOpen((open) => !open)}>
-              <Plus size={17} /> Create new <ChevronDown size={15} />
-            </button>
-            {createOpen && (
-              <div className="dashboard-create-menu">
-                <button onClick={() => createAction('todo')}>Add Todo</button>
-                <button onClick={() => createAction('job')}>Add Job</button>
-                <button onClick={() => createAction('document')}>Upload Document</button>
-                <button onClick={() => createAction('calendar')}>Open Calendar</button>
-              </div>
-            )}
-          </div>
+          {createOpen && (
+            <div className="dashboard-create-menu">
+              <button onClick={() => createAction('todo')}>Add Todo</button>
+              <button onClick={() => createAction('job')}>Add Job</button>
+              <button onClick={() => createAction('document')}>Upload Document</button>
+              <button onClick={() => createAction('calendar')}>Open Calendar</button>
+            </div>
+          )}
         </div>
       </div>
 

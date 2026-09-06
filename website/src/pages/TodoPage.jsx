@@ -2,7 +2,7 @@ import "../styles/pages/todo.css"
 import { useEffect, useMemo, useState } from 'react'
 import { CalendarDays, Check, Pencil, Plus, Trash2 } from 'lucide-react'
 import { createTodo, deleteTodo, updateTodo } from '../lib/todosApi'
-import { Alert, ConfirmDialog, EmptyState, FilterPills, Modal, PageHeader } from '../components/ui'
+import { Alert, ConfirmDialog, EmptyState, FilterPills, Modal } from '../components/ui'
 import { usePersistentState } from '../hooks/usePersistentState'
 
 export function TodoPage({ tasks, setTasks, createIntent }) {
@@ -112,10 +112,8 @@ export function TodoPage({ tasks, setTasks, createIntent }) {
 
   return (
     <section className="todo-page">
-      <PageHeader
-        eyebrow="Tasks"
-        title="Todo List"
-        actions={
+      <div className="todo-container">
+        <div className="page-inline-actions">
           <button
             className="primary-button todo-add-trigger"
             onClick={() => setTaskFormOpen(true)}
@@ -123,10 +121,7 @@ export function TodoPage({ tasks, setTasks, createIntent }) {
             <Plus size={17} />
             Add task
           </button>
-        }
-      />
-
-      <div className="todo-container">
+        </div>
         {taskError && (
           <Alert variant="error" onDismiss={() => setTaskError('')}>
             {taskError}

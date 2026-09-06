@@ -149,43 +149,43 @@ export function ProjectDetailPage({ project, onBack, onSave }) {
           <h1>{project.name}</h1>
           <span>{project.description}</span>
         </div>
-        <div className="project-page-header-actions">
-          <CustomDropdown
-            value={project.status}
-            onChange={handleStatusChange}
-            ariaLabel="Change project status"
-            options={['Planning', 'Active', 'On hold', 'Completed'].map((val) => ({
-              value: val,
-              label: val,
-            }))}
-          />
-          <div className="project-page-links">
-            <button className="project-edit-button" onClick={openEditor}>
-              <Pencil size={15} />
-              Edit
-            </button>
-            <button className="secondary-button" onClick={handleDelete}>
-              <Trash2 size={15} />
-              Delete
-            </button>
-            {project.githubUrl && (
-              <a href={project.githubUrl} target="_blank" rel="noreferrer">
-                <GitBranch size={15} />
-                GitHub
-              </a>
-            )}
-            {project.liveUrl && (
-              <a
-                className="live-link"
-                href={project.liveUrl}
-                target="_blank"
-                rel="noreferrer"
-              >
-                <ExternalLink size={15} />
-                Live site
-              </a>
-            )}
-          </div>
+      </div>
+      <div className="page-inline-actions">
+        <CustomDropdown
+          value={project.status}
+          onChange={handleStatusChange}
+          ariaLabel="Change project status"
+          options={['Planning', 'Active', 'On hold', 'Completed'].map((val) => ({
+            value: val,
+            label: val,
+          }))}
+        />
+        <div className="project-page-links">
+          <button className="project-edit-button" onClick={openEditor}>
+            <Pencil size={15} />
+            Edit
+          </button>
+          <button className="secondary-button" onClick={handleDelete}>
+            <Trash2 size={15} />
+            Delete
+          </button>
+          {project.githubUrl && (
+            <a href={project.githubUrl} target="_blank" rel="noreferrer">
+              <GitBranch size={15} />
+              GitHub
+            </a>
+          )}
+          {project.liveUrl && (
+            <a
+              className="live-link"
+              href={project.liveUrl}
+              target="_blank"
+              rel="noreferrer"
+            >
+              <ExternalLink size={15} />
+              Live site
+            </a>
+          )}
         </div>
       </div>
 

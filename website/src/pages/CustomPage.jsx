@@ -1,6 +1,6 @@
 import "../styles/pages/missing-states.css"
 import { useEffect, useState } from 'react'
-import { PageHeader, LoadingState, Alert } from '../components/ui'
+import { LoadingState, Alert } from '../components/ui'
 import { useCustomUI } from '../hooks/useCustomUI'
 
 function entryForSlug(source, slug) {
@@ -36,7 +36,6 @@ export function CustomPage({ slug }) {
 
   return (
     <section className="custom-page" data-eve-target={`custom:${slug}`}>
-      <PageHeader title={entry.title || slug} description={entry.description || ''} />
       <div className="card custom-page-card">
         <p className="custom-page-desc">{entry.description}</p>
         {entry.code && (

@@ -19,7 +19,7 @@ import {
   Layers,
   Zap,
 } from 'lucide-react'
-import { PageHeader, SectionHeading } from '../components/ui'
+import { SectionHeading } from '../components/ui'
 import {
   useThemeCustomizer,
   PALETTE_GROUPS,
@@ -76,63 +76,59 @@ export function ThemesPage() {
 
   return (
     <section className="themes-page">
-      <PageHeader
-        eyebrow="You"
-        title="UI & UX Customization Studio"
-        actions={
-          <div className="themes-header-actions">
-            <button
-              type="button"
-              className="secondary-button"
-              onClick={resetToDefault}
-              title="Reset UI/UX settings to system defaults"
-            >
-              <RotateCcw size={15} />
-              Reset Defaults
-            </button>
-            <button
-              type="button"
-              className="secondary-button"
-              onClick={exportTheme}
-              title="Export full UI/UX configuration JSON"
-            >
-              <Download size={15} />
-              Export JSON
-            </button>
-            <button
-              type="button"
-              className="secondary-button"
-              onClick={triggerImport}
-              title="Import full UI/UX configuration JSON"
-            >
-              <Upload size={15} />
-              Import JSON
-            </button>
-            <input
-              type="file"
-              ref={fileInputRef}
-              onChange={handleFileUpload}
-              accept=".json"
-              style={{ display: 'none' }}
-            />
-            <button
-              type="button"
-              className="primary-button theme-save-btn"
-              onClick={saveCustomTheme}
-            >
-              {isSaved ? (
-                <>
-                  <Check size={16} /> Saved!
-                </>
-              ) : (
-                <>
-                  <Sparkles size={16} /> Save Studio Preset
-                </>
-              )}
-            </button>
-          </div>
-        }
-      />
+      <div className="page-inline-actions">
+        <div className="themes-header-actions">
+          <button
+            type="button"
+            className="secondary-button"
+            onClick={resetToDefault}
+            title="Reset UI/UX settings to system defaults"
+          >
+            <RotateCcw size={15} />
+            Reset Defaults
+          </button>
+          <button
+            type="button"
+            className="secondary-button"
+            onClick={exportTheme}
+            title="Export full UI/UX configuration JSON"
+          >
+            <Download size={15} />
+            Export JSON
+          </button>
+          <button
+            type="button"
+            className="secondary-button"
+            onClick={triggerImport}
+            title="Import full UI/UX configuration JSON"
+          >
+            <Upload size={15} />
+            Import JSON
+          </button>
+          <input
+            type="file"
+            ref={fileInputRef}
+            onChange={handleFileUpload}
+            accept=".json"
+            style={{ display: 'none' }}
+          />
+          <button
+            type="button"
+            className="primary-button theme-save-btn"
+            onClick={saveCustomTheme}
+          >
+            {isSaved ? (
+              <>
+                <Check size={16} /> Saved!
+              </>
+            ) : (
+              <>
+                <Sparkles size={16} /> Save Studio Preset
+              </>
+            )}
+          </button>
+        </div>
+      </div>
 
       {/* 1. Presets */}
       <div className="themes-section">

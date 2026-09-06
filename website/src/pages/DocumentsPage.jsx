@@ -19,7 +19,7 @@ import {
   uploadGoogleDriveFile,
 } from '../lib/googleDriveApi'
 import { deleteDocument, persistDocument } from '../lib/documentsApi'
-import { ConfirmDialog, EmptyState, PageHeader, SearchBar } from '../components/ui'
+import { ConfirmDialog, EmptyState, SearchBar } from '../components/ui'
 import { DocumentEditorModal } from './documents/DocumentEditorModal'
 import { DriveImportModal } from './documents/DriveImportModal'
 
@@ -267,16 +267,12 @@ export function DocumentsPage({ documents, setDocuments, createIntent, onOpenDoc
 
   return (
     <section className="documents-page">
-      <PageHeader
-        eyebrow="Code"
-        title="Documents"
-        actions={
-          <button className="primary-button document-upload-button" onClick={openUpload}>
-            <Upload size={16} />
-            Upload document
-          </button>
-        }
-      />
+      <div className="page-inline-actions">
+        <button className="primary-button document-upload-button" onClick={openUpload}>
+          <Upload size={16} />
+          Upload document
+        </button>
+      </div>
 
       <section className="document-cloud-tools">
         <button onClick={connectGoogleDrive}>

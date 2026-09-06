@@ -13,7 +13,7 @@ import {
 } from 'lucide-react'
 import { usePersistentState } from '../hooks/usePersistentState'
 import { createHackathon, deleteHackathon, updateHackathon } from '../lib/workspaceApi'
-import { ConfirmDialog, CustomDropdown, EmptyState, FilterBar, MetricCard, MetricGrid, Modal, PageHeader, SearchBar, Alert } from '../components/ui'
+import { ConfirmDialog, CustomDropdown, EmptyState, FilterBar, MetricCard, MetricGrid, Modal, SearchBar, Alert } from '../components/ui'
 
 const emptyHackathon = {
   title: '',
@@ -174,22 +174,11 @@ export function HackathonsPage({ hackathons, setHackathons, canLoadMore, loading
 
   return (
     <section className="hackathons-page">
-      <PageHeader
-        eyebrow="Create"
-        title="Hackathons"
-        description="Find a room, a team, and a deadline worth building toward."
-        actions={
-          <>
-            <div className="hackathon-summary">
-              <Rocket size={16} />
-              <span>{hackathons.length} upcoming</span>
-            </div>
-            <button className="primary-button" onClick={() => setFormOpen(true)}>
-              <Plus size={16} /> Add hackathon
-            </button>
-          </>
-        }
-      />
+      <div className="page-inline-actions">
+        <button className="primary-button" onClick={() => setFormOpen(true)}>
+          <Plus size={16} /> Add hackathon
+        </button>
+      </div>
 
       <MetricGrid className="workspace-insight-grid" ariaLabel="Hackathon overview">
         <MetricCard className="compact" label="Opportunities" value={hackathons.length} detail="in your pipeline" />

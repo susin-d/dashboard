@@ -15,7 +15,7 @@ import {
 } from 'lucide-react'
 import { usePersistentState } from '../hooks/usePersistentState'
 import { createJob, deleteJob, updateJob } from '../lib/workspaceApi'
-import { ConfirmDialog, CustomDropdown, EmptyState, FilterBar, PageHeader, SearchBar } from '../components/ui'
+import { ConfirmDialog, CustomDropdown, EmptyState, FilterBar, SearchBar } from '../components/ui'
 import { buildApplicationTimeline } from '../utils/jobTimeline'
 import { JobModals } from './jobs/JobModals'
 import { JobTimeline } from './jobs/JobTimeline'
@@ -171,20 +171,15 @@ export function JobsPage({ jobs, setJobs, documents, createIntent, canLoadMore, 
 
   return (
     <section className="jobs-page">
-      <PageHeader
-        eyebrow="Create"
-        title="Jobs"
-        description={`${jobs.length} opportunities in your pipeline`}
-        actions={
-          <button
-            className="primary-button jobs-add-button"
-            onClick={() => setFormOpen(true)}
-          >
-            <Plus size={17} />
-            Add job
-          </button>
-        }
-      />
+      <div className="page-inline-actions">
+        <button
+          className="primary-button jobs-add-button"
+          onClick={() => setFormOpen(true)}
+        >
+          <Plus size={17} />
+          Add job
+        </button>
+      </div>
 
       <JobTimeline
         jobs={jobs}

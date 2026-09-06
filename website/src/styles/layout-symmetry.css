@@ -159,6 +159,8 @@
 
 .page-heading-actions,
 .dashboard-heading-actions,
+.dashboard-inline-actions,
+.page-inline-actions,
 .project-page-header-actions,
 .calendar-actions {
   display: flex;
@@ -172,6 +174,8 @@
 :where(
   .page-heading-actions,
   .dashboard-heading-actions,
+  .dashboard-inline-actions,
+  .page-inline-actions,
   .project-page-header-actions,
   .calendar-actions
 ) :where(button, a, select, input) {
@@ -317,6 +321,8 @@
 
   .page-heading-actions,
   .dashboard-heading-actions,
+  .dashboard-inline-actions,
+  .page-inline-actions,
   .project-page-header-actions,
   .calendar-actions {
     width: 100%;
@@ -327,6 +333,8 @@
 @media (max-width: 640px) {
   .page-heading-actions,
   .dashboard-heading-actions,
+  .dashboard-inline-actions,
+  .page-inline-actions,
   .project-page-header-actions,
   .calendar-actions {
     flex-wrap: wrap;
@@ -335,6 +343,8 @@
 
   .page-heading-actions > :where(button, a),
   .dashboard-heading-actions > :where(button, a, div),
+  .dashboard-inline-actions > :where(button, a, div),
+  .page-inline-actions > :where(button, a),
   .project-page-header-actions > :where(button, a),
   .calendar-actions > :where(button, a) {
     flex: 1 1 calc(50% - var(--space-2xs));

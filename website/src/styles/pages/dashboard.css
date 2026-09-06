@@ -18,14 +18,22 @@
 }
 
 .dashboard-heading-actions,
-.dashboard-heading-actions > div {
+.dashboard-heading-actions > div,
+.dashboard-inline-actions,
+.dashboard-inline-actions > div {
   display: flex;
   align-items: center;
   gap: var(--space-2xs);
 }
 
-.dashboard-heading-actions button {
+.dashboard-heading-actions button,
+.dashboard-inline-actions button {
   white-space: nowrap;
+}
+
+.dashboard-inline-actions {
+  justify-content: flex-end;
+  flex-wrap: wrap;
 }
 
 .dashboard-greeting {

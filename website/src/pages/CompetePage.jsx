@@ -1,7 +1,7 @@
 import '../styles/pages/compete.css'
 import { useEffect, useState } from 'react'
 import { ChartNoAxesCombined, Trophy } from 'lucide-react'
-import { PageHeader, TabNav } from '../components/ui'
+import { TabNav } from '../components/ui'
 import { CompetitiveCodingPage } from './CompetitiveCodingPage'
 import { StatsPage } from './StatsPage'
 
@@ -36,11 +36,6 @@ export function CompetePage({
 
   return (
     <div className="compete-page">
-      <PageHeader
-        eyebrow="Evolve"
-        title="Compete"
-        description="Contests on your radar and the numbers behind your climb."
-      />
       <TabNav tabs={COMPETE_TABS} activeTab={activeTab} onChange={switchTab} ariaLabel="Compete sections" />
       {activeTab === 'stats' ? (
         <StatsPage

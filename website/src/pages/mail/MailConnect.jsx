@@ -1,16 +1,10 @@
 import '../../styles/pages/mail-connect.css'
 import { LoaderCircle, Mail, MailPlus } from 'lucide-react'
-import { Alert, PageHeader } from '../../components/ui'
+import { Alert } from '../../components/ui'
 
 export function MailConnect({ error, connectingGmail, onConnect, onNavigate }) {
   return (
     <div className="mail-page-container">
-      <PageHeader
-        eyebrow="Connect"
-        title="Mails"
-        description="Centralize your Gmail accounts, organize threads, and compose messages."
-      />
-
       <div className="mail-connect-hero-card">
         <div className="mail-connect-badge-icon">
           <Mail size={24} strokeWidth={2} />

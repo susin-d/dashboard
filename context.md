@@ -2,7 +2,7 @@
 
 Living snapshot for AI agents. `AGENTS.md` holds permanent rules; this file holds the **current state**. See `CHANGELOG.md` for history and `PROJECT_MAP.md` for the file index.
 
-Last updated: 2026-09-06 — Dashboard documents widget converted to Recent activity feed
+Last updated: 2026-09-06 — Removed PageHeader everywhere; Dashboard keeps time-based greeting only, actions moved inline
 
 ## Contents
 1. [Overview](#1-overview) · 2. [Repository structure](#2-repository-structure) · 3. [Backend](#3-backend) · 4. [Frontend](#4-frontend) · 5. [Design system](#5-design-system) · 6. [Current snapshot](#6-current-snapshot) · 7. [Limitations](#7-limitations) · 8. [Verification](#8-verification)
@@ -48,7 +48,7 @@ For full maps see `PROJECT_MAP.md`. Keep this section brief; expand there.
 
 ## 4. Frontend
 - **Entry:** `website/src/main.jsx` → `App.jsx` (routing + workspace state). **Layout:** `layouts/AppLayout.jsx`.
- - **UI primitives** `components/ui/` (`Modal`, `MailModal`, `ConfirmDialog`, `PageHeader`, `EmptyState`, `CustomDropdown`, `CalendarPicker`, `Markdown`, `TabNav`, `SectionHeading`, `SettingsCard`, `MetricCard`, `SearchBar`, `Pagination`, `FilterBar`, `Alert`, `LoadingState`, `Avatar`, `Badge`, `EveUiBanner`) — must reuse before creating ad-hoc. **Eve Avatar** `components/eve/avatar/` (`EveAvatar`, `EveGlobalCompanion`, `EveInlineAvatar`, `VrmModel`/`Live2DModel` fallbacks, hooks `useEveAvatarState`/`useLipSync`/`useEyeTracking`/`useAvatarPref`/`useAvatarLifecycle`, `EveAvatarProvider` + `EveGlobalCompanionHost`) — glass `eve-avatar.css` (tokens, reduced-motion).
+ - **UI primitives** `components/ui/` (`Modal`, `MailModal`, `ConfirmDialog`, `EmptyState`, `CustomDropdown`, `CalendarPicker`, `Markdown`, `TabNav`, `SectionHeading`, `SettingsCard`, `MetricCard`, `SearchBar`, `Pagination`, `FilterBar`, `Alert`, `LoadingState`, `Avatar`, `Badge`, `EveUiBanner`) — must reuse before creating ad-hoc. Page titles live in the topbar; page actions sit in `.page-inline-actions` at the top of content. Dashboard header is greeting-only (`dashboard-greeting` date + live time + Good morning/afternoon/evening/night). **Eve Avatar** `components/eve/avatar/` (`EveAvatar`, `EveGlobalCompanion`, `EveInlineAvatar`, `VrmModel`/`Live2DModel` fallbacks, hooks `useEveAvatarState`/`useLipSync`/`useEyeTracking`/`useAvatarPref`/`useAvatarLifecycle`, `EveAvatarProvider` + `EveGlobalCompanionHost`) — glass `eve-avatar.css` (tokens, reduced-motion).
 - **Hooks:** `hooks/` (`useAuth`, `useRouter`, `useThemeCustomizer`, `useWorkspaceData` staggered, `useCustomUI`, `useDevices`, `useSyncEvents`, `call/` `useWebRTC`/`useEveVoice`/`useCallCenter`) + `usePersistentState`.
   - **API clients** `lib/` — one per backend feature via `request.js` `apiRequest` (dedup + cache 30s/15s + concurrency 6 + retries + `X-Device-Id`, 401 logout). `authApi` device-aware, `uiPreferencesApi`, `eveAvatarApi`, `firebase.js`.
   - **Pages:** Dashboard, Projects, Jobs, Hackathons, Todo, Documents, Workspace (IDE + Eve + Browser, `useEveAgentChat` streams `thinking`+`stream` cursors), Studio (hero→builder/apps/templates), Eve (chat+memory+voice+schedules, `EveChatSection` streams `thinking`/`delta`/`toolCalls` with `EveThoughtHistory` + live cursor), **Avatar Studio** (`/app/avatar` lazy), Calls (WebRTC+Twilio), WhatsApp, Mails, Calendar, Contacts, Coding, Stats, `UsagePage`, Settings (`Device`+`Appearance`+`EveAvatarSection`), `CustomPage`, Themes, Profile, Onboarding, Landing, etc. Global `EveGlobalCompanion` dock.

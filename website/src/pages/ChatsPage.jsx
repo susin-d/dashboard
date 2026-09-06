@@ -19,7 +19,7 @@ import {
   getGoogleChatSpaces,
   sendGoogleChatMessage,
 } from '../lib/googleChatApi'
-import { FilterPills, LoadingState, PageHeader, SearchBar } from '../components/ui'
+import { FilterPills, LoadingState, SearchBar } from '../components/ui'
 
 export function ChatsPage({ onNavigate: _onNavigate }) {
   const [accounts, setAccounts] = useState([])
@@ -141,37 +141,31 @@ export function ChatsPage({ onNavigate: _onNavigate }) {
 
   return (
     <section className="chats-page">
-      <PageHeader
-        eyebrow="Connect"
-        title="Team Chats"
-        actions={
-          <>
-            {accounts.length > 0 ? (
-              <div className="account-badge-pill">
-                <span className="dot active"></span>
-                {accounts.length} Google {accounts.length === 1 ? 'Account' : 'Accounts'} Connected
-              </div>
-            ) : !loading ? (
-              <button
-                className="secondary-button icon-button-text"
-                onClick={handleConnectGoogleChat}
-                disabled={connectingChat}
-              >
-                <Settings size={16} className={connectingChat ? 'spin' : ''} />
-                <span>{connectingChat ? 'Connecting…' : 'Connect Google Chat'}</span>
-              </button>
-            ) : null}
-            <button
-              className="icon-button"
-              onClick={() => fetchSpaces(selectedAccountEmail)}
-              disabled={loading}
-              title="Refresh"
-            >
-              <RefreshCw size={16} className={loading ? 'spin' : ''} />
-            </button>
-          </>
-        }
-      />
+      <div className="page-inline-actions">
+        {accounts.length > 0 ? (
+          <div className="account-badge-pill">
+            <span className="dot active"></span>
+            {accounts.length} Google {accounts.length === 1 ? 'Account' : 'Accounts'} Connected
+          </div>
+        ) : !loading ? (
+          <button
+            className="secondary-button icon-button-text"
+            onClick={handleConnectGoogleChat}
+            disabled={connectingChat}
+          >
+            <Settings size={16} className={connectingChat ? 'spin' : ''} />
+            <span>{connectingChat ? 'Connecting…' : 'Connect Google Chat'}</span>
+          </button>
+        ) : null}
+        <button
+          className="icon-button"
+          onClick={() => fetchSpaces(selectedAccountEmail)}
+          disabled={loading}
+          title="Refresh"
+        >
+          <RefreshCw size={16} className={loading ? 'spin' : ''} />
+        </button>
+      </div>
 
       {/* No accounts connected empty state */}
       {!loading && accounts.length === 0 && (

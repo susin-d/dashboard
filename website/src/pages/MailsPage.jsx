@@ -6,7 +6,7 @@ import {
   sendGoogleMessage, updateGoogleMessage,
 } from '../lib/googleMail'
 import { getGmailAccounts, getGmailStatus } from '../lib/gmailApi'
-import { ConfirmDialog, LoadingState, PageHeader, Pagination, SearchBar, TabNav } from '../components/ui'
+import { ConfirmDialog, LoadingState, Pagination, SearchBar, TabNav } from '../components/ui'
 import { usePersistentState } from '../hooks/usePersistentState'
 import { EMPTY_COMPOSE, INBOX_TABS, buildReplyDraft } from './mail/mailUtils'
 import { MailComposer } from './mail/MailComposer'
@@ -277,36 +277,29 @@ export function MailsPage({ onNavigate }) {
         unreadCount={messages.filter((message) => message.unread).length}
       />
 
-      <PageHeader
-        eyebrow="Connect"
-        title="Mails"
-        className="mail-page-heading"
-        actions={
-          <>
-            <div className="mail-toolbar">
-              <form onSubmit={(event) => { event.preventDefault(); refresh(query, folder, '', false, selectedAccountEmail) }}>
-                <SearchBar
-                  value={query}
-                  onChange={setQuery}
-                  onClear={() => {
-                    setQuery('')
-                    refresh('', folder, '', false, selectedAccountEmail)
-                  }}
-                  placeholder="Search mail"
-                  ariaLabel="Search mail"
-                  iconSize={17}
-                />
-              </form>
-              <button onClick={() => refresh(query, folder, pageToken, true, selectedAccountEmail)} disabled={loading} aria-label="Refresh inbox">
-                <RefreshCw size={17} className={loading ? 'mail-spin' : ''} />
-              </button>
-            </div>
-            <button className="primary-button" onClick={() => setCompose({ ...EMPTY_COMPOSE })}>
-              <MailPlus size={16} /> Compose
-            </button>
-          </>
-        }
-      />
+      <div className="page-inline-actions mail-page-heading">
+        <div className="mail-toolbar">
+          <form onSubmit={(event) => { event.preventDefault(); refresh(query, folder, '', false, selectedAccountEmail) }}>
+            <SearchBar
+              value={query}
+              onChange={setQuery}
+              onClear={() => {
+                setQuery('')
+                refresh('', folder, '', false, selectedAccountEmail)
+              }}
+              placeholder="Search mail"
+              ariaLabel="Search mail"
+              iconSize={17}
+            />
+          </form>
+          <button onClick={() => refresh(query, folder, pageToken, true, selectedAccountEmail)} disabled={loading} aria-label="Refresh inbox">
+            <RefreshCw size={17} className={loading ? 'mail-spin' : ''} />
+          </button>
+        </div>
+        <button className="primary-button" onClick={() => setCompose({ ...EMPTY_COMPOSE })}>
+          <MailPlus size={16} /> Compose
+        </button>
+      </div>
 
       {folder === 'INBOX' && (
         <TabNav

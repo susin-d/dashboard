@@ -2,9 +2,9 @@
 import '../../styles/pages/projects-list.css'
 import '../../styles/pages/project-cards.css'
 import { useState } from 'react'
-import { FolderKanban, LayoutGrid, List, Search, SlidersHorizontal } from 'lucide-react'
+import { LayoutGrid, List, Search, SlidersHorizontal } from 'lucide-react'
 import { createProject, deleteProject, updateProject } from '../../lib/workspaceApi'
-import { ConfirmDialog, CustomDropdown, EmptyState, FilterBar, FilterPills, PageHeader, SearchBar } from '../../components/ui'
+import { ConfirmDialog, CustomDropdown, EmptyState, FilterBar, FilterPills, SearchBar } from '../../components/ui'
 import { usePersistentState } from '../../hooks/usePersistentState'
 import { emptyProject } from './constants'
 import { useProjectFilters } from './useProjectFilters'
@@ -94,24 +94,11 @@ export function ProjectsPage({ projects, setProjects, onOpenProject, canLoadMore
 
   return (
     <section className="projects-page">
-      <PageHeader
-        eyebrow="Code"
-        title="Projects"
-        description="Turn ideas into momentum with a clear view of what is moving."
-        actions={
-          <>
-            <div className="project-summary">
-              <FolderKanban size={16} />
-              <span>
-                {filteredProjects.length} of {projects.length} projects
-              </span>
-            </div>
-            <button className="primary-button" onClick={() => setFormOpen(true)}>
-              Add project
-            </button>
-          </>
-        }
-      />
+      <div className="page-inline-actions">
+        <button className="primary-button" onClick={() => setFormOpen(true)}>
+          Add project
+        </button>
+      </div>
 
       <ProjectMetrics projects={projects} statusCounts={statusCounts} statusFilter={statusFilter} setStatusFilter={setStatusFilter} />
 
