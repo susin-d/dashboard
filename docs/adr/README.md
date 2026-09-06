@@ -37,6 +37,7 @@
 | [0025](0025-auth-split-screen-brand-panel.md) | Auth split-screen — minimal brand panel + perspective grid floor, form right, all flows | Accepted | 2026-09-06 |
 | [0026](0026-auth-pinned-landing-theme.md) | Auth pinned to landing Crimson Noir theme in both app themes | Accepted | 2026-09-06 |
 | [0027](0027-app-ia-nav-regroup.md) | App IA regroup — Home/Code/Create/Evolve/Connect/You; Eve tabs, Compete, Studio tabs | Accepted | 2026-09-06 |
+| [0028](0028-crimson-noir-default-and-motion.md) | Crimson Noir default for fresh visitors + CSS page-enter motion language | Accepted | 2026-09-06 |
 | [0022](0022-single-source-color-palette.md) | Single-source color palette in tokens.css — var() everywhere, dead legacy landing CSS removed | Accepted | 2026-09-06 |
 | [0023](0023-crimson-noir-default-dark-theme.md) | Crimson Noir default dark theme + landing planet/mountain SVG scenery | Accepted | 2026-09-06 |
 | [0024](0024-landing-bold-experimental-redesign.md) | Landing bold experimental redesign — Code/Create/Evolve arc, rich cinematic motion, CSS split | Accepted | 2026-09-06 |

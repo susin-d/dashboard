@@ -7,12 +7,19 @@ import {
 
 const STORAGE_KEY = 'starwaves.custom_theme'
 
+// Crimson Noir is the default (ADR 0028): fresh visitors with no stored
+// preference land on dark. Stored 'light' is always respected.
+function prefersDarkTheme() {
+  const stored = localStorage.getItem('starwaves.theme')
+  return stored ? stored === 'dark' : true
+}
+
 export function useThemeCustomizer() {
   const [themeState, setThemeState] = useState(() => {
     const saved = localStorage.getItem(STORAGE_KEY)
     if (saved) {
       try {
-        const isDark = localStorage.getItem('starwaves.theme') === 'dark'
+        const isDark = prefersDarkTheme()
         const fallbackPreset = isDark ? 'dark' : 'light'
         const activePreset = parsed.preset && THEME_PRESETS[parsed.preset] ? parsed.preset : fallbackPreset
         return {
@@ -28,7 +35,7 @@ export function useThemeCustomizer() {
         /* fallback */
       }
     }
-    const isDark = localStorage.getItem('starwaves.theme') === 'dark'
+    const isDark = prefersDarkTheme()
     return {
       preset: isDark ? 'dark' : 'light',
       colors: THEME_PRESETS[isDark ? 'dark' : 'light'].colors,
@@ -94,7 +101,7 @@ export function useThemeCustomizer() {
   const resetToDefault = useCallback(() => {
     localStorage.removeItem(STORAGE_KEY)
     resetThemeVariables()
-    const isDark = localStorage.getItem('starwaves.theme') === 'dark'
+    const isDark = prefersDarkTheme()
     const defaultPreset = isDark ? 'dark' : 'light'
     const defaultState = {
       preset: defaultPreset,

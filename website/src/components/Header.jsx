@@ -64,9 +64,10 @@ export function Header({
     }
   }
   const [eveOpen, setEveOpen] = useState(false)
-  const [darkTheme, setDarkTheme] = useState(
-    () => localStorage.getItem('starwaves.theme') === 'dark',
-  )
+  const [darkTheme, setDarkTheme] = useState(() => {
+    const stored = localStorage.getItem('starwaves.theme')
+    return stored ? stored === 'dark' : true
+  })
   const [permissionStatus, setPermissionStatus] = useState(() => getNotificationPermission())
 
   const handleToggleNotifications = () => {

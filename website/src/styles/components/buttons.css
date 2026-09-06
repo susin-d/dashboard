@@ -154,6 +154,10 @@
   .danger-button {
     min-height: 44px;
   }
+  .icon-button {
+    width: 44px;
+    height: 44px;
+  }
 }
 
 .icon-button:hover {
@@ -162,14 +166,14 @@
 
 .theme-toggle {
   flex: 0 0 38px;
-  border: 1px solid var(--color-primary) !important;
-  background: var(--color-primary) !important;
-  color: var(--text-inverse) !important;
+  border: 1px solid var(--color-primary);
+  background: var(--color-primary);
+  color: var(--text-inverse);
   transition: color 150ms ease, background 150ms ease, transform 150ms ease;
 }
 
 .theme-toggle:hover {
-  background: var(--bg-primary) !important;
-  color: var(--text-primary) !important;
+  background: var(--bg-primary);
+  color: var(--text-primary);
   transform: rotate(-8deg);
 }

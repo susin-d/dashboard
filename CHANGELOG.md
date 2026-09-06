@@ -5,6 +5,11 @@ Historical implementation log extracted from `context.md`. `context.md` now hold
 ## 2026-09-06 — Loading screen redesign (from prior commit f81e6b0)
 - Branded WaveLoader card (orbit ring + wave bars + progress) and matching LoadingState (`components/WaveLoader.jsx`, `components/ui/LoadingState.jsx`, `wave-loader.css`, `loading-state.css`).
 
+## 2026-09-06 — Phase 1: Crimson Noir default + motion language (ADR 0028)
+- Fresh visitors (no stored theme) land on Crimson Noir dark: `prefersDarkTheme` in `useThemeCustomizer`, `Header` toggle init, pre-paint `dark-theme` class + `theme-color #0d080a` in `index.html`. Stored preferences untouched; preset engine unchanged.
+- `.app-page-enter` CSS route transition (`key={activePage}`, motion-token timed, reduced-motion freeze) — no chunk cost.
+- Boy Scout: `.theme-toggle` `!important` removed; `.icon-button` 44px on coarse pointers.
+
 ## 2026-09-06 — IA merges implemented (ADR 0027 Accepted)
 - `EvePage` TabNav (Chat/Sessions/Memory/Voice/Schedules, URL-synced both ways); sidebar keeps one `Eve`; `AppLayout` highlights parent ids.
 - New `CompetePage` (Contests/Stats tabs over existing pages); `compete` nav entry + router id; `competitive-coding`/`stats` render it with matching tab (dashboard widgets, calendar links, `/app/competitive` URL unaffected).

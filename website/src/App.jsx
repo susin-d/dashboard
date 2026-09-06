@@ -738,12 +738,14 @@ function App() {
         }}
       >
         <Suspense fallback={<WaveLoader />}>
-          {activePage.startsWith('custom-')
-            ? (() => {
-                const slug = activePage.slice(7)
-                return <CustomPage slug={slug} />
-              })()
-            : (pages[activePage] ?? pages.dashboard)}
+          <div key={activePage} className="app-page-enter">
+            {activePage.startsWith('custom-')
+              ? (() => {
+                  const slug = activePage.slice(7)
+                  return <CustomPage slug={slug} />
+                })()
+              : (pages[activePage] ?? pages.dashboard)}
+          </div>
         </Suspense>
         <IncomingCallOverlay callCenter={callCenter} myUid={userProfile?.uid} />
         <UpdateBanner update={appUpdate} onDismiss={dismissAppUpdate} />
