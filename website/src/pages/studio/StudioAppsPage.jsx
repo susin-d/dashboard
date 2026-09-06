@@ -5,7 +5,6 @@ import { AppWindow, ExternalLink, FileCode, Play, Plus, RefreshCw, Sparkles, Tra
 import { ConfirmDialog, EmptyState, LoadingState, SectionHeading } from '../../components/ui'
 import { startPreview } from '../../lib/studioApi'
 import { ProjectCard } from './ProjectCard'
-import { StudioTabs } from './StudioTabs'
 import { useStudioProjects } from './useStudioProjects'
 
 function formatDate(iso) {
@@ -73,7 +72,6 @@ export function StudioAppsPage({ onOpenProject, onNavigate }) {
         </button>
         </div>
       </header>
-      <StudioTabs activeTab="studio-apps" onNavigate={onNavigate} />
       {(error || runError) && (
         <div className="studio-error-banner" role="alert">
           <span>{runError || error}</span>

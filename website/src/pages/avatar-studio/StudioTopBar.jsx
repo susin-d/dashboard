@@ -1,6 +1,6 @@
-import { ChevronDown, Download, FolderOpen, Redo2, Save, Undo2, Upload } from 'lucide-react'
+import { Box, ChevronDown, Download, FolderOpen, Redo2, Save, Undo2, Upload } from 'lucide-react'
 
-export function StudioTopBar({ project, projects, onOpen, onSave, onImport, onExport, onUndo, onRedo, canUndo, canRedo }) {
+export function StudioTopBar({ project, projects, onOpen, onSave, onImport, onExport, onCreatePrimitive, onUndo, onRedo, canUndo, canRedo }) {
   return (
     <header className="modeling-topbar">
       <div className="modeling-brand-mark" aria-hidden="true">A</div>
@@ -18,6 +18,7 @@ export function StudioTopBar({ project, projects, onOpen, onSave, onImport, onEx
           <Upload size={15} /> Import
           <input type="file" accept=".vrm,.glb,.gltf,.bin,.png,.jpg,.jpeg,.webp" multiple onChange={onImport} hidden />
         </label>
+        <button type="button" className="modeling-action-button" onClick={onCreatePrimitive}><Box size={15} /> Add cube</button>
         <button type="button" className="modeling-icon-button" onClick={onUndo} disabled={!canUndo} aria-label="Undo"><Undo2 size={15} /></button>
         <button type="button" className="modeling-icon-button" onClick={onRedo} disabled={!canRedo} aria-label="Redo"><Redo2 size={15} /></button>
         <button type="button" className="modeling-action-button is-primary" onClick={onSave}><Save size={15} /> Save</button>

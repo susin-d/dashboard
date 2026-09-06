@@ -40,6 +40,7 @@ export function ModelingStudioWorkspace() {
   const [browserOpen, setBrowserOpen] = useState(true)
   const [showGrid, setShowGrid] = useState(true)
   const [showAxes, setShowAxes] = useState(true)
+  const [controlsHidden, setControlsHidden] = useState(false)
   const [resetSignal, setResetSignal] = useState(0)
   const [status, setStatus] = useState('')
   const [error, setError] = useState('')
@@ -48,7 +49,7 @@ export function ModelingStudioWorkspace() {
   const [materialPatch, setMaterialPatch] = useState(null)
   const viewportRef = useRef(null)
   const historyRef = useRef({ past: [], future: [] })
-  const { projects, currentProject, scene, setScene, openProject, saveProject, importAsset, error: projectError } = useModelingProject(activeModel)
+  const { projects, currentProject, scene, setScene, openProject, saveProject, importAsset, getAssetBlob, error: projectError } = useModelingProject(activeModel)
 
   useEffect(() => {
     listAvatarModels().then((result) => setRemoteModels(result?.models || [])).catch(() => {})
@@ -59,14 +60,44 @@ export function ModelingStudioWorkspace() {
   const isLive2D = (prefs?.renderer === 'live2d' || (prefs?.renderer === 'auto' && activeModel?.renderer === 'live2d')) && !source?.file
 
   useEffect(() => {
-    if (source) return
+    if (source || currentProject.id) return
     const model = models.find((item) => item.id === (prefs?.modelId || activeModel?.id)) || activeModel || models[0]
     if (model?.renderer === 'vrm' && model.url) setSource({ url: model.url, key: model.id })
-  }, [activeModel, models, prefs?.modelId, source])
+  }, [activeModel, currentProject.id, models, prefs?.modelId, scene.model?.id, scene.model?.url, source])
 
   useEffect(() => {
     if (projectError) setError(projectError)
   }, [projectError])
+
+  useEffect(() => {
+    const onKeyDown = (event) => {
+      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 's') {
+        event.preventDefault()
+        handleSave()
+        return
+      }
+      if (event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement || event.target instanceof HTMLSelectElement) return
+      const shortcuts = { w: 'move', e: 'rotate', r: 'scale', q: 'select' }
+      const tool = shortcuts[event.key.toLowerCase()]
+      if (tool) setActiveTool(tool)
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  })
+
+  useEffect(() => {
+    if (!source && currentProject.id && scene.model?.url) {
+      setSource({ url: scene.model.url, key: `${currentProject.id}:${scene.model.id}` })
+      return undefined
+    }
+    if (!source && currentProject.id && scene.model?.assetId) {
+      getAssetBlob(scene.model.assetId).then((blob) => {
+        if (!blob) return
+        setSource({ url: URL.createObjectURL(blob), key: `${currentProject.id}:${scene.model.assetId}` })
+      }).catch(() => setError('Could not load the saved model asset.'))
+    }
+    return undefined
+  }, [currentProject.id, getAssetBlob, scene.model?.assetId, scene.model?.id, scene.model?.url, source])
 
   const updateScene = useCallback((updater) => {
     setScene((current) => {
@@ -93,14 +124,19 @@ export function ModelingStudioWorkspace() {
     const modelFile = files.find((file) => /\.(vrm|glb|gltf)$/i.test(file.name))
     if (!modelFile) { setError('Choose a VRM, GLB, or GLTF file.'); return }
     try {
-      const uploaded = currentProject.id ? await importAsset(modelFile, { relativePath: modelFile.webkitRelativePath || modelFile.name }) : null
+      let uploaded = null
+      try {
+        uploaded = await importAsset(modelFile, { relativePath: modelFile.webkitRelativePath || modelFile.name })
+      } catch {
+        setStatus('Loaded locally — sign in to save project assets.')
+      }
       setSource({ file: modelFile, files, key: `${modelFile.name}:${modelFile.lastModified}` })
       updateScene((current) => ({ ...current, model: { id: uploaded?.id || `local:${modelFile.name}`, label: modelFile.name, renderer: 'vrm', url: null, assetId: uploaded?.id || null } }))
       setStatus(`Loaded ${modelFile.name}`)
     } catch (err) {
       setError(err?.message || 'Could not import model.')
     }
-  }, [currentProject.id, importAsset, updateScene])
+  }, [importAsset, updateScene])
 
   const handleSceneGraph = useCallback((nextNodes) => {
     setNodes(nextNodes)
@@ -177,29 +213,30 @@ export function ModelingStudioWorkspace() {
   const handleResetCamera = () => { setResetSignal((value) => value + 1); updateScene((current) => ({ ...current, camera: createSceneProject().camera })) }
   const viewportSource = useMemo(() => source || (scene.model?.url ? { url: scene.model.url, key: scene.model.id } : null), [scene.model, source])
 
-  return <div className={`modeling-studio ${inspectorOpen ? 'is-inspector-open' : ''} ${browserOpen ? 'is-browser-open' : ''}`}>
-    <StudioTopBar project={currentProject} projects={projects} onOpen={(id) => id && openProject(id)} onSave={handleSave} onImport={handleImport} onExport={handleExport} onUndo={handleUndo} onRedo={handleRedo} canUndo={historyRef.current.past.length > 0} canRedo={historyRef.current.future.length > 0} />
-    <div className="modeling-workspace">
-      <aside className="modeling-tool-rail" aria-label="Modeling tools">
+  return <div className={`modeling-studio ${inspectorOpen ? 'is-inspector-open' : ''} ${browserOpen ? 'is-browser-open' : ''} ${controlsHidden ? 'is-controls-hidden' : ''}`}>
+    {!controlsHidden && <StudioTopBar project={currentProject} projects={projects} onOpen={async (id) => { const loaded = id ? await openProject(id) : null; if (loaded) { setNodes(loaded.scene?.nodes || []); setSelectedNodeId(null); setSource(null) } }} onSave={handleSave} onImport={handleImport} onCreatePrimitive={() => { const id = viewportRef.current?.addPrimitive('box'); if (id) setStatus('Cube added to scene'); else setError('Load a scene before adding a primitive.') }} onExport={handleExport} onUndo={handleUndo} onRedo={handleRedo} canUndo={historyRef.current.past.length > 0} canRedo={historyRef.current.future.length > 0} />}
+    <div className={`modeling-workspace ${controlsHidden ? 'is-controls-hidden' : ''}`}>
+      {!controlsHidden && <aside className="modeling-tool-rail" aria-label="Modeling tools">
         <div className="modeling-tool-rail-brand">A</div>
         {TOOL_GROUPS.map((toolItem) => { const Icon = TOOL_ICONS[toolItem.icon] || Box; return <button type="button" key={toolItem.id} className={activeTool === toolItem.id ? 'is-active' : ''} onClick={() => setActiveTool(toolItem.id)} aria-pressed={activeTool === toolItem.id} title={toolItem.label}><Icon size={17} /><span>{toolItem.label}</span></button> })}
         <button type="button" className="modeling-tool-rail-bottom" onClick={() => setBrowserOpen((open) => !open)} aria-label="Toggle model browser"><PanelLeft size={17} /></button>
-      </aside>
-      {browserOpen && <StudioModelBrowser models={models} activeModelId={prefs?.modelId || activeModel?.id} onSelectModel={handleSelectModel} onImport={handleImport} />}
+      </aside>}
+      {!controlsHidden && browserOpen && <StudioModelBrowser models={models} activeModelId={prefs?.modelId || activeModel?.id} onSelectModel={handleSelectModel} onImport={handleImport} />}
       <main className="modeling-center-column">
         <div className="modeling-viewport-shell">
           <div className="modeling-viewport-header"><div><span className="modeling-panel-kicker">3D Viewport</span><strong>Perspective</strong></div><div className="modeling-viewport-actions"><button type="button" onClick={() => setShowGrid((value) => !value)} className={showGrid ? 'is-active' : ''} aria-pressed={showGrid}><Grid3x3 size={14} /> Grid</button><button type="button" onClick={() => setShowAxes((value) => !value)} className={showAxes ? 'is-active' : ''} aria-pressed={showAxes}><Eye size={14} /> Axes</button><button type="button" onClick={() => setInspectorOpen((open) => !open)} aria-expanded={inspectorOpen}><PanelRight size={14} /></button></div></div>
           <div className="modeling-viewport-content">
-            {isLive2D ? <EveAvatar size="lg" className="modeling-live2d-avatar" prefs={prefs} activeModel={activeModel} /> : <SceneViewport ref={viewportRef} source={viewportSource} selectedNodeId={selectedNodeId} tool={activeTool} showGrid={showGrid} showAxes={showAxes} resetSignal={resetSignal} onSceneGraph={handleSceneGraph} onSelectNode={setSelectedNodeId} onNodeTransform={handleNodeTransform} onMaterialChange={materialPatch} onCameraChange={handleCameraChange} onStatus={(next) => { if (next === 'error') setError('Could not load this model.') }} />}
+            {isLive2D ? <EveAvatar size="lg" className="modeling-live2d-avatar" prefs={prefs} activeModel={activeModel} /> : <SceneViewport ref={viewportRef} source={viewportSource} nodes={nodes} selectedNodeId={selectedNodeId} tool={activeTool} showGrid={showGrid} showAxes={showAxes} resetSignal={resetSignal} onSceneGraph={handleSceneGraph} onSelectNode={setSelectedNodeId} onNodeTransform={handleNodeTransform} onMaterialChange={materialPatch} onCameraChange={handleCameraChange} onStatus={(next) => { if (next === 'error') setError('Could not load this model.') }} />}
             <div className="modeling-viewport-hint"><Camera size={13} /> Drag to orbit · Wheel to zoom · {activeTool === 'select' ? 'Click to select' : `${activeTool} tool active`}</div>
             <button type="button" className="modeling-fullscreen-button" aria-label="Fullscreen viewport"><Maximize2 size={15} /></button>
+            <button type="button" className="modeling-hide-controls" onClick={() => setControlsHidden(true)} aria-label="Hide all controls"><Eye size={14} /> Hide UI</button>
           </div>
         </div>
-        <StudioTimeline nodes={nodes} scene={scene} playing={playing} currentFrame={currentFrame} onTogglePlayback={() => setPlaying((value) => !value)} onFrameChange={setCurrentFrame} onAddKeyframe={handleAddKeyframe} />
+        {!controlsHidden && <StudioTimeline nodes={nodes} scene={scene} playing={playing} currentFrame={currentFrame} onTogglePlayback={() => setPlaying((value) => !value)} onFrameChange={setCurrentFrame} onAddKeyframe={handleAddKeyframe} />}
       </main>
-      {inspectorOpen && <aside className="modeling-right-column"><StudioOutliner nodes={nodes} selectedNodeId={selectedNodeId} onSelect={setSelectedNodeId} onToggleVisibility={(node) => handleNodeUpdateFor(node.id, { visible: node.visible === false })} /><StudioProperties node={selectedNode} onUpdateNode={handleNodeUpdate} onMaterialChange={(patch) => setMaterialPatch(patch)} /><div className="modeling-render-card"><div><span className="modeling-panel-kicker">Render preview</span><strong>{scene.model?.label || 'No model loaded'}</strong></div><button type="button" onClick={() => handleExport('glb')}><Save size={14} /> Export GLB</button></div></aside>}
+      {!controlsHidden && inspectorOpen && <aside className="modeling-right-column"><StudioOutliner nodes={nodes} selectedNodeId={selectedNodeId} onSelect={setSelectedNodeId} onToggleVisibility={(node) => handleNodeUpdateFor(node.id, { visible: node.visible === false })} /><StudioProperties node={selectedNode} onUpdateNode={handleNodeUpdate} onMaterialChange={(patch) => setMaterialPatch(patch)} /><div className="modeling-render-card"><div><span className="modeling-panel-kicker">Render preview</span><strong>{scene.model?.label || 'No model loaded'}</strong></div><button type="button" onClick={() => handleExport('glb')}><Save size={14} /> Export GLB</button></div></aside>}
     </div>
-    <div className="modeling-bottom-status"><span className={status ? 'is-success' : ''}>{status || (currentProject.dirty ? 'Unsaved changes' : 'Ready')}</span><span>{nodes.length} scene objects · {isTauri() ? 'Desktop' : 'Browser'} mode</span><button type="button" onClick={handleResetCamera}><RotateCcw size={13} /> Reset camera</button><button type="button" onClick={() => setInspectorOpen((open) => !open)}>{inspectorOpen ? <ChevronRight size={13} /> : <ChevronLeft size={13} />} {inspectorOpen ? 'Hide inspector' : 'Show inspector'}</button></div>
+    <div className="modeling-bottom-status"><span className={status ? 'is-success' : ''}>{status || (currentProject.dirty ? 'Unsaved changes' : 'Ready')}</span><span>{nodes.length} scene objects · {isTauri() ? 'Desktop' : 'Browser'} mode</span><button type="button" onClick={handleResetCamera}><RotateCcw size={13} /> Reset camera</button><button type="button" onClick={() => setInspectorOpen((open) => !open)}>{inspectorOpen ? <ChevronRight size={13} /> : <ChevronLeft size={13} />} {inspectorOpen ? 'Hide inspector' : 'Show inspector'}</button>{controlsHidden && <button type="button" onClick={() => setControlsHidden(false)}><PanelRight size={13} /> Show all controls</button>}</div>
     {(error || projectError) && <div className="modeling-toast is-error" role="alert"><X size={15} /> {error || projectError}</div>}
   </div>
 }

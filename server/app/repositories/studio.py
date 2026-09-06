@@ -85,11 +85,7 @@ def create_studio_project(
         raise ValueError("Project name cannot be empty.")
 
     workspaces = ws_repo._load_workspaces_metadata(user_id)
-    base_slug = ws_repo._sanitize_workspace_id(name_clean.lower().replace(" ", "-"))
-    ws_id = base_slug or "project"
-    existing_ids = {ws["id"] for ws in workspaces}
-    if ws_id in existing_ids:
-        ws_id = f"{base_slug}-{uuid.uuid4().hex[:6]}"
+    ws_id = str(uuid.uuid4())
 
     ws_root = ws_repo._workspace_root(user_id, ws_id)
     import os

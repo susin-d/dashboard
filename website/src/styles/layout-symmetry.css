@@ -47,6 +47,8 @@
 .content:has(.whatsapp-page-wrapper),
 .content:has(.workspace-page),
 .content:has(.studio-builder),
+.content:has(.studio-page-builder),
+.content:has(.studio-page-gallery),
 .content:has(.avatar-studio) {
   width: 100%;
   max-width: none;
@@ -58,6 +60,12 @@
   flex-direction: column !important;
   flex: 1 1 auto !important;
   min-height: 0 !important;
+}
+
+.content:has(.studio-builder) > .app-page-enter {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
 }
 
 .content:has(.todo-page) {

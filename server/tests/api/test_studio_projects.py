@@ -4,6 +4,7 @@ import os
 import shutil
 import tempfile
 import unittest
+import uuid
 
 from app.core.config import settings
 from app.repositories import studio as studio_repo
@@ -46,6 +47,7 @@ class TestStudioProjects(unittest.TestCase):
     def test_create_and_list_project(self):
         project = self._create("Habit Tracker")
         self.assertEqual(project["type"], "studio")
+        self.assertEqual(str(uuid.UUID(project["id"])), project["id"])
         self.assertEqual(project["db_preference"], "sqlite")
         self.assertEqual(project["preview_status"], "unavailable")
         self.assertEqual(project["last_activity"]["type"], "created")

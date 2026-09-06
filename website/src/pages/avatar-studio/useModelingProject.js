@@ -45,6 +45,7 @@ export function useModelingProject(activeModel) {
       setSceneState(normalizeSceneProject(result.scene, activeModel))
       setDirty(false)
       setStatus('saved')
+      return result
     } catch (err) {
       setError(err?.message || 'Could not open project.')
     }
@@ -72,8 +73,7 @@ export function useModelingProject(activeModel) {
   }, [projectId, projectName, scene])
 
   const importAsset = useCallback(async (file, options = {}) => {
-    if (!projectId) await saveProject('Create project for imported asset')
-    const currentId = projectId || (await listModelingProjects()).projects?.[0]?.id
+    const currentId = projectId || await saveProject('Create project for imported asset')
     if (!currentId) throw new Error('Create a project before importing an asset.')
     return uploadModelingAsset(currentId, file, options)
   }, [projectId, saveProject])

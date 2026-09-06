@@ -2,7 +2,7 @@
 # Starwaves Context
 
 Living snapshot for AI agents. `AGENTS.md` holds permanent rules; this file holds the **current state**. See `CHANGELOG.md` for history and `PROJECT_MAP.md` for the file index.
-Last updated: 2026-09-06 — Calendar page now has responsive outer spacing around the toolbar and calendar grid; day-detail drawer, Studio, WhatsApp, Jobs, and Usage updates remain current. WhatsApp chat loading now avoids a messages-state update loop.
+Last updated: 2026-09-06 — Calendar day-detail empty sections now use compact token-based empty-state styling; Studio prompt card and input are shadow-free; UUID project routes, full-page Builder layout, and Avatar Studio updates remain current.
 
 ## Contents
 1. [Overview](#1-overview) · 2. [Repository structure](#2-repository-structure) · 3. [Backend](#4-backend) · 4. [Frontend](#4-frontend) · 5. [Design system](#5-design-system) · 6. [Current snapshot](#6-current-snapshot) · 7. [Limitations](#7-limitations) · 8. [Verification](#8-verification)
@@ -65,6 +65,7 @@ For full maps see `PROJECT_MAP.md`. Keep this section brief; expand there.
 ## 6. Current snapshot
   - Eve streaming + quota fallback (ADR 0014): `EveChatSection` surfaces `thinking`/`delta`/`toolCalls` live — `EveThoughtHistory` + eye pulse + `eve-*-cursor` blink + chips; `WorkspaceEvePanel` mirrors. Backend `openai_compat` caps `max_tokens` 1024/4096 via `_provider_label`, retries quota halved, `chat`/`chat_stream` fallback same-provider default/free then `_FALLBACK_ORDER` for `server`/`quota` (fixes 402/500).
   - Eve Avatar (ADR 0012): dual VRM+Live2D via `EveAvatarProvider` (lip-sync + `BroadcastChannel`) — global companion + inline micro + **Avatar Studio** (`/app/avatar`) + `EveAvatarSection`. Backend `/eve/avatar/*` validates, stores `avatars/{uid}/`. Anime defaults: 10.3MB VRM + 3MB Live2D.
+  - Avatar modeling workspace (ADR 0034): browser/Tauri shared editor shell under `pages/avatar-studio/` with catalog/upload browser, lazy GLTF/VRM viewport, selection/outliner, transform/material inspector, timeline/keyframe scene JSON, GLB/GLTF export, camera reset/save compatibility, and versioned `/modeling/projects` filesystem API with multipart binary assets.
   - GET caching: `core/cache.py` `cached` per-user keys (Redis/LRU) for hot GETs + `cache_clear` fixture.
   - Multi-device: `user_sessions` 30d/10 cap + `X-Device-Id` + `session_revoked`/`sync_invalidate` + `DeviceSection`.
   - Workspace IDE: folder-first Monaco + Explorer + Eve SSE panel (`workspace_id` required) + Browser `srcdoc`.
@@ -79,6 +80,7 @@ For full maps see `PROJECT_MAP.md`. Keep this section brief; expand there.
   - Process: no sub-agents + tiered `context.md` <15k + ADRs + no demo/mock + no temp fixes.
 
 ## 7. Limitations
+- Modeling projects require non-serverless filesystem storage; object storage is still needed for serverless deployments. VRM export currently validates and reports unsupported scenes while GLB/GLTF export is available. Sculpt/UV/texture-paint tooling remains the next modeling milestone beyond the current scene/transform/material foundation.
 - Calendar create/edit not implemented. Mail attachments/forwarding/rich-text/drafts not implemented. Calls use STUN only — TURN needed for strict NAT. Frontend bundle emits size advisory.
 
 ## 8. Verification

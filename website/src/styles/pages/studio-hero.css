@@ -9,13 +9,13 @@
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  margin: 0 auto;
+  margin: 0;
   padding: 1rem 0 2rem;
   min-height: min(680px, calc(100vh - 220px));
-  width: min(100%, var(--content-max-width, 1440px));
-  border-radius: var(--radius-xl, 24px);
+  width: 100%;
+  border-radius: 0;
   background: color-mix(in srgb, var(--bg-card) 72%, transparent);
-  border: 1px solid color-mix(in srgb, var(--module-studio) 14%, var(--border-color));
+  border: 0;
 }
 
 /* Ambient glow backdrop */
@@ -116,19 +116,23 @@
   border: 1.5px solid color-mix(in srgb, var(--module-studio) 32%, var(--border-heavy));
   border-radius: 20px;
   background: var(--bg-card);
-  box-shadow: var(--shadow-lg);
+  box-shadow: none;
   text-align: left;
   transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
 }
 
 .studio-prompt-card:focus-within {
   border-color: var(--module-studio, var(--text-primary));
-  box-shadow: var(--shadow-xl), 0 0 0 1px var(--module-studio, var(--text-primary));
+  box-shadow: none;
 }
 
-.studio-prompt-input {
+.studio-prompt-card .studio-prompt-input {
   border: none;
   background: transparent;
+  background-color: transparent;
+  box-shadow: none;
+  appearance: none;
+  -webkit-appearance: none;
   resize: none;
   outline: none;
   min-height: 2.4rem;
@@ -144,7 +148,10 @@
   color: var(--text-muted);
 }
 
-.studio-prompt-input:focus-visible {
+.studio-prompt-card .studio-prompt-input:focus,
+.studio-prompt-card .studio-prompt-input:focus-visible {
+  border: none;
+  box-shadow: none;
   outline: none;
 }
 

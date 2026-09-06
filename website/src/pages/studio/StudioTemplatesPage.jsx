@@ -3,13 +3,12 @@ import "../../styles/pages/studio-gallery.css"
 import { useCallback, useEffect, useState } from 'react'
 import { LayoutTemplate, Search, Sparkles } from 'lucide-react'
 import { EmptyState, FormField, LoadingState, Modal } from '../../components/ui'
-import { StudioTabs } from './StudioTabs'
 import {
   listStudioTemplates,
   remixStudioTemplate,
 } from '../../lib/studioApi'
 
-export function StudioTemplatesPage({ onOpenProject, onNavigate }) {
+export function StudioTemplatesPage({ onOpenProject }) {
   const [templates, setTemplates] = useState([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState('')
@@ -76,7 +75,6 @@ export function StudioTemplatesPage({ onOpenProject, onNavigate }) {
         </button>
         </div>
       </header>
-      <StudioTabs activeTab="studio-templates" onNavigate={onNavigate} />
 
       {templates.length > 0 && (
         <div className="studio-template-toolbar">

@@ -20,12 +20,14 @@ function toArray(vector) {
   return [Number(vector.x.toFixed(4)), Number(vector.y.toFixed(4)), Number(vector.z.toFixed(4))]
 }
 
-function applyArray(vector, values, fallback) {
-  const next = Array.isArray(values) && values.length === 3 ? values : fallback
-  vector.set(Number(next[0]) || 0, Number(next[1]) || 0, Number(next[2]) || 0)
+function themeColor(name) {
+  const value = getComputedStyle(document.documentElement).getPropertyValue(name).trim()
+  const color = new THREE.Color()
+  if (value) color.setStyle(value)
+  return color
 }
 
-export const SceneViewport = forwardRef(function SceneViewport({ source, selectedNodeId, tool, showGrid = true, showAxes = true, onSceneGraph, onSelectNode, onNodeTransform, onMaterialChange, onCameraChange, resetSignal, onStatus }, ref) {
+export const SceneViewport = forwardRef(function SceneViewport({ source, nodes = [], selectedNodeId, tool, showGrid = true, showAxes = true, onSceneGraph, onSelectNode, onNodeTransform, onMaterialChange, onCameraChange, resetSignal, onStatus }, ref) {
   const containerRef = useRef(null)
   const sceneRef = useRef(null)
   const cameraRef = useRef(null)
@@ -43,6 +45,27 @@ export const SceneViewport = forwardRef(function SceneViewport({ source, selecte
   statusRef.current = onStatus
 
   useImperativeHandle(ref, () => ({
+    addPrimitive: (type = 'box') => {
+      const editorScene = sceneRef.current
+      if (!editorScene) return null
+      const root = rootRef.current || new THREE.Group()
+      if (!rootRef.current) {
+        root.name = 'Scene'
+        rootRef.current = root
+        editorScene.add(root)
+      }
+      const geometry = type === 'sphere' ? new THREE.SphereGeometry(0.5, 24, 16) : type === 'cylinder' ? new THREE.CylinderGeometry(0.45, 0.45, 1, 24) : new THREE.BoxGeometry(0.8, 0.8, 0.8)
+      const material = new THREE.MeshStandardMaterial({ color: themeColor('--color-primary'), roughness: 0.45, metalness: 0.15 })
+      const mesh = new THREE.Mesh(geometry, material)
+      mesh.name = `${type[0].toUpperCase()}${type.slice(1)} primitive`
+      mesh.userData.nodeId = crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`
+      mesh.position.set(0, 0.5, 0)
+      root.add(mesh)
+      nodeMapRef.current.set(mesh.userData.nodeId, mesh)
+      onSceneGraph?.([...nodeMapRef.current.values()].map((object) => ({ id: object.userData.nodeId, name: object.name, type: object.type, visible: object.visible, position: toArray(object.position), rotation: toArray(object.rotation), scale: toArray(object.scale), parentId: object.parent?.userData?.nodeId || null, materialColor: object.material?.color ? `#${object.material.color.getHexString()}` : null, metalness: object.material?.metalness ?? 0, roughness: object.material?.roughness ?? 0.5 })))
+      onSelectNode?.(mesh.userData.nodeId)
+      return mesh.userData.nodeId
+    },
     exportScene: async (format = 'glb') => {
       const root = rootRef.current
       if (!root) throw new Error('Load a 3D model before exporting.')
@@ -56,7 +79,18 @@ export const SceneViewport = forwardRef(function SceneViewport({ source, selecte
       const blob = new Blob([isBinary ? result : JSON.stringify(result)], { type: isBinary ? 'model/gltf-binary' : 'model/gltf+json' })
       return { blob, filename: `avatar-scene.${format === 'vrm' ? 'vrm' : format}` }
     },
-  }), [])
+  }), [onSceneGraph, onSelectNode])
+
+  useEffect(() => {
+    nodes.forEach((node) => {
+      const object = nodeMapRef.current.get(node.id)
+      if (!object) return
+      object.visible = node.visible !== false
+      if (Array.isArray(node.position)) object.position.set(...node.position)
+      if (Array.isArray(node.rotation)) object.rotation.set(...node.rotation)
+      if (Array.isArray(node.scale)) object.scale.set(...node.scale)
+    })
+  }, [nodes])
 
   useEffect(() => {
     const container = containerRef.current
@@ -70,19 +104,19 @@ export const SceneViewport = forwardRef(function SceneViewport({ source, selecte
     renderer.shadowMap.enabled = true
     container.appendChild(renderer.domElement)
 
-    const grid = new THREE.GridHelper(12, 24, 0x71809a, 0x27354b)
+    const grid = new THREE.GridHelper(12, 24, themeColor('--color-primary'), themeColor('--border-heavy'))
     grid.position.y = 0
     grid.name = 'Studio grid'
     editorScene.add(grid)
     const axes = new THREE.AxesHelper(1.5)
     axes.name = 'Studio axes'
     editorScene.add(axes)
-    editorScene.add(new THREE.HemisphereLight(0xdbeafe, 0x172033, 2.4))
-    const keyLight = new THREE.DirectionalLight(0xffffff, 3)
+    editorScene.add(new THREE.HemisphereLight(themeColor('--text-primary'), themeColor('--border-color'), 2.4))
+    const keyLight = new THREE.DirectionalLight(themeColor('--text-primary'), 3)
     keyLight.position.set(3, 5, 4)
     keyLight.castShadow = true
     editorScene.add(keyLight)
-    const fillLight = new THREE.PointLight(0x8aa4ff, 2, 10)
+    const fillLight = new THREE.PointLight(themeColor('--color-accent'), 2, 10)
     fillLight.position.set(-3, 2, 2)
     editorScene.add(fillLight)
 
@@ -244,7 +278,7 @@ export const SceneViewport = forwardRef(function SceneViewport({ source, selecte
           root.traverse((object) => {
             if (object === root || !object.userData.nodeId) return
             const material = object.isMesh ? (Array.isArray(object.material) ? object.material[0] : object.material) : null
-            nodes.push({ id: object.userData.nodeId, name: object.name, type: object.type, visible: object.visible, position: toArray(object.position), rotation: toArray(object.rotation), scale: toArray(object.scale), parentId: object.parent?.userData?.nodeId || null, materialColor: material?.color ? `#${material.color.getHexString()}` : '#ffffff', metalness: material?.metalness ?? 0, roughness: material?.roughness ?? 0.5 })
+            nodes.push({ id: object.userData.nodeId, name: object.name, type: object.type, visible: object.visible, position: toArray(object.position), rotation: toArray(object.rotation), scale: toArray(object.scale), parentId: object.parent?.userData?.nodeId || null, materialColor: material?.color ? `#${material.color.getHexString()}` : null, metalness: material?.metalness ?? 0, roughness: material?.roughness ?? 0.5 })
           })
           onSceneGraph?.(nodes)
           statusRef.current?.('ready')

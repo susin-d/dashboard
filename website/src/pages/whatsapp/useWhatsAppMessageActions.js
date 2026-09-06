@@ -1,3 +1,4 @@
+import { useRef } from 'react'
 import {
   deleteWhatsAppMessage,
   generateEveWhatsAppDraft,
@@ -17,7 +18,12 @@ export function useWhatsAppMessageActions({
   setIsDrafting,
   setIsSummarizing,
 }) {
+  const inFlightMessages = useRef(new Set())
+
   const handleSendMessage = async ({ chatId, content, media, replyToMessageId }) => {
+    const requestKey = `${chatId}:${content}:${replyToMessageId || ''}:${media?.type || ''}:${media?.filename || ''}`
+    if (inFlightMessages.current.has(requestKey)) return
+    inFlightMessages.current.add(requestKey)
     try {
       const tempId = `temp-${Date.now()}`
       const optimisticMsg = {
@@ -31,6 +37,7 @@ export function useWhatsAppMessageActions({
         timestamp: new Date().toISOString(),
         status: 'pending',
         media,
+        is_optimistic: true,
       }
       setMessages((prev) => [...prev, optimisticMsg])
 
@@ -50,6 +57,8 @@ export function useWhatsAppMessageActions({
       )
     } catch (err) {
       console.error('Failed to send WhatsApp message:', err)
+    } finally {
+      inFlightMessages.current.delete(requestKey)
     }
   }
 

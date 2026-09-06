@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { ArrowUp, Bot, Code2, Eye, Layers, Paperclip, Plus, Sparkles, X, Zap } from 'lucide-react'
+import { ArrowUp, Bot, Code2, Eye, Layers, Paperclip, Plus, X, Zap } from 'lucide-react'
 import { CustomDropdown } from '../../components/ui/CustomDropdown'
 import { ModelSelectorDropdown } from '../../components/ui/ModelSelectorDropdown'
 import { formatFileSize } from '../../utils/fileSize'
@@ -104,11 +104,6 @@ export function StudioHero({
       <div className="studio-hero-glow" aria-hidden="true" />
 
       <div className="studio-hero-content">
-        <div className="studio-hero-badge">
-          <Sparkles size={12} aria-hidden="true" />
-          AI Fullstack Studio
-        </div>
-
         <h1 className="studio-hero-title">
           Build something
           <span className="studio-hero-title-accent"> extraordinary</span>

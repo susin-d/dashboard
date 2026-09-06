@@ -18,6 +18,11 @@
   gap: var(--space-7, 1.75rem);
 }
 
+.studio-page-builder {
+  gap: 0;
+  padding: 0;
+}
+
 .studio-section-header {
   display: flex;
   align-items: flex-end;

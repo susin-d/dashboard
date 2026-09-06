@@ -174,10 +174,10 @@ export function WhatsAppPage() {
               if (exists) {
                 return prev.map((m) => (m.id === incomingMsg.id ? incomingMsg : m))
               }
-              // 2. If it is from me, replace optimistic pending temp message
+              // 2. If it is from me, replace the matching optimistic message
               if (incomingMsg.is_from_me) {
                 const tempIndex = prev.findIndex(
-                  (m) => m.is_optimistic && m.content === incomingMsg.content,
+                  (m) => m.is_optimistic && m.chat_id === incomingMsg.chat_id && m.content === incomingMsg.content,
                 )
                 if (tempIndex !== -1) {
                   const updated = [...prev]
