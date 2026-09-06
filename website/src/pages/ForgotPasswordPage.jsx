@@ -1,8 +1,8 @@
 import "../styles/pages/landing-auth.css"
-import { ArrowLeft, ArrowRight, CheckCircle2, Eye, EyeOff, LockKeyhole, Mail, RefreshCw } from 'lucide-react'
+import { ArrowRight, CheckCircle2, Eye, EyeOff, LockKeyhole, Mail, RefreshCw } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { requestPasswordReset, resetPassword, verifyResetCode } from '../lib/authApi'
-import { StarWavesLogo } from '../components/StarWavesLogo'
+import { AuthShell } from '../components/auth/AuthShell'
 
 export function ForgotPasswordPage({ onNavigate }) {
   const [step, setStep] = useState(1)
@@ -167,55 +167,7 @@ export function ForgotPasswordPage({ onNavigate }) {
   }
 
   return (
-    <main id="main-content" className="auth-page" tabIndex={-1}>
-      <section className="auth-brand-panel">
-        <button className="public-brand auth-brand" onClick={() => onNavigate('/')}>
-          <StarWavesLogo size={28} /> StarWaves
-        </button>
-
-        <div>
-          <p>SECURITY & ACCESS</p>
-          <h1>
-            {step === 1
-              ? 'Identify your account.'
-              : step === 2
-                ? 'Verify your identity.'
-                : step === 3
-                  ? 'Set a strong password.'
-                  : 'Access restored.'}
-          </h1>
-          <span>
-            {step === 1
-              ? 'Step 1 of 3: Enter your registered email address to receive a secure verification code.'
-              : step === 2
-                ? `Step 2 of 3: Enter the 6-digit code sent to ${email}.`
-                : step === 3
-                  ? 'Step 3 of 3: Choose a strong, memorable password for your workspace account.'
-                  : 'Your password has been reset successfully. Return to log in.'}
-          </span>
-        </div>
-
-        <small>Plan clearly. Build consistently.</small>
-      </section>
-
-      <section className="auth-form-panel">
-        <div className="auth-form-shell">
-          <div className="auth-form-top-bar">
-            <button className="auth-back" onClick={() => onNavigate('/login')} aria-label="Back to log in">
-              <ArrowLeft size={16} /> Back to log in
-            </button>
-            <div
-              className="auth-mobile-brand"
-              onClick={() => onNavigate('/')}
-              role="button"
-              tabIndex={0}
-              onKeyDown={(e) => e.key === 'Enter' && onNavigate('/')}
-              title="StarWaves Home"
-            >
-              <StarWavesLogo size={22} />
-              <span>StarWaves</span>
-            </div>
-          </div>
+    <AuthShell backLabel="Back to log in" onBack={() => onNavigate('/login')} onHome={() => onNavigate('/')}>
 
           {/* Stepper Progress Bar */}
           <div className="auth-stepper" aria-label="Password recovery steps">
@@ -436,8 +388,6 @@ export function ForgotPasswordPage({ onNavigate }) {
             Remembered your password?
             <button onClick={() => onNavigate('/login')}>Log in</button>
           </p>
-        </div>
-      </section>
-    </main>
+    </AuthShell>
   )
 }

@@ -1,5 +1,5 @@
 import "../styles/pages/landing-auth.css"
-import { ArrowLeft, ArrowRight, Eye, EyeOff, LockKeyhole, Mail } from 'lucide-react'
+import { ArrowRight, Eye, EyeOff, LockKeyhole, Mail } from 'lucide-react'
 import { useState } from 'react'
 import {
   beginGoogleOAuth,
@@ -7,7 +7,7 @@ import {
   resetPassword,
   signupWithEmail,
 } from '../lib/authApi'
-import { StarWavesLogo } from '../components/StarWavesLogo'
+import { AuthShell } from '../components/auth/AuthShell'
 
 export function AuthPage({ mode, onNavigate, onAuthenticate, resetToken }) {
   const signup = mode === 'signup'
@@ -86,37 +86,7 @@ export function AuthPage({ mode, onNavigate, onAuthenticate, resetToken }) {
   }
 
   return (
-    <main id="main-content" className="auth-page" tabIndex={-1}>
-      <section className="auth-brand-panel">
-        <button className="public-brand auth-brand" onClick={() => onNavigate('/')}>
-          <StarWavesLogo size={28} /> StarWaves
-        </button>
-        <div>
-          <p>YOUR WORKSPACE</p>
-          <h1>{resetting ? 'Set a new password.' : signup ? 'Start with a clear view of what matters.' : 'Welcome back to your momentum.'}</h1>
-          <span>{resetting ? 'Choose a strong password to secure your account.' : 'Tasks. Opportunities. Progress. One focused place.'}</span>
-        </div>
-        <small>Plan clearly. Build consistently.</small>
-      </section>
-
-      <section className="auth-form-panel">
-        <div className="auth-form-shell">
-          <div className="auth-form-top-bar">
-            <button className="auth-back" onClick={() => onNavigate('/')} aria-label="Back home">
-              <ArrowLeft size={16} /> Back home
-            </button>
-            <div
-              className="auth-mobile-brand"
-              onClick={() => onNavigate('/')}
-              role="button"
-              tabIndex={0}
-              onKeyDown={(e) => e.key === 'Enter' && onNavigate('/')}
-              title="StarWaves Home"
-            >
-              <StarWavesLogo size={22} />
-              <span>StarWaves</span>
-            </div>
-          </div>
+    <AuthShell backLabel="Back home" onBack={() => onNavigate('/')} onHome={() => onNavigate('/')}>
           <div className="auth-heading">
             <p>{resetting ? 'Reset your password' : signup ? 'Create an account' : 'Welcome back'}</p>
             <h2>{resetting ? 'Set a new password' : signup ? 'Build your workspace' : 'Log in to StarWaves'}</h2>
@@ -208,8 +178,6 @@ export function AuthPage({ mode, onNavigate, onAuthenticate, resetToken }) {
               {resetting ? 'Log in' : signup ? 'Log in' : 'Create an account'}
             </button>
           </p>
-        </div>
-      </section>
-    </main>
+    </AuthShell>
   )
 }

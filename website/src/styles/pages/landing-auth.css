@@ -1,7 +1,6 @@
 /* Public Landing, Auth & Onboarding Page Styles */
 
-.public-page,
-.auth-page {
+.public-page {
   min-height: 100vh;
   min-height: 100dvh;
   background: var(--bg-primary);
@@ -1512,68 +1511,143 @@ html.dark-theme .landing-cinematic .public-nav {
    Auth, Onboarding & Forgot Password Styles
    ═══════════════════════════════════════════════════════════ */
 
-.auth-page {
-  display: grid;
-  grid-template-columns: minmax(360px, 0.8fr) minmax(520px, 1.2fr);
-}
+/* ═══════════════════════════════════════════════════════════
+   Auth — Cinematic Centered Card (ADR 0021)
+   Shared shell for login / signup / reset / forgot-password.
+   Backdrop reuses the landing grammar; surfaces use theme tokens.
+   ═══════════════════════════════════════════════════════════ */
 
-.auth-brand-panel {
-  display: flex;
-  min-height: 100vh;
-  min-height: 100dvh;
-  flex-direction: column;
-  justify-content: space-between;
-  padding: clamp(32px, 5vw, 68px);
-  background: #0a0a0a;
-  color: #fff;
-}
-
-.auth-brand {
-  align-self: flex-start;
-  color: #fff;
-  border: 0 !important;
-  outline: none !important;
-  box-shadow: none !important;
-  background: transparent !important;
-}
-
-.auth-brand span {
-  background: #fff;
-  color: #111;
-}
-
-.auth-form-panel {
+.auth-cinematic {
+  position: relative;
   display: grid;
   min-height: 100vh;
   min-height: 100dvh;
   place-items: center;
-  padding: 46px 24px;
-  background: var(--bg-primary);
+  gap: var(--space-sm);
+  align-content: center;
+  padding: 48px 20px calc(32px + env(safe-area-inset-bottom));
+  overflow-x: clip;
+  background:
+    radial-gradient(ellipse 55% 38% at 50% 0%, rgba(99, 102, 241, 0.16), transparent 70%),
+    radial-gradient(ellipse 40% 32% at 82% 18%, rgba(168, 85, 247, 0.10), transparent 70%),
+    radial-gradient(ellipse 45% 38% at 50% 108%, rgba(244, 63, 94, 0.10), transparent 70%),
+    var(--bg-primary);
+  color: var(--text-primary);
 }
 
-.auth-form-shell {
+.auth-cinematic__bg {
+  position: absolute;
+  inset: 0;
+  opacity: 0.09;
+  pointer-events: none;
+  background-image:
+    linear-gradient(rgba(129, 140, 248, 0.6) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(129, 140, 248, 0.6) 1px, transparent 1px);
+  background-size: 48px 48px;
+  mask-image: radial-gradient(ellipse 65% 55% at 50% 40%, black 50%, transparent 80%);
+  -webkit-mask-image: radial-gradient(ellipse 65% 55% at 50% 40%, black 50%, transparent 80%);
+}
+
+.auth-cinematic__card {
+  position: relative;
+  z-index: 1;
   width: min(440px, 100%);
+  padding: clamp(24px, 4vw, 32px);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-xl);
+  background: var(--bg-card);
+  box-shadow: var(--shadow-lg), var(--glow-primary);
 }
 
-.auth-form-top-bar {
+.auth-cinematic__top {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 24px;
-  width: 100%;
+  gap: var(--space-xs);
+  margin-bottom: var(--space-md);
 }
 
-.auth-mobile-brand {
-  display: none;
+.auth-cinematic__brand {
+  display: inline-flex;
   align-items: center;
   gap: 8px;
-  font-size: 15px;
-  font-weight: 800;
-  letter-spacing: -0.35px;
+  min-height: 44px;
+  padding: 0 4px;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
   color: var(--text-primary);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
   cursor: pointer;
-  user-select: none;
-  -webkit-user-select: none;
+}
+
+.auth-cinematic__brand:focus-visible,
+.auth-cinematic__card .auth-back:focus-visible {
+  outline: 1.5px solid var(--border-focus);
+  outline-offset: 2px;
+}
+
+.auth-cinematic__foot {
+  position: relative;
+  z-index: 1;
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-align: center;
+}
+
+.auth-cinematic .auth-heading {
+  margin-bottom: var(--space-md);
+}
+
+.auth-cinematic .auth-submit {
+  border-color: transparent;
+  background: var(--gradient-primary);
+  color: #fff;
+  box-shadow: var(--glow-primary);
+  transition: filter var(--transition-fast), transform var(--transition-fast);
+}
+
+.auth-cinematic .auth-submit:hover:not(:disabled) {
+  filter: brightness(1.08);
+  transform: translateY(-1px);
+}
+
+.auth-cinematic .auth-submit:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.auth-cinematic .auth-error {
+  border-color: var(--color-danger);
+  background: var(--color-danger-light);
+  color: var(--color-danger);
+}
+
+.auth-switch {
+  margin-top: var(--space-md);
+  color: var(--text-secondary);
+  font-size: 12px;
+  text-align: center;
+}
+
+.auth-switch button {
+  padding-left: 4px;
+  border: 0;
+  background: transparent;
+  color: var(--color-primary);
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.auth-switch button:hover {
+  text-decoration: underline;
 }
 
 .auth-google {
@@ -2125,42 +2199,14 @@ html.dark-theme .landing-cinematic .public-nav {
 }
 
 @media (max-width: 900px) {
-  .auth-page {
-    display: flex;
-    flex-direction: column;
-    min-height: 100vh;
-    min-height: 100dvh;
-    background: var(--bg-primary);
+  .auth-cinematic {
+    padding: 24px 16px calc(24px + env(safe-area-inset-bottom));
     overflow-x: hidden;
   }
 
-  .auth-brand-panel {
-    display: none;
-  }
-
-  .auth-form-panel {
-    width: 100%;
-    min-height: 100vh;
-    min-height: 100dvh;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    padding: 24px 20px calc(24px + env(safe-area-inset-bottom));
-  }
-
-  .auth-form-shell {
+  .auth-cinematic__card {
     width: 100%;
     max-width: 400px;
-    margin: auto 0;
-  }
-
-  .auth-mobile-brand {
-    display: inline-flex;
-  }
-
-  .auth-form-top-bar {
-    margin-bottom: 20px;
   }
 
   .auth-heading {
@@ -2199,12 +2245,14 @@ html.dark-theme .landing-cinematic .public-nav {
 }
 
 @media (max-width: 480px) {
-  .auth-form-panel {
+  .auth-cinematic {
     padding: 20px 14px calc(20px + env(safe-area-inset-bottom));
   }
 
-  .auth-form-shell {
+  .auth-cinematic__card {
     max-width: 100%;
+    padding: 22px 18px;
+    border-radius: var(--radius-lg);
   }
 
   .auth-heading h2 {
@@ -2213,10 +2261,6 @@ html.dark-theme .landing-cinematic .public-nav {
 
   .auth-heading span {
     font-size: 12.5px;
-  }
-
-  .auth-form-top-bar {
-    margin-bottom: 16px;
   }
 
   .auth-form label span input {

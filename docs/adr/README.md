@@ -33,6 +33,7 @@
 | [0018](0018-optimize-all-lucide-pixi-themes.md) | Optimize all: lucide 1.40 (icons 469→43 kB), single-pixi override, theme leaf (index →113 kB), drop drei/fiber | Accepted | 2026-09-04 |
 | [0019](0019-multi-color-redesign-and-module-theming.md) | Multi-color redesign, module accent theming, and monochrome retirement | Accepted | 2026-09-06 |
 | [0020](0020-landing-cinematic-module-theming.md) | Landing cinematic module theming — ADR 0019 accents + light variant, full section theming | Accepted | 2026-09-06 |
+| [0021](0021-auth-cinematic-centered-card.md) | Auth cinematic centered card — shared AuthShell for login/signup/forgot-password | Accepted | 2026-09-06 |
 
 ## How to add a new ADR
 
