@@ -26,28 +26,17 @@ export function Hero({ onNavigate }) {
   return (
     <section ref={ref} className="cinema-hero" aria-labelledby="hero-title">
       <div className="cinema-hero__grid" aria-hidden="true" />
+      <div className="cinema-hero__photo" aria-hidden="true" />
       <motion.div className="cinema-hero__glow" aria-hidden="true" style={reduce ? undefined : { y: ySlow }} />
       <motion.div className="cinema-hero__glow" aria-hidden="true" style={reduce ? undefined : { y: yFast, scale: 0.9, left: '72%' }} />
       <div className="cinema-hero__vignette" aria-hidden="true" />
       <motion.div className="cinema-scenery" aria-hidden="true" style={reduce ? undefined : { y: yFast }}>
         <svg viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice" focusable="false">
           <defs>
-            <radialGradient id="cinema-planet-body" cx="38%" cy="34%" r="75%">
-              <stop offset="0%" className="cinema-svg-stop-surface" />
-              <stop offset="55%" className="cinema-svg-stop-card" />
-              <stop offset="100%" className="cinema-svg-stop-bg" />
-            </radialGradient>
-            <radialGradient id="cinema-planet-halo" cx="50%" cy="50%" r="50%">
-              <stop offset="0%" className="cinema-svg-stop-halo" />
-              <stop offset="100%" stopColor="#000000" stopOpacity="0" />
-            </radialGradient>
             <linearGradient id="cinema-ridge-fade" x1="0" y1="0" x2="0" y2="1">
               <stop offset="0%" className="cinema-svg-stop-ridge" />
               <stop offset="100%" className="cinema-svg-stop-bg" />
             </linearGradient>
-            <filter id="cinema-soft" x="-40%" y="-40%" width="180%" height="180%">
-              <feGaussianBlur stdDeviation="6" />
-            </filter>
             <filter id="cinema-tide-soft" x="-40%" y="-60%" width="180%" height="220%">
               <feGaussianBlur stdDeviation="28" />
             </filter>
@@ -66,46 +55,6 @@ export function Hero({ onNavigate }) {
               strokeWidth="150"
             />
           </g>
-          <g filter="url(#cinema-soft)">
-            <path
-              d="M-40,620 C250,560 350,680 600,610 S950,540 1200,600"
-              fill="none"
-              className="cinema-svg-wisp"
-              strokeWidth="3"
-            />
-            <path
-              d="M-40,690 C220,650 420,735 700,665 S1050,600 1440,675"
-              fill="none"
-              className="cinema-svg-wisp cinema-svg-wisp--eve"
-              strokeWidth="2"
-            />
-            <path
-              d="M80,300 C300,255 450,330 660,285"
-              fill="none"
-              className="cinema-svg-wisp cinema-svg-wisp--faint"
-              strokeWidth="2"
-            />
-          </g>
-          <circle cx="1360" cy="260" r="290" fill="url(#cinema-planet-halo)" className="cinema-svg-halo" />
-          <circle cx="1360" cy="260" r="210" fill="url(#cinema-planet-body)" />
-          <circle cx="1360" cy="260" r="210" fill="none" className="cinema-svg-planet-rim" strokeWidth="2" />
-          <g filter="url(#cinema-soft)">
-            <path
-              d="M1225,421 A210,210 0 0 0 1225,99"
-              fill="none"
-              className="cinema-svg-crescent"
-              strokeWidth="11"
-            />
-          </g>
-          <path
-            d="M1225,421 A210,210 0 0 0 1225,99"
-            fill="none"
-            className="cinema-svg-crescent cinema-svg-crescent--core"
-            strokeWidth="2.5"
-          />
-          <circle cx="1310" cy="210" r="30" className="cinema-svg-crater" />
-          <circle cx="1372" cy="328" r="19" className="cinema-svg-crater" />
-          <circle cx="1332" cy="362" r="12" className="cinema-svg-crater" />
           <path
             d="M0,820 L120,740 L260,790 L400,710 L560,800 L720,730 L900,810 L1080,740 L1240,800 L1440,750 L1440,900 L0,900 Z"
             fill="url(#cinema-ridge-fade)"

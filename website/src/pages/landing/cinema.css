@@ -107,6 +107,18 @@
   border-bottom: 1px solid var(--cinema-border);
 }
 .cinema-hero__vignette { display: none; }
+.cinema-hero__photo {
+  position: absolute; inset: 0; pointer-events: none;
+  background: url('/landing/hero-bg.png') 72% center / cover no-repeat;
+  animation: cinema-photo-drift 36s ease-in-out infinite alternate;
+}
+.cinema-hero__photo::after {
+  content: ""; position: absolute; inset: 0;
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--cinema-bg) 30%, transparent), transparent 30%, transparent 62%, var(--cinema-bg) 100%),
+    radial-gradient(ellipse 60% 50% at 50% 42%, transparent 40%, color-mix(in srgb, var(--cinema-bg) 72%, transparent) 100%);
+}
+@keyframes cinema-photo-drift { from { transform: scale(1); } to { transform: scale(1.07); } }
 .cinema-hero__grid {
   position: absolute; inset: 0; opacity: 0.10; pointer-events: none;
   background-image:
@@ -468,23 +480,10 @@
 /* — Hero scenery (planet + ridges, ADR 0023; static art, parallax via Hero) — */
 .cinema-scenery { position: absolute; inset: 0; pointer-events: none; }
 .cinema-scenery svg { width: 100%; height: 100%; display: block; }
-.cinema-svg-stop-surface { stop-color: var(--cinema-surface-2); }
-.cinema-svg-stop-card { stop-color: var(--cinema-bg-2); }
-.cinema-svg-stop-bg { stop-color: var(--cinema-bg); }
 .cinema-svg-stop-ridge { stop-color: var(--cinema-surface-2); stop-opacity: 0.9; }
-.cinema-svg-stop-halo { stop-color: var(--cinema-eve); stop-opacity: 0.22; }
-.cinema-svg-planet-rim { stroke: var(--cinema-eve); stroke-opacity: 0.75; }
-.cinema-svg-crater { fill: var(--cinema-bg); opacity: 0.55; }
+.cinema-svg-stop-bg { stop-color: var(--cinema-bg); }
 .cinema-svg-ridge-front { fill: var(--cinema-bg); }
 .cinema-svg-ridge-rim { stroke: var(--cinema-primary); stroke-opacity: 0.4; }
-.cinema-svg-wisp { stroke: var(--cinema-primary); stroke-opacity: 0.32; stroke-dasharray: 260 180; animation: cinema-wisp-drift 14s linear infinite; }
-.cinema-svg-wisp--eve { stroke: var(--cinema-eve); stroke-opacity: 0.24; animation-duration: 19s; animation-direction: reverse; }
-.cinema-svg-wisp--faint { stroke: var(--cinema-primary); stroke-opacity: 0.16; animation-duration: 26s; }
-@keyframes cinema-wisp-drift { to { stroke-dashoffset: -440; } }
-.cinema-svg-halo { animation: cinema-halo-breathe 7s ease-in-out infinite; transform-origin: center; transform-box: fill-box; }
-@keyframes cinema-halo-breathe { 0%, 100% { opacity: 0.8; } 50% { opacity: 1; } }
-.cinema-svg-crescent { stroke: var(--cinema-eve); stroke-opacity: 0.4; stroke-linecap: round; }
-.cinema-svg-crescent--core { stroke: var(--on-fill); stroke-opacity: 0.8; stroke-linecap: round; }
 .cinema-svg-tide {
   stroke: var(--cinema-primary); stroke-opacity: 0.14; stroke-linecap: round;
   animation: cinema-tide-drift 22s ease-in-out infinite alternate;
@@ -501,7 +500,6 @@
 /* reduced motion */
 @media (prefers-reduced-motion: reduce) {
   .cinema * { animation: none !important; transition: none !important; }
-  .cinema-svg-wisp { stroke-dasharray: none; }
 }
 
 /* responsive */
