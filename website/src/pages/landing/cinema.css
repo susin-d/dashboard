@@ -405,21 +405,6 @@
 .cinema-footer__links button:hover, .cinema-footer__links a:hover { color: var(--cinema-text); background: var(--cinema-surface); border-color: var(--cinema-border-strong); }
 .cinema-footer__links button:focus-visible, .cinema-footer__links a:focus-visible { outline:1.5px solid var(--cinema-focus); outline-offset:2px; }
 
-/* — Curtain — */
-.cinema-curtain {
-  position: fixed; inset: 0; z-index: 80; display: grid; place-items: center;
-  background: var(--cinema-bg);   color: var(--on-fill);
-}
-.cinema-curtain__inner { text-align: center; display: grid; gap: 12px; justify-items: center; }
-.cinema-curtain__mark {
-  width: 52px; height: 52px; border-radius: 10px; display: grid; place-items: center;
-  background: var(--cinema-gradient-primary);   color: var(--on-fill); border: 1px solid transparent;
-  font-weight: 950; font-size: 22px; letter-spacing: -0.04em;
-  box-shadow: var(--cinema-glow-primary);
-}
-.cinema-curtain__word { font-weight: 900; letter-spacing: -0.04em; font-size: 16px; color: var(--cinema-muted); }
-.cinema-curtain__sub { font-size: 10px; font-weight: 850; letter-spacing: 0.18em; text-transform: uppercase; color: var(--cinema-dim); }
-
 /* grain — subtler for sharp theme */
 .cinema::after {
   content:""; position: fixed; inset:0; pointer-events:none; opacity:0.03; z-index:1;
