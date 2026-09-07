@@ -50,6 +50,9 @@
 | [0035](0035-studio-product-area-redesign.md) | Unified Studio product-area redesign with real-data presentation metadata | Accepted | 2026-09-06 |
 | [0036](0036-studio-project-uuid-identifiers.md) | UUID identifiers for Studio project routes and full-height detail shell | Accepted | 2026-09-06 |
 | [0037](0037-per-turn-eve-model-selection.md) | Per-turn EVE model selection in the Workspace Agent composer | Accepted | 2026-09-07 |
+| [0038](0038-studio-preview-embedding-policy.md) | Scoped cross-origin embedding policy for signed Studio previews | Accepted | 2026-09-07 |
+| [0039](0039-avatar-studio-editor-state-and-capabilities.md) | Avatar Studio schema v2, normalized formats, animation state, and capability-aware tools | Accepted | 2026-09-07 |
+| [0040](0040-avatar-studio-eve-editor-actions.md) | Validated Eve-to-Avatar-Studio action protocol with frontend confirmation | Accepted | 2026-09-07 |
 
 ## How to add a new ADR
 

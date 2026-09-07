@@ -62,6 +62,7 @@ export function Header({
     }
   }
   const [eveOpen, setEveOpen] = useState(false)
+  const [editorContext, setEditorContext] = useState(null)
   const [permissionStatus, setPermissionStatus] = useState(() => getNotificationPermission())
 
   const handleToggleNotifications = () => {
@@ -153,9 +154,15 @@ export function Header({
 
     document.addEventListener('keydown', handleShortcut)
     window.addEventListener('starwaves:open-search', handleOpenSearchEvent)
+    const handleOpenEve = () => setEveOpen(true)
+    const handleEditorContext = (event) => setEditorContext(event.detail || null)
+    window.addEventListener('starwaves:open-eve', handleOpenEve)
+    window.addEventListener('starwaves:avatar-editor-context', handleEditorContext)
     return () => {
       document.removeEventListener('keydown', handleShortcut)
       window.removeEventListener('starwaves:open-search', handleOpenSearchEvent)
+      window.removeEventListener('starwaves:open-eve', handleOpenEve)
+      window.removeEventListener('starwaves:avatar-editor-context', handleEditorContext)
     }
   }, [setNotificationsOpen])
 
@@ -427,6 +434,7 @@ export function Header({
             onClose={() => setEveOpen(false)}
             onNavigate={onNavigate}
             onWorkspaceChanged={onWorkspaceChanged}
+            editorContext={editorContext}
           />
         </Suspense>
       )}

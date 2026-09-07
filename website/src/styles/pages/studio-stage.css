@@ -154,6 +154,18 @@
   transition: all var(--transition-medium, 0.2s ease);
 }
 
+.studio-preview-loading {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  background: color-mix(in srgb, var(--bg-secondary) 78%, transparent);
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  pointer-events: none;
+}
+
 .aistudio-stage-canvas .studio-preview-mobile .studio-preview-frame-container {
   width: min(390px, 92%);
   height: min(780px, 94%);

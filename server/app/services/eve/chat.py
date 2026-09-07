@@ -24,6 +24,7 @@ def chat_with_eve(
     session_id: str | None = None,
     provider: str | None = None,
     model: str | None = None,
+    editor_context: dict[str, Any] | None = None,
 ) -> tuple[str, list[str], list[dict[str, Any]]]:
     user_id = user.get("uid")
     if not any_provider_available():
@@ -42,9 +43,9 @@ def chat_with_eve(
 
     try:
         if provider or model:
-            context = resolve_chat_context(database, user_id, messages, provider, model)
+            context = resolve_chat_context(database, user_id, messages, provider, model, editor_context)
         else:
-            context = resolve_chat_context(database, user_id, messages)
+            context = resolve_chat_context(database, user_id, messages, editor_context=editor_context)
     except AIServiceError as error:
         logger.error(f"[Eve Chat] AI config error for user {user_id}: {error}", exc_info=True)
         code = getattr(error, "status_code", 502)

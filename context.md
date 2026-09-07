@@ -2,7 +2,7 @@
 # Starwaves Context
 
 Living snapshot for AI agents. `AGENTS.md` holds permanent rules; this file holds the **current state**. See `CHANGELOG.md` for history and `PROJECT_MAP.md` for the file index.
-Last updated: 2026-09-07 — Workspace EVE supports per-turn provider/model selection through streaming and REST fallback; Studio’s prompt card now starts directly with the input while retaining its viewport-safe cinematic layout; Contacts, Mail, Calendar, Studio Apps, Templates, Workspace overview, and EVE updates remain current.
+Last updated: 2026-09-07 — Avatar Studio now uses schema-v2 normalized scenes, OBJ/FBX/MTL asset sets, real timeline/keyframe playback, capability-aware controls, compatible UV painting, and a validated Eve editor-action bridge; existing filesystem persistence and unrelated Studio/Eve updates remain current.
 
 ## Contents
 1. [Overview](#1-overview) · 2. [Repository structure](#2-repository-structure) · 3. [Backend](#4-backend) · 4. [Frontend](#4-frontend) · 5. [Design system](#5-design-system) · 6. [Current snapshot](#6-current-snapshot) · 7. [Limitations](#7-limitations) · 8. [Verification](#8-verification)
@@ -65,7 +65,7 @@ For full maps see `PROJECT_MAP.md`. Keep this section brief; expand there.
 ## 6. Current snapshot
   - Eve streaming + quota fallback (ADR 0014): `EveChatSection` surfaces `thinking`/`delta`/`toolCalls` live — `EveThoughtHistory` + eye pulse + `eve-*-cursor` blink + chips; `WorkspaceEvePanel` mirrors. Backend `openai_compat` caps `max_tokens` 1024/4096 via `_provider_label`, retries quota halved, `chat`/`chat_stream` fallback same-provider default/free then `_FALLBACK_ORDER` for `server`/`quota` (fixes 402/500).
   - Eve Avatar (ADR 0012): dual VRM+Live2D via `EveAvatarProvider` (lip-sync + `BroadcastChannel`) — global companion + inline micro + **Avatar Studio** (`/app/avatar`) + `EveAvatarSection`. Backend `/eve/avatar/*` validates, stores `avatars/{uid}/`. Anime defaults: 10.3MB VRM + 3MB Live2D.
-  - Avatar modeling workspace (ADR 0034): browser/Tauri shared editor shell under `pages/avatar-studio/` with catalog/upload browser, lazy GLTF/VRM viewport, selection/outliner, transform/material inspector, timeline/keyframe scene JSON, GLB/GLTF export, camera reset/save compatibility, and versioned `/modeling/projects` filesystem API with multipart binary assets.
+  - Avatar modeling workspace (ADR 0034, 0039, 0040): browser/Tauri shared editor shell under `pages/avatar-studio/` with schema-v2 normalized GLB/GLTF/VRM/OBJ/FBX scenes, companion asset sets through the existing `/modeling/projects` filesystem API, hierarchical outliner, transform/material inspector, real clip/keyframe timeline, compatible UV painting, GLB export, and Eve context/action events. Sculpting, UV editing, and VRM export remain explicitly unavailable.
   - GET caching: `core/cache.py` `cached` per-user keys (Redis/LRU) for hot GETs + `cache_clear` fixture.
   - Multi-device: `user_sessions` 30d/10 cap + `X-Device-Id` + `session_revoked`/`sync_invalidate` + `DeviceSection`.
   - Workspace IDE: folder-first Monaco + Explorer + Eve SSE panel (`workspace_id` required) + Browser `srcdoc`.

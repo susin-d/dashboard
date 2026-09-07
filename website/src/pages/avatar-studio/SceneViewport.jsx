@@ -11,7 +11,17 @@ function loadLoaderModules() {
       import('three/addons/loaders/GLTFLoader.js'),
       import('@pixiv/three-vrm'),
       import('three/addons/exporters/GLTFExporter.js'),
-    ]).then(([gltf, vrm, exporter]) => ({ GLTFLoader: gltf.GLTFLoader, VRMLoaderPlugin: vrm.VRMLoaderPlugin, GLTFExporter: exporter.GLTFExporter }))
+      import('three/addons/loaders/OBJLoader.js'),
+      import('three/addons/loaders/FBXLoader.js'),
+      import('three/addons/loaders/MTLLoader.js'),
+    ]).then(([gltf, vrm, exporter, obj, fbx, mtl]) => ({
+      GLTFLoader: gltf.GLTFLoader,
+      VRMLoaderPlugin: vrm.VRMLoaderPlugin,
+      GLTFExporter: exporter.GLTFExporter,
+      OBJLoader: obj.OBJLoader,
+      FBXLoader: fbx.FBXLoader,
+      MTLLoader: mtl.MTLLoader,
+    }))
   }
   return loaderModulesPromise
 }
@@ -31,7 +41,29 @@ function createNodeId() {
   return globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random()}`
 }
 
-export const SceneViewport = forwardRef(function SceneViewport({ source, nodes = [], camera: savedCamera = null, selectedNodeId, tool, showGrid = true, showAxes = true, onSceneGraph, onSelectNode, onNodeTransform, onMaterialChange, onCameraChange, resetSignal, onStatus }, ref) {
+function formatFromSource(source) {
+  if (source?.format) return String(source.format).toLowerCase()
+  const name = source?.file?.name || source?.url || ''
+  return String(name).toLowerCase().split('.').pop() || 'glb'
+}
+
+function canvasForTexture(material) {
+  const image = material?.map?.image
+  const canvas = document.createElement('canvas')
+  canvas.width = Math.min(1024, Math.max(32, image?.width || 512))
+  canvas.height = Math.min(1024, Math.max(32, image?.height || 512))
+  const context = canvas.getContext('2d')
+  if (!context) throw new Error('Texture painting is unavailable in this browser.')
+  if (image) {
+    try { context.drawImage(image, 0, 0, canvas.width, canvas.height) } catch { /* Cross-origin textures are reported as unavailable below. */ }
+  } else {
+    context.fillStyle = `#${material?.color?.getHexString?.() || 'ffffff'}`
+    context.fillRect(0, 0, canvas.width, canvas.height)
+  }
+  return canvas
+}
+
+export const SceneViewport = forwardRef(function SceneViewport({ source, nodes = [], camera: savedCamera = null, selectedNodeId, tool, showGrid = true, showAxes = true, animationFrame = 0, activeAnimationId = null, playing = false, paintSettings = null, onSceneGraph, onSelectNode, onNodeTransform, onMaterialChange, onTextureChange, onCameraChange, onAnimationClips, resetSignal, onStatus }, ref) {
   const containerRef = useRef(null)
   const sceneRef = useRef(null)
   const cameraRef = useRef(null)
@@ -43,18 +75,48 @@ export const SceneViewport = forwardRef(function SceneViewport({ source, nodes =
   const nodesRef = useRef(nodes)
   const selectedNodeIdRef = useRef(selectedNodeId)
   const toolRef = useRef(tool)
+  const paintSettingsRef = useRef(paintSettings)
+  const textureChangeRef = useRef(onTextureChange)
+  const animationClipsRef = useRef(onAnimationClips)
   const statusRef = useRef(onStatus)
   const savedCameraRef = useRef(savedCamera)
   const selectedMaterialsRef = useRef(new Map())
+  const mixerRef = useRef(null)
+  const clipsRef = useRef([])
+  const paintStateRef = useRef({ active: false, object: null, material: null, canvas: null, context: null })
 
   nodesRef.current = nodes
   savedCameraRef.current = savedCamera
   selectedNodeIdRef.current = selectedNodeId
   toolRef.current = tool
+  paintSettingsRef.current = paintSettings
+  textureChangeRef.current = onTextureChange
+  animationClipsRef.current = onAnimationClips
   statusRef.current = onStatus
 
   useImperativeHandle(ref, () => {
-    const serializeSceneGraph = () => [...nodeMapRef.current.values()].map((object) => ({ id: object.userData.nodeId, name: object.name, type: object.type, visible: object.visible, position: toArray(object.position), rotation: toArray(object.rotation), scale: toArray(object.scale), parentId: object.parent?.userData?.nodeId || null, materialColor: object.material?.color ? `#${object.material.color.getHexString()}` : null, metalness: object.material?.metalness ?? 0, roughness: object.material?.roughness ?? 0.5 }))
+    const serializeSceneGraph = () => [...nodeMapRef.current.values()].map((object) => {
+      const material = object.isMesh ? (Array.isArray(object.material) ? object.material[0] : object.material) : null
+      return {
+        id: object.userData.nodeId,
+        name: object.name,
+        type: object.type,
+        visible: object.visible,
+        position: toArray(object.position),
+        rotation: toArray(object.rotation),
+        scale: toArray(object.scale),
+        parentId: object.parent?.userData?.nodeId || null,
+        isMesh: Boolean(object.isMesh),
+        hasUv: Boolean(object.isMesh && object.geometry?.getAttribute?.('uv')),
+        hasTexture: Boolean(material?.map),
+        materialColor: material?.color ? `#${material.color.getHexString()}` : null,
+        metalness: material?.metalness ?? 0,
+        roughness: material?.roughness ?? 0.5,
+        opacity: material?.opacity ?? 1,
+        textureDataUrl: object.userData.textureDataUrl || null,
+        materialSlots: Array.isArray(object.material) ? object.material.map((item) => item?.name || 'Material') : material ? [material.name || 'Material'] : [],
+      }
+    })
     const disposeObject = (object) => object.traverse((child) => {
       child.geometry?.dispose()
       const materials = Array.isArray(child.material) ? child.material : [child.material]
@@ -127,8 +189,15 @@ export const SceneViewport = forwardRef(function SceneViewport({ source, nodes =
       const blob = new Blob([isBinary ? result : JSON.stringify(result)], { type: isBinary ? 'model/gltf-binary' : 'model/gltf+json' })
       return { blob, filename: `avatar-scene.${format === 'vrm' ? 'vrm' : format}` }
     },
+    setAnimationFrame: (frame, fps = 24) => {
+      const mixer = mixerRef.current
+      if (!mixer || !clipsRef.current.length) return false
+      const clip = clipsRef.current.find((item) => item.name === activeAnimationId || item.uuid === activeAnimationId) || clipsRef.current[0]
+      mixer.setTime(Math.max(0, Number(frame)) / Math.max(1, Number(fps)))
+      return Boolean(clip)
+    },
     })
-  }, [onSceneGraph, onSelectNode])
+  }, [activeAnimationId, onSceneGraph, onSelectNode])
 
   useEffect(() => {
     nodes.forEach((node) => {
@@ -138,8 +207,38 @@ export const SceneViewport = forwardRef(function SceneViewport({ source, nodes =
       if (Array.isArray(node.position)) object.position.set(...node.position)
       if (Array.isArray(node.rotation)) object.rotation.set(...node.rotation)
       if (Array.isArray(node.scale)) object.scale.set(...node.scale)
+      if (node.textureDataUrl && object.isMesh) {
+        const material = Array.isArray(object.material) ? object.material[0] : object.material
+        const image = new Image()
+        image.onload = () => {
+          const canvas = document.createElement('canvas')
+          canvas.width = image.width
+          canvas.height = image.height
+          canvas.getContext('2d')?.drawImage(image, 0, 0)
+          const texture = new THREE.CanvasTexture(canvas)
+          if (material) {
+            material.map?.dispose?.()
+            material.map = texture
+            material.needsUpdate = true
+          }
+        }
+        image.src = node.textureDataUrl
+      }
     })
   }, [nodes])
+
+  useEffect(() => {
+    const mixer = mixerRef.current
+    if (!mixer || !clipsRef.current.length) return
+    const clip = clipsRef.current.find((item) => item.uuid === activeAnimationId || item.name === activeAnimationId) || clipsRef.current[0]
+    if (!clip) return
+    mixer.stopAllAction()
+    const action = mixer.clipAction(clip)
+    action.reset()
+    action.play()
+    action.paused = !playing
+    mixer.setTime(Math.max(0, Number(animationFrame)) / Math.max(1, Number(clip.userData?.fps || 24)))
+  }, [activeAnimationId, animationFrame, playing])
 
   useEffect(() => {
     const container = containerRef.current
@@ -209,22 +308,85 @@ export const SceneViewport = forwardRef(function SceneViewport({ source, nodes =
     }
     animate()
 
-    const pointerDown = (event) => {
-      if (toolRef.current !== 'select' || transform.dragging) return
+    const raycast = (event) => {
       const bounds = renderer.domElement.getBoundingClientRect()
       const pointer = new THREE.Vector2(((event.clientX - bounds.left) / bounds.width) * 2 - 1, -((event.clientY - bounds.top) / bounds.height) * 2 + 1)
       const raycaster = new THREE.Raycaster()
       raycaster.setFromCamera(pointer, camera)
-      const hits = raycaster.intersectObjects(rootRef.current ? [rootRef.current] : [], true)
-      const hit = hits.find((item) => item.object.userData.nodeId)
+      return raycaster.intersectObjects(rootRef.current ? [rootRef.current] : [], true)
+    }
+    const paintAt = (event) => {
+      const hit = raycast(event).find((item) => item.object.isMesh && item.uv)
+      if (!hit) {
+        statusRef.current?.('Texture painting requires a selectable mesh with UVs.')
+        return false
+      }
+      const object = hit.object
+      const material = Array.isArray(object.material) ? object.material[hit.face?.materialIndex || 0] : object.material
+      if (!material || !object.geometry?.getAttribute?.('uv')) {
+        statusRef.current?.('This mesh does not expose paintable UV coordinates.')
+        return false
+      }
+      let canvas = object.userData.paintCanvas
+      if (!canvas) {
+        try { canvas = canvasForTexture(material) } catch (error) {
+          statusRef.current?.(error?.message || 'Texture painting is unavailable.')
+          return false
+        }
+        object.userData.paintCanvas = canvas
+      }
+      const context = canvas.getContext('2d')
+      if (!context) return false
+      const settings = paintSettingsRef.current || {}
+      const x = hit.uv.x * canvas.width
+      const y = (1 - hit.uv.y) * canvas.height
+      const radius = Math.max(1, (Number(settings.size || 24) / 100) * Math.min(canvas.width, canvas.height))
+      context.save()
+      context.globalAlpha = Math.max(0.01, Math.min(1, Number(settings.strength ?? 1)))
+      context.globalCompositeOperation = settings.mode === 'erase' ? 'destination-out' : 'source-over'
+      context.fillStyle = settings.color || '#a83b59'
+      context.beginPath()
+      context.arc(x, y, radius, 0, Math.PI * 2)
+      context.fill()
+      context.restore()
+      const texture = material.map || new THREE.CanvasTexture(canvas)
+      texture.image = canvas
+      texture.needsUpdate = true
+      material.map = texture
+      material.needsUpdate = true
+      const textureDataUrl = canvas.toDataURL('image/png')
+      object.userData.textureDataUrl = textureDataUrl
+      textureChangeRef.current?.({ nodeId: object.userData.nodeId, textureDataUrl })
+      return true
+    }
+    const pointerDown = (event) => {
+      if (transform.dragging) return
+      if (toolRef.current === 'paint') {
+        paintStateRef.current.active = paintAt(event)
+        if (paintStateRef.current.active) renderer.domElement.setPointerCapture?.(event.pointerId)
+        return
+      }
+      if (toolRef.current !== 'select') return
+      const hit = raycast(event).find((item) => item.object.userData.nodeId)
       onSelectNode?.(hit?.object?.userData?.nodeId || null)
     }
+    const pointerMove = (event) => {
+      if (paintStateRef.current.active && toolRef.current === 'paint') paintAt(event)
+    }
+    const pointerUp = (event) => {
+      paintStateRef.current.active = false
+      renderer.domElement.releasePointerCapture?.(event.pointerId)
+    }
     renderer.domElement.addEventListener('pointerdown', pointerDown)
+    renderer.domElement.addEventListener('pointermove', pointerMove)
+    renderer.domElement.addEventListener('pointerup', pointerUp)
 
     return () => {
       cancelAnimationFrame(frame)
       observer.disconnect()
       renderer.domElement.removeEventListener('pointerdown', pointerDown)
+      renderer.domElement.removeEventListener('pointermove', pointerMove)
+      renderer.domElement.removeEventListener('pointerup', pointerUp)
       transform.dispose()
       controls.dispose()
       renderer.dispose()
@@ -287,30 +449,34 @@ export const SceneViewport = forwardRef(function SceneViewport({ source, nodes =
         rootRef.current = null
         nodeMapRef.current.clear()
       }
+      mixerRef.current?.stopAllAction?.()
+      mixerRef.current = null
+      clipsRef.current = []
+      onAnimationClips?.([])
       statusRef.current?.('loading')
       try {
-        const { GLTFLoader, VRMLoaderPlugin } = await loadLoaderModules()
+        const { GLTFLoader, VRMLoaderPlugin, OBJLoader, FBXLoader, MTLLoader } = await loadLoaderModules()
+        const format = formatFromSource(source)
         const manager = new THREE.LoadingManager()
         const objectUrls = []
         if (source.files?.length) {
-          const fileMap = new Map(source.files.map((file) => [file.name, file]))
+          const fileMap = new Map(source.files.flatMap((file) => [[file.name, file], [file.webkitRelativePath, file]]))
           manager.setURLModifier((url) => {
-            const name = decodeURIComponent(url).split('/').pop()
-            const file = fileMap.get(name)
+            const decoded = decodeURIComponent(url)
+            const name = decoded.split('/').pop()
+            const file = fileMap.get(decoded) || fileMap.get(name)
             if (!file) return url
             const objectUrl = URL.createObjectURL(file)
             objectUrls.push(objectUrl)
             return objectUrl
           })
         }
-        const loader = new GLTFLoader(manager)
-        loader.register((parser) => new VRMLoaderPlugin(parser))
-        const onLoaded = (gltf) => {
+        const onLoaded = (root, animations = [], metadata = {}) => {
           if (cancelled) return
-          const root = gltf.scene || gltf.scenes?.[0]
           if (!root) throw new Error('The model did not contain a scene.')
-          root.userData.vrm = gltf.userData?.vrm || null
-          root.userData.originalGltfExtensions = gltf.parser?.json?.extensions || null
+          root.userData.vrm = metadata.vrm || null
+          root.userData.originalGltfExtensions = metadata.extensions || null
+          root.userData.sourceFormat = format
           const persistedNodes = nodesRef.current
           const usedPersistedIds = new Set()
           root.traverse((object) => {
@@ -324,6 +490,7 @@ export const SceneViewport = forwardRef(function SceneViewport({ source, nodes =
               if (Array.isArray(persistedNode.position)) object.position.set(...persistedNode.position)
               if (Array.isArray(persistedNode.rotation)) object.rotation.set(...persistedNode.rotation)
               if (Array.isArray(persistedNode.scale)) object.scale.set(...persistedNode.scale)
+              if (persistedNode.textureDataUrl) object.userData.textureDataUrl = persistedNode.textureDataUrl
             }
             object.castShadow = true
             object.receiveShadow = true
@@ -351,18 +518,39 @@ export const SceneViewport = forwardRef(function SceneViewport({ source, nodes =
           root.traverse((object) => {
             if (object === root || !object.userData.nodeId) return
             const material = object.isMesh ? (Array.isArray(object.material) ? object.material[0] : object.material) : null
-            nodes.push({ id: object.userData.nodeId, name: object.name, type: object.type, visible: object.visible, position: toArray(object.position), rotation: toArray(object.rotation), scale: toArray(object.scale), parentId: object.parent?.userData?.nodeId || null, materialColor: material?.color ? `#${material.color.getHexString()}` : null, metalness: material?.metalness ?? 0, roughness: material?.roughness ?? 0.5 })
+            nodes.push({ id: object.userData.nodeId, name: object.name, type: object.type, visible: object.visible, position: toArray(object.position), rotation: toArray(object.rotation), scale: toArray(object.scale), parentId: object.parent?.userData?.nodeId || null, isMesh: Boolean(object.isMesh), hasUv: Boolean(object.isMesh && object.geometry?.getAttribute?.('uv')), hasTexture: Boolean(material?.map), materialColor: material?.color ? `#${material.color.getHexString()}` : null, metalness: material?.metalness ?? 0, roughness: material?.roughness ?? 0.5, opacity: material?.opacity ?? 1, textureDataUrl: object.userData.textureDataUrl || null, materialSlots: Array.isArray(object.material) ? object.material.map((item) => item?.name || 'Material') : material ? [material.name || 'Material'] : [] })
           })
-          onSceneGraph?.(nodes, { initial: true })
+          clipsRef.current = animations || []
+          mixerRef.current = animations?.length ? new THREE.AnimationMixer(root) : null
+          onAnimationClips?.((animations || []).map((clip) => ({ id: clip.uuid, name: clip.name || 'Imported action', duration: clip.duration, source: format })))
+          onSceneGraph?.(nodes, { initial: true, format, animations: animations.map((clip) => ({ id: clip.uuid, name: clip.name || 'Imported action', duration: clip.duration, source: format })) })
           statusRef.current?.('ready')
           objectUrls.forEach((url) => URL.revokeObjectURL(url))
         }
-        if (source.file || source.files?.[0]) {
-          const file = source.file || source.files[0]
+        const file = source.file || source.files?.find((item) => formatFromSource({ file: item }) === format) || source.files?.[0]
+        if (file && format === 'obj') {
+          const materialFile = source.files?.find((item) => item.name.toLowerCase().endsWith('.mtl'))
+          let materials = null
+          if (materialFile) {
+            materials = new MTLLoader(manager).parse(await materialFile.text(), '')
+            materials.preload()
+          }
+          const loader = new OBJLoader(manager)
+          if (materials) loader.setMaterials(materials)
+          onLoaded(loader.parse(await file.text()), [])
+        } else if (file && format === 'fbx') {
+          const loader = new FBXLoader(manager)
+          const object = loader.parse(await file.arrayBuffer(), '')
+          onLoaded(object, object.animations || [])
+        } else if (file) {
+          const loader = new GLTFLoader(manager)
+          loader.register((parser) => new VRMLoaderPlugin(parser))
           const buffer = await file.arrayBuffer()
-          loader.parse(buffer, '', onLoaded, (error) => { throw error })
+          loader.parse(buffer, '', (gltf) => onLoaded(gltf.scene || gltf.scenes?.[0], gltf.animations || [], { vrm: gltf.userData?.vrm, extensions: gltf.parser?.json?.extensions }), (error) => { throw error })
         } else {
-          await loader.loadAsync(source.url).then(onLoaded)
+          const loader = new GLTFLoader(manager)
+          loader.register((parser) => new VRMLoaderPlugin(parser))
+          await loader.loadAsync(source.url).then((gltf) => onLoaded(gltf.scene || gltf.scenes?.[0], gltf.animations || [], { vrm: gltf.userData?.vrm, extensions: gltf.parser?.json?.extensions }))
         }
       } catch (error) {
         if (!cancelled) {
@@ -373,7 +561,7 @@ export const SceneViewport = forwardRef(function SceneViewport({ source, nodes =
     }
     load()
     return () => { cancelled = true }
-  }, [source, onSceneGraph])
+  }, [source, onAnimationClips, onSceneGraph])
 
   useEffect(() => {
     const object = nodeMapRef.current.get(selectedNodeId)
@@ -385,6 +573,10 @@ export const SceneViewport = forwardRef(function SceneViewport({ source, nodes =
         if (onMaterialChange?.color) material.color?.set(onMaterialChange.color)
         if (typeof onMaterialChange?.metalness === 'number' && 'metalness' in material) material.metalness = onMaterialChange.metalness
         if (typeof onMaterialChange?.roughness === 'number' && 'roughness' in material) material.roughness = onMaterialChange.roughness
+        if (typeof onMaterialChange?.opacity === 'number' && 'opacity' in material) {
+          material.opacity = onMaterialChange.opacity
+          material.transparent = onMaterialChange.opacity < 1
+        }
       })
     }
     object.traverse(applyMaterial)

@@ -7,15 +7,13 @@ const MENU_ITEMS = {
   View: [{ label: 'Toggle grid', action: 'grid' }, { label: 'Toggle axes', action: 'axes' }, { label: 'Reset camera', action: 'reset-camera' }, { label: 'Fullscreen viewport', action: 'fullscreen' }],
   Create: [{ label: 'Add cube', action: 'add-cube' }],
   Modeling: [{ label: 'Select tool', action: 'tool-select' }, { label: 'Move tool', action: 'tool-move' }, { label: 'Rotate tool', action: 'tool-rotate' }, { label: 'Scale tool', action: 'tool-scale' }],
-  Sculpting: [{ label: 'Activate sculpt tool', action: 'tool-sculpt' }],
-  'UV Editing': [{ label: 'Activate paint tool', action: 'tool-paint' }],
-  'Texture Paint': [{ label: 'Activate paint tool', action: 'tool-paint' }],
+  Sculpting: [{ label: 'Sculpt tool unavailable', action: 'tool-sculpt', disabled: true }],
+  UV: [{ label: 'UV editing unavailable', action: 'tool-uv', disabled: true }],
   Shading: [{ label: 'Open properties inspector', action: 'inspector' }],
   Animation: [{ label: 'Play or pause timeline', action: 'timeline' }],
-  Rendering: [{ label: 'Export GLB', action: 'export-glb' }],
 }
 
-export function StudioTopBar({ project, projects, onOpen, onSave, onImport, onExport, onCreatePrimitive, onUndo, onRedo, onMenuAction, canUndo, canRedo }) {
+export function StudioTopBar({ project, projects, capabilities, onOpen, onSave, onImport, onExport, onCreatePrimitive, onUndo, onRedo, onMenuAction, canUndo, canRedo }) {
   const [openMenu, setOpenMenu] = useState(null)
   const menuRef = useRef(null)
 
@@ -34,17 +32,17 @@ export function StudioTopBar({ project, projects, onOpen, onSave, onImport, onEx
       <div className="modeling-brand-mark" aria-hidden="true">A</div>
       <div className="modeling-brand-copy">
         <strong>Avatar Studio</strong>
-        <span>{project.name}{project.dirty ? ' · Unsaved changes' : ''}</span>
+        <span>{project.name}{project.dirty ? ' · Unsaved changes' : ` · ${project.status === 'saved' ? 'Saved' : 'Local scene'}`}</span>
       </div>
       <nav className="modeling-menu" aria-label="Studio menu" ref={menuRef}>
         {Object.keys(MENU_ITEMS).map((item) => (
-          <div className="modeling-menu-group" key={item}><button type="button" className="modeling-menu-item" aria-haspopup="menu" aria-expanded={openMenu === item} onClick={() => setOpenMenu((current) => current === item ? null : item)}>{item}<ChevronDown size={11} /></button>{openMenu === item && <div className="modeling-menu-dropdown" role="menu">{MENU_ITEMS[item].map(({ label, action }) => <button type="button" role="menuitem" key={action} onClick={() => runMenuAction(action)}>{label}</button>)}</div>}</div>
+          <div className="modeling-menu-group" key={item}><button type="button" className="modeling-menu-item" aria-haspopup="menu" aria-expanded={openMenu === item} onClick={() => setOpenMenu((current) => current === item ? null : item)}>{item}<ChevronDown size={11} /></button>{openMenu === item && <div className="modeling-menu-dropdown" role="menu">{MENU_ITEMS[item].map(({ label, action, disabled }) => <button type="button" role="menuitem" key={action} onClick={() => runMenuAction(action)} disabled={disabled}>{label}</button>)}</div>}</div>
         ))}
       </nav>
       <div className="modeling-top-actions">
         <label className="modeling-action-button" title="Import model">
           <Upload size={15} /> Import
-          <input type="file" accept=".vrm,.glb,.gltf,.bin,.png,.jpg,.jpeg,.webp" multiple onChange={onImport} hidden />
+          <input type="file" accept=".vrm,.glb,.gltf,.obj,.fbx,.mtl,.bin,.png,.jpg,.jpeg,.webp" multiple onChange={onImport} hidden />
         </label>
         <button type="button" className="modeling-action-button" onClick={onCreatePrimitive}><Box size={15} /> Add cube</button>
         <button type="button" className="modeling-icon-button" onClick={onUndo} disabled={!canUndo} aria-label="Undo"><Undo2 size={15} /></button>
@@ -55,7 +53,7 @@ export function StudioTopBar({ project, projects, onOpen, onSave, onImport, onEx
           <div className="modeling-export-options">
             <button type="button" onClick={() => onExport('glb')}>Export GLB</button>
             <button type="button" onClick={() => onExport('gltf')}>Export GLTF</button>
-            <button type="button" onClick={() => onExport('vrm')}>Export VRM</button>
+            <button type="button" onClick={() => onExport('vrm')} disabled={!capabilities?.exportVrm} title="VRM export is unavailable until a VRM-preserving exporter is implemented">Export VRM unavailable</button>
           </div>
         </div>
         <label className="modeling-project-picker">

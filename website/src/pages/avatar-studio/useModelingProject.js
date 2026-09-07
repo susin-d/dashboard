@@ -3,6 +3,7 @@ import {
   createModelingProject,
   getModelingProject,
   listModelingProjects,
+  listModelingAssets,
   loadModelingAssetBlob,
   saveModelingVersion,
   uploadModelingAsset,
@@ -87,9 +88,34 @@ export function useModelingProject(activeModel) {
     return uploadModelingAsset(currentId, file, options)
   }, [projectId, saveProject])
 
+  const importAssetSet = useCallback(async (files, options = {}) => {
+    const selectedFiles = Array.from(files || []).filter(Boolean)
+    if (!selectedFiles.length) return []
+    let currentId = projectId
+    if (!currentId) currentId = await saveProject('Create project for imported asset set')
+    if (!currentId) throw new Error('Create a project before importing assets.')
+    const assetSetId = options.assetSetId || globalThis.crypto?.randomUUID?.() || `asset-set-${Date.now()}`
+    return Promise.all(selectedFiles.map((file) => uploadModelingAsset(currentId, file, {
+      ...options,
+      assetSetId,
+      relativePath: file.webkitRelativePath || file.name,
+    })))
+  }, [projectId, saveProject])
+
   const getAssetBlob = useCallback(async (assetId) => {
     if (!projectId || !assetId) return null
     return loadModelingAssetBlob(projectId, assetId)
+  }, [projectId])
+
+  const getAssetSet = useCallback(async (assetSetId, primaryAssetId) => {
+    if (!projectId || !assetSetId) return []
+    const assets = await listModelingAssets(projectId)
+    const matching = (assets || []).filter((asset) => asset.asset_set_id === assetSetId)
+    const ordered = [...matching.filter((asset) => asset.id === primaryAssetId), ...matching.filter((asset) => asset.id !== primaryAssetId)]
+    return Promise.all(ordered.map(async (asset) => {
+      const blob = await loadModelingAssetBlob(projectId, asset.id)
+      return new File([blob], asset.filename, { type: asset.content_type || 'application/octet-stream' })
+    }))
   }, [projectId])
 
   const currentProject = useMemo(() => ({ id: projectId, name: projectName, scene, dirty, status }), [projectId, projectName, scene, dirty, status])
@@ -104,7 +130,9 @@ export function useModelingProject(activeModel) {
     resetLocalScene,
     saveProject,
     importAsset,
+    importAssetSet,
     getAssetBlob,
+    getAssetSet,
     error,
     setError,
   }

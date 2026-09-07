@@ -121,6 +121,12 @@ class TestStudioProjects(unittest.TestCase):
         self.assertEqual(user_id, USER)
         self.assertEqual(workspace_id, project["id"])
 
+    def test_preview_missing_output_returns_controlled_html(self):
+        project = self._create("Empty Preview")
+        data, media_type = studio_preview.read_preview_file(USER, project["id"], "index.html")
+        self.assertEqual(media_type, "text/html")
+        self.assertIn(b"No HTML entry file found", data)
+
     def test_curated_templates_catalog(self):
         templates = list_curated_templates()
         ids = {t["id"] for t in templates}

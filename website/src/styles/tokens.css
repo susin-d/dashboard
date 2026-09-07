@@ -22,6 +22,9 @@
   --font-weight-semibold: 700;
   --font-weight-bold: 800;
 
+  /* Avatar Studio route-local identity — intentionally independent of theme presets. */
+  --avatar-studio-accent: #a83b59;
+
   /* 8pt spacing scale — use these instead of hard-coded px */
   --space-3xs: 4px;
   --space-2xs: 8px;

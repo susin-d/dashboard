@@ -48,6 +48,10 @@ export function uploadModelingAsset(projectId, file, options = {}) {
   }).then((response) => response.json())
 }
 
+export function listModelingAssets(projectId, workspaceId = 'default') {
+  return apiRequest(`${PREFIX}/${encodeURIComponent(projectId)}/assets${query(workspaceId)}`, { useCache: false })
+}
+
 export function getModelingAssetUrl(projectId, assetId, workspaceId = 'default') {
   return `${API_URL}${PREFIX}/${encodeURIComponent(projectId)}/assets/${encodeURIComponent(assetId)}${query(workspaceId)}`
 }

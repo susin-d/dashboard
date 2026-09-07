@@ -53,9 +53,9 @@ async def chat_stream(
     def _producer():
         try:
             if payload.provider or payload.model:
-                stream = stream_chat_with_eve(database, user, messages, session_id, payload.provider, payload.model)
+                stream = stream_chat_with_eve(database, user, messages, session_id, payload.provider, payload.model, payload.editor_context)
             else:
-                stream = stream_chat_with_eve(database, user, messages, session_id)
+                stream = stream_chat_with_eve(database, user, messages, session_id, editor_context=payload.editor_context)
             for event in stream:
                 q.put(f"data: {json.dumps(event, default=str)}\n\n")
         except Exception as error:

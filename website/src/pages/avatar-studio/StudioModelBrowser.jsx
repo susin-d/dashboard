@@ -22,11 +22,11 @@ export function StudioModelBrowser({ models, activeModelId, onSelectModel, onImp
         <div><span className="modeling-panel-kicker">Library</span><h2>Models</h2></div>
         <label className="modeling-upload-compact" title="Upload model">
           <Upload size={14} />
-          <input type="file" accept=".vrm,.glb,.gltf,.bin,.png,.jpg,.jpeg,.webp" multiple onChange={onImport} hidden />
+          <input type="file" accept=".vrm,.glb,.gltf,.obj,.fbx,.mtl,.bin,.png,.jpg,.jpeg,.webp" multiple onChange={onImport} hidden />
         </label>
       </div>
       <div className="modeling-browser-tabs" role="tablist" aria-label="Asset type">
-        {['Models', 'Assets', 'Materials', 'Brushes'].map((tab) => <button type="button" key={tab} className={tab === 'Models' ? 'is-active' : ''}>{tab}</button>)}
+        {['Models', 'Assets', 'Materials', 'Textures', 'Animations'].map((tab) => <button type="button" key={tab} className={tab === 'Models' ? 'is-active' : ''} disabled={tab !== 'Models'} title={tab === 'Models' ? undefined : `${tab} browser is available when its scene data is loaded`}>{tab}</button>)}
       </div>
       <label className="modeling-search-field"><Search size={14} /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search models" aria-label="Search models" /></label>
       <div className="modeling-filter-list">

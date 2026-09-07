@@ -27,6 +27,23 @@ from app.db.session import init_db
 logger = logging.getLogger(__name__)
 
 
+def _is_studio_preview_path(path: str) -> bool:
+    """Return whether a request serves a signed Studio preview document."""
+    preview_prefix = f"{settings.api_v1_prefix.rstrip('/')}/studio/preview/"
+    return path.startswith(preview_prefix)
+
+
+def _studio_preview_frame_ancestors() -> str:
+    """Build the narrow frame policy required by the cross-origin preview iframe."""
+    origins = {"'self'", "http://localhost:5173", "http://127.0.0.1:5173"}
+    origins.update(
+        origin.rstrip("/")
+        for origin in [settings.frontend_url, *settings.cors_origins]
+        if origin.startswith(("http://", "https://"))
+    )
+    return " ".join(sorted(origins))
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     if settings.app_env == "production":
@@ -90,15 +107,21 @@ def create_app() -> FastAPI:
     async def security_headers_middleware(request: Request, call_next):
         response = await call_next(request)
         response.headers["X-Content-Type-Options"] = "nosniff"
-        response.headers["X-Frame-Options"] = "SAMEORIGIN"
         response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
         response.headers["Permissions-Policy"] = "geolocation=(), microphone=(self), camera=(self)"
         if request.url.scheme == "https":
             response.headers["Strict-Transport-Security"] = "max-age=63072000; includeSubDomains; preload"
-        response.headers["Content-Security-Policy"] = (
-            "default-src 'self'; script-src 'self' 'unsafe-inline' https://accounts.google.com; "
-            "style-src 'self' 'unsafe-inline'; frame-ancestors 'self'; object-src 'none'; base-uri 'self'"
-        )
+        if _is_studio_preview_path(request.url.path):
+            response.headers["Content-Security-Policy"] = (
+                "default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob:; "
+                f"frame-ancestors {_studio_preview_frame_ancestors()}; object-src 'none'; base-uri 'self'"
+            )
+        else:
+            response.headers["X-Frame-Options"] = "SAMEORIGIN"
+            response.headers["Content-Security-Policy"] = (
+                "default-src 'self'; script-src 'self' 'unsafe-inline' https://accounts.google.com; "
+                "style-src 'self' 'unsafe-inline'; frame-ancestors 'self'; object-src 'none'; base-uri 'self'"
+            )
         return response
 
     @application.exception_handler(FastAPIHTTPException)

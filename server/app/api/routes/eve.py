@@ -227,9 +227,10 @@ async def chat(
             payload.session_id,
             payload.provider,
             payload.model,
+            payload.editor_context,
         )
     else:
-        result = await asyncio.to_thread(chat_with_eve, database, user, messages, payload.session_id)
+        result = await asyncio.to_thread(chat_with_eve, database, user, messages, payload.session_id, None, None, payload.editor_context)
     message, changed_resources, actions = result
     return {"message": message, "changed_resources": changed_resources, "actions": actions}
 
