@@ -56,7 +56,11 @@ export function StudioOutliner({ nodes, selectedNodeId, onSelect, onRename, onTo
   const roots = childrenByParent.get(null) || nodes.filter((node) => !node.parentId)
 
   useEffect(() => {
-    setExpanded((current) => new Set([...current, ...roots.map((node) => node.id)]))
+    const rootIds = roots.map((node) => node.id)
+    setExpanded((current) => {
+      if (rootIds.every((id) => current.has(id))) return current
+      return new Set([...current, ...rootIds])
+    })
   }, [roots])
 
   const toggleExpanded = (id) => setExpanded((current) => {

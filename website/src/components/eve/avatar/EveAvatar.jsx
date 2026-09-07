@@ -31,6 +31,7 @@ export function EveAvatar({
   resetViewSignal = 0,
   className = '',
   style = {},
+  chrome = true,
 }) {
   const effectivePrefs = prefs || AVATAR_DEFAULTS
   const model = activeModel || { url: '/avatars/vrm/eve-anime.vrm', renderer: 'vrm', id: 'eve-anime-vrm' }
@@ -132,7 +133,7 @@ export function EveAvatar({
   return (
     <div
       ref={containerRef}
-      className={`eve-avatar eve-avatar--${size} is-${emotion} ${reducedMotion ? 'is-reduced' : ''} ${className}`}
+      className={`eve-avatar eve-avatar--${size} ${chrome ? '' : 'eve-avatar--bare'} is-${emotion} ${reducedMotion ? 'is-reduced' : ''} ${className}`}
       data-eve-target="eve-avatar"
       data-emotion={emotion}
       data-renderer={resolvedRenderer}
