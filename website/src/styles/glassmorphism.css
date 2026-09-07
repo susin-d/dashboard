@@ -226,6 +226,7 @@ textarea:not(.eve-composer-textarea):not(.studio-prompt-textarea):not(.whatsapp-
 .eve-composer textarea,
 .eve-composer-textarea,
 .eve-composer-field textarea,
+.studio-prompt-input,
 .studio-prompt-textarea,
 .whatsapp-composer textarea,
 .whatsapp-composer-input,

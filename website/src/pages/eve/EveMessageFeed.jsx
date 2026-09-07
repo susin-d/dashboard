@@ -138,13 +138,17 @@ export function EveMessageFeed({
           {streamText ? (
             <div className="eve-bubble-text eve-bubble-markdown eve-streaming-text">
               <Markdown content={streamText} />
-              <span className="eve-streaming-cursor" aria-hidden="true" />
+              {thinkingText && <span className="eve-streaming-thinking">Thinking…</span>}
             </div>
           ) : activeTool ? (
             <div className="eve-tool-activity" role="status">
               <Loader2 size={13} className="spin" />
               <Wrench size={12} />
               <span>Using tool: {activeTool}…</span>
+            </div>
+          ) : thinkingText ? (
+            <div className="eve-bubble-text eve-streaming-thinking-bubble" role="status">
+              Thinking…
             </div>
           ) : !thinkingText ? (
             <div className="eve-typing-indicator" aria-label="Eve is thinking">

@@ -181,12 +181,29 @@ def invalidate_ai_config_cache(user_uid: str) -> None:
     _ai_config_cache.pop(user_uid, None)
 
 
-def resolve_ai_config(database: SqlClient, user_uid: str) -> AiConfig:
-    """Resolve a user's AI provider/model choice, falling back to the server default."""
-    cached = _cache_get(user_uid)
-    if cached is not None:
-        return cached
+def resolve_ai_config(
+    database: SqlClient,
+    user_uid: str,
+    provider_override: str | None = None,
+    model_override: str | None = None,
+) -> AiConfig:
+    """Resolve a user's AI choice, optionally applying a validated per-turn override."""
+    has_override = bool(provider_override or model_override)
+    if not has_override:
+        cached = _cache_get(user_uid)
+        if cached is not None:
+            return cached
+
     preference = load_ai_preference(database, user_uid)
+
+    if has_override:
+        chosen_provider = provider_override or (preference or {}).get("provider") or "default"
+        api_keys = (preference or {}).get("api_keys") or {}
+        user_api_key = api_keys.get(chosen_provider) if isinstance(api_keys, dict) else None
+        if not user_api_key and preference and preference.get("provider") == chosen_provider:
+            user_api_key = preference.get("api_key")
+        return build_ai_config(chosen_provider, model_override, user_api_key=user_api_key)
+
     if not preference:
         cfg = build_ai_config("default")
         _cache_set(user_uid, cfg)

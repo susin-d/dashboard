@@ -22,6 +22,8 @@ def chat_with_eve(
     user: dict,
     messages: list[dict[str, str]],
     session_id: str | None = None,
+    provider: str | None = None,
+    model: str | None = None,
 ) -> tuple[str, list[str], list[dict[str, Any]]]:
     user_id = user.get("uid")
     if not any_provider_available():
@@ -39,7 +41,10 @@ def chat_with_eve(
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(error)) from error
 
     try:
-        context = resolve_chat_context(database, user_id, messages)
+        if provider or model:
+            context = resolve_chat_context(database, user_id, messages, provider, model)
+        else:
+            context = resolve_chat_context(database, user_id, messages)
     except AIServiceError as error:
         logger.error(f"[Eve Chat] AI config error for user {user_id}: {error}", exc_info=True)
         code = getattr(error, "status_code", 502)

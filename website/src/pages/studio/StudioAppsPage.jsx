@@ -1,8 +1,8 @@
 import "../../styles/pages/studio-shared.css"
 import "../../styles/pages/studio-gallery.css"
-import { useState } from 'react'
-import { AppWindow, ExternalLink, FileCode, Play, Plus, RefreshCw, Sparkles, Trash2 } from 'lucide-react'
-import { ConfirmDialog, EmptyState, LoadingState, SectionHeading } from '../../components/ui'
+import { useMemo, useState } from 'react'
+import { AppWindow, ExternalLink, FileCode, Play, Plus, RefreshCw, Trash2 } from 'lucide-react'
+import { ConfirmDialog, EmptyState, LoadingState, SearchBar, SectionHeading } from '../../components/ui'
 import { startPreview } from '../../lib/studioApi'
 import { ProjectCard } from './ProjectCard'
 import { useStudioProjects } from './useStudioProjects'
@@ -18,9 +18,21 @@ export function StudioAppsPage({ onOpenProject, onNavigate }) {
   const [runError, setRunError] = useState('')
   const [projectToDelete, setProjectToDelete] = useState(null)
   const [isDeleting, setIsDeleting] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
 
-  const draftProjects = projects.filter((project) => project.build_status !== 'ready')
-  const builtApps = projects.filter((project) => project.build_status === 'ready')
+  const filteredProjects = useMemo(() => {
+    const normalizedQuery = searchQuery.trim().toLowerCase()
+    if (!normalizedQuery) return projects
+
+    return projects.filter((project) =>
+      [project.name, project.description, project.stack]
+        .filter(Boolean)
+        .some((value) => String(value).toLowerCase().includes(normalizedQuery)),
+    )
+  }, [projects, searchQuery])
+
+  const draftProjects = filteredProjects.filter((project) => project.build_status !== 'ready')
+  const builtApps = filteredProjects.filter((project) => project.build_status === 'ready')
 
   const handleRunApp = async (project) => {
     if (runningId) return
@@ -52,11 +64,13 @@ export function StudioAppsPage({ onOpenProject, onNavigate }) {
   return (
     <div className="studio-page studio-page-gallery">
       <header className="studio-section-header studio-gallery-header">
-        <div>
-          <span className="studio-eyebrow"><Sparkles size={13} /> Studio workspace</span>
-          <h2>Your apps, in motion.</h2>
-          <p>Pick up where you left off or open a live preview.</p>
-        </div>
+        <SearchBar
+          className="studio-apps-search"
+          value={searchQuery}
+          onChange={setSearchQuery}
+          placeholder="Search apps"
+          ariaLabel="Search apps"
+        />
         <div className="page-inline-actions">
         <button
           type="button"
@@ -153,11 +167,22 @@ export function StudioAppsPage({ onOpenProject, onNavigate }) {
                 ))}
               </div>
             </section>
-          ) : draftProjects.length === 0 ? (
+          ) : draftProjects.length === 0 && projects.length === 0 ? (
             <EmptyState
               icon={AppWindow}
               title="No finished apps yet"
               description='Ask Eve to build one — try "Build a habit tracker app" in Studio.'
+            />
+          ) : draftProjects.length === 0 ? (
+            <EmptyState
+              icon={AppWindow}
+              title="No matching apps"
+              description="Try a different app name, description, or technology."
+              action={
+                <button type="button" className="secondary-button" onClick={() => setSearchQuery('')}>
+                  Clear search
+                </button>
+              }
             />
           ) : null}
         </>

@@ -52,7 +52,11 @@ async def chat_stream(
 
     def _producer():
         try:
-            for event in stream_chat_with_eve(database, user, messages, session_id):
+            if payload.provider or payload.model:
+                stream = stream_chat_with_eve(database, user, messages, session_id, payload.provider, payload.model)
+            else:
+                stream = stream_chat_with_eve(database, user, messages, session_id)
+            for event in stream:
                 q.put(f"data: {json.dumps(event, default=str)}\n\n")
         except Exception as error:
             logger.error(f"[Eve Chat Stream] Unhandled stream failure: {type(error).__name__}: {error}", exc_info=True)

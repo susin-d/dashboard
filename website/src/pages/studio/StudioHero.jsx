@@ -27,7 +27,7 @@ export function StudioHero({
 }) {
   const [prompt, setPrompt] = useState('')
   const [mode, setMode] = useState('plan')
-  const [model, setModel] = useState('')
+  const [model, setModel] = useState('openrouter/free')
   const [attachments, setAttachments] = useState([])
   const textareaRef = useRef(null)
   const fileInputRef = useRef(null)
@@ -102,8 +102,17 @@ export function StudioHero({
   return (
     <section className="studio-hero">
       <div className="studio-hero-glow" aria-hidden="true" />
+      <div className="studio-hero-orbit studio-hero-orbit-primary" aria-hidden="true" />
+      <div className="studio-hero-orbit studio-hero-orbit-secondary" aria-hidden="true" />
 
       <div className="studio-hero-content">
+        <div className="studio-hero-eyebrow">
+          <span className="studio-hero-eyebrow-mark" aria-hidden="true" />
+          <span>Eve Studio</span>
+          <span className="studio-hero-eyebrow-divider" aria-hidden="true" />
+          <span>Prompt to product</span>
+        </div>
+
         <h1 className="studio-hero-title">
           Build something
           <span className="studio-hero-title-accent"> extraordinary</span>
@@ -114,12 +123,15 @@ export function StudioHero({
         </p>
 
         <div className="studio-hero-features" aria-label="Studio capabilities">
-          {HERO_FEATURES.map(({ icon: Icon, label }) => (
-            <div key={label} className="studio-hero-feature-pill">
-              <Icon size={13} aria-hidden="true" />
-              <span>{label}</span>
-            </div>
-          ))}
+          <span className="studio-hero-features-label">Eve can help you ship</span>
+          <div className="studio-hero-feature-list" role="list">
+            {HERO_FEATURES.map(({ icon: Icon, label }) => (
+              <div key={label} className="studio-hero-feature" role="listitem">
+                <Icon size={13} aria-hidden="true" />
+                <span>{label}</span>
+              </div>
+            ))}
+          </div>
         </div>
 
         <form className="studio-prompt-card" onSubmit={handleSubmit}>
@@ -171,6 +183,7 @@ export function StudioHero({
                 className="studio-prompt-mode"
                 value={model}
                 onChange={(m) => setModel(m.model || m.value)}
+                direction="up"
                 placeholder="Model"
               />
               <CustomDropdown

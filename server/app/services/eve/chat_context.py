@@ -37,9 +37,11 @@ def resolve_chat_context(
     database: SqlClient,
     user_id: str,
     messages: list[dict[str, str]],
+    provider: str | None = None,
+    model: str | None = None,
 ) -> ChatContext:
     """Build RAG memory instructions and resolve the user's AI provider client."""
-    config = resolve_ai_config(database, user_id)
+    config = resolve_ai_config(database, user_id, provider_override=provider, model_override=model)
     return ChatContext(
         database=database,
         user_id=user_id,

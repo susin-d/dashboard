@@ -24,6 +24,8 @@ def stream_chat_with_eve(
     user: dict,
     messages: list[dict[str, str]],
     session_id: str | None = None,
+    provider: str | None = None,
+    model: str | None = None,
 ) -> Iterator[dict[str, Any]]:
     """Yield streaming events for an Eve chat turn.
 
@@ -55,7 +57,7 @@ def stream_chat_with_eve(
             return
 
     try:
-        context = resolve_chat_context(database, user_id, messages)
+        context = resolve_chat_context(database, user_id, messages, provider, model)
     except Exception as error:
         logger.error(f"[Eve Chat Stream] AI config error for user {user_id}: {type(error).__name__}: {error}", exc_info=True)
         # Surface kind/status so frontend can differentiate rate limit vs auth etc.

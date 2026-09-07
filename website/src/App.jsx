@@ -475,9 +475,7 @@ function App() {
                 ? 'documents'
                 : activePage === 'studio-detail'
                   ? 'studio'
-                  : activePage === 'studio-apps' || activePage === 'studio-templates'
-                    ? 'studio'
-                    : activePage === 'eve-sessions' ||
+                  : activePage === 'eve-sessions' ||
                         activePage === 'eve-memory' ||
                         activePage === 'eve-call' ||
                         activePage === 'eve-schedules'

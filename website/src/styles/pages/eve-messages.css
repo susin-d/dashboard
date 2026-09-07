@@ -202,15 +202,20 @@
   animation: eve-stream-fade-in 0.22s ease;
 }
 
-.eve-streaming-cursor {
-  display: inline-block;
-  width: 7px;
-  height: 1.05em;
-  margin-left: 3px;
-  vertical-align: -0.15em;
-  border-radius: 1px;
-  background: var(--text-primary, #ffffff);
-  animation: eve-caret-blink 0.95s steps(1, end) infinite;
+
+.eve-streaming-thinking {
+  display: block;
+  margin-top: 0.45rem;
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+  font-style: italic;
+  line-height: 1.4;
+}
+
+.eve-streaming-thinking-bubble {
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+  font-style: italic;
 }
 
 .eve-thinking-cursor {
@@ -251,7 +256,6 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .eve-streaming-cursor,
   .eve-thinking-cursor {
     animation: none;
     opacity: 1;

@@ -135,6 +135,59 @@
   min-width: 0;
 }
 
+/* The disconnected mail state is a full-page onboarding surface. */
+.content:has(.mail-page-container) {
+  width: 100%;
+  max-width: none;
+  padding: var(--space-lg) var(--content-gutter) var(--space-xl);
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.content:has(.mail-page-container) > .app-page-enter {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+  width: 100%;
+}
+
+/* Chats uses an internal split-pane shell that should occupy the available
+   viewport below the app header while retaining the standard content gutters. */
+.content:has(.chats-page) {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.content:has(.chats-page) > .app-page-enter {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+  width: 100%;
+}
+
+/* Contacts uses the available viewport for its directory surface while
+   retaining the shared content gutters and natural page scrolling. */
+.content:has(.contacts-page) {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.content:has(.contacts-page) > .app-page-enter {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+  width: 100%;
+}
+
 /* ── Page heading — symmetric, token-driven ── */
 :where(
   .competitive-coding-page,
@@ -261,10 +314,21 @@
 }
 
 .calendar-content {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
   padding: 0 !important;
+  overflow: hidden;
   width: 100%;
   max-width: 100%;
   margin: 0;
+}
+
+.calendar-content > .app-page-enter {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
 }
 
 .calendar-toolbar {
@@ -359,6 +423,14 @@
 }
 
 @media (max-width: 640px) {
+  .calendar-content {
+    overflow-y: auto;
+  }
+
+  .calendar-page {
+    min-height: 100%;
+  }
+
   .page-heading-actions,
   .dashboard-heading-actions,
   .dashboard-inline-actions,

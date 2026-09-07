@@ -109,6 +109,10 @@
   gap: 1rem;
 }
 
+.studio-apps-search {
+  width: min(100%, 320px);
+}
+
 /* ── Projects grid ── */
 .studio-project-grid {
   display: grid;

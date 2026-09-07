@@ -49,6 +49,7 @@
 | [0034](0034-avatar-modeling-studio-projects.md) | Avatar modeling studio workspace with versioned scenes and managed binary assets | Accepted | 2026-09-06 |
 | [0035](0035-studio-product-area-redesign.md) | Unified Studio product-area redesign with real-data presentation metadata | Accepted | 2026-09-06 |
 | [0036](0036-studio-project-uuid-identifiers.md) | UUID identifiers for Studio project routes and full-height detail shell | Accepted | 2026-09-06 |
+| [0037](0037-per-turn-eve-model-selection.md) | Per-turn EVE model selection in the Workspace Agent composer | Accepted | 2026-09-07 |
 
 ## How to add a new ADR
 

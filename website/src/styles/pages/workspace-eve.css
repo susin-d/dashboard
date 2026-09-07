@@ -210,15 +210,53 @@
 
 .workspace-eve-input {
   display: flex;
-  align-items: center;
-  gap: 6px;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 5px;
   padding: 6px 8px;
   border-top: 1px solid var(--border-color);
   flex-shrink: 0;
   background: var(--bg-secondary);
 }
 
-.workspace-eve-input input {
+.workspace-eve-model-row {
+  display: flex;
+  min-width: 0;
+}
+
+.workspace-eve-model-selector {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.workspace-eve-model-selector .model-selector-trigger {
+  min-width: 0;
+  max-width: 100%;
+  min-height: 24px;
+  padding: 3px 5px;
+  border: 0;
+  border-radius: var(--radius-xs, 4px);
+  background: transparent;
+  font-size: var(--text-xs, 12px);
+  font-weight: 650;
+}
+
+.workspace-eve-model-selector .model-selector-label {
+  max-width: 190px;
+}
+
+.workspace-eve-model-selector .model-selector-trigger:hover:not(:disabled) {
+  background: var(--bg-hover);
+}
+
+.workspace-eve-compose-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.workspace-eve-compose-row input {
   flex: 1;
   padding: 6px 8px;
   border: 1px solid var(--border-color);

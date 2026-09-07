@@ -32,10 +32,15 @@ function request(path, options = {}) {
   })
 }
 
-export function sendEveMessage(messages, sessionId) {
+export function sendEveMessage(messages, sessionId, modelSelection = null) {
+  const body = { messages, session_id: sessionId ?? null }
+  if (modelSelection?.provider && modelSelection?.model) {
+    body.provider = modelSelection.provider
+    body.model = modelSelection.model
+  }
   return request('/eve/chat', {
     method: 'POST',
-    body: JSON.stringify({ messages, session_id: sessionId ?? null }),
+    body: JSON.stringify(body),
     timeoutMs: 60_000,
   })
 }
@@ -54,6 +59,7 @@ export function sendEveMessage(messages, sessionId) {
 export async function streamEveMessage({
   messages,
   sessionId,
+  modelSelection = null,
   signal,
   onDelta,
   onThinking,
@@ -73,7 +79,13 @@ export async function streamEveMessage({
         'Content-Type': 'application/json',
         Accept: 'text/event-stream',
       },
-      body: JSON.stringify({ messages, session_id: sessionId ?? null }),
+      body: JSON.stringify({
+        messages,
+        session_id: sessionId ?? null,
+        ...(modelSelection?.provider && modelSelection?.model
+          ? { provider: modelSelection.provider, model: modelSelection.model }
+          : {}),
+      }),
       signal,
     },
     STREAM_TIMEOUT_MS,

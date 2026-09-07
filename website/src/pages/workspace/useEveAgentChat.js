@@ -34,7 +34,7 @@ export function useEveAgentChat({ workspaceId, workspaceName, activeFilePath, on
   }, [])
 
   const send = useCallback(
-    async (rawText) => {
+    async (rawText, modelSelection = null) => {
       const content = rawText.trim()
       if (!content || sending) return
       setError('')
@@ -63,6 +63,7 @@ export function useEveAgentChat({ workspaceId, workspaceName, activeFilePath, on
           await streamEveMessage({
             messages: apiMessages,
             sessionId: null,
+            modelSelection,
             signal: controller.signal,
             onDelta: (delta) => {
               receivedText += delta
@@ -99,7 +100,7 @@ export function useEveAgentChat({ workspaceId, workspaceName, activeFilePath, on
 
         if (fallbackToRest) {
           try {
-            const response = await sendEveMessage(apiMessages, null)
+            const response = await sendEveMessage(apiMessages, null, modelSelection)
             commit(response.message)
             if (response.changed_resources?.includes(WORKSPACE_CHANGED_RESOURCE)) onFilesChanged?.()
             return

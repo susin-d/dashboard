@@ -217,13 +217,20 @@ async def chat(
     user: dict = Depends(get_current_user),
 ):
     # Offload heavy LLM + tool loop to thread to keep event loop responsive; LLM calls are sync httpx
-    message, changed_resources, actions = await asyncio.to_thread(
-        chat_with_eve,
-        database,
-        user,
-        [item.model_dump() for item in payload.messages],
-        payload.session_id,
-    )
+    messages = [item.model_dump() for item in payload.messages]
+    if payload.provider or payload.model:
+        result = await asyncio.to_thread(
+            chat_with_eve,
+            database,
+            user,
+            messages,
+            payload.session_id,
+            payload.provider,
+            payload.model,
+        )
+    else:
+        result = await asyncio.to_thread(chat_with_eve, database, user, messages, payload.session_id)
+    message, changed_resources, actions = result
     return {"message": message, "changed_resources": changed_resources, "actions": actions}
 
 
