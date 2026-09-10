@@ -85,6 +85,19 @@ function Write-CacheRecord {
   Move-Item -LiteralPath $tmp -Destination $target -Force
 }
 
+function Invoke-SuiteNative {
+  param([string]$Command, [string[]]$TestArgs = @(), [string]$WorkDir = "")
+  # Runs a test suite with live console output that does NOT leak into the
+  # function's output stream: native stdout is re-routed through Write-Host so
+  # callers receive only the integer exit code (bare `& $Command` would append
+  # every output line to the caller's return value and corrupt `$rc -ne 0`).
+  Push-Location -LiteralPath $WorkDir
+  try {
+    & $Command @TestArgs 2>&1 | ForEach-Object { Write-Host "$_" }
+    return $LASTEXITCODE
+  } finally { Pop-Location }
+}
+
 function Invoke-ScopeSuite {
   param([string]$Name)
   $sha = Get-CurrentSha $Name
@@ -112,27 +125,15 @@ function Invoke-ScopeSuite {
     if ($Name -eq "server") {
       $cmd = "python -m pytest tests -q"
       Assert-Command "python" "Install Python 3.12+ and retry."
-      Push-Location -LiteralPath (Join-Path $root "server")
-      try {
-        & python -m pytest tests -q
-        $code = $LASTEXITCODE
-      } finally { Pop-Location }
+      $code = Invoke-SuiteNative -Command "python" -TestArgs @("-m", "pytest", "tests", "-q") -WorkDir (Join-Path $root "server")
     } elseif ($Name -eq "website") {
       $cmd = "npm test -- --run"
       Assert-Command "npm" "Install Node 20+ and retry."
-      Push-Location -LiteralPath (Join-Path $root "website")
-      try {
-        & npm test -- --run
-        $code = $LASTEXITCODE
-      } finally { Pop-Location }
+      $code = Invoke-SuiteNative -Command "npm" -TestArgs @("test", "--", "--run") -WorkDir (Join-Path $root "website")
     } else {
       $cmd = "go test ./..."
       Assert-Command "go" "Install Go and retry, or run -Scope server."
-      Push-Location -LiteralPath (Join-Path $root "services/whatsapp-worker")
-      try {
-        & go test ./...
-        $code = $LASTEXITCODE
-      } finally { Pop-Location }
+      $code = Invoke-SuiteNative -Command "go" -TestArgs @("test", "./...") -WorkDir (Join-Path $root "services/whatsapp-worker")
     }
   } catch {
     $code = 1

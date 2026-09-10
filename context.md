@@ -1,7 +1,7 @@
 # Starwaves Context
 
 Living snapshot for AI agents. `AGENTS.md` holds permanent rules; this file holds the **current state**. See `CHANGELOG.md` for history and `PROJECT_MAP.md` for the file index.
-Last updated: 2026-09-10 — Seven-day file logging (ADR 0050): rotated app+error logs + request middleware.
+Last updated: 2026-09-10 — Smart test cache (ADR 0048): skip-if-unchanged runners + Assert-Command/output-stream exit-code fixes; seven-day file logging (ADR 0050).
 
 ## Contents
 1. [Overview](#1-overview) · 2. [Repository structure](#2-repository-structure) · 3. [Backend](#4-backend) · 4. [Frontend](#4-frontend) · 5. [Design system](#5-design-system) · 6. [Current snapshot](#6-current-snapshot) · 7. [Limitations](#7-limitations) · 8. [Verification](#8-verification)
@@ -42,7 +42,7 @@ For full maps see `PROJECT_MAP.md`. Keep this section brief; expand there.
 - **Layering:** Routes → Services/Repos → Core/Models. Never import FastAPI types in Services/Repos. Use `CurrentUser`/`CurrentUserId`/`DbClient` from `core/dependencies.py`.
  - **Route groups:** `auth/` (oauth/credentials/password/account/combine/sessions), `workspace/` (jobs/hackathons/projects/notifications/contests/calendar), `whatsapp/` (status/chats/messages/settings/webhook+`_shared`), `workspace_files`, `whatsapp_ws`+`calls_ws`+`twilio-relay`, `eve`+`eve_stream` (SSE), `calls`+`calls_twilio`, `ai_models`, `eve_speech`, `eve_avatar` (`/eve/avatar/preferences|models|upload`, upload 12MB + zip model3.json guard, per-user `avatars/{uid}/`), `ui_preferences` (`/ui/preferences` tokens/CSS/visibility/history + `GET /history`), `cron`, `health`.
   - **Repos:** one per entity (`helpers.py` soft-delete/snapshot, `pagination.py` facade). **Services:** `eve/` (chat/stream/tools/handlers/memories/RAG + `ui` tools), `ui_preferences` (per-user `ui-preferences` v1, sanitize CSS, allowlist tokens, history 20), `ai_models/` (contracts `AIServiceError` + `classify_provider_error` 429/401/404/422/503/quota; `openai_compat` flat→nested `function` + Referer/Title + `max_tokens` 1024 openrouter/4096 else + quota retry + `_provider_label`; default `openrouter`/`openrouter/free` + fallback `openrouter→...→opencode` + runtime `server`/`quota` fallback (ADR 0014); `groq` 3.3-70b; Gemini thought/Anthropic 8192; discovery `gpt-5/o4` +5min; ADR 0007), `speech/` (Groq/Deepgram STT, Google/OpenRouter TTS), `twilio/`, `oauth/` (canonical `starwaves.susindran.in`, ADR 0006), `web_browsing/`, `embeddings` (1536-dim).
-- **DB:** `models/` (`UserSession` for devices) + mixins. SQL in `sql/` (idempotent, now `user_sessions` + indexes `ix_user_sessions_*`). `db/sql/` modular handlers + `registry.py` dispatch + `base.py` CRUD + RLS `SET LOCAL app.current_user_id`. Device sessions 30d expiry, 10 cap LRU.
+ - **DB:** `models/` (`UserSession` for devices) + mixins. SQL in `sql/` (idempotent, now `user_sessions` + indexes `ix_user_sessions_*`). `db/sql/` modular handlers + `registry.py` dispatch + `base.py` CRUD + RLS `SET LOCAL app.current_user_id`. Device sessions 30d expiry, 10 cap LRU. Schedule create persists all fields (`next_run_at`/`enabled` round-trip for due-scan); call `update()` round-trips `created_at`/`updated_at` (stale-ring expiry).
   - **Performance:** hot reads `async+to_thread`, composite indexes, pools `5/5 recycle 300`, Redis/LRU `cached` per-user + `cache_clear` fixture, workspace disk. `usage:summary/logs` `SHORT 30s` + invalidates. Rate-limit `10r/s burst 60` + CORS via `$cors_allow_*` + `RateLimitMiddleware`.
 - **Logging:** `core/app_logging.py` `setup_logging()` + `core/request_log.py` access lines → `LOG_DIR` (`server/logs/` local, `/app/logs` + `server-logs` volume in Docker) `starwaves.log` INFO+ / `starwaves-error.log` WARNING+, midnight rotation × `LOG_RETENTION_DAYS=7` (ADR 0050); serverless stdout-only.
 
@@ -68,6 +68,7 @@ For full maps see `PROJECT_MAP.md`. Keep this section brief; expand there.
   - Eve Avatar (ADR 0012): dual VRM+Live2D via `EveAvatarProvider` (lip-sync + `BroadcastChannel`) — global companion + inline micro + **Avatar Studio** (`/app/avatar`) + `EveAvatarSection`. Backend `/eve/avatar/*` validates, stores `avatars/{uid}/`.
   - Avatar modeling workspace (ADR 0034, 0039, 0040): editor shell under `pages/avatar-studio/` with schema-v2 normalized GLB/GLTF/VRM/OBJ/FBX scenes, `/modeling/projects` filesystem API, outliner, inspector, timeline, UV painting, GLB export, Eve events.
   - GET caching: `core/cache.py` `cached` per-user keys (Redis/LRU) for hot GETs + `cache_clear` fixture.
+ - Smart test cache (ADR 0048): `scripts/test-smart.ps1/.sh` skip suites on unchanged content hash (per-scope server/website/worker, fail-closed, `-Force` override; hasher `scripts/lib/test-hash.py`).
   - Multi-device: `user_sessions` 30d/10 cap + `X-Device-Id` + `session_revoked`/`sync_invalidate` + `DeviceSection`.
   - Workspace IDE: folder-first Monaco + Explorer + Eve SSE panel (`workspace_id` required) + Browser `srcdoc`.
   - Studio: unified prompt-first Builder, status-aware Apps gallery, filterable Templates catalog, preview readiness metadata, and Builder IDE handoff via `StudioHero`.
@@ -91,6 +92,8 @@ For full maps see `PROJECT_MAP.md`. Keep this section brief; expand there.
 npm run lint && npm run build && npm test
 # Backend (server/)
 python -m pytest tests -q
+# Smart cache — skips scopes whose content hash is unchanged (fail-closed)
+./scripts/test-smart.ps1 -Scope all  # server|website|worker, -Force to override
 # Docker
 docker compose config && curl -i http://localhost/health
 ```

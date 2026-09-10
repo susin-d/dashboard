@@ -2,6 +2,11 @@
 
 Historical implementation log extracted from `context.md`. `context.md` now holds the **current snapshot** only; this file preserves the full chronological history for audit.
 
+## 2026-09-10 — Smart test cache skip-if-unchanged (ADR 0048)
+- `scripts/test-smart.ps1/.sh` + `scripts/lib/test-hash.py` (stdlib SHA-256 over per-scope inputs): repeat runs skip in <1s (`SKIP server — unchanged`, 0.66s vs 238s suite); miss/corrupt/prior-fail/`-Force`/real-change always runs (fail-closed); `.cache/` gitignored.
+- Root-caused 3 suite failures instead of masking: schedule create now persists all fields (`eve.py`), call `update()` round-trips timestamps (`calls.py`), webhook test asserts paginated `items` contract (ADR 0042).
+- Runner hardening: `Assert-Command` no longer leaks `Get-Command` objects into return values; suite stdout re-routed via `Write-Host` (`Invoke-SuiteNative`) so exit codes stay clean integers.
+
 ## 2026-09-06 — Recent documents widget converted to Recent activity
 - Full-width card now shows the 3 most recent items across documents (`modifiedAt`) + projects (`updatedAt`) + jobs (`appliedDate`), each deep-linking to its page; title `Recent activity`, `Activity` icon, sky-blue accent kept. Slot id `documents` unchanged so saved layouts/hidden prefs survive; big count omitted, footer still opens Documents.
 - Prior snapshot: Dashboard widgets bolder (solid accent top bar + saturated icon chips).

@@ -9,7 +9,11 @@ function Write-Err { param([string]$Msg) Write-Host "  ✗ $Msg" -ForegroundColo
 
 function Assert-Command {
   param([string]$Name, [string]$Hint = "")
-  if (-not (Get-Command $Name -ErrorAction SilentlyContinue)) {
+  # Capture first: a bare Get-Command call emits its result object, which would
+  # leak into the output stream of any function that calls Assert-Command and
+  # corrupt return values (e.g. test-smart.ps1 exit-code handling).
+  $found = Get-Command $Name -ErrorAction SilentlyContinue
+  if (-not $found) {
     Write-Err "Missing required command: $Name"
     if ($Hint) { Write-Host "  Hint: $Hint" }
     throw "Prerequisite missing: $Name"
