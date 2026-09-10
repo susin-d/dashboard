@@ -300,6 +300,7 @@ def set_eve_schedule_doc(
     merge: bool = False,
 ) -> None:
     """Create or update a schedule document."""
+    _ALLOWED = {"title", "prompt", "schedule_type", "action_type", "cron_expression", "execute_at", "next_run_at", "enabled", "last_run_at"}
     s = session.get(EveSchedule, doc_id)
     if not s:
         s = EveSchedule(
@@ -310,10 +311,17 @@ def set_eve_schedule_doc(
             cron_expression=data.get("cron_expression"),
         )
         session.add(s)
+        # Apply every provided scheduling field — not just the legacy trio —
+        # so next_run_at/enabled/title survive the round-trip and due
+        # schedules are actually discoverable via collection_group queries.
+        for key, val in data.items():
+            if key not in _ALLOWED:
+                continue
+            if hasattr(s, key):
+                setattr(s, key, coerce_model_value(key, val))
     else:
         if s.user_id != user_id:
             raise PermissionError("Not owner")
-        _ALLOWED = {"title", "prompt", "schedule_type", "action_type", "cron_expression", "execute_at", "next_run_at", "enabled", "last_run_at"}
         _IMMUTABLE = {"id", "user_id", "created_at"}
         for key, val in data.items():
             if key in _IMMUTABLE:

@@ -92,8 +92,10 @@ def set_call_doc(
             c.duration = data["duration"]
         if "messages" in data:
             c.messages = data["messages"] or []
-        # Allow only safe fields via explicit allowlist (no caller_id/receiver_id rewrite)
-        _ALLOWED_CALL = {"status", "duration", "messages", "provider", "external_sid", "phone_number"}
+        # Allow only safe fields via explicit allowlist (no caller_id/receiver_id rewrite).
+        # created_at/updated_at are round-tripped so backfill-style update() calls
+        # and the stale-ring expirer observe the stored timestamps (Firestore parity).
+        _ALLOWED_CALL = {"status", "duration", "messages", "provider", "external_sid", "phone_number", "created_at", "updated_at"}
         for k, val in data.items():
             if k not in _ALLOWED_CALL:
                 continue

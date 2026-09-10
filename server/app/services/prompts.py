@@ -49,6 +49,15 @@ def memory_exchange_message(user_text: str, reply_text: str) -> str:
         "Extract durable memories now."
     )
 
+
+def ui_page_description(pages: list[str]) -> str:
+    """Page-inspect description with the live page list (moved verbatim from services/eve/tools/ui.py).
+
+    The page list is owned by services/eve/constants (nav config); only the text
+    lives here, rendered through this builder (ADR 0049).
+    """
+    return f"Optional page to inspect. One of: {', '.join(pages)} or custom:<slug>"
+
 # === Document extraction prompt (moved verbatim from services/document_reader.py) ===
 EXTRACTION_PROMPT = (
 "Extract all text content from this document. Return only the text, "

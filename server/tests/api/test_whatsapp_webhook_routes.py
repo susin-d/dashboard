@@ -43,7 +43,10 @@ class TestWhatsAppWebhook:
 
         res_chats = client.get("/api/v1/whatsapp/chats", headers=_auth_headers())
         assert res_chats.status_code == 200, res_chats.text[:200]
-        ids = [c["id"] for c in res_chats.json()]
+        # Contract is the paginated WhatsAppChatListResponse (ADR 0042), not a bare list.
+        body = res_chats.json()
+        assert isinstance(body, dict) and "items" in body, body
+        ids = [c["id"] for c in body["items"]]
         assert "15551234567@s.whatsapp.net" in ids
 
     def test_missing_ids_ignored(self, client, db):
