@@ -145,6 +145,9 @@ class GeminiProviderClient(ProviderClient):
         conversation: Any,
         tools: list[dict[str, Any]],
     ) -> Iterator[StreamChunk]:
+        from google.genai.errors import APIError
+
+        types = _types()
         config = types.GenerateContentConfig(
             system_instruction=instructions,
             tools=[_convert_tool(tool) for tool in tools],
@@ -192,6 +195,7 @@ class GeminiProviderClient(ProviderClient):
         return [response.raw.candidates[0].content]
 
     def tool_result_blocks(self, call: ToolCall, output: str) -> list[Any]:
+        types = _types()
         try:
             payload = json.loads(output)
         except (json.JSONDecodeError, TypeError):
