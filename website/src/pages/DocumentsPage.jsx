@@ -1,5 +1,5 @@
 import "../styles/pages/documents.css"
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import {
   CalendarClock,
   ChevronDown,
@@ -22,20 +22,9 @@ import { deleteDocument, persistDocument } from '../lib/documentsApi'
 import { ConfirmDialog, EmptyState, FilterBar, SearchBar } from '../components/ui'
 import { DocumentEditorModal } from './documents/DocumentEditorModal'
 import { DriveImportModal } from './documents/DriveImportModal'
-
-const emptyDocument = {
-  name: '',
-  category: 'General',
-  description: '',
-  tags: '',
-  file: null,
-}
-
-function formatFileSize(bytes) {
-  if (bytes < 1024) return `${bytes} B`
-  if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
-}
+import { EMPTY_DOCUMENT } from './documents/documentConstants'
+import { useDocumentFilters } from './documents/useDocumentFilters'
+import { formatFileSize } from '../utils/fileSize'
 
 export function DocumentsPage({ documents, setDocuments, createIntent, onOpenDocument }) {
   const [openDocuments, setOpenDocuments] = useState(
@@ -43,7 +32,7 @@ export function DocumentsPage({ documents, setDocuments, createIntent, onOpenDoc
   )
   const [editorOpen, setEditorOpen] = useState(false)
   const [editingId, setEditingId] = useState(null)
-  const [form, setForm] = useState(emptyDocument)
+  const [form, setForm] = useState(EMPTY_DOCUMENT)
   const [driveOpen, setDriveOpen] = useState(false)
   const [driveFiles, setDriveFiles] = useState([])
   const [driveLoading, setDriveLoading] = useState(false)
@@ -54,16 +43,7 @@ export function DocumentsPage({ documents, setDocuments, createIntent, onOpenDoc
   const [deleteId, setDeleteId] = useState(null)
   const [query, setQuery] = useState('')
 
-  const visibleDocuments = useMemo(() => {
-    const search = query.trim().toLowerCase()
-    if (!search) return documents
-    return documents.filter((document) =>
-      document.name.toLowerCase().includes(search) ||
-      (document.description ?? '').toLowerCase().includes(search) ||
-      (document.category ?? '').toLowerCase().includes(search) ||
-      (document.tags ?? []).some((tag) => tag.toLowerCase().includes(search)),
-    )
-  }, [documents, query])
+  const { visibleDocuments, filteredDriveFiles } = useDocumentFilters({ documents, query, driveFiles, driveQuery })
 
   const handleDeleteDocument = async (documentId) => {
     setDeleteId(documentId)
@@ -81,20 +61,10 @@ export function DocumentsPage({ documents, setDocuments, createIntent, onOpenDoc
     }
   }
 
-  const filteredDriveFiles = useMemo(() => {
-    const query = driveQuery.trim().toLowerCase()
-    if (!query) return driveFiles
-    return driveFiles.filter(
-      (file) =>
-        file.name.toLowerCase().includes(query) ||
-        file.mimeType.toLowerCase().includes(query),
-    )
-  }, [driveFiles, driveQuery])
-
   useEffect(() => {
     if (createIntent?.type === 'document') {
       setEditingId(null)
-      setForm(emptyDocument)
+      setForm(EMPTY_DOCUMENT)
       setDocumentSaveError('')
       setEditorOpen(true)
     }
@@ -111,7 +81,7 @@ export function DocumentsPage({ documents, setDocuments, createIntent, onOpenDoc
 
   const openUpload = () => {
     setEditingId(null)
-    setForm(emptyDocument)
+    setForm(EMPTY_DOCUMENT)
     setDocumentSaveError('')
     setEditorOpen(true)
   }
