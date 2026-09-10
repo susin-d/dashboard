@@ -59,6 +59,7 @@
 | [0044](0044-canonical-backend-errors.md) | Canonical backend errors via core/errors | Accepted | 2026-09-10 |
 | [0045](0045-canonical-configuration.md) | Canonical configuration: Settings singleton + one API_URL + storage keys | Accepted | 2026-09-10 |
 | [0046](0046-transport-and-ai-route-ownership.md) | Transport canonicals: apiRequest, shared WS base, updater roles, AI route ownership | Accepted | 2026-09-10 |
+| [0047](0047-avatar-studio-zoom-fix.md) | Avatar Studio unified zoom state & smooth wheel zoom (renumbered from 0034) | Accepted | 2026-09-06 |
 
 ## How to add a new ADR
 

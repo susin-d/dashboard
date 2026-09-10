@@ -3,11 +3,23 @@
 from datetime import date
 from typing import Any
 
-from app.db import ArrayUnion, Query, SERVER_TIMESTAMP, SqlClient
+from app.db import Query, SqlClient
 
 # Re-export canonical pagination primitives from core
 from app.core.errors import bad_request
 from app.core.pagination import encode_cursor, decode_cursor, resolve_limit, DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE
+
+__all__ = [
+    "DEFAULT_PAGE_SIZE",
+    "MAX_PAGE_SIZE",
+    "bad_request",
+    "decode_cursor",
+    "encode_cursor",
+    "paginate_collection",
+    "resolve_limit",
+    "serialize_dates",
+    "user_collection",
+]
 
 
 def user_collection(database: SqlClient, user_id: str, collection_name: str):

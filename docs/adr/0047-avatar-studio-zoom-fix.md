@@ -1,4 +1,6 @@
-# ADR 0034 — Avatar Studio: unified zoom state & smooth wheel zoom
+# ADR 0047 — Avatar Studio: unified zoom state & smooth wheel zoom
+
+> Renumbered from `0034` on 2026-09-10 to resolve a filename collision with `0034-avatar-modeling-studio-projects.md` (content unchanged).
 
 ## Status
 

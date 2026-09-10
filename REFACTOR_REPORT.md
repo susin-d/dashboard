@@ -1,6 +1,12 @@
 # REFACTOR_REPORT — Single Source of Truth (2026-09-10)
 
-> Scope per user mandate: audit → canonicals → dedup → config → contracts/state → docs. Behavior **strictly preserved**; database **read-only** (no migrations). Commits: `b36f553` (Phase 1 audit) · `7e715fe` (ADRs 0043–0046 + errors) · `b088521` (backend + frontend canonicals) · this commit (docs).
+> Scope per user mandate: audit → canonicals → dedup → config → contracts/state → docs. Behavior **strictly preserved**; database **read-only** (no migrations). Commits: `b36f553` (Phase 1 audit) · `7e715fe` (ADRs 0043–0046 + errors) · `b088521` (backend + frontend canonicals) · `464a9d9` (docs) · follow-ups below.
+
+## Follow-up (2026-09-10, same mandates)
+- Debt #3 closed: second `0034` ADR renumbered → `0047-avatar-studio-zoom-fix.md` (+ README row; header notes the rename).
+- Debt #4 closed: spent one-offs `server/gen_memories.py` + `server/write_memories.py` deleted (history preserved in `f3310ac`).
+- Debt #2 closed: `models/__init__.py` (409) split into `user/workspace/calls/eve/settings/workspace_files/whatsapp/sessions/usage` + `_shared` + facade `__init__` (import path preserved; 18 tables verified identical; circular-import order unchanged from baseline — see note in commit).
+- Intentionally deferred: `services/whatsapp.py` (549) stays one class — single responsibility per external system, routes already split (`whatsapp/status/chats/messages/webhook`), and tests mock `WhatsAppService.*` paths; splitting would add seams without removing duplication (§17: one module suffices). Same for the 19 oversized frontend files (no duplication; splitting needs visual QA).
 
 ---
 
