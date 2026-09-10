@@ -1,11 +1,14 @@
 /** Eve voice hook — single responsibility: STT/TTS and Eve conversation. */
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { sendEveMessage, streamEveVoice } from '../../lib/eveApi'
-import { loadEveSpeech, transcribeEveAudio } from '../../lib/eveSpeechApi'
+import { loadEveSpeech } from '../../lib/eveSpeechApi'
 import { streamEveSpeech } from '../../lib/eveSpeechStream'
 import { isSpeechRecognitionSupported, loadEveVoicePrefs, selectVoice } from '../../utils/speech'
 import { ECHO_COOLDOWN_MS } from './callConstants'
-import { pickAudioMimeType, resolveSpeechProviders } from './callHelpers'
+import { resolveSpeechProviders } from './callHelpers'
+import { createChunkPlayer } from './eve-voice/audioPlayback'
+import { useBrowserStt } from './eve-voice/useBrowserStt'
+import { useServerSttRecording } from './eve-voice/useServerSttRecording'
 
 export function useEveVoice({ isEveCall, phase, muted, localStreamRef, phaseRef }) {
   const [userTranscript, setUserTranscript] = useState('')
@@ -39,11 +42,8 @@ export function useEveVoice({ isEveCall, phase, muted, localStreamRef, phaseRef 
     const prefs = loadEveVoicePrefs()
     const voice = speechPrefsRef.current.ttsVoice
     const provider = speechPrefsRef.current.ttsProvider
-    // Google has no true streaming — use server-side streaming envelope which
-    // falls back to single-chunk for google but streams progressively for Fish.
     const useStream = provider === 'openrouter' || provider === 'google'
     if (useStream) {
-      // Stop any previous stream
       if (eveAudioRef.current) {
         try {
           eveAudioRef.current.pause()
@@ -77,7 +77,6 @@ export function useEveVoice({ isEveCall, phase, muted, localStreamRef, phaseRef 
         })
       return
     }
-    // Fallback (should not reach here for server providers)
     isEveSpeakingRef.current = false
     setIsEveSpeaking(false)
   }, [])
@@ -143,8 +142,6 @@ export function useEveVoice({ isEveCall, phase, muted, localStreamRef, phaseRef 
     async (text) => {
       if (!text || !text.trim()) return
       const clean = text.trim()
-      // Newer speech supersedes an in-flight turn (barge-in semantics):
-      // abort the previous stream/playback instead of silently dropping.
       if (abortTurnRef.current) {
         abortTurnRef.current.abort()
         stopPlayback()
@@ -156,56 +153,10 @@ export function useEveVoice({ isEveCall, phase, muted, localStreamRef, phaseRef 
       setIsEveThinking(true)
       setEveTranscript('')
 
-      // Fast path: streaming voice endpoint — first audio <1s.
-      // Audio chunks play sequentially; browser-provider chunks speak locally.
       let sawAudio = false
       let streamFailed = false
       const audioQueueRef = playQueueRef.current
-      const playNextChunk = () => {
-        const next = audioQueueRef.shift()
-        if (!next) {
-          isEveSpeakingRef.current = false
-          lastSpeechEndRef.current = Date.now()
-          setIsEveSpeaking(false)
-          return
-        }
-        if (next.audio_base64) {
-          try {
-            const binary = atob(next.audio_base64)
-            const bytes = new Uint8Array(binary.length)
-            for (let i = 0; i < binary.length; ++i) bytes[i] = binary.charCodeAt(i)
-            const blob = new Blob([bytes], { type: next.mime || 'audio/mpeg' })
-            const url = URL.createObjectURL(blob)
-            const audio = new Audio(url)
-            eveAudioRef.current = audio
-            audio.onended = () => {
-              URL.revokeObjectURL(url)
-              playNextChunk()
-            }
-            audio.onerror = () => {
-              URL.revokeObjectURL(url)
-              playNextChunk()
-            }
-            audio.play().catch(() => playNextChunk())
-          } catch {
-            playNextChunk()
-          }
-        } else if (next.text && typeof window !== 'undefined' && 'speechSynthesis' in window) {
-          const prefs = loadEveVoicePrefs()
-          const voices = window.speechSynthesis.getVoices() || []
-          const voice = selectVoice(prefs, voices)
-          const utterance = new SpeechSynthesisUtterance(next.text)
-          if (voice) utterance.voice = voice
-          utterance.lang = prefs.language
-          utterance.rate = prefs.rate
-          utterance.pitch = prefs.pitch
-          utterance.onend = playNextChunk
-          utterance.onerror = playNextChunk
-          window.speechSynthesis.speak(utterance)
-        } else {
-          playNextChunk()
-        }
-      }
+      const playNextChunk = createChunkPlayer({ eveAudioRef, isEveSpeakingRef, lastSpeechEndRef, setIsEveSpeaking, queue: audioQueueRef })
 
       try {
         await streamEveVoice({
@@ -235,8 +186,6 @@ export function useEveVoice({ isEveCall, phase, muted, localStreamRef, phaseRef 
         streamFailed = true
       }
 
-      // Fallback to the blocking chat path when the fast path failed or
-      // produced no playable audio (e.g. server has no TTS configured).
       if (!controller.signal.aborted && (streamFailed || (!sawAudio && !isEveSpeakingRef.current))) {
         try {
           const response = await sendEveMessage([{ role: 'user', content: clean }])
@@ -253,8 +202,6 @@ export function useEveVoice({ isEveCall, phase, muted, localStreamRef, phaseRef 
     [speakEveResponse, stopPlayback],
   )
 
-  // Barge-in: stop Eve mid-sentence - aborts the in-flight stream, drains the
-  // queued audio, and cancels local SpeechSynthesis so the caller is heard.
   const interruptEve = useCallback(() => {
     if (abortTurnRef.current) {
       abortTurnRef.current.abort()
@@ -262,90 +209,25 @@ export function useEveVoice({ isEveCall, phase, muted, localStreamRef, phaseRef 
     }
     stopPlayback()
     isEveSpeakingRef.current = false
-    // Pre-age the echo timestamp so recognition resumes immediately.
     lastSpeechEndRef.current = Date.now() - ECHO_COOLDOWN_MS
     setIsEveSpeaking(false)
     setIsEveThinking(false)
   }, [stopPlayback])
 
-  const transcribeServerAudio = useCallback(
-    async (blob) => {
-      const prefs = loadEveVoicePrefs()
-      try {
-        const data = await transcribeEveAudio(blob, prefs.language)
-        const text = (data?.text || '').trim()
-        if (text) await sendVoiceToEve(text)
-      } catch {
-        setEveTranscript('Sorry, I had trouble understanding that audio.')
-      } finally {
-        setSttStatus('idle')
-      }
-    },
-    [sendVoiceToEve],
-  )
-
-  const startSttRecording = useCallback(() => {
-    if (speechPrefsRef.current.sttProvider !== 'groq') return
-    // Hold-to-talk doubles as barge-in: pressing while Eve speaks cuts her off.
-    if (isEveSpeakingRef.current || isEveThinkingRef.current) interruptEve()
-    if (mediaRecorderRef.current) return
-    const stream = localStreamRef.current
-    if (!stream || typeof window === 'undefined' || !window.MediaRecorder) {
-      setSttStatus('error')
-      return
-    }
-    const mimeType = pickAudioMimeType()
-    if (!mimeType) {
-      setSttStatus('error')
-      return
-    }
-    try {
-      const audioTracks = stream.getAudioTracks()
-      if (audioTracks.length === 0) {
-        setSttStatus('error')
-        return
-      }
-      const audioStream = new MediaStream(audioTracks)
-      const recorder = new MediaRecorder(audioStream, { mimeType })
-      mediaChunksRef.current = []
-      recorder.ondataavailable = (event) => {
-        if (event.data && event.data.size > 0) mediaChunksRef.current.push(event.data)
-      }
-      recorder.onstop = () => {
-        setSttRecording(false)
-        audioStream.getTracks().forEach((track) => track.stop())
-        const blob = new Blob(mediaChunksRef.current, { type: mimeType })
-        mediaChunksRef.current = []
-        if (blob.size > 0) {
-          setSttStatus('listening')
-          transcribeServerAudio(blob)
-        } else {
-          setSttStatus('idle')
-        }
-      }
-      recorder.onerror = () => {
-        setSttRecording(false)
-        setSttStatus('error')
-      }
-      recorder.start()
-      mediaRecorderRef.current = recorder
-      audioStreamRef.current = audioStream
-      setSttRecording(true)
-      setSttStatus('listening')
-    } catch {
-      setSttStatus('error')
-    }
-  }, [transcribeServerAudio, localStreamRef, interruptEve])
-
-  const stopSttRecording = useCallback(() => {
-    const recorder = mediaRecorderRef.current
-    if (recorder && recorder.state !== 'inactive') {
-      try {
-        recorder.stop()
-      } catch {}
-    }
-    mediaRecorderRef.current = null
-  }, [])
+  const { startSttRecording, stopSttRecording } = useServerSttRecording({
+    localStreamRef,
+    speechPrefsRef,
+    mediaRecorderRef,
+    mediaChunksRef,
+    audioStreamRef,
+    isEveSpeakingRef,
+    isEveThinkingRef,
+    interruptEve,
+    sendVoiceToEve,
+    setEveTranscript,
+    setSttRecording,
+    setSttStatus,
+  })
 
   useEffect(() => {
     if (!isEveCall || phase !== 'active') return undefined
@@ -360,96 +242,22 @@ export function useEveVoice({ isEveCall, phase, muted, localStreamRef, phaseRef 
     }
   }, [isEveCall, phase])
 
-  useEffect(() => {
-    if (!isEveCall || phase !== 'active' || muted) {
-      if (recognitionRef.current) {
-        try {
-          recognitionRef.current.stop()
-        } catch {}
-        recognitionRef.current = null
-      }
-      setSttStatus(speechPrefs.sttProvider === 'groq' || sttSupported ? 'idle' : 'unsupported')
-      return
-    }
-
-    const SpeechRecognition = typeof window !== 'undefined' ? window.SpeechRecognition || window.webkitSpeechRecognition : null
-    if (speechPrefs.sttProvider === 'groq') {
-      setSttStatus('idle')
-      return
-    }
-    if (!SpeechRecognition) {
-      setSttStatus('unsupported')
-      return
-    }
-
-    let rec = recognitionRef.current
-    if (!rec) {
-      const prefs = loadEveVoicePrefs()
-      rec = new SpeechRecognition()
-      rec.continuous = true
-      rec.interimResults = true
-      rec.lang = prefs.language
-
-      rec.onresult = (event) => {
-        if (isEveSpeakingRef.current || isEveThinkingRef.current || Date.now() - lastSpeechEndRef.current < ECHO_COOLDOWN_MS) {
-          return
-        }
-        let finalResult = ''
-        let interimResult = ''
-        for (let i = event.resultIndex; i < event.results.length; ++i) {
-          if (event.results[i].isFinal) {
-            finalResult += event.results[i][0].transcript
-          } else {
-            interimResult += event.results[i][0].transcript
-          }
-        }
-        if (interimResult) setUserTranscript(interimResult)
-        if (finalResult) {
-          setUserTranscript(finalResult)
-          sendVoiceToEve(finalResult)
-        }
-      }
-
-      rec.onstart = () => {
-        permissionBlockedRef.current = false
-        setSttStatus('listening')
-      }
-
-      rec.onerror = (event) => {
-        const reason = event?.error
-        if (reason === 'not-allowed' || reason === 'service-not-allowed') {
-          permissionBlockedRef.current = true
-          setSttStatus('permission')
-        } else if (reason === 'aborted' || reason === 'no-speech') {
-          // transient
-        } else {
-          setSttStatus('error')
-        }
-      }
-
-      rec.onend = () => {
-        if (phaseRef.current === 'active' && recognitionRef.current && !permissionBlockedRef.current) {
-          try {
-            rec.start()
-          } catch {}
-        }
-      }
-
-      recognitionRef.current = rec
-      try {
-        rec.start()
-      } catch {}
-    }
-
-    return () => {
-      if (recognitionRef.current) {
-        try {
-          recognitionRef.current.stop()
-        } catch {}
-        recognitionRef.current = null
-      }
-    }
-  }, [isEveCall, muted, phase, sendVoiceToEve, sttSupported, speechPrefs.sttProvider, phaseRef])
+  useBrowserStt({
+    isEveCall,
+    phase,
+    muted,
+    sttSupported,
+    sttProvider: speechPrefs.sttProvider,
+    phaseRef,
+    recognitionRef,
+    permissionBlockedRef,
+    isEveSpeakingRef,
+    isEveThinkingRef,
+    lastSpeechEndRef,
+    setUserTranscript,
+    setSttStatus,
+    sendVoiceToEve,
+  })
 
   const toggleTts = useCallback(() => {
     setTtsEnabled((current) => {

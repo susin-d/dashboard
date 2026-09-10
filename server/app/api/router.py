@@ -26,6 +26,7 @@ from app.api.routes import (
     health,
     notifications,
     profiles,
+    prompts,
     studio,
     todos,
     ui_preferences,
@@ -50,6 +51,7 @@ api_router.include_router(email.router, tags=["email"])
 api_router.include_router(health.router, tags=["health"])
 api_router.include_router(notifications.router, tags=["notifications"])
 api_router.include_router(profiles.router, tags=["profiles"])
+api_router.include_router(prompts.router, tags=["prompt catalog"])
 api_router.include_router(documents.router, tags=["documents"])
 api_router.include_router(eve.router, tags=["Eve AI assistant"])
 api_router.include_router(eve_stream.router, tags=["Eve AI assistant"])

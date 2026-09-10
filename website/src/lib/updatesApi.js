@@ -6,7 +6,7 @@ export async function fetchUpdateCheck(platform, currentVersion, arch) {
   const params = new URLSearchParams({ platform, currentVersion })
   if (arch) params.set('arch', arch)
   const url = `${API_URL}${UPDATES_PREFIX}/check?${params.toString()}`
-  // public, no auth; use native fetch to avoid token requirement
+  // ADR 0046 exception: public no-auth updater endpoint, no token/dedup needed — raw fetch intentional.
   const res = await fetch(url, { mode: 'cors', credentials: 'omit' })
   if (!res.ok) {
     const err = await res.json().catch(() => ({}))
@@ -16,18 +16,21 @@ export async function fetchUpdateCheck(platform, currentVersion, arch) {
 }
 
 export async function fetchTauriLatest() {
+  // ADR 0046 exception: public Tauri updater JSON, no auth — raw fetch intentional.
   const r = await fetch(`${API_URL}${UPDATES_PREFIX}/latest.json`, { mode: 'cors' })
   if (!r.ok) throw new Error('No desktop release')
   return r.json()
 }
 
 export async function fetchAndroidLatest() {
+  // ADR 0046 exception: public Android updater JSON, no auth — raw fetch intentional.
   const r = await fetch(`${API_URL}${UPDATES_PREFIX}/android.json`, { mode: 'cors' })
   if (!r.ok) throw new Error('No Android release')
   return r.json()
 }
 
 export async function fetchOtaLatest() {
+  // ADR 0046 exception: public OTA manifest, 404 means no release — raw fetch intentional.
   const r = await fetch(`${API_URL}${UPDATES_PREFIX}/ota/latest.json`, { mode: 'cors' })
   if (r.status === 404) return null
   if (!r.ok) throw new Error('OTA check failed')
