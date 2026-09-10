@@ -10,3 +10,5 @@ firebase-secrets-*.json
 .ruff_cache/
 *.db
 workspaces/
+logs/
+*.log

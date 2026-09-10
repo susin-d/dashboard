@@ -27,7 +27,7 @@ COPY requirements.txt ./
 # API 500s on every workspace/studio file operation (Errno 13).
 RUN addgroup --gid 10001 appgroup && \
     adduser --uid 10001 --ingroup appgroup --disabled-password --gecos "" appuser && \
-    mkdir -p /app/workspaces && \
+    mkdir -p /app/workspaces /app/logs && \
     chown -R appuser:appgroup /app
 
 USER appuser

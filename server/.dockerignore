@@ -19,4 +19,6 @@ serviceAccountKey.json
 .env.*
 *.db
 workspaces/
+logs/
+*.log
 starwaves.db
