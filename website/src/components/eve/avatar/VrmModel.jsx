@@ -1,43 +1,10 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
-import {
-  Clock,
-  Color,
-  DirectionalLight,
-  Group,
-  HemisphereLight,
-  MathUtils,
-  Mesh,
-  MeshStandardMaterial,
-  NoToneMapping,
-  PerspectiveCamera,
-  Scene,
-  SphereGeometry,
-  SRGBColorSpace,
-  WebGLRenderer,
-} from 'three'
+import { Clock, MathUtils } from 'three'
 import { AVATAR_DEFAULTS, clampUserPan, clampZoom } from './avatarConstants'
-
-// GLTF + VRM loader modules are only needed when a model URL actually loads —
-// fetched on demand so the placeholder scene never pays for them. Cached at
-// module scope across mounts.
-let vrmLoaderModules = null
-
-async function ensureVrmLoader() {
-  if (!vrmLoaderModules) {
-    const [{ GLTFLoader }, { VRMLoaderPlugin, VRMUtils }] = await Promise.all([
-      import('three/addons/loaders/GLTFLoader.js'),
-      import('@pixiv/three-vrm'),
-    ])
-    vrmLoaderModules = { GLTFLoader, VRMLoaderPlugin, VRMUtils }
-  }
-  return vrmLoaderModules
-}
-
-// VRM faces +Z by spec; the camera sits on +Z so no yaw offset is needed.
-const BASE_CAMERA_DISTANCE = 1.1
-const AUTO_ROTATE_SPEED = 0.35
-// Emotion expression keys cross-faded each frame (module scope: no per-frame alloc).
-const EMOTION_EXPRESSION_KEYS = ['happy', 'angry', 'relaxed']
+import { AUTO_ROTATE_SPEED, EMOTION_EXPRESSION_KEYS, ensureVrmLoader } from './vrmLoaders'
+import { useVrmFraming } from './vrmFraming'
+import { createVrmStage } from './vrmStage'
+import { VrmFallback } from './VrmFallback'
 
 export function VrmModel({
   url,
@@ -75,7 +42,6 @@ export function VrmModel({
   const zoomRef = useRef(clampZoom(zoom))
   const sizeRef = useRef({ w: 320, h: 240 })
   const dragRef = useRef(null)
-  const transformRafRef = useRef(0)
   const [isPanning, setIsPanning] = useState(false)
   const [status, setStatus] = useState('loading')
   const [loadError, setLoadError] = useState('')
@@ -106,82 +72,24 @@ export function VrmModel({
     onReady?.()
   }, [onError, onReady])
 
-  // Apply the current user pan + zoom to the camera. Pan moves the camera in
-  // world XY; zoom scales its distance from the model so the apparent size
-  // changes without distorting perspective.
-  const applyFraming = useCallback(() => {
-    const camera = cameraRef.current
-    if (!camera) return
-    const safeZoom = clampZoom(zoomRef.current)
-    const safePan = clampUserPan(userPanRef.current)
-    camera.position.x = safePan.x * 0.1
-    camera.position.y = 1.35 + safePan.y * 0.1
-    camera.position.z = BASE_CAMERA_DISTANCE / Math.max(0.1, safeZoom)
-    camera.lookAt(0, 1.35, 0)
-  }, [])
-
-  const scheduleTransformEmit = useCallback(() => {
-    if (transformRafRef.current) return
-    transformRafRef.current = window.requestAnimationFrame(() => {
-      transformRafRef.current = 0
-      onTransformChange?.(
-        clampUserPan(userPanRef.current),
-        clampZoom(zoomRef.current),
-      )
-    })
-  }, [onTransformChange])
+  const { applyFraming, scheduleTransformEmit } = useVrmFraming({ cameraRef, userPanRef, zoomRef, onTransformChange })
 
   useEffect(() => {
     if (!mountRef.current) return undefined
     const mount = mountRef.current
-    // Ensure mount has size even before layout (Avatar Studio preview 360px)
-    const rect = mount.getBoundingClientRect()
-    const width = Math.max(320, rect.width || mount.clientWidth || 320)
-    const height = Math.max(240, rect.height || mount.clientHeight || 280)
-
-    const scene = new Scene()
-    scene.background = new Color(0x000000)
-    scene.background = null
-    sceneRef.current = scene
-
-    const camera = new PerspectiveCamera(30, width / height, 0.1, 20)
-    camera.position.set(0, 1.35, BASE_CAMERA_DISTANCE)
-    cameraRef.current = camera
-
+    let scene
+    let camera
     let renderer
     try {
-      // low-power + DPR 1.0 saves memory on low-end PCs
-      renderer = new WebGLRenderer({ antialias: false, alpha: true, preserveDrawingBuffer: false, powerPreference: 'low-power' })
+      ;({ scene, camera, renderer } = createVrmStage(mount))
     } catch {
       setStatus('fallback')
       readyRef.current()
       return undefined
     }
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.0))
-    renderer.setSize(width, height)
-    renderer.outputColorSpace = SRGBColorSpace
-    renderer.toneMapping = NoToneMapping
+    sceneRef.current = scene
+    cameraRef.current = camera
     rendererRef.current = renderer
-    mount.appendChild(renderer.domElement)
-    // Ensure canvas fills mount
-    renderer.domElement.style.width = '100%'
-    renderer.domElement.style.height = '100%'
-    renderer.domElement.style.display = 'block'
-
-    const ambient = new HemisphereLight(0xffffff, 0x222222, 1.2)
-    const dir = new DirectionalLight(0xffffff, 1.0)
-    dir.position.set(1, 2, 2)
-    scene.add(ambient, dir)
-
-    // fallback procedural torso/head when no url
-    const placeholder = new Group()
-    const headGeo = new SphereGeometry(0.28, 24, 18)
-    const headMat = new MeshStandardMaterial({ color: 0xf5f5f5, roughness: 0.7 })
-    const head = new Mesh(headGeo, headMat)
-    head.position.set(0, 1.45, 0)
-    head.name = 'fallback-head'
-    placeholder.add(head)
-    scene.add(placeholder)
 
     const clock = new Clock()
     let visible = true
@@ -503,30 +411,7 @@ export function VrmModel({
       <div ref={mountRef} className={`eve-vrm-mount ${isPanning ? 'is-panning' : ''}`} />
       {/* CSS procedural fallback — always visible until VRM ready, ensures the grey bar never appears empty */}
       {showCssFallback && (
-        <div
-          className={`eve-vrm-fallback is-${emotion} ${isBlinking ? 'is-blinking' : ''}`}
-          style={{
-            '--mouth': String(Math.max(0, Math.min(1, mouthOpen))),
-            '--look-x': String(lookAt.x),
-            '--look-y': String(lookAt.y),
-          }}
-        >
-          <div className="eve-vrm-head">
-            <div className="eve-vrm-face">
-              <div className="eve-vrm-eyes">
-                <span className="eve-vrm-eye left" />
-                <span className="eve-vrm-eye right" />
-              </div>
-              <div className="eve-vrm-mouth" />
-              <div className="eve-vrm-blush" />
-            </div>
-            <div className="eve-vrm-hair" />
-          </div>
-          <div className="eve-vrm-body">
-            <div className="eve-vrm-torso" />
-          </div>
-          <span className="eve-vrm-url" aria-hidden="true">{status === 'loading' ? 'Loading 3D — anime VRM 10MB…' : (loadError ? 'Fallback — CSS avatar' : 'Anime VRM ready')}</span>
-        </div>
+        <VrmFallback emotion={emotion} isBlinking={isBlinking} mouthOpen={mouthOpen} lookAt={lookAt} status={status} loadError={loadError} />
       )}
       {status === 'loading' && <span className="eve-vrm-badge">Loading 3D…</span>}
       {status === 'fallback' && loadError && (
