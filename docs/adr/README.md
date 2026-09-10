@@ -53,6 +53,8 @@
 | [0038](0038-studio-preview-embedding-policy.md) | Scoped cross-origin embedding policy for signed Studio previews | Accepted | 2026-09-07 |
 | [0039](0039-avatar-studio-editor-state-and-capabilities.md) | Avatar Studio schema v2, normalized formats, animation state, and capability-aware tools | Accepted | 2026-09-07 |
 | [0040](0040-avatar-studio-eve-editor-actions.md) | Validated Eve-to-Avatar-Studio action protocol with frontend confirmation | Accepted | 2026-09-07 |
+| [0041](0041-ai-latency-reduction.md) | AI latency reduction & pre-LLM pipeline optimization (async auto-memory, RAG cache, SSE asyncio queue) | Accepted | 2026-09-09 |
+| [0042](0042-whatsapp-chats-pagination-and-background-sync.md) | WhatsApp chats endpoint cursor-based pagination and non-blocking background sync | Accepted | 2026-09-10 |
 
 ## How to add a new ADR
 
