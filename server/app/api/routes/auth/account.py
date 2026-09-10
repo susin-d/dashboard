@@ -1,11 +1,12 @@
 """User account management: profile retrieval/update and account deletion."""
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends
 from app.db import SqlClient, get_firestore
 from pydantic import BaseModel
 
 from app.core.auth import get_current_user
 from app.core.cache import CACHE_TTL_LONG, cache_invalidate_prefix, cached
+from app.core.errors import bad_request, not_found
 from app.repositories.account_deletion import delete_user_account
 from app.repositories.users import get_user_by_id, update_user_profile as update_profile_in_db
 
@@ -29,10 +30,7 @@ def delete_account(
 ):
     deleted = delete_user_account(database, user["uid"])
     if not deleted:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="User account not found.",
-        )
+        raise not_found("User account not found.")
     return {"message": "Your StarWaves account and all associated data have been deleted."}
 
 
@@ -79,7 +77,5 @@ def update_user_profile(
             "displayName": user_record["display_name"],
         }
     except Exception as exc:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(exc),
+        raise bad_request(str(exc),
         ) from None

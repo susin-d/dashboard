@@ -1,7 +1,8 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends
 from app.db import ArrayUnion, SERVER_TIMESTAMP, SqlClient, get_firestore
 
 from app.core.auth import get_current_user
+from app.core.errors import not_found, unprocessable
 from app.core.cache import CACHE_TTL_LONG, cache_invalidate_prefix, cached
 from app.core.config import settings
 from app.schemas.ai_models import AiModelsResponse, AiModelPreferenceUpdate
@@ -94,7 +95,7 @@ async def list_provider_models(
         # Fall back to the server env-configured key for this provider
         effective_key = effective_api_key(provider, user_keys)
     if provider not in AI_PROVIDERS:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Unknown provider")
+        raise not_found("Unknown provider")
     if not effective_key:
         # No key available — return static fallback list
         static = AI_PROVIDERS[provider]["models"]
@@ -114,10 +115,7 @@ async def save_ai_models(
     user: dict = Depends(get_current_user),
 ):
     if not validate_preference(payload.provider, payload.model):
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail="Unknown AI provider or model.",
-        )
+        raise unprocessable("Unknown AI provider or model.")
 
     current_pref = load_ai_preference(database, user["uid"])
     user_keys = _extract_user_keys(current_pref)
@@ -133,10 +131,7 @@ async def save_ai_models(
 
     # If provider is not default/env-configured, require user API key
     if not key_optional and not has_env and not api_key_to_save and not user_keys.get(payload.provider):
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail=f"API key is required for {provider_label}.",
-        )
+        raise unprocessable(f"API key is required for {provider_label}.")
 
     if api_key_to_save and not is_default:
         user_keys[payload.provider] = api_key_to_save
