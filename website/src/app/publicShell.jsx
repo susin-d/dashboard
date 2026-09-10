@@ -13,16 +13,6 @@ export const EveGlobalCompanionHost = lazy(() => import('../components/eve/avata
 export const AvatarOverlayManager = lazy(() => import('../components/eve/avatar/AvatarOverlayManager').then((m) => ({ default: m.AvatarOverlayManager })))
 export const AvatarOverlayPage = lazy(() => import('../pages/AvatarOverlayPage').then((m) => ({ default: m.AvatarOverlayPage })))
 
-export const routeTitles = {
-  '/': 'StarWaves — Developer productivity workspace',
-  '/login': 'Log in — StarWaves',
-  '/signup': 'Create account — StarWaves',
-  '/forgot-password': 'Forgot password — StarWaves',
-  '/onboarding': 'Set up your workspace — StarWaves',
-  '/privacy': 'Privacy policy — StarWaves',
-  '/terms': 'Terms of service — StarWaves',
-}
-
 export function publicRoute(content) {
   return (
     <>

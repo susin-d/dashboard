@@ -3,7 +3,7 @@ import { confirmEmailVerification } from '../lib/emailApi'
 import { verifyAccountCombine } from '../lib/authApi'
 import { CUSTOM_THEME_KEY, THEME_MODE_KEY } from '../lib/storageKeys'
 import { applyThemeVariables } from '../themes/themeApplicator'
-import { routeTitles } from './publicShell'
+import { routeTitles } from './appUtils'
 
 export function useAppTitle({ activePage, route, previousRouteRef }) {
   useEffect(() => {

@@ -1,3 +1,13 @@
+export const routeTitles = {
+  '/': 'StarWaves — Developer productivity workspace',
+  '/login': 'Log in — StarWaves',
+  '/signup': 'Create account — StarWaves',
+  '/forgot-password': 'Forgot password — StarWaves',
+  '/onboarding': 'Set up your workspace — StarWaves',
+  '/privacy': 'Privacy policy — StarWaves',
+  '/terms': 'Terms of service — StarWaves',
+}
+
 export function detectNativeApp() {
   try {
     if (typeof window !== 'undefined') {
