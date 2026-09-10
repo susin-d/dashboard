@@ -166,6 +166,21 @@ def load_ai_preference(database: SqlClient, user_uid: str) -> dict[str, Any] | N
     return snapshot.to_dict() or None
 
 
+def extract_user_keys(preference: dict[str, Any] | None) -> dict[str, str]:
+    """Single implementation of stored user API keys incl. legacy `api_key` (ADR 0046)."""
+    if not preference:
+        return {}
+    keys: dict[str, str] = {}
+    saved_keys = preference.get("api_keys")
+    if isinstance(saved_keys, dict):
+        keys.update({k: str(v) for k, v in saved_keys.items() if v})
+    legacy_key = preference.get("api_key")
+    saved_provider = preference.get("provider")
+    if legacy_key and saved_provider and saved_provider not in keys:
+        keys[saved_provider] = str(legacy_key)
+    return keys
+
+
 def _cache_get(user_uid: str) -> AiConfig | None:
     entry = _ai_config_cache.get(user_uid)
     if entry and entry[0] > time.monotonic():
@@ -204,10 +219,7 @@ def resolve_ai_config(
 
     if has_override:
         chosen_provider = provider_override or (preference or {}).get("provider") or "default"
-        api_keys = (preference or {}).get("api_keys") or {}
-        user_api_key = api_keys.get(chosen_provider) if isinstance(api_keys, dict) else None
-        if not user_api_key and preference and preference.get("provider") == chosen_provider:
-            user_api_key = preference.get("api_key")
+        user_api_key = extract_user_keys(preference).get(chosen_provider)
         return build_ai_config(chosen_provider, model_override, user_api_key=user_api_key)
 
     if not preference:

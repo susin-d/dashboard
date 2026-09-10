@@ -11,6 +11,7 @@ from app.services.ai_models import (
     AI_PROVIDERS,
     DEFAULT_PROVIDER,
     effective_api_key,
+    extract_user_keys,
     fetch_provider_models,
     has_server_key,
     invalidate_ai_config_cache,
@@ -38,17 +39,8 @@ def _reference(database: SqlClient, user_id: str):
 
 
 def _extract_user_keys(preference: dict | None) -> dict[str, str]:
-    if not preference:
-        return {}
-    keys: dict[str, str] = {}
-    saved_keys = preference.get("api_keys")
-    if isinstance(saved_keys, dict):
-        keys.update({k: str(v) for k, v in saved_keys.items() if v})
-    legacy_key = preference.get("api_key")
-    saved_provider = preference.get("provider")
-    if legacy_key and saved_provider and saved_provider not in keys:
-        keys[saved_provider] = str(legacy_key)
-    return keys
+    # Canonical implementation lives in services/ai_models/config (ADR 0046).
+    return extract_user_keys(preference)
 
 
 def _preference_payload(preference: dict | None, user_keys: dict[str, str]) -> dict | None:
