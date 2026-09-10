@@ -13,6 +13,14 @@ from app.repositories.calls import CallRepository
 from app.repositories.users import get_user_by_id
 from app.schemas.call import CallResponse, CallUser, EveTwilioCallRequest, TwilioCallCreate
 from app.services.notifications import send_call_notification
+from app.services.prompts import (
+    DEFAULT_CALL_GREETING,
+    DEFAULT_CALL_GREETING_SHORT,
+    EVE_ECHO_FALLBACK,
+    EVE_FALLBACK_NO_PROCESS,
+    EVE_GOODBYE,
+    EVE_GOODBYE_NO_SPEECH,
+)
 from app.services.twilio.client import TwilioError, initiate_twilio_call, is_twilio_configured, map_twilio_status
 from app.services.twilio.twiml import build_eve_twiml, build_human_twiml, build_relay_twiml
 
@@ -86,7 +94,7 @@ async def trigger_eve_twilio_call(payload: EveTwilioCallRequest, database: SqlCl
     eve = CallUser(uid="eve-bot", name="Eve AI Assistant", email="eve@starwaves.app")
     call = repo.create(caller=eve, callee=callee, mode=payload.mode, provider="twilio", phone_number=payload.phone_number)
     # prompt stored as Say text
-    prompt = payload.prompt or "Hello, this is Eve from StarWaves. How can I help you today?"
+    prompt = payload.prompt or DEFAULT_CALL_GREETING
     # Update call with say payload so twiml can render it
     try:
         repo.append_message(call["id"], {"id": "eve-prompt", "from_uid": "eve-bot", "type": "say", "payload": prompt[:500], "created_at": call["created_at"]})
@@ -146,7 +154,7 @@ async def twilio_twiml(call_id: str, database: SqlClient = Depends(get_firestore
             say_text = m.get("payload")
             break
     if is_eve:
-        twiml = build_eve_twiml(say_text or "Hello, this is Eve from StarWaves.", gather=True)
+        twiml = build_eve_twiml(say_text or DEFAULT_CALL_GREETING_SHORT, gather=True)
     else:
         twiml = build_human_twiml(say_text, None)
     return PlainTextResponse(twiml, media_type="application/xml")
@@ -199,7 +207,7 @@ async def twilio_gather(request: Request, database: SqlClient = Depends(get_fire
         return PlainTextResponse(twiml, media_type="application/xml")
     # fallback echo
     from app.services.twilio.twiml import build_echo_twiml
-    twiml = build_echo_twiml(speech or "I didn't catch that")
+    twiml = build_echo_twiml(speech or EVE_ECHO_FALLBACK)
     return PlainTextResponse(twiml, media_type="application/xml")
 
 
@@ -262,7 +270,7 @@ async def twilio_gather_fast(request: Request, database: SqlClient = Depends(get
     call_sid = form.get("CallSid") or ""
     if not speech:
         return PlainTextResponse(
-            '<?xml version="1.0"?><Response><Say>I didn\'t catch that. Goodbye.</Say><Hangup/></Response>',
+            f'<?xml version="1.0"?><Response><Say>{EVE_GOODBYE_NO_SPEECH}</Say><Hangup/></Response>',
             media_type="application/xml",
         )
     uid = None
@@ -278,7 +286,7 @@ async def twilio_gather_fast(request: Request, database: SqlClient = Depends(get
     user_rec = {"uid": uid} if uid else None
     from app.services.eve.voice_fast import voice_reply_blocking
 
-    reply = await asyncio.to_thread(voice_reply_blocking, database, user_rec, speech) or "Sorry, I couldn't process that."
+    reply = await asyncio.to_thread(voice_reply_blocking, database, user_rec, speech) or EVE_FALLBACK_NO_PROCESS
     from html import escape
 
     safe_reply = escape(reply[:800])
@@ -286,7 +294,7 @@ async def twilio_gather_fast(request: Request, database: SqlClient = Depends(get
         '<?xml version="1.0" encoding="UTF-8"?>\n<Response>\n'
         f'    <Say voice="alice">{safe_reply}</Say>\n'
         '    <Gather input="speech" speechTimeout="auto" action="/api/v1/calls/twilio/gather-fast" method="POST"/>\n'
-        '    <Say voice="alice">Goodbye.</Say>\n'
+        f'    <Say voice="alice">{EVE_GOODBYE}</Say>\n'
         '    <Hangup/>\n'
         '</Response>'
     )

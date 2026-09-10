@@ -16,6 +16,7 @@ from app.db import SqlClient
 from app.repositories.eve import add_memory, list_memories
 from app.services.ai_models import PROVIDER_CLIENTS, resolve_ai_config
 from app.services.eve.memory_settings import resolve_auto_remember
+from app.services.prompts import build_extraction_instructions, memory_exchange_message
 
 logger = logging.getLogger(__name__)
 
@@ -24,14 +25,10 @@ MAX_MEMORY_CHARS = 500
 MAX_CONTEXT_CHARS = 2000
 _DEDUPE_RECENT = 100
 
-EXTRACTION_INSTRUCTIONS = (
-    "You extract long-term memories about the user from a conversation exchange. "
-    f"Return ONLY a JSON array of at most {MAX_EXTRACTED_MEMORIES} short strings. "
-    "Each string is one durable fact worth remembering across future conversations: "
-    "preferences, identity, ongoing projects, tech stack, commitments, corrections "
-    "about you (Eve). Exclude small talk, transient questions, and anything already "
-    "obvious from the reply itself. If nothing durable appears, return []."
-)
+
+def _extraction_instructions() -> str:
+    # Text owned by services/prompts.py; the count stays with memory logic (ADR 0049).
+    return build_extraction_instructions(MAX_EXTRACTED_MEMORIES)
 
 
 def _exchange_text(messages: list[dict[str, str]], reply: str) -> tuple[str, str]:
@@ -105,15 +102,12 @@ def extract_and_save_memories(
         conversation = [
             {
                 "role": "user",
-                "content": (
-                    f"User said:\n{user_text}\n\nEve replied:\n{reply_text}\n\n"
-                    "Extract durable memories now."
-                ),
+                "content": memory_exchange_message(user_text, reply_text),
             }
         ]
         response = client.call(
             model=config.model,
-            instructions=EXTRACTION_INSTRUCTIONS,
+            instructions=_extraction_instructions(),
             conversation=conversation,
             tools=[],
         )

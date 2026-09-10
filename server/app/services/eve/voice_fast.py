@@ -15,14 +15,9 @@ from app.core.config import settings
 from app.services.ai_models.catalog import DEFAULT_PROVIDER
 from app.services.ai_models.config import build_ai_config, has_server_key
 from app.services.ai_models.contracts import AiConfig
+from app.services.prompts import VOICE_INSTRUCTIONS
 
 logger = logging.getLogger(__name__)
-
-VOICE_INSTRUCTIONS = (
-    "You are Eve, a warm concise voice assistant for StarWaves. "
-    "Reply in 1-2 short sentences, max 25 words, friendly and helpful. "
-    "No preamble, no markdown, plain speech."
-)
 
 # Sentence boundary for chunked TTS
 _SENTENCE_RE = re.compile(r"[^.!?]+[.!?]+[\s]*")

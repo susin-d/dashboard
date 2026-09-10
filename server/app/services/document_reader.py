@@ -8,6 +8,7 @@ import logging
 
 from app.core.config import settings
 from app.services.ai_models.config import effective_api_key
+from app.services.prompts import EXTRACTION_PROMPT
 
 logger = logging.getLogger(__name__)
 
@@ -15,10 +16,6 @@ GEMINI_VISION_MODEL = "gemini-2.5-flash"
 OPENAI_VISION_MODEL = "gpt-4o-mini"
 OCR_MAX_BYTES = 15 * 1024 * 1024
 PDF_MAX_BYTES = 20 * 1024 * 1024
-EXTRACTION_PROMPT = (
-    "Extract all text content from this document. Return only the text, "
-    "preserving the reading order. If there is no text, say so."
-)
 
 
 class DocumentReadError(RuntimeError):

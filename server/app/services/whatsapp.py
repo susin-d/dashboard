@@ -13,6 +13,7 @@ from app.core.config import settings
 from app.core.http import create_async_client
 from app.core.whatsapp_ws_manager import whatsapp_ws_manager
 from app.repositories import whatsapp as whatsapp_repo
+from app.services.prompts import whatsapp_draft_prompt, whatsapp_summary_prompt
 from app.schemas.whatsapp import (
     WhatsAppChatListResponse,
     WhatsAppChatResponse,
@@ -506,11 +507,7 @@ class WhatsAppService:
         history_text = "\n".join(
             f"[{'Me' if m.is_from_me else (m.sender_name or 'Them')}]: {m.content}" for m in recent
         )
-        prompt = (
-            f"Here is the recent WhatsApp chat history:\n{history_text}\n\n"
-            f"Instruction: {instruction}\n\n"
-            f"Generate only the concise suggested reply message text to send. Do not include quotes or conversational preamble."
-        )
+        prompt = whatsapp_draft_prompt(history_text, instruction)
 
         try:
             draft, _, _ = chat_with_eve(
@@ -535,9 +532,7 @@ class WhatsAppService:
         history_text = "\n".join(
             f"[{'Me' if m.is_from_me else (m.sender_name or 'Them')}]: {m.content}" for m in recent
         )
-        prompt = (
-            f"Summarize the following WhatsApp conversation with key points and any action items:\n\n{history_text}"
-        )
+        prompt = whatsapp_summary_prompt(history_text)
         try:
             summary, _, _ = chat_with_eve(
                 database=database,
