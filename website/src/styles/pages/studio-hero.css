@@ -348,47 +348,6 @@
   50% { opacity: 0.6; }
 }
 
-/* Suggestions chips */
-.studio-suggestions {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: center;
-  gap: 0.45rem;
-  max-width: 860px;
-  margin-top: 0.45rem;
-}
-
-.studio-suggestions-label {
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: var(--text-muted);
-  margin-right: 0.25rem;
-}
-
-.studio-suggestion-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  padding: 0.42rem 0.7rem;
-  border-radius: var(--radius-sm);
-  border: 1px solid color-mix(in srgb, var(--module-studio) 16%, var(--border-color));
-  background: color-mix(in srgb, var(--bg-card) 74%, transparent);
-  color: var(--text-secondary);
-  font-size: 0.78rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all var(--transition-fast);
-}
-
-.studio-suggestion-chip:hover {
-  border-color: var(--color-primary, var(--border-heavy));
-  color: var(--text-primary);
-  background: var(--bg-hover-subtle);
-  transform: translateY(-1px);
-  box-shadow: var(--shadow-sm);
-}
-
 @media (max-width: 760px) {
   .studio-hero {
     min-height: calc(100vh - var(--header-height-mobile));

@@ -1,7 +1,7 @@
 # Starwaves Context
 
 Living snapshot for AI agents. `AGENTS.md` holds permanent rules; this file holds the **current state**. See `CHANGELOG.md` for history and `PROJECT_MAP.md` for the file index.
-Last updated: 2026-09-10 — Smart test cache (ADR 0048): skip-if-unchanged runners + Assert-Command/output-stream exit-code fixes; seven-day file logging (ADR 0050).
+Last updated: 2026-09-10 — Fastest pytest suite (ADR 0052) kept; menu-text UI + /prompts endpoint removed, prompts.py backend-only canonical (ADR 0049 amended).
 
 ## Contents
 1. [Overview](#1-overview) · 2. [Repository structure](#2-repository-structure) · 3. [Backend](#4-backend) · 4. [Frontend](#4-frontend) · 5. [Design system](#5-design-system) · 6. [Current snapshot](#6-current-snapshot) · 7. [Limitations](#7-limitations) · 8. [Verification](#8-verification)
@@ -91,10 +91,10 @@ For full maps see `PROJECT_MAP.md`. Keep this section brief; expand there.
 # Frontend (website/)
 npm run lint && npm run build && npm test
 # Backend (server/)
-python -m pytest tests -q
+python -m pytest tests -q  # xdist parallel, 30s timeout, per-worker SQLite
 # Smart cache — skips scopes whose content hash is unchanged (fail-closed)
 ./scripts/test-smart.ps1 -Scope all  # server|website|worker, -Force to override
 # Docker
 docker compose config && curl -i http://localhost/health
 ```
-Tests: pytest `asyncio_mode=auto`, harness `tests/support/` (SQLite, real tokens, scripted AI providers), `tests/{unit,api,services,e2e}` — mocks only external (AI/HTTP/Twilio/WhatsApp).
+Tests: pytest `asyncio_mode=auto` + `xdist loadfile` + `timeout 30`, harness `tests/support/` (per-worker SQLite, truncate rows, real tokens, scripted AI providers), `tests/{unit,api,services,e2e}` — Eve auto-memory disabled globally, WS ping 0.1s in tests.

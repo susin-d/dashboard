@@ -61,8 +61,10 @@
 | [0046](0046-transport-and-ai-route-ownership.md) | Transport canonicals: apiRequest, shared WS base, updater roles, AI route ownership | Accepted | 2026-09-10 |
 | [0047](0047-avatar-studio-zoom-fix.md) | Avatar Studio unified zoom state & smooth wheel zoom (renumbered from 0034) | Accepted | 2026-09-06 |
 | [0048](0048-smart-test-cache-skip-on-no-change.md) | Smart test cache: skip suites when content is unchanged | Accepted | 2026-09-10 |
-| [0049](0049-canonical-prompts-file.md) | One canonical prompts file; no prompts in frontend | Accepted | 2026-09-10 |
+| [0049](0049-canonical-prompts-file.md) | One canonical prompts file; no prompts in frontend (serving half superseded — menu UI deleted) | Accepted (amended) | 2026-09-10 |
 | [0050](0050-seven-day-file-logging.md) | Seven-day server file logging (rotated app + error logs + request middleware) | Accepted | 2026-09-10 |
+| [0051](0051-large-file-refactor-facades.md) | Large-file refactor via facaded packages (batch 1: 10 files, whatsapp exception, 10 phased + menu-text removal) | Accepted | 2026-09-10 |
+| [0052](0052-fastest-pytest-suite.md) | Fastest pytest suite (parallel, truncate, no-network) | Accepted | 2026-09-10 |
 
 ## How to add a new ADR
 

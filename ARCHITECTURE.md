@@ -63,6 +63,7 @@ CLIENT (UX validation only; backend authoritative)
 | API transport (FE) | `lib/request.js` (`apiRequest`, `fetchWithTimeout`, `API_URL`, `getWsBase`) | 0046; raw `fetch` only for OAuth popup, binary, SSE/MediaSource (inline justification) |
 | Storage keys (FE) | `lib/storageKeys.js` (verbatim values) + `usePersistentState` | 0045 |
 | AI user keys (BE) | `services/ai_models/config.extract_user_keys` (incl. legacy `api_key`) | 0046; `/settings/ai-models` = preference CRUD, `/models` = live discovery |
+| Prompts (BE only) | `services/prompts.py` (leaf module); frontend holds zero prompt content | 0049 (serving half superseded — menu UI deleted, nothing fetched); system/tool/extraction/voice prompts never leave the backend |
 | Design tokens | `styles/tokens.css` + `themes/dark.css` (ADR 0022) | `var(--…)` only; no bare hex |
 
 ## 6. Database

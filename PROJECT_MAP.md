@@ -289,6 +289,7 @@ repositories/* = sole data API (db/sql internal) · core/errors.py = errors
 core/pagination.py = pagination · core/config.py Settings + request.js API_URL = config
 request.js apiRequest/fetchWithTimeout/getWsBase = transport · lib/storageKeys.js = keys
 services/ai_models/config.extract_user_keys = AI keys · tokens.css vars = colors
+services/prompts.py = prompts (backend-only; zero prompt content in website/src)
 ```
 
 ## Agent Rules (`AGENTS.md` §1)

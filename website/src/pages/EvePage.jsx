@@ -3,7 +3,6 @@ import "../styles/pages/eve-messages.css"
 import "../styles/pages/eve-thoughts.css"
 import "../styles/pages/eve-composer.css"
 import "../styles/pages/eve-composer-box.css"
-import "../styles/pages/eve-skills.css"
 import "../styles/pages/eve-subpages.css"
 import "../styles/pages/eve-schedules.css"
 import "../styles/pages/eve-call-stage.css"
@@ -19,12 +18,7 @@ import { useEveLibrary } from './eve/useEveLibrary'
 import { useEveAvatar } from '../components/eve/avatar/EveAvatarProvider'
 import { useThemeCustomizer } from '../hooks/useThemeCustomizer'
 import { EveActiveView } from './eve/EveActiveView'
-import {
-  EVE_PRESET_PROMPTS,
-  EVE_TOOLS_LIST,
-  STARTER_MESSAGES,
-  TAB_PAGE_ID,
-} from './eve/eveConstants'
+import { useEveActiveTab, useEveCompanionBroadcast } from './eve/useEveViewSync'
 
 export function EvePage({
   activeSubpage = 'chat',
@@ -35,12 +29,7 @@ export function EvePage({
 }) {
   const [activeTab, setActiveTab] = useState(activeSubpage)
 
-  useEffect(() => {
-    if (activeSubpage) {
-      setActiveTab(activeSubpage)
-    }
-  }, [activeSubpage])
-  const [messages, setMessages] = useState(STARTER_MESSAGES)
+  const [messages, setMessages] = useState([])
   const [draft, setDraft] = useState('')
   const [isSending, setIsSending] = useState(false)
   const [streamText, setStreamText] = useState('')
@@ -71,7 +60,7 @@ export function EvePage({
   } = useEveLibrary({ notifyError: setError, onActiveSessionDeleted: () => startNewChat() })
 
   useEffect(() => {
-    setMessages(STARTER_MESSAGES)
+    setMessages([])
     setDraft('')
     setError('')
     setPromptQueue([])
@@ -318,7 +307,7 @@ export function EvePage({
   }
 
   const startNewChat = () => {
-    setMessages(STARTER_MESSAGES)
+    setMessages([])
     setDraft('')
     setError('')
     setPromptQueue([])
@@ -330,9 +319,9 @@ export function EvePage({
   const resumeSession = async (session) => {
     try {
       const sessionData = await getEveSession(session.id)
-      const loaded = sessionData?.session?.messages || STARTER_MESSAGES
+      const loaded = sessionData?.session?.messages || []
       const sanitized = Array.isArray(loaded) ? loaded.filter((m) => typeof m.content === 'string' && m.content.trim().length > 0) : loaded
-      setMessages(sanitized.length ? sanitized : STARTER_MESSAGES)
+      setMessages(sanitized.length ? sanitized : [])
       setActiveSessionId(session.id)
       setError('')
       setActiveTab('chat')
@@ -385,40 +374,8 @@ export function EvePage({
     }
   }
 
-  const isTypingTool = draft.startsWith('@') && !draft.includes(' ')
-  const toolQuery = isTypingTool ? draft.slice(1).toLowerCase() : ''
-  const matchingTools = isTypingTool
-    ? EVE_TOOLS_LIST.filter((tool) =>
-        `${tool.command} ${tool.label} ${tool.name}`.toLowerCase().includes(toolQuery),
-      )
-    : []
-
-  const isTypingPrompt = draft.startsWith('/') && !draft.includes(' ')
-  const promptQuery = isTypingPrompt ? draft.slice(1).toLowerCase() : ''
-  const matchingPrompts = isTypingPrompt
-    ? EVE_PRESET_PROMPTS.filter((item) =>
-        `${item.command} ${item.label}`.toLowerCase().includes(promptQuery),
-      )
-    : []
-
-  const selectTool = (tool) => {
-    setDraft(`@${tool.command} `)
-  }
-
-  const selectPrompt = (item) => {
-    setDraft(item.prompt)
-  }
-
-  // Broadcast Eve live state to global companion
-  useEffect(() => {
-    const detail = { isSending, isEveSpeaking: Boolean(streamText) && isSending, isEveThinking: Boolean(thinkingText) && isSending, thinkingText, activeTool, streamText, error }
-    window.dispatchEvent(new CustomEvent('starwaves:eve-state', { detail }))
-  }, [isSending, streamText, thinkingText, activeTool, error])
-
-  const switchTab = (tabId) => {
-    setActiveTab(tabId)
-    onNavigate?.(TAB_PAGE_ID[tabId])
-  }
+  useEveCompanionBroadcast({ isSending, streamText, thinkingText, activeTool, error })
+  const { switchTab } = useEveActiveTab({ activeSubpage, setActiveTab, onNavigate })
 
   return (
     <EveActiveView
@@ -444,11 +401,6 @@ export function EvePage({
       clearQueue={clearQueue}
       runQueue={runQueue}
       handleSubmit={handleSubmit}
-      matchingTools={matchingTools}
-      matchingPrompts={matchingPrompts}
-      selectTool={selectTool}
-      selectPrompt={selectPrompt}
-      EVE_PRESET_PROMPTS={EVE_PRESET_PROMPTS}
       aiProviders={aiProviders}
       activeModel={activeModel}
       onSelectAiModel={handleSelectAiModel}

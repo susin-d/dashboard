@@ -30,11 +30,6 @@ export function EveActiveView({
   clearQueue,
   runQueue,
   handleSubmit,
-  matchingTools,
-  matchingPrompts,
-  selectTool,
-  selectPrompt,
-  EVE_PRESET_PROMPTS,
   aiProviders,
   activeModel,
   onSelectAiModel,
@@ -99,11 +94,6 @@ export function EveActiveView({
             clearQueue={clearQueue}
             runQueue={runQueue}
             handleSubmit={handleSubmit}
-            matchingTools={matchingTools}
-            matchingPrompts={matchingPrompts}
-            selectTool={selectTool}
-            selectPrompt={selectPrompt}
-            EVE_PRESET_PROMPTS={EVE_PRESET_PROMPTS}
             aiProviders={aiProviders}
             activeModel={activeModel}
             onSelectAiModel={onSelectAiModel}

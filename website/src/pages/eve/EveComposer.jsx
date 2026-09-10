@@ -26,10 +26,6 @@ export function EveComposer({
   addToQueue,
   removeFromQueue,
   handleSubmit,
-  matchingTools,
-  matchingPrompts,
-  selectTool,
-  selectPrompt,
   aiProviders = [],
   activeModel,
   onSelectAiModel,
@@ -158,56 +154,6 @@ export function EveComposer({
         }}
       >
         <div className={`eve-composer-card ${isDragging ? 'dragging' : ''}`}>
-          {draft.startsWith('@') && matchingTools.length > 0 && (
-            <div className="eve-skills-popup" role="listbox" aria-label="Eve tools">
-              <div className="eve-skills-popup-title">
-                Workspace Tools &amp; Resources <span>Type @ to reference</span>
-              </div>
-              {matchingTools.map((tool) => (
-                <button
-                  type="button"
-                  key={tool.command}
-                  className="eve-skill-item"
-                  onClick={() => {
-                    selectTool(tool)
-                    composerRef.current?.focus()
-                  }}
-                >
-                  <span className="eve-skill-cmd">@{tool.command}</span>
-                  <div className="eve-skill-desc">
-                    <strong>{tool.label}</strong>
-                    <small>{tool.description}</small>
-                  </div>
-                </button>
-              ))}
-            </div>
-          )}
-
-          {draft.startsWith('/') && matchingPrompts.length > 0 && (
-            <div className="eve-skills-popup" role="listbox" aria-label="Eve pre-saved prompts">
-              <div className="eve-skills-popup-title">
-                Pre-saved Prompts <span>Type / to filter</span>
-              </div>
-              {matchingPrompts.map((item) => (
-                <button
-                  type="button"
-                  key={item.command}
-                  className="eve-skill-item"
-                  onClick={() => {
-                    selectPrompt(item)
-                    composerRef.current?.focus()
-                  }}
-                >
-                  <span className="eve-skill-cmd">/{item.command}</span>
-                  <div className="eve-skill-desc">
-                    <strong>{item.label}</strong>
-                    <small>{item.description}</small>
-                  </div>
-                </button>
-              ))}
-            </div>
-          )}
-
           {attachments.length > 0 && (
             <div className="eve-composer-attachments-row" aria-label="Attached files">
               {attachments.map((file) => (
@@ -243,18 +189,15 @@ export function EveComposer({
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
             onKeyDown={(e) => {
-              if (e.key === 'Escape' && (draft.startsWith('@') || draft.startsWith('/'))) {
-                e.preventDefault()
-                setDraft('')
-              } else if (e.key === 'Enter' && !e.shiftKey) {
+              if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault()
                 onFormSubmit(e)
               }
             }}
             placeholder={
               attachments.length > 0
-                ? 'Add a prompt about the attached files (or press Enter to send)…'
-                : '@ for files/agents; / for commands and skills; ! for shell; # for snippets'
+                ? 'Add a message about the attached files (or press Enter to send)…'
+                : 'Message Eve…'
             }
             rows={4}
             maxLength={MAX_CHARS}

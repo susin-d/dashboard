@@ -186,67 +186,26 @@
   color: var(--text-inverse);
 }
 
-/* Starter Prompts */
-.eve-starter-prompts {
+/* Empty feed */
+.eve-empty-feed {
   display: flex;
   flex-direction: column;
-  gap: 0.6rem;
+  align-items: center;
+  gap: 0.3rem;
   margin-top: 1rem;
-  padding-top: 1rem;
-  border-top: 1px dashed var(--border-color, #27272a);
+  padding: 1.5rem 1rem;
+  text-align: center;
 }
 
-.eve-starter-title {
-  font-size: 0.78rem;
+.eve-empty-title {
+  font-size: 0.85rem;
   font-weight: 600;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.eve-empty-hint {
+  font-size: 0.78rem;
   color: var(--text-muted, #71717a);
   margin: 0;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
 }
-
-.eve-starter-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: 0.6rem;
-}
-
-.eve-starter-chip {
-  display: flex;
-  flex-direction: column;
-  gap: 0.2rem;
-  padding: 0.75rem 0.9rem;
-  border-radius: var(--radius-md, 8px);
-  background: var(--bg-card, var(--bg-secondary));
-  border: 1px solid var(--border-color);
-  color: var(--text-primary);
-  text-align: left;
-  cursor: pointer;
-  transition: all 0.15s ease;
-  box-shadow: none !important;
-}
-
-.eve-starter-chip strong {
-  font-size: 0.82rem;
-  color: var(--text-primary);
-}
-
-.eve-starter-chip small {
-  font-size: 0.72rem;
-  color: var(--text-secondary);
-}
-
-.eve-starter-chip:hover {
-  border-color: var(--border-heavy, var(--border-color));
-  background: var(--bg-hover);
-  transform: translateY(-1px);
-}
-
-.eve-starter-chip:hover strong {
-  color: var(--text-primary);
-}
-
-.eve-starter-chip:hover small {
-  color: var(--text-secondary);
-}
-

@@ -2,11 +2,18 @@
 
 ## Status
 
-Accepted
+Superseded (serving half) — see 2026-09-10 note below. Backend catalog stands.
 
 - Date: 2026-09-10
 - Deciders: refactor agent (user directive: all prompts in one file, none in frontend)
 - Tags: `prompts`, `single-source-of-truth`, `backend`, `frontend`
+
+## 2026-09-10 amendment — menu-text UI removed instead of served
+
+The user directed that the UI must not fetch menu text either ("remove them"). Consequences:
+- `GET /api/v1/prompts`, `schemas/prompts.py`, `lib/promptsApi.js`, and the `PRESET_PROMPTS`/`TOOLS_LIST`/starter/studio-template sections of `prompts.py` were **deleted** — no consumer remains.
+- The preset chips, starter greetings, `/`+`@` autocomplete menus, and Studio suggestion cards were **deleted** from the frontend (fresh chats open empty; typing plain text is unaffected — the backend never parsed `@`/`/`).
+- What stands: `services/prompts.py` remains the single owner of every **backend-consumed** prompt (system/voice/extraction instructions, greetings, WhatsApp builders, tool descriptions). Frontend holds zero prompt content (grep-verified).
 
 ## Context
 

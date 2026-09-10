@@ -3,7 +3,6 @@ import { ArrowUp, Paperclip, Plus, X, Zap } from 'lucide-react'
 import { CustomDropdown } from '../../components/ui/CustomDropdown'
 import { ModelSelectorDropdown } from '../../components/ui/ModelSelectorDropdown'
 import { formatFileSize } from '../../utils/fileSize'
-import { PROMPT_SUGGESTIONS } from './studioConstants'
 
 const PROMPT_TEXTAREA_MAX_HEIGHT = 160
 const TEXT_EXTENSION_PATTERN = /\.(txt|md|json|js|jsx|ts|tsx|html|css|py|csv|xml|yaml|yml|sql|sh|log|rs|go|java|c|cpp|h)$/i
@@ -85,11 +84,6 @@ export function StudioHero({
       event.preventDefault()
       handleSubmit(event)
     }
-  }
-
-  const handleSuggestionClick = (suggestionPrompt) => {
-    setPrompt(suggestionPrompt)
-    textareaRef.current?.focus()
   }
 
   return (
@@ -174,20 +168,6 @@ export function StudioHero({
             </div>
           </div>
         </form>
-
-        <div className="studio-suggestions" aria-label="Prompt suggestions">
-          <span className="studio-suggestions-label">Try asking:</span>
-          {PROMPT_SUGGESTIONS.map((item) => (
-            <button
-              key={item.label}
-              type="button"
-              className="studio-suggestion-chip"
-              onClick={() => handleSuggestionClick(item.prompt)}
-            >
-              {item.label}
-            </button>
-          ))}
-        </div>
       </div>
     </section>
   )

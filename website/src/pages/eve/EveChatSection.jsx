@@ -16,11 +16,6 @@ export function EveChatSection({
   addToQueue,
   removeFromQueue,
   handleSubmit,
-  matchingTools,
-  matchingPrompts,
-  selectTool,
-  selectPrompt,
-  EVE_PRESET_PROMPTS,
   aiProviders = [],
   activeModel,
   onSelectAiModel,
@@ -29,15 +24,12 @@ export function EveChatSection({
     <main className="eve-chat-section">
       <EveMessageFeed
         messages={messages}
-        draft={draft}
         isSending={isSending}
         streamText={streamText}
         thinkingText={thinkingText}
         toolCalls={toolCalls}
         activeTool={activeTool}
         error={error}
-        EVE_PRESET_PROMPTS={EVE_PRESET_PROMPTS}
-        selectPrompt={selectPrompt}
       />
       <EveComposer
         draft={draft}
@@ -48,10 +40,6 @@ export function EveChatSection({
         addToQueue={addToQueue}
         removeFromQueue={removeFromQueue}
         handleSubmit={handleSubmit}
-        matchingTools={matchingTools}
-        matchingPrompts={matchingPrompts}
-        selectTool={selectTool}
-        selectPrompt={selectPrompt}
         aiProviders={aiProviders}
         activeModel={activeModel}
         onSelectAiModel={onSelectAiModel}

@@ -31,15 +31,6 @@ def test_whatsapp_templates():
     )
 
 
-def test_ui_lists_present():
-    assert len(prompts.PRESET_PROMPTS) == 9
-    assert len(prompts.TOOLS_LIST) == 9
-    assert len(prompts.STUDIO_TEMPLATES) == 6
-    assert prompts.EVE_STARTER_MESSAGE
-    assert prompts.EVE_MODAL_STARTER_MESSAGE
-    assert prompts.EVE_STARTER_MESSAGE != prompts.EVE_MODAL_STARTER_MESSAGE
-
-
 def test_call_greetings():
     assert prompts.DEFAULT_CALL_GREETING.startswith("Hello, this is Eve")
     assert prompts.DEFAULT_CALL_GREETING_SHORT == "Hello, this is Eve from StarWaves."

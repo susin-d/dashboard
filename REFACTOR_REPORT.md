@@ -8,6 +8,11 @@
 - Debt #2 closed: `models/__init__.py` (409) split into `user/workspace/calls/eve/settings/workspace_files/whatsapp/sessions/usage` + `_shared` + facade `__init__` (import path preserved; 18 tables verified identical; circular-import order unchanged from baseline — see note in commit).
 - Intentionally deferred: `services/whatsapp.py` (549) stays one class — single responsibility per external system, routes already split (`whatsapp/status/chats/messages/webhook`), and tests mock `WhatsAppService.*` paths; splitting would add seams without removing duplication (§17: one module suffices). Same for the 19 oversized frontend files (no duplication; splitting needs visual QA).
 
+## Follow-up 2 (2026-09-10) — menu-text UI removed, ADR 0049 serving half superseded
+- Per user directive ("no system prompt in frontend" + "remove what the UI fetches"): preset chips, starter greetings, `/`+`@` autocomplete menus, and Studio suggestion cards deleted from the frontend; fresh chats open empty; typing plain text (incl. `@web …`) works unchanged (backend never parsed `@`/`/`).
+- Deleted as dead: `lib/promptsApi.js`, `GET /api/v1/prompts` + `schemas/prompts.py` + `tests/api/test_prompts.py`, the UI-list sections of `services/prompts.py`, orphaned CSS (`eve-skills.css` file, skills/starter/suggestion blocks). Composer placeholders rewritten neutral.
+- `services/prompts.py` remains canonical for backend-consumed prompts only (system/voice/extraction, greetings, WhatsApp builders, 141 tool descriptions — all runtime-verified identical). Grep gate: zero prompt content in `website/src`.
+
 ---
 
 ## Removed

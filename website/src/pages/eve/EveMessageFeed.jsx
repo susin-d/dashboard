@@ -16,15 +16,12 @@ import { EveThoughtHistory } from './EveThoughtHistory'
 
 export function EveMessageFeed({
   messages,
-  draft = '',
   isSending,
   streamText = '',
   thinkingText = '',
   toolCalls = [],
   activeTool = null,
   error,
-  EVE_PRESET_PROMPTS,
-  selectPrompt,
 }) {
   const messagesEndRef = useRef(null)
   const [streamThoughtOpen, setStreamThoughtOpen] = useState(true)
@@ -180,22 +177,10 @@ export function EveMessageFeed({
         )
       })()}
 
-      {messages.length <= 1 && !draft?.trim() && (
-        <div className="eve-starter-prompts">
-          <p className="eve-starter-title">Quick prompts to get started:</p>
-          <div className="eve-starter-grid">
-            {EVE_PRESET_PROMPTS.slice(0, 6).map((item) => (
-              <button
-                key={item.command}
-                type="button"
-                className="eve-starter-chip"
-                onClick={() => selectPrompt(item)}
-              >
-                <strong>{item.label}</strong>
-                <small>{item.description}</small>
-              </button>
-            ))}
-          </div>
+      {messages.length === 0 && !isSending && !error && (
+        <div className="eve-empty-feed">
+          <p className="eve-empty-title">No messages yet</p>
+          <p className="eve-empty-hint">Type a message below to start chatting with Eve.</p>
         </div>
       )}
 

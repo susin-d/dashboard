@@ -93,53 +93,6 @@ def whatsapp_summary_prompt(history_text: str) -> str:
     return (
         f"Summarize the following WhatsApp conversation with key points and any action items:\n\n{history_text}"
     )
-
-
-# === UI preset prompts (moved verbatim from website/src/pages/eve/eveConstants.js) ===
-# Served to the frontend via GET /api/v1/prompts; the frontend holds no copies.
-PRESET_PROMPTS = [
-    {"command": "web", "label": "Search the web", "prompt": "Search the open web for the latest updates and information on: ", "description": "Browse and search external websites"},
-    {"command": "call", "label": "Call me now", "prompt": "Call me right now on voice to review my workspace status.", "description": "Trigger an immediate incoming voice call from Eve"},
-    {"command": "today", "label": "Plan my day", "prompt": "Plan my day by reviewing tasks, upcoming deadlines, and calendar events.", "description": "Review tasks, deadlines, and calendar events"},
-    {"command": "tasks", "label": "Manage tasks & overdue", "prompt": "Find all overdue tasks and suggest next priority actions.", "description": "Audit overdue tasks and list priority items"},
-    {"command": "projects", "label": "Work with projects", "prompt": "Review project progress, stale projects, and next steps.", "description": "Review project progress and stale projects"},
-    {"command": "jobs", "label": "Track applications", "prompt": "Summarize recent job application statuses and upcoming interview dates.", "description": "Find job application status and interview dates"},
-    {"command": "documents", "label": "Search documents", "prompt": "Search workspace documents and summarize key notes.", "description": "Search documents and notes"},
-    {"command": "calendar", "label": "Check calendar & contests", "prompt": "Look up upcoming calendar events, competitive coding contests, and deadlines.", "description": "Look up events, contests, and deadlines"},
-    {"command": "insights", "label": "Workspace overview", "prompt": "Summarize overall workspace dashboard metrics and suggest next actions.", "description": "Generate overall workspace insights"},
-]
-
-
-# === UI tools list (moved verbatim from website/src/pages/eve/eveConstants.js) ===
-TOOLS_LIST = [
-    {"command": "web", "name": "web", "label": "Web Browsing & Search Tool", "description": "Search the open web, browse external websites, and read URLs"},
-    {"command": "todos", "name": "todos", "label": "Tasks & Todos Tool", "description": "Read, create, update, or soft-delete task items"},
-    {"command": "projects", "name": "projects", "label": "Projects Tool", "description": "Access project repositories, milestones, and status"},
-    {"command": "jobs", "name": "jobs", "label": "Job Tracker Tool", "description": "Access job applications, interview dates, and contacts"},
-    {"command": "hackathons", "name": "hackathons", "label": "Hackathons Tool", "description": "Access hackathons, schedules, and prize details"},
-    {"command": "documents", "name": "documents", "label": "Documents Tool", "description": "Access notes, project plans, and drive specs"},
-    {"command": "notifications", "name": "notifications", "label": "Notifications Tool", "description": "Access workspace notifications and reminders"},
-    {"command": "search", "name": "search", "label": "Workspace Search Tool", "description": "Search across all local workspace resources"},
-    {"command": "insight", "name": "insight", "label": "Workspace Insights Tool", "description": "Compute deadlines, overdue tasks, or dashboard summary"},
-]
-
-
-# === Starter messages (moved verbatim from the frontend; one per surface) ===
-EVE_STARTER_MESSAGE = "Hello! I’m Eve, your StarWaves AI workspace assistant. I can read, create, update, soft-delete, and restore records across your workspace, help you with code, and browse the open web for up-to-date information and research."
-EVE_MODAL_STARTER_MESSAGE = "Hi, I’m Eve. I can read, create, update, delete, and restore your workspace records, help with code, and browse or search the open web with @web."
-
-
-# === Studio template suggestions (moved verbatim from website/src/pages/studio/studioConstants.js) ===
-STUDIO_TEMPLATES = [
-    {"label": "📊 SaaS Dashboard", "prompt": "Build a modern SaaS metrics dashboard with KPI cards, revenue charts, and user activity table."},
-    {"label": "⚡ Kanban Board", "prompt": "Create a drag-and-drop Kanban task board with custom columns, labels, and local persistence."},
-    {"label": "💬 AI Chat App", "prompt": "Build a real-time chat interface with model switching, markdown code blocks, and conversation history."},
-    {"label": "🎯 Habit Tracker", "prompt": "Build a daily habit tracker with streak counts, completion heatmaps, and weekly goals."},
-    {"label": "🛒 E-commerce", "prompt": "Create a product storefront with search, category filters, interactive shopping cart, and checkout flow."},
-    {"label": "📝 Notes Wiki", "prompt": "Build a minimalist markdown notes knowledge-base with tags, instant search, and live preview."},
-]
-
-
 # === Tool description catalog (moved verbatim from services/eve/tools/*.py) ===
 # Keys are tool names, or tool.param for parameter descriptions.
 
