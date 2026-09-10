@@ -1,47 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { AVATAR_DEFAULTS, AVATAR_LIMITS, clampUserPan, clampZoom } from './avatarConstants'
-
-let PixiModule = null
-let Live2DFactory = null
-
-async function ensurePixi() {
-  if (PixiModule) return PixiModule
-  const mod = await import('pixi.js')
-  PixiModule = mod
-  if (typeof window !== 'undefined') window.PIXI = mod
-  return PixiModule
-}
-
-async function ensureLive2D() {
-  if (Live2DFactory) return Live2DFactory
-  const PIXI = await ensurePixi()
-  if (typeof window !== 'undefined' && !window.Live2DCubismCore) {
-    try {
-      await new Promise((resolve) => {
-        const existing = document.querySelector('script[src*="live2dcubismcore"]')
-        if (existing && window.Live2DCubismCore) { resolve(); return }
-        const script = document.createElement('script')
-        script.src = '/live2d/live2dcubismcore.min.js'
-        script.onload = () => resolve()
-        script.onerror = () => resolve()
-        document.head.appendChild(script)
-      })
-    } catch {}
-  }
-  try {
-    const mod = await import('pixi-live2d-display/cubism4')
-    Live2DFactory = mod.Live2DModel
-    if (typeof Live2DFactory.registerTicker === 'function' && PIXI?.Ticker) {
-      try { Live2DFactory.registerTicker(PIXI.Ticker) } catch {}
-    }
-    return Live2DFactory
-  } catch (err) {
-    console.warn('[Live2D] Cubism4 runtime import failed:', err)
-    return null
-  }
-}
-
-const FIT_MARGIN = 0.92 // leave a small visible margin so the model never touches the edges
+import { AVATAR_DEFAULTS, clampUserPan, clampZoom } from './avatarConstants'
+import { ensureLive2D, ensurePixi, FIT_MARGIN } from './live2dLoaders'
+import { useLive2dFraming } from './live2dFraming'
 
 export function Live2DModel({
   url,
@@ -78,7 +38,6 @@ export function Live2DModel({
   const emotionRef = useRef(emotion)
   emotionRef.current = emotion
   const loadIdRef = useRef(0)
-  const rafRef = useRef(0)
 
   // Drag state
   const dragRef = useRef(null)
@@ -99,31 +58,7 @@ export function Live2DModel({
     onReady?.()
   }, [onError, onReady])
 
-  // Apply the current transform (scale + pan) to the model.
-  const applyTransform = useCallback(() => {
-    const m = modelRef.current
-    if (!m) return
-    const { w, h } = sizeRef.current
-    const safeZoom = clampZoom(zoomRef.current)
-    const safePan = clampUserPan(panRef.current)
-    try {
-      m.scale.set(baseScaleRef.current * safeZoom)
-      m.x = w / 2 + safePan.x
-      m.y = h / 2 + safePan.y
-    } catch {}
-  }, [])
-
-  // Schedule a single rAF tick to emit transform changes (avoids re-render thrash).
-  const scheduleTransformEmit = useCallback(() => {
-    if (rafRef.current) return
-    rafRef.current = window.requestAnimationFrame(() => {
-      rafRef.current = 0
-      onTransformChange?.(
-        clampUserPan(panRef.current),
-        clampZoom(zoomRef.current),
-      )
-    })
-  }, [onTransformChange])
+  const { applyTransform, scheduleTransformEmit, rafRef } = useLive2dFraming({ modelRef, sizeRef, baseScaleRef, zoomRef, panRef, onTransformChange })
 
   useEffect(() => {
     if (!mountRef.current) return undefined
@@ -456,6 +391,3 @@ export function Live2DModel({
     </div>
   )
 }
-
-// Keep `AVATAR_LIMITS` reachable for callers that import only Live2DModel
-export { AVATAR_LIMITS }
