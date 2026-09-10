@@ -1,10 +1,11 @@
 """Eve whatsapp tool definitions — single responsibility: whatsapp domain."""
+from app.services.prompts import WHATSAPP_DESCRIPTIONS as D
 
 WHATSAPP_TOOLS = [
     {
         "type": "function",
         "name": "list_whatsapp_chats",
-        "description": "List the user's recent WhatsApp conversations, active contacts, unread counts, and last messages.",
+        "description": D["list_whatsapp_chats"],
         "parameters": {
             "type": "object",
             "properties": {},
@@ -15,12 +16,12 @@ WHATSAPP_TOOLS = [
     {
         "type": "function",
         "name": "read_whatsapp_messages",
-        "description": "Read recent WhatsApp message history for a specific chat or contact.",
+        "description": D["read_whatsapp_messages"],
         "parameters": {
             "type": "object",
             "properties": {
-                "chat_id": {"type": "string", "description": "The chat ID, phone number, or 'eve' to read messages from"},
-                "limit": {"type": "integer", "description": "Number of recent messages to fetch (default 20, max 50)"},
+                "chat_id": {"type": "string", "description": D["read_whatsapp_messages.chat_id"]},
+                "limit": {"type": "integer", "description": D["read_whatsapp_messages.limit"]},
             },
             "required": ["chat_id"],
             "additionalProperties": False,
@@ -30,12 +31,12 @@ WHATSAPP_TOOLS = [
     {
         "type": "function",
         "name": "send_whatsapp_message",
-        "description": "Send a WhatsApp message to a specific contact or phone number on behalf of the user.",
+        "description": D["send_whatsapp_message"],
         "parameters": {
             "type": "object",
             "properties": {
-                "chat_id": {"type": "string", "description": "The contact JID or phone number (e.g. +1234567890 or 1234567890@s.whatsapp.net)"},
-                "content": {"type": "string", "description": "The message text to send"},
+                "chat_id": {"type": "string", "description": D["send_whatsapp_message.chat_id"]},
+                "content": {"type": "string", "description": D["send_whatsapp_message.content"]},
             },
             "required": ["chat_id", "content"],
             "additionalProperties": False,
@@ -45,11 +46,11 @@ WHATSAPP_TOOLS = [
     {
         "type": "function",
         "name": "summarize_whatsapp_chat",
-        "description": "Generate a concise summary and action points for a WhatsApp chat.",
+        "description": D["summarize_whatsapp_chat"],
         "parameters": {
             "type": "object",
             "properties": {
-                "chat_id": {"type": "string", "description": "The chat ID to summarize"},
+                "chat_id": {"type": "string", "description": D["summarize_whatsapp_chat.chat_id"]},
             },
             "required": ["chat_id"],
             "additionalProperties": False,

@@ -1,12 +1,13 @@
 """Eve workspace tool definitions — single responsibility: workspace domain."""
 
 from app.services.eve.constants import SUPPORTED_RESOURCES, WRITABLE_RESOURCES
+from app.services.prompts import WORKSPACE_DESCRIPTIONS as D
 
 WORKSPACE_TOOLS = [
     {
         "type": "function",
         "name": "list_workspace_records",
-        "description": "List the current user's records for a supported workspace resource.",
+        "description": D["list_workspace_records"],
         "parameters": {
             "type": "object",
             "properties": {"resource": {"type": "string", "enum": list(SUPPORTED_RESOURCES)}},
@@ -18,7 +19,7 @@ WORKSPACE_TOOLS = [
     {
         "type": "function",
         "name": "create_workspace_record",
-        "description": "Create a record for the current user. data must use the API field names for the selected resource.",
+        "description": D["create_workspace_record"],
         "parameters": {
             "type": "object",
             "properties": {
@@ -33,7 +34,7 @@ WORKSPACE_TOOLS = [
     {
         "type": "function",
         "name": "update_workspace_record",
-        "description": "Update one existing record owned by the current user. changes must use the API field names for the selected resource.",
+        "description": D["update_workspace_record"],
         "parameters": {
             "type": "object",
             "properties": {
@@ -49,7 +50,7 @@ WORKSPACE_TOOLS = [
     {
         "type": "function",
         "name": "delete_workspace_record",
-        "description": "Soft delete a workspace record owned by the current user. The record remains recoverable for 7 days before permanent deletion.",
+        "description": D["delete_workspace_record"],
         "parameters": {
             "type": "object",
             "properties": {
@@ -64,7 +65,7 @@ WORKSPACE_TOOLS = [
     {
         "type": "function",
         "name": "restore_workspace_record",
-        "description": "Restore a soft-deleted workspace record owned by the current user within the 7-day retention period.",
+        "description": D["restore_workspace_record"],
         "parameters": {
             "type": "object",
             "properties": {
@@ -79,7 +80,7 @@ WORKSPACE_TOOLS = [
     {
         "type": "function",
         "name": "bulk_update_records",
-        "description": "Update several records of the same resource. Use only after the user clearly specifies the changes.",
+        "description": D["bulk_update_records"],
         "parameters": {
             "type": "object",
             "properties": {

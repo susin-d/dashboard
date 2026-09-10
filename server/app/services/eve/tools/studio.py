@@ -1,13 +1,12 @@
 """Eve Studio tool definitions — single responsibility: builder domain."""
+from app.services.prompts import STUDIO_DESCRIPTIONS as D
 
 STUDIO_TOOLS = [
     {
         "type": "function",
         "name": "create_studio_project",
         "description": (
-            "Create a new Studio project (an isolated workspace for one app/website). "
-            "Optionally scaffold a curated template. Returns the project id used by all "
-            "other Studio tools."
+            D["create_studio_project"]
         ),
         "parameters": {
             "type": "object",
@@ -17,8 +16,7 @@ STUDIO_TOOLS = [
                 "template_id": {
                     "type": "string",
                     "description": (
-                        "One of: react-vite, static-site, react-saas, fastapi-api, "
-                        "node-express-api, fullstack-react-fastapi. Omit for a blank project."
+                        D["create_studio_project.template_id"]
                     ),
                 },
                 "stack": {"type": "string"},
@@ -36,7 +34,7 @@ STUDIO_TOOLS = [
     {
         "type": "function",
         "name": "list_studio_projects",
-        "description": "List the user's Studio projects with their build status and metadata.",
+        "description": D["list_studio_projects"],
         "parameters": {
             "type": "object",
             "properties": {},
@@ -49,8 +47,7 @@ STUDIO_TOOLS = [
         "type": "function",
         "name": "get_studio_project",
         "description": (
-            "Get one Studio project's details: metadata, pending build plan and its "
-            "approval status, git state, and file count."
+            D["get_studio_project"]
         ),
         "parameters": {
             "type": "object",
@@ -64,10 +61,7 @@ STUDIO_TOOLS = [
         "type": "function",
         "name": "submit_build_plan",
         "description": (
-            "Submit a structured build plan for a Studio project BEFORE writing any code. "
-            "The plan is shown to the user as an approval card; they must approve it in the "
-            "UI before you may start building. Include every file you intend to create with "
-            "a one-line purpose each."
+            D["submit_build_plan"]
         ),
         "parameters": {
             "type": "object",
@@ -103,9 +97,7 @@ STUDIO_TOOLS = [
         "type": "function",
         "name": "write_studio_files",
         "description": (
-            "Write a batch of files into a Studio project (build phase). Max 50 files per "
-            "call; split larger builds across multiple calls. Only call this after the plan "
-            "is approved (plan_status === 'approved')."
+            D["write_studio_files"]
         ),
         "parameters": {
             "type": "object",
@@ -135,9 +127,7 @@ STUDIO_TOOLS = [
         "type": "function",
         "name": "run_studio_command",
         "description": (
-            "Run an allowlisted command (npm, npx, pnpm, yarn, node, git, python, pip) "
-            "inside a Studio workspace. Chains with && are supported. Use for installs, "
-            "builds, tests, and git commits. Timeout up to 600s."
+            D["run_studio_command"]
         ),
         "parameters": {
             "type": "object",
@@ -155,8 +145,7 @@ STUDIO_TOOLS = [
         "type": "function",
         "name": "publish_studio_template",
         "description": (
-            "Publish an existing Studio project as a personal reusable template that can "
-            "be remixed into new projects."
+            D["publish_studio_template"]
         ),
         "parameters": {
             "type": "object",

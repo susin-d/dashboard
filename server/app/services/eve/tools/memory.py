@@ -1,10 +1,11 @@
 """Eve memory tool definitions — single responsibility: memory domain."""
+from app.services.prompts import MEMORY_DESCRIPTIONS as D
 
 MEMORY_TOOLS = [
     {
         "type": "function",
         "name": "remember_memory",
-        "description": "Save a fact or preference the user wants Eve to remember across conversations. Keep each memory concise (a short phrase or sentence).",
+        "description": D["remember_memory"],
         "parameters": {
             "type": "object",
             "properties": {"content": {"type": "string", "minLength": 1, "maxLength": 500}},
@@ -16,7 +17,7 @@ MEMORY_TOOLS = [
     {
         "type": "function",
         "name": "recall_memories",
-        "description": "Recall the user's saved memories. Optionally provide a query to search by keyword.",
+        "description": D["recall_memories"],
         "parameters": {
             "type": "object",
             "properties": {"query": {"type": "string"}},
@@ -28,7 +29,7 @@ MEMORY_TOOLS = [
     {
         "type": "function",
         "name": "forget_memory",
-        "description": "Remove a previously saved memory using its id.",
+        "description": D["forget_memory"],
         "parameters": {
             "type": "object",
             "properties": {"memory_id": {"type": "string", "minLength": 1}},

@@ -129,3 +129,240 @@ STUDIO_TEMPLATES = [
     {"label": "🛒 E-commerce", "prompt": "Create a product storefront with search, category filters, interactive shopping cart, and checkout flow."},
     {"label": "📝 Notes Wiki", "prompt": "Build a minimalist markdown notes knowledge-base with tags, instant search, and live preview."},
 ]
+
+
+# === Tool description catalog (moved verbatim from services/eve/tools/*.py) ===
+# Keys are tool names, or tool.param for parameter descriptions.
+
+
+# --- AVATAR (services/eve/tools/avatar.py) ---
+AVATAR_DESCRIPTIONS = {
+    "avatar_editor_action": "Request a validated action in the open Avatar Studio editor. "
+            "The frontend applies the action and asks for confirmation when required.",
+}
+
+# --- BROWSER (services/eve/tools/browser.py) ---
+BROWSER_DESCRIPTIONS = {
+    "browser_navigate": "Open a URL in Eve's headless browser session. The page state persists across browser_* tool calls, so you can navigate then click, type, extract, or screenshot.",
+    "browser_click": "Click an element in Eve's headless browser session using a CSS selector.",
+    "browser_type": "Type text into a form field in Eve's headless browser session using a CSS selector.",
+    "browser_extract_text": "Extract visible text from the current page in Eve's headless browser session, optionally scoped to a CSS selector.",
+    "browser_screenshot": "Capture a PNG screenshot of the current page in Eve's headless browser session and save it to the workspace.",
+    "browser_navigate.url": "The HTTP or HTTPS URL to open",
+    "browser_click.selector": "CSS selector of the element to click",
+    "browser_type.selector": "CSS selector of the input field",
+    "browser_type.text": "Text to type into the field",
+    "browser_type.submit": "Press Enter after typing to submit the form (default false)",
+    "browser_extract_text.selector": "Optional CSS selector to extract text from; defaults to the whole page",
+    "browser_screenshot.full_page": "Capture the full scrollable page instead of the viewport (default false)",
+}
+
+# --- CALENDAR (services/eve/tools/calendar.py) ---
+CALENDAR_DESCRIPTIONS = {
+    "create_calendar_event": "Create a calendar event (meeting, deadline, or reminder) stored in the user's calendar_events collection.",
+    "list_calendar_events": "List the user's calendar events.",
+    "delete_calendar_event": "Delete a calendar event by its record id.",
+    "create_calendar_event.title": "Event title",
+    "create_calendar_event.date": "Event date in YYYY-MM-DD format",
+    "create_calendar_event.time": "Optional event time in HH:MM (24h) format",
+    "create_calendar_event.end_date": "Optional end date in YYYY-MM-DD format for multi-day events",
+    "create_calendar_event.notes": "Optional additional details",
+    "delete_calendar_event.event_id": "Id of the calendar event to delete",
+}
+
+# --- EMAIL (services/eve/tools/email.py) ---
+EMAIL_DESCRIPTIONS = {
+    "send_email": "Send an email from the user's connected Gmail account.",
+    "list_emails": "List recent emails from the user's connected Gmail account, newest first.",
+    "search_emails": "Search the user's connected Gmail account with Gmail search syntax (from:, subject:, has:attachment, etc.).",
+    "send_email.to": "Recipient email address",
+    "send_email.subject": "Email subject line",
+    "send_email.body": "Plain-text email body",
+    "send_email.from_account": "Optional connected Gmail address to send from (defaults to the first connected account)",
+    "list_emails.max_results": "Number of emails to return (default 10, max 25)",
+    "list_emails.account": "Optional connected Gmail address to read from",
+    "search_emails.query": "Gmail search query, e.g. 'from:alice@example.com invoice'",
+    "search_emails.max_results": "Number of results to return (default 10, max 25)",
+    "search_emails.account": "Optional connected Gmail address to search",
+}
+
+# --- FILES (services/eve/tools/files.py) ---
+FILES_DESCRIPTIONS = {
+    "workspace_id": "Id of the code workspace to operate on. Use the workspace_id given in the user's message context, or 'default' when unknown.",
+    "read_workspace_file": "Read the content of a file in the user's code workspace by its relative path.",
+    "write_workspace_file": "Create or overwrite a file in the user's code workspace. Provide the relative path and full content.",
+    "list_workspace_files": "List files and directories in the user's code workspace. Optionally specify a subdirectory.",
+    "search_workspace_files": "Search for text content across all files in the user's code workspace. Returns matching file paths and line numbers.",
+    "run_workspace_command": "Run a shell command in the user's code workspace directory. Only available on the self-hosted server.",
+    "open_workspace_browser": "Open a URL in the workspace's built-in browser panel, side-by-side with the editor. "
+            "Use this after writing an HTML/CSS/JS file or starting a dev server so the user can preview it immediately.\n\n"
+            "PORT SELECTION RULES — always follow these:\n"
+            "1. NEVER use port 5173 (reserved for StarWaves itself) or 3000/8080 (commonly occupied).\n"
+            "2. For any static HTML/CSS/JS you wrote: first run `python -m http.server <port> --bind 127.0.0.1` "
+            "(or `npx serve . -p <port> --no-clipboard`) via run_workspace_command to serve the workspace directory, "
+            "then open http://localhost:<port>/filename.html.\n"
+            "3. Choose ports from the range 8765–8799 unless the user or their project config specifies a different port. "
+            "Pick a different port in that range each time to avoid collisions with previously started servers.\n"
+            "4. For framework dev servers (React/Vite/Next/Vue etc.) the port is set by the project — use whatever port "
+            "the dev server printed in its output.",
+    "open_workspace_browser.url": "The full URL to open (e.g. 'http://localhost:8765/index.html', 'http://localhost:8770').",
+}
+
+# --- HTTP (services/eve/tools/http.py) ---
+HTTP_DESCRIPTIONS = {
+    "http_request": "Make an HTTP request to any external API endpoint. Supports GET, POST, PUT, PATCH, and DELETE with JSON bodies. Requests to localhost and private networks are blocked.",
+    "http_request.method": "HTTP method (default GET)",
+    "http_request.url": "The HTTP or HTTPS URL to request",
+    "http_request.body": "Optional JSON body for the request",
+    "http_request.headers": "Optional extra request headers",
+}
+
+# --- MEDIA (services/eve/tools/media.py) ---
+MEDIA_DESCRIPTIONS = {
+    "generate_image": "Generate an image from a text prompt using an AI image model. Returns the workspace path of the saved PNG.",
+    "generate_video": "Generate a short video clip from a text prompt using an AI video model (Gemini Veo). Takes up to a few minutes. Returns the workspace path of the saved MP4.",
+    "text_to_speech": "Convert text into a spoken audio file (MP3) saved to the workspace, using the user's configured TTS provider.",
+    "speech_to_text": "Transcribe an audio file to text using the user's configured STT provider. Accepts a workspace file path or an external URL.",
+    "generate_image.prompt": "Description of the image to generate",
+    "generate_image.size": "Image dimensions: square, portrait, or landscape (default 1024x1024)",
+    "generate_video.prompt": "Description of the video scene to generate",
+    "text_to_speech.text": "The text to speak",
+    "speech_to_text.source": "Workspace file path (e.g. media/note.mp3) or HTTP(S) URL of the audio",
+}
+
+# --- MEMORY (services/eve/tools/memory.py) ---
+MEMORY_DESCRIPTIONS = {
+    "remember_memory": "Save a fact or preference the user wants Eve to remember across conversations. Keep each memory concise (a short phrase or sentence).",
+    "recall_memories": "Recall the user's saved memories. Optionally provide a query to search by keyword.",
+    "forget_memory": "Remove a previously saved memory using its id.",
+}
+
+# --- NAVIGATION (services/eve/tools/navigation.py) ---
+NAVIGATION_DESCRIPTIONS = {
+    "navigate_page": "Navigate the user to a StarWaves workspace page.",
+    "open_record": "Open a record detail view when supported. Supports projects and documents.",
+    "refresh_workspace_data": "Refresh StarWaves workspace data in the frontend.",
+}
+
+# --- SCHEDULE (services/eve/tools/schedule.py) ---
+SCHEDULE_DESCRIPTIONS = {
+    "trigger_eve_call": "Trigger an immediate incoming voice call from Eve AI Assistant to the user. Use provider in_app for browser/WebRTC, or twilio for real phone PSTN.",
+    "make_twilio_call": "Make a real phone PSTN call via Twilio to any number, with an optional spoken message. Requires Twilio to be configured.",
+    "create_eve_schedule": "Create an automated scheduled task or reminder that auto-prompts Eve or triggers an incoming voice call from Eve at a specified time or interval.",
+    "list_eve_schedules": "List the user's active automated Eve schedules and reminders.",
+    "delete_eve_schedule": "Delete or cancel an automated Eve schedule/reminder by its id.",
+    "trigger_eve_call.provider": "in_app = browser call, twilio = real phone call",
+    "trigger_eve_call.phone_number": "E.164 phone number required when provider is twilio, e.g. +14155551234",
+    "make_twilio_call.phone_number": "E.164 destination, e.g. +14155551234",
+    "make_twilio_call.message": "Text to speak when answered",
+}
+
+# --- SEARCH (services/eve/tools/search.py) ---
+SEARCH_DESCRIPTIONS = {
+    "search_workspace": "Search across local StarWaves workspace records.",
+    "workspace_insight": "Generate computed workspace insights such as dashboard summary, deadlines, overdue tasks, stale projects, next actions, export summary, or calendar day.",
+    "explain_record": "Explain a specific workspace record.",
+    "generate_text_artifact": "Generate a non-sending draft or plan from workspace context.",
+}
+
+# --- STUDIO (services/eve/tools/studio.py) ---
+STUDIO_DESCRIPTIONS = {
+    "create_studio_project": "Create a new Studio project (an isolated workspace for one app/website). "
+            "Optionally scaffold a curated template. Returns the project id used by all "
+            "other Studio tools.",
+    "list_studio_projects": "List the user's Studio projects with their build status and metadata.",
+    "get_studio_project": "Get one Studio project's details: metadata, pending build plan and its "
+            "approval status, git state, and file count.",
+    "submit_build_plan": "Submit a structured build plan for a Studio project BEFORE writing any code. "
+            "The plan is shown to the user as an approval card; they must approve it in the "
+            "UI before you may start building. Include every file you intend to create with "
+            "a one-line purpose each.",
+    "write_studio_files": "Write a batch of files into a Studio project (build phase). Max 50 files per "
+            "call; split larger builds across multiple calls. Only call this after the plan "
+            "is approved (plan_status === 'approved').",
+    "run_studio_command": "Run an allowlisted command (npm, npx, pnpm, yarn, node, git, python, pip) "
+            "inside a Studio workspace. Chains with && are supported. Use for installs, "
+            "builds, tests, and git commits. Timeout up to 600s.",
+    "publish_studio_template": "Publish an existing Studio project as a personal reusable template that can "
+            "be remixed into new projects.",
+    "create_studio_project.template_id": "One of: react-vite, static-site, react-saas, fastapi-api, "
+                        "node-express-api, fullstack-react-fastapi. Omit for a blank project.",
+}
+
+# --- UI (services/eve/tools/ui.py) ---
+UI_DESCRIPTIONS = {
+    "get_ui_state": "Read the current UI customization state: global tokens, global CSS, per-page overrides, visibility, and version history. Use before making edits to avoid overwriting.",
+    "update_ui_theme": "Update UI design tokens (colors, radii, spacing, shadows, fonts). Tokens are CSS variables like --bg-primary, --text-primary, --radius-lg, --font-family, --layout-gutter, --shadow-md. Monochrome is default; use color only when user explicitly requests it (e.g. 'make it blue'). Page param scopes to a single page, omit for global.",
+    "update_ui_styles": "Inject freeform CSS for advanced styling. Use for effects beyond tokens (animations, gradients, layout tweaks). CSS is sanitized (blocks @import, javascript:, external urls, < >). Keep under 5000 chars. Prefer tokens when possible. Page param scopes to a page.",
+    "manage_ui_visibility": "Show or hide a UI section. Target is a logical section id like 'sidebar', 'header', 'dashboard.metrics', 'projects.grid'. Use get_ui_state to discover current visibility. Page scopes to a page when relevant.",
+    "reset_ui": "Reset UI customizations. Without page, resets global tokens+CSS. With page, resets only that page. With version, restores a historical version (use list_ui_history or get_ui_state to find version). Also serves as undo.",
+    "list_ui_history": "List UI version history (last 20 versions) with version, timestamp, cause, and snapshot. Use to find a version to restore via reset_ui.",
+    "create_custom_page": "Create a new custom page/component. Generates a React page at /custom/<slug> with provided description and optional code. Slug must be lowercase alphanumeric with hyphens. Use when user wants a brand new page or widget.",
+    "update_ui_theme.tokens": "Map of CSS variable to value, e.g. {\"--radius-lg\": \"24px\", \"--bg-primary\": \"#fafafa\"}. Only allowlisted tokens are accepted.",
+    "update_ui_theme.page": "Optional page scope.",
+    "update_ui_theme.reason": "Short reason for the change (for history).",
+    "update_ui_styles.css": "CSS string to inject.",
+    "update_ui_styles.page": "Optional page scope.",
+    "manage_ui_visibility.target": "Section target id.",
+    "manage_ui_visibility.visible": "True to show, false to hide.",
+    "manage_ui_visibility.page": "Optional page scope.",
+    "reset_ui.page": "Optional page to reset.",
+    "reset_ui.version": "Optional historical version to restore.",
+    "create_custom_page.slug": "URL slug, e.g. 'my-dashboard'",
+    "create_custom_page.title": "Page title.",
+    "create_custom_page.description": "What the page should do.",
+    "create_custom_page.code": "Optional React code for the page. If omitted, a starter template is used.",
+}
+
+# --- UTILITY (services/eve/tools/utility.py) ---
+UTILITY_DESCRIPTIONS = {
+    "generate_qr_code": "Generate a QR code image from text or a URL and save it to the workspace as a PNG.",
+    "create_chart": "Render a bar, line, or pie chart from data points and save it to the workspace as a PNG.",
+    "read_pdf_file": "Extract the text content of a PDF file using an AI document model. Accepts a workspace file path or an HTTP(S) URL.",
+    "extract_text_from_image": "Perform OCR on an image (PNG/JPG/WebP) to extract its text. Accepts a workspace file path or an HTTP(S) URL.",
+    "generate_qr_code.data": "The text or URL to encode in the QR code",
+    "create_chart.chart_type": "Type of chart to render",
+    "create_chart.labels": "Category labels, one per data point",
+    "create_chart.values": "Numeric values matching the labels",
+    "create_chart.title": "Optional chart title",
+    "read_pdf_file.source": "Workspace file path or URL of the PDF",
+    "extract_text_from_image.source": "Workspace file path or URL of the image",
+}
+
+# --- WEB (services/eve/tools/web.py) ---
+WEB_DESCRIPTIONS = {
+    "browse_web": "Browse the web. Search the open web using a search query, fetch and read the content of a specific web URL, or do both.",
+    "search_web": "Search the open web for current information, documentation, news, or articles. Returns top matching results with titles, snippets, and URLs.",
+    "fetch_web_page": "Fetch and extract readable text/markdown content from an external web URL.",
+    "browse_web.query": "Optional search query to search the open web for",
+    "browse_web.url": "Optional HTTP or HTTPS URL to fetch and read",
+    "browse_web.num_results": "Number of search results to return (default 5, max 10)",
+    "browse_web.max_chars": "Maximum characters of text to extract from the page (default 12000)",
+    "search_web.query": "The search terms to query the web for",
+    "search_web.num_results": "Number of search results to return (default 5, max 10)",
+    "fetch_web_page.url": "The HTTP or HTTPS URL of the web page to read",
+    "fetch_web_page.max_chars": "Maximum characters of text content to extract (default 12000, max 30000)",
+}
+
+# --- WHATSAPP (services/eve/tools/whatsapp.py) ---
+WHATSAPP_DESCRIPTIONS = {
+    "list_whatsapp_chats": "List the user's recent WhatsApp conversations, active contacts, unread counts, and last messages.",
+    "read_whatsapp_messages": "Read recent WhatsApp message history for a specific chat or contact.",
+    "send_whatsapp_message": "Send a WhatsApp message to a specific contact or phone number on behalf of the user.",
+    "summarize_whatsapp_chat": "Generate a concise summary and action points for a WhatsApp chat.",
+    "read_whatsapp_messages.chat_id": "The chat ID, phone number, or 'eve' to read messages from",
+    "read_whatsapp_messages.limit": "Number of recent messages to fetch (default 20, max 50)",
+    "send_whatsapp_message.chat_id": "The contact JID or phone number (e.g. +1234567890 or 1234567890@s.whatsapp.net)",
+    "send_whatsapp_message.content": "The message text to send",
+    "summarize_whatsapp_chat.chat_id": "The chat ID to summarize",
+}
+
+# --- WORKSPACE (services/eve/tools/workspace.py) ---
+WORKSPACE_DESCRIPTIONS = {
+    "list_workspace_records": "List the current user's records for a supported workspace resource.",
+    "create_workspace_record": "Create a record for the current user. data must use the API field names for the selected resource.",
+    "update_workspace_record": "Update one existing record owned by the current user. changes must use the API field names for the selected resource.",
+    "delete_workspace_record": "Soft delete a workspace record owned by the current user. The record remains recoverable for 7 days before permanent deletion.",
+    "restore_workspace_record": "Restore a soft-deleted workspace record owned by the current user within the 7-day retention period.",
+    "bulk_update_records": "Update several records of the same resource. Use only after the user clearly specifies the changes.",
+}

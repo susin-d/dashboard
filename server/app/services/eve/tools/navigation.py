@@ -1,12 +1,13 @@
 """Eve navigation tool definitions — single responsibility: navigation domain."""
 
 from app.services.eve.constants import WORKSPACE_PAGES
+from app.services.prompts import NAVIGATION_DESCRIPTIONS as D
 
 NAVIGATION_TOOLS = [
     {
         "type": "function",
         "name": "navigate_page",
-        "description": "Navigate the user to a StarWaves workspace page.",
+        "description": D["navigate_page"],
         "parameters": {
             "type": "object",
             "properties": {"page": {"type": "string", "enum": list(WORKSPACE_PAGES)}},
@@ -18,7 +19,7 @@ NAVIGATION_TOOLS = [
     {
         "type": "function",
         "name": "open_record",
-        "description": "Open a record detail view when supported. Supports projects and documents.",
+        "description": D["open_record"],
         "parameters": {
             "type": "object",
             "properties": {
@@ -33,7 +34,7 @@ NAVIGATION_TOOLS = [
     {
         "type": "function",
         "name": "refresh_workspace_data",
-        "description": "Refresh StarWaves workspace data in the frontend.",
+        "description": D["refresh_workspace_data"],
         "parameters": {"type": "object", "properties": {}, "additionalProperties": False},
         "strict": True,
     },

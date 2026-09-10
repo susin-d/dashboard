@@ -1,12 +1,13 @@
 """Eve search tool definitions — single responsibility: search domain."""
 
 from app.services.eve.constants import SUPPORTED_RESOURCES
+from app.services.prompts import SEARCH_DESCRIPTIONS as D
 
 SEARCH_TOOLS = [
     {
         "type": "function",
         "name": "search_workspace",
-        "description": "Search across local StarWaves workspace records.",
+        "description": D["search_workspace"],
         "parameters": {
             "type": "object",
             "properties": {
@@ -24,7 +25,7 @@ SEARCH_TOOLS = [
     {
         "type": "function",
         "name": "workspace_insight",
-        "description": "Generate computed workspace insights such as dashboard summary, deadlines, overdue tasks, stale projects, next actions, export summary, or calendar day.",
+        "description": D["workspace_insight"],
         "parameters": {
             "type": "object",
             "properties": {
@@ -52,7 +53,7 @@ SEARCH_TOOLS = [
     {
         "type": "function",
         "name": "explain_record",
-        "description": "Explain a specific workspace record.",
+        "description": D["explain_record"],
         "parameters": {
             "type": "object",
             "properties": {
@@ -67,7 +68,7 @@ SEARCH_TOOLS = [
     {
         "type": "function",
         "name": "generate_text_artifact",
-        "description": "Generate a non-sending draft or plan from workspace context.",
+        "description": D["generate_text_artifact"],
         "parameters": {
             "type": "object",
             "properties": {

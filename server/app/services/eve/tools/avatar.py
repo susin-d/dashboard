@@ -1,12 +1,12 @@
 """Eve tools for validated Avatar Studio editor actions."""
+from app.services.prompts import AVATAR_DESCRIPTIONS as D
 
 AVATAR_EDITOR_TOOLS = [
     {
         "type": "function",
         "name": "avatar_editor_action",
         "description": (
-            "Request a validated action in the open Avatar Studio editor. "
-            "The frontend applies the action and asks for confirmation when required."
+            D["avatar_editor_action"]
         ),
         "parameters": {
             "type": "object",

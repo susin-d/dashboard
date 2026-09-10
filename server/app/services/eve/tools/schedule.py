@@ -1,16 +1,17 @@
 """Eve schedule tool definitions — single responsibility: schedule domain."""
+from app.services.prompts import SCHEDULE_DESCRIPTIONS as D
 
 SCHEDULE_TOOLS = [
     {
         "type": "function",
         "name": "trigger_eve_call",
-        "description": "Trigger an immediate incoming voice call from Eve AI Assistant to the user. Use provider in_app for browser/WebRTC, or twilio for real phone PSTN.",
+        "description": D["trigger_eve_call"],
         "parameters": {
             "type": "object",
             "properties": {
                 "mode": {"type": "string", "enum": ["audio", "video"]},
-                "provider": {"type": "string", "enum": ["in_app", "twilio"], "description": "in_app = browser call, twilio = real phone call"},
-                "phone_number": {"type": "string", "description": "E.164 phone number required when provider is twilio, e.g. +14155551234"},
+                "provider": {"type": "string", "enum": ["in_app", "twilio"], "description": D["trigger_eve_call.provider"]},
+                "phone_number": {"type": "string", "description": D["trigger_eve_call.phone_number"]},
             },
             "required": [],
             "additionalProperties": False,
@@ -20,12 +21,12 @@ SCHEDULE_TOOLS = [
     {
         "type": "function",
         "name": "make_twilio_call",
-        "description": "Make a real phone PSTN call via Twilio to any number, with an optional spoken message. Requires Twilio to be configured.",
+        "description": D["make_twilio_call"],
         "parameters": {
             "type": "object",
             "properties": {
-                "phone_number": {"type": "string", "description": "E.164 destination, e.g. +14155551234"},
-                "message": {"type": "string", "description": "Text to speak when answered"},
+                "phone_number": {"type": "string", "description": D["make_twilio_call.phone_number"]},
+                "message": {"type": "string", "description": D["make_twilio_call.message"]},
                 "mode": {"type": "string", "enum": ["audio", "video"]},
             },
             "required": ["phone_number"],
@@ -36,7 +37,7 @@ SCHEDULE_TOOLS = [
     {
         "type": "function",
         "name": "create_eve_schedule",
-        "description": "Create an automated scheduled task or reminder that auto-prompts Eve or triggers an incoming voice call from Eve at a specified time or interval.",
+        "description": D["create_eve_schedule"],
         "parameters": {
             "type": "object",
             "properties": {
@@ -55,14 +56,14 @@ SCHEDULE_TOOLS = [
     {
         "type": "function",
         "name": "list_eve_schedules",
-        "description": "List the user's active automated Eve schedules and reminders.",
+        "description": D["list_eve_schedules"],
         "parameters": {"type": "object", "properties": {}, "additionalProperties": False},
         "strict": True,
     },
     {
         "type": "function",
         "name": "delete_eve_schedule",
-        "description": "Delete or cancel an automated Eve schedule/reminder by its id.",
+        "description": D["delete_eve_schedule"],
         "parameters": {
             "type": "object",
             "properties": {"schedule_id": {"type": "string", "minLength": 1}},

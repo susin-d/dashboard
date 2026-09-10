@@ -1,14 +1,15 @@
 """Eve utility tool definitions — single responsibility: QR, chart, PDF, and OCR helpers."""
+from app.services.prompts import UTILITY_DESCRIPTIONS as D
 
 UTILITY_TOOLS = [
     {
         "type": "function",
         "name": "generate_qr_code",
-        "description": "Generate a QR code image from text or a URL and save it to the workspace as a PNG.",
+        "description": D["generate_qr_code"],
         "parameters": {
             "type": "object",
             "properties": {
-                "data": {"type": "string", "minLength": 1, "description": "The text or URL to encode in the QR code"},
+                "data": {"type": "string", "minLength": 1, "description": D["generate_qr_code.data"]},
             },
             "required": ["data"],
             "additionalProperties": False,
@@ -18,24 +19,24 @@ UTILITY_TOOLS = [
     {
         "type": "function",
         "name": "create_chart",
-        "description": "Render a bar, line, or pie chart from data points and save it to the workspace as a PNG.",
+        "description": D["create_chart"],
         "parameters": {
             "type": "object",
             "properties": {
-                "chart_type": {"type": "string", "enum": ["bar", "line", "pie"], "description": "Type of chart to render"},
+                "chart_type": {"type": "string", "enum": ["bar", "line", "pie"], "description": D["create_chart.chart_type"]},
                 "labels": {
                     "type": "array",
                     "items": {"type": "string"},
                     "minItems": 1,
-                    "description": "Category labels, one per data point",
+                    "description": D["create_chart.labels"],
                 },
                 "values": {
                     "type": "array",
                     "items": {"type": "number"},
                     "minItems": 1,
-                    "description": "Numeric values matching the labels",
+                    "description": D["create_chart.values"],
                 },
-                "title": {"type": "string", "description": "Optional chart title"},
+                "title": {"type": "string", "description": D["create_chart.title"]},
             },
             "required": ["chart_type", "labels", "values"],
             "additionalProperties": False,
@@ -45,11 +46,11 @@ UTILITY_TOOLS = [
     {
         "type": "function",
         "name": "read_pdf_file",
-        "description": "Extract the text content of a PDF file using an AI document model. Accepts a workspace file path or an HTTP(S) URL.",
+        "description": D["read_pdf_file"],
         "parameters": {
             "type": "object",
             "properties": {
-                "source": {"type": "string", "minLength": 1, "description": "Workspace file path or URL of the PDF"},
+                "source": {"type": "string", "minLength": 1, "description": D["read_pdf_file.source"]},
             },
             "required": ["source"],
             "additionalProperties": False,
@@ -59,11 +60,11 @@ UTILITY_TOOLS = [
     {
         "type": "function",
         "name": "extract_text_from_image",
-        "description": "Perform OCR on an image (PNG/JPG/WebP) to extract its text. Accepts a workspace file path or an HTTP(S) URL.",
+        "description": D["extract_text_from_image"],
         "parameters": {
             "type": "object",
             "properties": {
-                "source": {"type": "string", "minLength": 1, "description": "Workspace file path or URL of the image"},
+                "source": {"type": "string", "minLength": 1, "description": D["extract_text_from_image.source"]},
             },
             "required": ["source"],
             "additionalProperties": False,

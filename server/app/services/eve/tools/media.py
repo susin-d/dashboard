@@ -1,18 +1,19 @@
 """Eve media tool definitions — single responsibility: image, video, and audio generation."""
+from app.services.prompts import MEDIA_DESCRIPTIONS as D
 
 MEDIA_TOOLS = [
     {
         "type": "function",
         "name": "generate_image",
-        "description": "Generate an image from a text prompt using an AI image model. Returns the workspace path of the saved PNG.",
+        "description": D["generate_image"],
         "parameters": {
             "type": "object",
             "properties": {
-                "prompt": {"type": "string", "minLength": 1, "description": "Description of the image to generate"},
+                "prompt": {"type": "string", "minLength": 1, "description": D["generate_image.prompt"]},
                 "size": {
                     "type": "string",
                     "enum": ["1024x1024", "1024x1536", "1536x1024"],
-                    "description": "Image dimensions: square, portrait, or landscape (default 1024x1024)",
+                    "description": D["generate_image.size"],
                 },
             },
             "required": ["prompt"],
@@ -23,11 +24,11 @@ MEDIA_TOOLS = [
     {
         "type": "function",
         "name": "generate_video",
-        "description": "Generate a short video clip from a text prompt using an AI video model (Gemini Veo). Takes up to a few minutes. Returns the workspace path of the saved MP4.",
+        "description": D["generate_video"],
         "parameters": {
             "type": "object",
             "properties": {
-                "prompt": {"type": "string", "minLength": 1, "description": "Description of the video scene to generate"},
+                "prompt": {"type": "string", "minLength": 1, "description": D["generate_video.prompt"]},
             },
             "required": ["prompt"],
             "additionalProperties": False,
@@ -37,11 +38,11 @@ MEDIA_TOOLS = [
     {
         "type": "function",
         "name": "text_to_speech",
-        "description": "Convert text into a spoken audio file (MP3) saved to the workspace, using the user's configured TTS provider.",
+        "description": D["text_to_speech"],
         "parameters": {
             "type": "object",
             "properties": {
-                "text": {"type": "string", "minLength": 1, "description": "The text to speak"},
+                "text": {"type": "string", "minLength": 1, "description": D["text_to_speech.text"]},
             },
             "required": ["text"],
             "additionalProperties": False,
@@ -51,14 +52,14 @@ MEDIA_TOOLS = [
     {
         "type": "function",
         "name": "speech_to_text",
-        "description": "Transcribe an audio file to text using the user's configured STT provider. Accepts a workspace file path or an external URL.",
+        "description": D["speech_to_text"],
         "parameters": {
             "type": "object",
             "properties": {
                 "source": {
                     "type": "string",
                     "minLength": 1,
-                    "description": "Workspace file path (e.g. media/note.mp3) or HTTP(S) URL of the audio",
+                    "description": D["speech_to_text.source"],
                 },
             },
             "required": ["source"],

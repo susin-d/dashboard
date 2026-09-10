@@ -162,6 +162,12 @@ class Settings:
     updater_secret: str | None = os.getenv("UPDATER_SECRET") or os.getenv("OTA_SECRET")
     tauri_signing_public_key: str | None = os.getenv("TAURI_SIGNING_PUBLIC_KEY")
 
+    # File logging (canonical — app.core.app_logging reads these, ADR 0050).
+    # LOG_DIR may be absolute (/app/logs in Docker) or relative to server/.
+    log_dir: str = os.getenv("LOG_DIR", "logs")
+    log_level: str = os.getenv("LOG_LEVEL", "INFO")
+    log_retention_days: int = int(os.getenv("LOG_RETENTION_DAYS", "7"))
+
     # Twilio PSTN provider (dual call option: in-app WebRTC vs PSTN)
     twilio_account_sid: str | None = os.getenv("TWILIO_ACCOUNT_SID")
     twilio_auth_token: str | None = os.getenv("TWILIO_AUTH_TOKEN")

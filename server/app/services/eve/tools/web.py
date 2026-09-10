@@ -1,17 +1,18 @@
 """Eve web tool definitions — single responsibility: web domain."""
+from app.services.prompts import WEB_DESCRIPTIONS as D
 
 WEB_TOOLS = [
     {
         "type": "function",
         "name": "browse_web",
-        "description": "Browse the web. Search the open web using a search query, fetch and read the content of a specific web URL, or do both.",
+        "description": D["browse_web"],
         "parameters": {
             "type": "object",
             "properties": {
-                "query": {"type": "string", "description": "Optional search query to search the open web for"},
-                "url": {"type": "string", "description": "Optional HTTP or HTTPS URL to fetch and read"},
-                "num_results": {"type": "integer", "description": "Number of search results to return (default 5, max 10)"},
-                "max_chars": {"type": "integer", "description": "Maximum characters of text to extract from the page (default 12000)"},
+                "query": {"type": "string", "description": D["browse_web.query"]},
+                "url": {"type": "string", "description": D["browse_web.url"]},
+                "num_results": {"type": "integer", "description": D["browse_web.num_results"]},
+                "max_chars": {"type": "integer", "description": D["browse_web.max_chars"]},
             },
             "required": [],
             "additionalProperties": False,
@@ -21,12 +22,12 @@ WEB_TOOLS = [
     {
         "type": "function",
         "name": "search_web",
-        "description": "Search the open web for current information, documentation, news, or articles. Returns top matching results with titles, snippets, and URLs.",
+        "description": D["search_web"],
         "parameters": {
             "type": "object",
             "properties": {
-                "query": {"type": "string", "minLength": 1, "description": "The search terms to query the web for"},
-                "num_results": {"type": "integer", "description": "Number of search results to return (default 5, max 10)"},
+                "query": {"type": "string", "minLength": 1, "description": D["search_web.query"]},
+                "num_results": {"type": "integer", "description": D["search_web.num_results"]},
             },
             "required": ["query"],
             "additionalProperties": False,
@@ -36,12 +37,12 @@ WEB_TOOLS = [
     {
         "type": "function",
         "name": "fetch_web_page",
-        "description": "Fetch and extract readable text/markdown content from an external web URL.",
+        "description": D["fetch_web_page"],
         "parameters": {
             "type": "object",
             "properties": {
-                "url": {"type": "string", "minLength": 1, "description": "The HTTP or HTTPS URL of the web page to read"},
-                "max_chars": {"type": "integer", "description": "Maximum characters of text content to extract (default 12000, max 30000)"},
+                "url": {"type": "string", "minLength": 1, "description": D["fetch_web_page.url"]},
+                "max_chars": {"type": "integer", "description": D["fetch_web_page.max_chars"]},
             },
             "required": ["url"],
             "additionalProperties": False,

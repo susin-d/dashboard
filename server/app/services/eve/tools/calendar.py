@@ -1,18 +1,19 @@
 """Eve calendar tool definitions — single responsibility: calendar events and reminders."""
+from app.services.prompts import CALENDAR_DESCRIPTIONS as D
 
 CALENDAR_TOOLS = [
     {
         "type": "function",
         "name": "create_calendar_event",
-        "description": "Create a calendar event (meeting, deadline, or reminder) stored in the user's calendar_events collection.",
+        "description": D["create_calendar_event"],
         "parameters": {
             "type": "object",
             "properties": {
-                "title": {"type": "string", "minLength": 1, "description": "Event title"},
-                "date": {"type": "string", "description": "Event date in YYYY-MM-DD format"},
-                "time": {"type": "string", "description": "Optional event time in HH:MM (24h) format"},
-                "end_date": {"type": "string", "description": "Optional end date in YYYY-MM-DD format for multi-day events"},
-                "notes": {"type": "string", "description": "Optional additional details"},
+                "title": {"type": "string", "minLength": 1, "description": D["create_calendar_event.title"]},
+                "date": {"type": "string", "description": D["create_calendar_event.date"]},
+                "time": {"type": "string", "description": D["create_calendar_event.time"]},
+                "end_date": {"type": "string", "description": D["create_calendar_event.end_date"]},
+                "notes": {"type": "string", "description": D["create_calendar_event.notes"]},
             },
             "required": ["title", "date"],
             "additionalProperties": False,
@@ -22,7 +23,7 @@ CALENDAR_TOOLS = [
     {
         "type": "function",
         "name": "list_calendar_events",
-        "description": "List the user's calendar events.",
+        "description": D["list_calendar_events"],
         "parameters": {
             "type": "object",
             "properties": {},
@@ -34,11 +35,11 @@ CALENDAR_TOOLS = [
     {
         "type": "function",
         "name": "delete_calendar_event",
-        "description": "Delete a calendar event by its record id.",
+        "description": D["delete_calendar_event"],
         "parameters": {
             "type": "object",
             "properties": {
-                "event_id": {"type": "string", "minLength": 1, "description": "Id of the calendar event to delete"},
+                "event_id": {"type": "string", "minLength": 1, "description": D["delete_calendar_event.event_id"]},
             },
             "required": ["event_id"],
             "additionalProperties": False,

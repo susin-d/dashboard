@@ -13,8 +13,10 @@ from app.api.routes.calls_ws import router as calls_ws_router
 from app.api.routes.twilio_relay import router as twilio_relay_router
 from app.api.routes.whatsapp_ws import router as whatsapp_ws_router
 from app.core.config import settings
+from app.core.app_logging import setup_logging
 from app.core.cors import ALLOWED_ORIGIN_REGEX, is_allowed_origin as _is_allowed_origin
 from app.core.rate_limit import RateLimitMiddleware
+from app.core.request_log import RequestLoggingMiddleware
 from app.core.worker import server_worker
 
 from fastapi.staticfiles import StaticFiles
@@ -75,6 +77,7 @@ async def lifespan(app: FastAPI):
 
 
 def create_app() -> FastAPI:
+    setup_logging()
     is_prod = settings.app_env == "production"
     application = FastAPI(
         title=settings.app_name,
@@ -86,6 +89,8 @@ def create_app() -> FastAPI:
     )
 
     # Standard ASGI CORS Middleware (pure ASGI handler for preflight and standard requests)
+    # RequestLogging is added first so it stays outermost and also logs 429s.
+    application.add_middleware(RequestLoggingMiddleware)
     application.add_middleware(RateLimitMiddleware)
     application.add_middleware(
         CORSMiddleware,

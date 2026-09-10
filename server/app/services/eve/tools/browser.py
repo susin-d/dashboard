@@ -1,14 +1,15 @@
 """Eve browser-control tool definitions — single responsibility: interactive web automation."""
+from app.services.prompts import BROWSER_DESCRIPTIONS as D
 
 BROWSER_TOOLS = [
     {
         "type": "function",
         "name": "browser_navigate",
-        "description": "Open a URL in Eve's headless browser session. The page state persists across browser_* tool calls, so you can navigate then click, type, extract, or screenshot.",
+        "description": D["browser_navigate"],
         "parameters": {
             "type": "object",
             "properties": {
-                "url": {"type": "string", "minLength": 1, "description": "The HTTP or HTTPS URL to open"},
+                "url": {"type": "string", "minLength": 1, "description": D["browser_navigate.url"]},
             },
             "required": ["url"],
             "additionalProperties": False,
@@ -18,11 +19,11 @@ BROWSER_TOOLS = [
     {
         "type": "function",
         "name": "browser_click",
-        "description": "Click an element in Eve's headless browser session using a CSS selector.",
+        "description": D["browser_click"],
         "parameters": {
             "type": "object",
             "properties": {
-                "selector": {"type": "string", "minLength": 1, "description": "CSS selector of the element to click"},
+                "selector": {"type": "string", "minLength": 1, "description": D["browser_click.selector"]},
             },
             "required": ["selector"],
             "additionalProperties": False,
@@ -32,13 +33,13 @@ BROWSER_TOOLS = [
     {
         "type": "function",
         "name": "browser_type",
-        "description": "Type text into a form field in Eve's headless browser session using a CSS selector.",
+        "description": D["browser_type"],
         "parameters": {
             "type": "object",
             "properties": {
-                "selector": {"type": "string", "minLength": 1, "description": "CSS selector of the input field"},
-                "text": {"type": "string", "description": "Text to type into the field"},
-                "submit": {"type": "boolean", "description": "Press Enter after typing to submit the form (default false)"},
+                "selector": {"type": "string", "minLength": 1, "description": D["browser_type.selector"]},
+                "text": {"type": "string", "description": D["browser_type.text"]},
+                "submit": {"type": "boolean", "description": D["browser_type.submit"]},
             },
             "required": ["selector", "text"],
             "additionalProperties": False,
@@ -48,11 +49,11 @@ BROWSER_TOOLS = [
     {
         "type": "function",
         "name": "browser_extract_text",
-        "description": "Extract visible text from the current page in Eve's headless browser session, optionally scoped to a CSS selector.",
+        "description": D["browser_extract_text"],
         "parameters": {
             "type": "object",
             "properties": {
-                "selector": {"type": "string", "description": "Optional CSS selector to extract text from; defaults to the whole page"},
+                "selector": {"type": "string", "description": D["browser_extract_text.selector"]},
             },
             "required": [],
             "additionalProperties": False,
@@ -62,11 +63,11 @@ BROWSER_TOOLS = [
     {
         "type": "function",
         "name": "browser_screenshot",
-        "description": "Capture a PNG screenshot of the current page in Eve's headless browser session and save it to the workspace.",
+        "description": D["browser_screenshot"],
         "parameters": {
             "type": "object",
             "properties": {
-                "full_page": {"type": "boolean", "description": "Capture the full scrollable page instead of the viewport (default false)"},
+                "full_page": {"type": "boolean", "description": D["browser_screenshot.full_page"]},
             },
             "required": [],
             "additionalProperties": False,
