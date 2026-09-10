@@ -14,7 +14,7 @@ from tests.support.auth import (
     headers_for,
     token_for,
 )
-from tests.support.db import clean_database, get_sql_client, seed_user
+from tests.support.db import clean_database, get_sql_client, seed_user, truncate_database
 
 __all__ = [
     "TEST_USER",
@@ -25,4 +25,5 @@ __all__ = [
     "headers_for",
     "seed_user",
     "token_for",
+    "truncate_database",
 ]

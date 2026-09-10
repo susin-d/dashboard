@@ -2,6 +2,9 @@
 
 Historical implementation log extracted from `context.md`. `context.md` now holds the **current snapshot** only; this file preserves the full chronological history for audit.
 
+## 2026-09-10 — Batch 1 splits (ADR 0051) kept; prompts backend-only (ADR 0049 amended)
+- 10 files split into facaded packages (SceneViewport, Eve voice, App shell, Eve composer, Workspace dialogs, Live2D, VRM, Documents, Eve modal, Eve page); menu-text UI + `/prompts` endpoint removed, `prompts.py` backend-only canonical.
+
 ## 2026-09-10 — Smart test cache skip-if-unchanged (ADR 0048)
 - `scripts/test-smart.ps1/.sh` + `scripts/lib/test-hash.py` (stdlib SHA-256 over per-scope inputs): repeat runs skip in <1s (`SKIP server — unchanged`, 0.66s vs 238s suite); miss/corrupt/prior-fail/`-Force`/real-change always runs (fail-closed); `.cache/` gitignored.
 - Root-caused 3 suite failures instead of masking: schedule create now persists all fields (`eve.py`), call `update()` round-trips timestamps (`calls.py`), webhook test asserts paginated `items` contract (ADR 0042).

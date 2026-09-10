@@ -51,5 +51,7 @@ class TestCallWebSocketEndpoint(unittest.TestCase):
         mock_repo = mock_repo_class.return_value
         mock_repo.list_incoming.return_value = []
         with self.client.websocket_connect(f"/ws/calls?token={self.token}") as ws:
-            # Successfully connected
+            # Successfully connected — close explicitly so teardown never
+            # waits out the server ping interval.
             self.assertIsNotNone(ws)
+            ws.close()

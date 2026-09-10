@@ -65,9 +65,13 @@ class TestRelayWebSocket(unittest.TestCase):
         self.addCleanup(patcher_cfg.stop)
         self.addCleanup(patcher_client.stop)
 
-    def _read_until_last(self, ws):
+    def _read_until_last(self, ws, max_frames=50):
+        # Server always terminates a turn with last=True (done/fallback).
+        # max_frames converts a server regression into an assertion instead
+        # of an infinite loop; pytest-timeout (30s) bounds a dead socket.
         frames = [ws.receive_json()]
         while not frames[-1].get("last"):
+            assert len(frames) < max_frames, f"relay never sent last frame: {frames[-1]!r}"
             frames.append(ws.receive_json())
         return frames
 

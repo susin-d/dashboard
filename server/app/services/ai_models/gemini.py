@@ -2,11 +2,7 @@ import json
 import logging
 from collections.abc import Iterator
 from types import SimpleNamespace
-from typing import Any
-
-from google import genai
-from google.genai import types
-from google.genai.errors import APIError
+from typing import Any, TYPE_CHECKING
 
 from app.services.ai_models.contracts import (
     AIServiceError,
@@ -17,11 +13,22 @@ from app.services.ai_models.contracts import (
     classify_provider_error,
 )
 
+if TYPE_CHECKING:  # pragma: no cover — typing only, never imported at runtime
+    from google.genai import types as _genai_types
+
 logger = logging.getLogger(__name__)
 
 
-def _convert_tool(tool: dict[str, Any]) -> types.Tool:
+def _types():
+    """Local import so ``google.genai`` (~7s) loads only on first Gemini use."""
+    from google.genai import types
+
+    return types
+
+
+def _convert_tool(tool: dict[str, Any]) -> "_genai_types.Tool":
     """Convert an OpenAI-style tool definition to a Gemini Tool."""
+    types = _types()
     function = types.FunctionDeclaration(
         name=tool["name"],
         description=tool.get("description", ""),
@@ -49,7 +56,10 @@ def _parts_tool_calls(parts: list[Any]) -> list[ToolCall]:
 class GeminiProviderClient(ProviderClient):
     """Google Gemini provider adapter using the google-genai SDK."""
 
-    def build_client(self, client_options: dict[str, Any]) -> genai.Client:
+    def build_client(self, client_options: dict[str, Any]):
+        from google import genai
+
+        types = _types()
         try:
             options = dict(client_options)
             api_key = options.pop("api_key")
@@ -64,7 +74,8 @@ class GeminiProviderClient(ProviderClient):
             logger.error(f"[Gemini Provider] Failed to initialize client: {type(error).__name__}: {error}", exc_info=True)
             raise AIServiceError(f"Gemini client initialization failed: {type(error).__name__}: {error}") from error
 
-    def normalize_messages(self, messages: list[dict[str, str]]) -> list[types.Content]:
+    def normalize_messages(self, messages: list[dict[str, str]]) -> list[Any]:
+        types = _types()
         contents = []
         for message in messages:
             role = "model" if message["role"] == "assistant" else "user"
@@ -83,6 +94,9 @@ class GeminiProviderClient(ProviderClient):
         conversation: Any,
         tools: list[dict[str, Any]],
     ) -> ProviderResponse:
+        from google.genai.errors import APIError
+
+        types = _types()
         config = types.GenerateContentConfig(
             system_instruction=instructions,
             tools=[_convert_tool(tool) for tool in tools],

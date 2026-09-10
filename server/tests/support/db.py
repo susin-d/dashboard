@@ -1,8 +1,9 @@
 """SQLite-backed database helpers shared by integration and E2E tests.
 
 The engine itself is created once at import time (see ``tests/conftest.py``),
-bound to a throwaway SQLite file. These helpers reset schema state around each
-test and seed well-known rows.
+bound to a throwaway per-worker SQLite file. Schema is created once per
+worker; per-test isolation truncates rows (``DELETE FROM``) instead of
+``drop_all``/``create_all`` DDL, which is ~10x faster on Windows file SQLite.
 """
 
 from datetime import datetime, timezone
@@ -16,16 +17,27 @@ TEST_DB_USER = {
 }
 
 
-def clean_database() -> None:
-    """Drop and recreate every table for a pristine per-test schema."""
+def _ensure_schema() -> None:
+    """Create all tables once per worker (idempotent, no drop)."""
     from app.db.session import Base, sync_engine
 
-    Base.metadata.drop_all(sync_engine)
     Base.metadata.create_all(sync_engine)
-    # Clear the response cache so previous test data does not leak into the
-    # next test when the local in-memory fallback is used (REDIS_URL unset in
-    # conftest.py). Redis-backed runs use ephemeral prefixes but local tests
-    # share a single process-wide dict.
+
+
+def truncate_database() -> None:
+    """Delete all rows for per-test isolation without DDL rebuilds."""
+    from sqlalchemy import text
+
+    from app.db.session import Base, sync_engine
+
+    _ensure_schema()
+    with sync_engine.begin() as conn:
+        for table in reversed(Base.metadata.sorted_tables):
+            conn.execute(text(f'DELETE FROM "{table.name}"'))
+        try:
+            conn.execute(text("DELETE FROM sqlite_sequence"))
+        except Exception:
+            pass
     try:
         from app.core.cache import cache_clear
 
@@ -34,12 +46,21 @@ def clean_database() -> None:
         pass
 
 
+def clean_database() -> None:
+    """Backward-compatible alias: pristine rows via truncate (no DDL)."""
+    truncate_database()
+
+
 @pytest.fixture()
 def db():
-    """Function-scoped fixture: fresh empty SQLite schema around each test."""
-    clean_database()
+    """Function-scoped fixture: clean rows before each test (not after).
+
+    Truncate-before (single pass) is sufficient for isolation and halves the
+    per-test DB cost vs the old drop+create before+after pattern. Schema is
+    created once per worker via ``_ensure_schema``.
+    """
+    truncate_database()
     yield
-    clean_database()
 
 
 def get_sql_client():

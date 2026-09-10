@@ -14,6 +14,7 @@ parameter (identical token format validated by ``app.core.auth``).
 
 import asyncio
 import logging
+import os
 
 from fastapi import APIRouter, Query, WebSocket, WebSocketDisconnect
 
@@ -28,6 +29,19 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 PING_INTERVAL_S = 25
+
+
+def _ping_interval() -> float:
+    """Server ping interval, overridable for tests via env.
+
+    Production default stays 25s. Tests set
+    ``STARWAVES_WS_PING_INTERVAL_S=0.1`` (see ``tests/conftest.py``) so
+    ``websocket_connect`` teardown never waits out the full interval.
+    """
+    try:
+        return max(0.05, float(os.getenv("STARWAVES_WS_PING_INTERVAL_S", "25")))
+    except ValueError:
+        return 25.0
 
 
 def _serialize_call(call: dict) -> dict:
@@ -79,7 +93,7 @@ async def calls_websocket(
             # Keep the connection alive with server-side pings.
             # We also drain any client messages (pong / keep-alive) without acting on them.
             try:
-                text = await asyncio.wait_for(websocket.receive_text(), timeout=PING_INTERVAL_S)
+                text = await asyncio.wait_for(websocket.receive_text(), timeout=_ping_interval())
                 if len(text) > 8192:
                     await websocket.close(code=1009)
                     break
