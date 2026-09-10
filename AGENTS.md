@@ -77,6 +77,11 @@ Instructions and guidelines for AI Coding Agents working in the **Starwaves** co
    - If a temporary mitigation is unavoidable (e.g. upstream outage), it must be: (a) behind an explicit flag/env, (b) tracked with a TODO that links to an issue, and (c) approved by the user — never silent.
    - Review checklist before commit: `Grep` for `temp fix|easy fix|quick fix|hack|workaround|TODO.*temp` must be clean; failing tests must be fixed, not skipped or commented out.
 
+10. **Single Source of Truth — Search First, Never Duplicate**:
+   - Before creating ANY file, function, component, service, hook, type, schema, endpoint, utility, constant, or abstraction, `Grep` (with `include`) for an existing implementation. If it exists, reuse or improve it; if several exist, migrate to the ONE canonical below and delete the rest.
+   - Canonicals (ADRs 0043–0046, see `ARCHITECTURE.md` §5): data access → `repositories/*` (never import `app.db.sql` from routes/services); errors → `core/errors.py` (never raw `HTTPException` except dynamic upstream passthrough with comment); pagination → `core/pagination.py`; config → `core/config.py Settings` / `lib/request.js API_URL`; transport → `apiRequest`/`fetchWithTimeout`/`getWsBase` (raw `fetch` only for OAuth popup, binary, SSE with inline justification); storage keys → `lib/storageKeys.js` (values verbatim, never redefined); AI user keys → `extract_user_keys()`; colors → `tokens.css` vars.
+   - Do not treat cache as authoritative (DB wins). Do not add abstractions without a concrete need. Do not change behavior during refactoring — document conflicts in the audit/ADR instead. Run tests after meaningful changes and delete obsolete implementations after migration.
+
 ---
 
 ## 🏗 2. Clean Code Principles

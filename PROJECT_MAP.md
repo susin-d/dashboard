@@ -16,6 +16,10 @@ starwaves/
 ├── sql/              Canonical DB schema + migrations + indexes
 ├── docs/adr/         Architecture Decision Records (0001, _template, README)
 ├── AGENTS.md         Permanent agent rules (no sub-agents, context.md, ADRs)
+├── ARCHITECTURE.md   Durable architecture: layering, truth, ownership, canonicals
+├── CODEBASE_AUDIT.md Phase 1 single-source-of-truth audit (duplicates, debt, order)
+├── REFACTOR_REPORT.md What the 0043–0046 refactor changed + remaining debt
+├── AGENTS.md         Permanent agent rules (no sub-agents, context.md, ADRs)
 ├── context.md        Living project snapshot (current state only)
 ├── CHANGELOG.md      History log (moved from context.md)
 ├── PROJECT_MAP.md    This file — agent fast-path index
@@ -274,8 +278,18 @@ curl -i http://localhost/health
 | `docs/adr/README.md` | ADR index + rules (numbering, lifecycle, commit gate) |
 | `docs/adr/_template.md` | ADR template (Status, Context, Decision, Consequences, Alternatives) |
 | `docs/adr/0001-*.md` | ADR 0001 — No sub-agents, context.md first, ADRs required |
+| `docs/adr/0043-*.md` → `0046-*.md` | Single-truth canonicals: data-access layer, backend errors, configuration, transport/AI-route ownership |
 
 ADRs: `docs/adr/NNNN-kebab-case-title.md` (zero-padded, sequential). Create via `_template.md`; commit with code; update `context.md` `Last updated`.
+
+## Canonicals (do not re-create — reuse; see `ARCHITECTURE.md` §5)
+
+```text
+repositories/* = sole data API (db/sql internal) · core/errors.py = errors
+core/pagination.py = pagination · core/config.py Settings + request.js API_URL = config
+request.js apiRequest/fetchWithTimeout/getWsBase = transport · lib/storageKeys.js = keys
+services/ai_models/config.extract_user_keys = AI keys · tokens.css vars = colors
+```
 
 ## Agent Rules (`AGENTS.md` §1)
 
@@ -283,6 +297,7 @@ ADRs: `docs/adr/NNNN-kebab-case-title.md` (zero-padded, sequential). Create via 
 - **Tiered loading** (§1.5): Tier 0 `AGENTS.md`+`PROJECT_MAP.md` (preloaded) → Tier 1 `PROJECT_MAP.md` → Tier 2 `context.md` (conditional) → Tier 3 targeted `Grep`/`Read`. No `Glob **/*` scans.
 - **context.md** (§1.1): Living snapshot <15k, updated in same commit as code (single `Last updated` one-liner; old detail → `CHANGELOG.md`).
 - **ADRs required** (§1.7): Non-trivial architecture → ADR in `docs/adr/` with lifecycle `Proposed→Accepted→Superseded`.
+- **Single source of truth** (§1.10): Search first via `Grep`; reuse canonicals above; never duplicate business logic or state.
 
 ## Files to Ignore
 
