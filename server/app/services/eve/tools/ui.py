@@ -2,6 +2,7 @@
 
 from app.services.eve.constants import WORKSPACE_PAGES
 from app.services.prompts import UI_DESCRIPTIONS as D
+from app.services.prompts import ui_page_description
 
 _WORKSPACE_PAGES_LIST = list(WORKSPACE_PAGES)
 
@@ -15,7 +16,7 @@ UI_TOOLS = [
             "properties": {
                 "page": {
                     "type": "string",
-                    "description": f"Optional page to inspect. One of: {', '.join(_WORKSPACE_PAGES_LIST)} or custom:<slug>",
+                    "description": ui_page_description(_WORKSPACE_PAGES_LIST),
                 }
             },
             "required": [],
