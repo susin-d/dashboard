@@ -177,8 +177,9 @@ def create_app() -> FastAPI:
     # Root /health alias for load balancers and direct probe requests
     @application.get("/health", include_in_schema=False)
     async def root_health_check():
-        from app.services.health import build_liveness
-        return JSONResponse(content=build_liveness())
+        from app.services.health import collect_health
+
+        return JSONResponse(content=await collect_health(detailed=False))
 
     # Root readiness aliases for operators and load balancers that do not use
     # the versioned API prefix. These delegate to the canonical health probes.

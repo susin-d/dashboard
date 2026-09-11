@@ -1,4 +1,4 @@
-"""Liveness probe: GET /health answers from process state only (no DB/HTTP/disk)."""
+"""Health probe: GET /health reports dependency statuses without inventory data."""
 
 from fastapi.testclient import TestClient
 
@@ -27,12 +27,12 @@ class TestLivenessPayload:
 
 
 class TestLivenessRoute:
-    def test_health_carries_no_checks(self):
+    def test_health_carries_dependency_checks(self):
         response = TestClient(app).get("/api/v1/health")
         assert response.status_code == 200
         body = response.json()
-        assert body["status"] == "ok"
-        assert body["checks"] is None
+        assert body["checks"] is not None
+        assert {"database", "cache", "whatsapp_worker"}.issubset(body["checks"])
 
     def test_root_health_alias(self):
         response = TestClient(app).get("/health")

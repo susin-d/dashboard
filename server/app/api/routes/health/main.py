@@ -1,4 +1,4 @@
-"""Liveness probe — zero-I/O fast path for docker healthcheck and load balancers."""
+"""Health probe with dependency statuses and no endpoint inventory."""
 
 import logging
 
@@ -13,9 +13,9 @@ router = APIRouter()
 
 @router.get("/health", response_model=HealthResponse)
 async def health_check() -> HealthResponse:
-    """Liveness — process state only. Deep probes live on /health/detailed + /health/checks."""
-    from app.services.health import build_liveness
+    """Return service statuses without the expensive endpoint inventory walk."""
+    from app.services.health import collect_health
 
-    payload = build_liveness()
-    logger.debug("GET /api/v1/health -> %s", payload["status"])
+    payload = await collect_health(detailed=False)
+    logger.info("GET /api/v1/health -> %s (%s)", payload["status"], payload["summary"])
     return HealthResponse(**payload)
