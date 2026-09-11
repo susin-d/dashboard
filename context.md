@@ -1,7 +1,7 @@
 # Starwaves Context
 
 Living snapshot for AI agents. `AGENTS.md` holds permanent rules; this file holds the **current state**. See `CHANGELOG.md` for history and `PROJECT_MAP.md` for the file index.
-Last updated: 2026-09-10 — Fastest pytest suite (ADR 0052) kept; menu-text UI + /prompts endpoint removed, prompts.py backend-only canonical (ADR 0049 amended).
+Last updated: 2026-09-11 — Health probes available through both /api/v1/health/* and root /health/* aliases; /health remains zero-I/O liveness.
 
 ## Contents
 1. [Overview](#1-overview) · 2. [Repository structure](#2-repository-structure) · 3. [Backend](#4-backend) · 4. [Frontend](#4-frontend) · 5. [Design system](#5-design-system) · 6. [Current snapshot](#6-current-snapshot) · 7. [Limitations](#7-limitations) · 8. [Verification](#8-verification)
@@ -45,6 +45,7 @@ For full maps see `PROJECT_MAP.md`. Keep this section brief; expand there.
  - **DB:** `models/` (`UserSession` for devices) + mixins. SQL in `sql/` (idempotent, now `user_sessions` + indexes `ix_user_sessions_*`). `db/sql/` modular handlers + `registry.py` dispatch + `base.py` CRUD + RLS `SET LOCAL app.current_user_id`. Device sessions 30d expiry, 10 cap LRU. Schedule create persists all fields (`next_run_at`/`enabled` round-trip for due-scan); call `update()` round-trips `created_at`/`updated_at` (stale-ring expiry).
   - **Performance:** hot reads `async+to_thread`, composite indexes, pools `5/5 recycle 300`, Redis/LRU `cached` per-user + `cache_clear` fixture, workspace disk. `usage:summary/logs` `SHORT 30s` + invalidates. Rate-limit `10r/s burst 60` + CORS via `$cors_allow_*` + `RateLimitMiddleware`.
 - **Logging:** `core/app_logging.py` `setup_logging()` + `core/request_log.py` access lines → `LOG_DIR` (`server/logs/` local, `/app/logs` + `server-logs` volume in Docker) `starwaves.log` INFO+ / `starwaves-error.log` WARNING+, midnight rotation × `LOG_RETENTION_DAYS=7` (ADR 0050); serverless stdout-only.
+- **Health:** `/health` is zero-I/O liveness; `/health/detailed`, `/health/checks`, and `/health/checks/{name}` expose database, cache, WhatsApp worker, and workspace readiness probes. The same routes remain available under `/api/v1/health/*`.
 
 ## 4. Frontend
 - **Entry:** `website/src/main.jsx` → `App.jsx` (routing + workspace state). **Layout:** `layouts/AppLayout.jsx`.

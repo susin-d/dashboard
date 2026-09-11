@@ -1,8 +1,8 @@
-"""Lightweight liveness — fast path for docker healthcheck (no 20KB endpoint list)."""
+"""Liveness probe — zero-I/O fast path for docker healthcheck and load balancers."""
 
 import logging
 
-from fastapi import APIRouter, Request
+from fastapi import APIRouter
 
 from app.schemas.health import HealthResponse
 
@@ -12,10 +12,10 @@ router = APIRouter()
 
 
 @router.get("/health", response_model=HealthResponse)
-async def health_check(request: Request) -> HealthResponse:
-    """Liveness probe — timed checks for DB/cache/whatsapp/workspace, no endpoint inventory."""
-    from app.services.health import collect_health
+async def health_check() -> HealthResponse:
+    """Liveness — process state only. Deep probes live on /health/detailed + /health/checks."""
+    from app.services.health import build_liveness
 
-    payload = await collect_health(app=request.app, detailed=False)
-    logger.info("GET /api/v1/health -> %s (%s)", payload["status"], payload["summary"])
+    payload = build_liveness()
+    logger.debug("GET /api/v1/health -> %s", payload["status"])
     return HealthResponse(**payload)

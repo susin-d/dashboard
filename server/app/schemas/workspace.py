@@ -80,6 +80,16 @@ class PageResponse(BaseModel):
     has_more: bool = False
 
 
+class DashboardOverviewResponse(BaseModel):
+    jobs: PageResponse
+    projects: PageResponse
+    hackathons: PageResponse
+    notifications: PageResponse
+    contests: PageResponse
+    todos: PageResponse
+    documents: PageResponse
+
+
 class JobUpdate(BaseModel):
     company: str | None = Field(default=None, min_length=1, max_length=200)
     role: str | None = Field(default=None, min_length=1, max_length=200)

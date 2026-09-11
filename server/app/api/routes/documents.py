@@ -15,6 +15,7 @@ _DOCUMENTS_PREFIX = "documents"
 
 def _invalidate_documents(user_id: str) -> None:
     cache_invalidate_prefix(f"{_DOCUMENTS_PREFIX}:{user_id}")
+    cache_invalidate_prefix(f"workspace:overview:{user_id}")
 
 
 @router.get("")

@@ -13,7 +13,7 @@ function request(path = '', options = {}) {
   })
 }
 
-function fromApi(todo) {
+export function mapTodoFromApi(todo) {
   return {
     id: todo.id,
     title: todo.title,
@@ -24,7 +24,8 @@ function fromApi(todo) {
 
 export async function loadTodos() {
   const todos = await request()
-  return todos.map(fromApi)
+  const items = Array.isArray(todos) ? todos : todos.items ?? []
+  return items.map(mapTodoFromApi)
 }
 
 export async function createTodo(todo) {
@@ -36,7 +37,7 @@ export async function createTodo(todo) {
       due_date: todo.dueDate || null,
     }),
   })
-  return fromApi(created)
+  return mapTodoFromApi(created)
 }
 
 export async function updateTodo(todoId, changes) {
@@ -48,7 +49,7 @@ export async function updateTodo(todoId, changes) {
     method: 'PATCH',
     body: JSON.stringify(payload),
   })
-  return fromApi(updated)
+  return mapTodoFromApi(updated)
 }
 
 export function deleteTodo(todoId) {

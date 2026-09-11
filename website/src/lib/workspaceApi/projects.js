@@ -1,6 +1,6 @@
 import { request } from './_shared'
 
-function mapProject(project) {
+export function mapProject(project) {
   const rawId = String(project.id)
   const isGithub = rawId.startsWith('github-')
   const formattedId = isGithub || rawId.startsWith('project-') ? rawId : `project-${rawId}`

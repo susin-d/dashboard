@@ -11,7 +11,7 @@ function authenticatedRequest(path, options = {}) {
   })
 }
 
-function fromApi(document) {
+export function mapDocumentFromApi(document) {
   return {
     id: document.id,
     name: document.name,
@@ -42,7 +42,8 @@ function toApi(document) {
 
 export async function loadDocuments() {
   const documents = await authenticatedRequest('/documents')
-  return documents.map(fromApi)
+  const items = Array.isArray(documents) ? documents : documents.items ?? []
+  return items.map(mapDocumentFromApi)
 }
 
 export async function persistDocument(document) {
@@ -50,7 +51,7 @@ export async function persistDocument(document) {
     `/documents/${encodeURIComponent(document.id)}`,
     { method: 'PUT', body: JSON.stringify(toApi(document)) },
   )
-  return fromApi(saved)
+  return mapDocumentFromApi(saved)
 }
 
 export function deleteDocument(documentId) {

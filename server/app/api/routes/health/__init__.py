@@ -1,7 +1,7 @@
 """Facade — preserves `from app.api.routes.health import router` after split.
 
 The monolithic 27-line health.py has been split per SRP:
-- main.py      : GET /health (lightweight, for docker healthcheck)
+- main.py      : GET /health (liveness, zero I/O — no checks, for docker/LB)
 - detailed.py  : GET /health/detailed (full checks + 231 endpoints)
 - checks.py    : GET /health/checks and GET /health/checks/{name} (per-service probes from other services)
 

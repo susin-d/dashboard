@@ -4,7 +4,11 @@ import asyncio
 from fastapi import APIRouter, Depends, Query, Response
 from app.db import SqlClient, get_firestore
 
-from app.api.routes.workspace._shared import DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE
+from app.api.routes.workspace._shared import (
+    DEFAULT_PAGE_SIZE,
+    MAX_PAGE_SIZE,
+    invalidate_workspace_overview,
+)
 from app.core.auth import get_current_user
 from app.core.cache import CACHE_TTL_MEDIUM, CACHE_TTL_SHORT, cache_invalidate_prefix, cached
 from app.core.errors import not_found
@@ -18,6 +22,7 @@ _WS_NOTIFICATIONS_PREFIX = "workspace:notifications"
 
 def _invalidate_ws_notifications(user_id: str) -> None:
     cache_invalidate_prefix(f"{_WS_NOTIFICATIONS_PREFIX}:{user_id}")
+    invalidate_workspace_overview(user_id)
 
 
 @router.get("/notifications", response_model=PageResponse)

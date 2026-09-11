@@ -1,6 +1,6 @@
 import { request } from './_shared'
 
-function mapJob(job) {
+export function mapJob(job) {
   return {
     id: job.id,
     company: job.company,

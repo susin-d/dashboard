@@ -39,8 +39,6 @@ async def collect_health(app=None, detailed: bool = True) -> dict:
     }
 
     endpoints = collect_endpoints(app) if (app is not None and detailed) else None
-    if not detailed and endpoints is not None:
-        endpoints = None
 
     uptime = time.monotonic() - _START_TS
     timestamp = datetime.now(timezone.utc).isoformat()
@@ -77,7 +75,9 @@ async def collect_health(app=None, detailed: bool = True) -> dict:
         payload["endpoints"] = endpoints
         payload["endpoint_count"] = len(endpoints) if endpoints else 0
     else:
-        payload["endpoint_count"] = len(collect_endpoints(app) if app else []) if app else None
+        # Non-detailed callers (readiness summaries) must not pay the route
+        # inventory walk — liveness carries no endpoint data at all.
+        payload["endpoint_count"] = None
     return payload
 
 

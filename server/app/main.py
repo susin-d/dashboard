@@ -176,10 +176,33 @@ def create_app() -> FastAPI:
 
     # Root /health alias for load balancers and direct probe requests
     @application.get("/health", include_in_schema=False)
-    async def root_health_check(request: Request):
+    async def root_health_check():
+        from app.services.health import build_liveness
+        return JSONResponse(content=build_liveness())
+
+    # Root readiness aliases for operators and load balancers that do not use
+    # the versioned API prefix. These delegate to the canonical health probes.
+    @application.get("/health/detailed", include_in_schema=False)
+    async def root_detailed_health(request: Request):
         from app.services.health import collect_health
-        payload = await collect_health(app=request.app, detailed=False)
-        return JSONResponse(content=payload)
+
+        return JSONResponse(content=await collect_health(app=request.app, detailed=True))
+
+    @application.get("/health/checks", include_in_schema=False)
+    async def root_health_checks():
+        from app.services.health import collect_checks
+
+        return JSONResponse(content=await collect_checks())
+
+    @application.get("/health/checks/{name}", include_in_schema=False)
+    async def root_health_check_by_name(name: str):
+        from app.core.errors import not_found
+        from app.services.health import get_check
+
+        result = await get_check(name)
+        if result is None:
+            raise not_found(f"Unknown check '{name}'. Use database, cache, whatsapp, workspace.")
+        return JSONResponse(content=result)
 
     # Backend-hosted updater static alias: /updates -> server/static/updates
     # Serves APKs/EXEs/.sigs + OTA bundles; /api/v1/updates/latest.json is the Tauri entrypoint

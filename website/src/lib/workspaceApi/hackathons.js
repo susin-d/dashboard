@@ -1,6 +1,6 @@
 import { request } from './_shared'
 
-function mapHackathon(record) {
+export function mapHackathon(record) {
   return {
     id: record.id,
     title: record.title,

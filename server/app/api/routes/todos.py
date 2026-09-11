@@ -17,6 +17,7 @@ _TODOS_PREFIX = "todos"
 
 def _invalidate_todos(user_id: str) -> None:
     cache_invalidate_prefix(f"{_TODOS_PREFIX}:{user_id}")
+    cache_invalidate_prefix(f"workspace:overview:{user_id}")
 
 
 @router.get("")

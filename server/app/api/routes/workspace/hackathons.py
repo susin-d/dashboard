@@ -10,6 +10,7 @@ from app.api.routes.workspace._shared import (
     DEFAULT_PAGE_SIZE,
     MAX_PAGE_SIZE,
     hackathon_settings_reference,
+    invalidate_workspace_overview,
     user_collection,
 )
 from app.core.auth import get_current_user
@@ -133,6 +134,7 @@ async def create_hackathon(
         )
     )
     snap = await asyncio.to_thread(reference.get)
+    invalidate_workspace_overview(user["uid"])
     return {"id": reference.id, **(snap.to_dict() or {})}
 
 
@@ -173,6 +175,7 @@ async def update_hackathon(
         )
     )
     snap = await asyncio.to_thread(reference.get)
+    invalidate_workspace_overview(user["uid"])
     return {"id": reference.id, **(snap.to_dict() or {})}
 
 
@@ -196,6 +199,7 @@ async def delete_hackathon(
             },
         )
     )
+    invalidate_workspace_overview(user["uid"])
     return Response(status_code=204)
 
 
@@ -219,4 +223,5 @@ async def restore_hackathon(
         )
     )
     snap = await asyncio.to_thread(reference.get)
+    invalidate_workspace_overview(user["uid"])
     return {"id": reference.id, **(snap.to_dict() or {})}

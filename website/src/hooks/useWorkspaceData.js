@@ -1,17 +1,21 @@
 import { useEffect, useMemo, useState } from 'react'
-import { loadDocuments } from '../lib/documentsApi'
+import { loadDocuments, mapDocumentFromApi } from '../lib/documentsApi'
 import { loadPlatformCodingStats } from '../lib/codingStatsApi'
 import { loadGithubData } from '../lib/githubApi'
-import { loadTodos } from '../lib/todosApi'
+import { loadTodos, mapTodoFromApi } from '../lib/todosApi'
 import { loadGoogleCalendarData } from '../lib/googleCalendar'
 import { usePersistentState } from './usePersistentState'
 import { autoPromptNotificationPermission, notify } from '../utils/browserNotifications'
 import {
   loadContests,
+  loadDashboardOverview,
   loadHackathons,
   loadJobs,
   loadNotifications,
   loadProjects,
+  mapHackathon,
+  mapJob,
+  mapProject,
 } from '../lib/workspaceApi'
 import { buildCalendarEventIndex } from '../utils/calendarEvents'
 import {
@@ -167,9 +171,8 @@ export function useWorkspaceData(currentUser, activePage, refreshKey = 0) {
     }
   }, [calendarEventIndex, firedReminderIds, setFiredReminderIds])
 
-  // Consolidated workspace fetch — single debounced effect for all refreshKey-gated resources
-  // Staggered to avoid e2-micro burst (15 GETs + 15 OPTIONS =30 → Nginx burst 60, but JS concurrency limiter =6)
-  // Delays spread the 8 parallel requests (was 3 effects firing 8 at once) across 600ms
+  // Consolidated workspace fetch — dashboard uses single /dashboard-overview (ADR 0053),
+  // list pages keep granular staggered loads to preserve limit=20 + pagination contracts.
   useEffect(() => {
     let active = true
     if (!currentUserId) {
@@ -193,59 +196,112 @@ export function useWorkspaceData(currentUser, activePage, refreshKey = 0) {
         }, delayMs)
       })
 
-    // Tier 1: immediate (docs + calendar, cheap and cached)
-    loadGoogleCalendarData()
-      .then(({ events }) => { if (active) setGoogleCalendarEvents(events) })
-      .catch((error) => { console.error('Could not load Google Calendar:', error); if (active) setGoogleCalendarEvents([]) })
-    loadDocuments()
-      .then((savedDocuments) => { if (active) setDocuments(savedDocuments) })
-      .catch((error) => { console.error('Could not load documents:', error); if (active) setDocuments([]) })
+    const readEnabledPlatforms = () => {
+      try { return JSON.parse(localStorage.getItem(ENABLED_PLATFORMS_KEY) ?? '["codeforces","codechef","leetcode"]') } catch { return ['codeforces', 'codechef', 'leetcode'] }
+    }
 
-    // Tier 2: todos staggered 120ms (so not all at t=0)
-    staggered(loadTodos, 120)
-      .then((savedTasks) => { if (active) setTasks(savedTasks) })
-      .catch((error) => { console.error('Could not load todos:', error); if (active) setTasks([]) })
-
-    // Core workspace batch (5) — staggered 0/150/300/450ms, respects request.js GET cache (30s TTL) + concurrency limiter (6)
-    Promise.allSettled([
-      loadJobs(), // t=0
-      staggered(loadHackathons, 150),
-      staggered(loadNotifications, 300),
-      staggered(loadContests, 300),
-      staggered(loadProjects, 450),
-    ]).then(([jobsResult, hackathonsResult, notificationsResult, contestsResult, projectsResult]) => {
-      if (!active) return
-      const jobsPage = jobsResult.status === 'fulfilled' ? jobsResult.value : { items: [] }
-      const projectsPage = projectsResult.status === 'fulfilled' ? projectsResult.value : { items: [] }
-      const hackathonsPage = hackathonsResult.status === 'fulfilled' ? hackathonsResult.value : { items: [] }
-      const notificationsPage = notificationsResult.status === 'fulfilled' ? notificationsResult.value : { items: [] }
-      setJobs(jobsPage.items)
-      setPagination({
-        jobs: jobsPage,
-        projects: projectsPage,
-        hackathons: hackathonsPage,
-        notifications: notificationsPage,
-        contests: contestsResult.status === 'fulfilled' ? contestsResult.value : {},
-      })
-      setHackathons(hackathonsPage.items)
-      setNotifications(notificationsPage.items)
-      const enabledPlatforms = (() => {
-        try { return JSON.parse(localStorage.getItem(ENABLED_PLATFORMS_KEY) ?? '["codeforces","codechef","leetcode"]') } catch { return ['codeforces', 'codechef', 'leetcode'] }
-      })()
-      const rawContestItems = contestsResult.status === 'fulfilled' ? contestsResult.value.items : []
-      const rawContestSites = rawContestItems.reduce((sites, contest) => {
+    const groupContestItems = (rawItems) => {
+      const enabledPlatforms = readEnabledPlatforms()
+      const sites = (rawItems ?? []).reduce((acc, contest) => {
         const id = contest.platformId || 'contests'
-        const site = sites.find((item) => item.id === id)
+        const site = acc.find((item) => item.id === id)
         if (site) site.contests.push(contest)
-        else sites.push({ id, name: id, shortName: id.slice(0, 2).toUpperCase(), description: 'Upcoming contests.', contests: [contest] })
-        return sites
+        else acc.push({ id, name: id, shortName: id.slice(0, 2).toUpperCase(), description: 'Upcoming contests.', contests: [contest] })
+        return acc
       }, [])
-      setContestSites(rawContestSites.filter((site) => enabledPlatforms.includes(site.id)))
-      setProjects((current) => [...projectsPage.items, ...current.filter((project) => project.source === 'github')])
-    })
+      return sites.filter((site) => enabledPlatforms.includes(site.id))
+    }
 
+    const applyOverview = (overview) => {
+      if (!active) return
+      const jobsItems = (overview.jobs?.items ?? []).map((item) => { try { return mapJob(item) } catch { return null } }).filter(Boolean)
+      const projectsItems = (overview.projects?.items ?? []).map((item) => { try { return mapProject(item) } catch { return null } }).filter(Boolean)
+      const hackItems = (overview.hackathons?.items ?? []).map((item) => { try { return mapHackathon(item) } catch { return item } })
+      const todoItems = (overview.todos?.items ?? []).map(mapTodoFromApi)
+      const docItems = (overview.documents?.items ?? []).map(mapDocumentFromApi)
+      setJobs(jobsItems)
+      setHackathons(hackItems)
+      setNotifications(overview.notifications?.items ?? [])
+      setContestSites(groupContestItems(overview.contests?.items))
+      setTasks(todoItems)
+      setDocuments(docItems)
+      setPagination({
+        jobs: overview.jobs ?? {},
+        projects: overview.projects ?? {},
+        hackathons: overview.hackathons ?? {},
+        notifications: overview.notifications ?? {},
+        contests: overview.contests ?? {},
+      })
+      setProjects((current) => [...projectsItems, ...current.filter((project) => project.source === 'github')])
+    }
+
+    const loadGranularFallback = () => {
+      loadGoogleCalendarData()
+        .then(({ events }) => { if (active) setGoogleCalendarEvents(events) })
+        .catch((error) => { console.error('Could not load Google Calendar:', error); if (active) setGoogleCalendarEvents([]) })
+      loadDocuments()
+        .then((savedDocuments) => { if (active) setDocuments(savedDocuments) })
+        .catch((error) => { console.error('Could not load documents:', error); if (active) setDocuments([]) })
+      staggered(loadTodos, 120)
+        .then((savedTasks) => { if (active) setTasks(savedTasks) })
+        .catch((error) => { console.error('Could not load todos:', error); if (active) setTasks([]) })
+      Promise.allSettled([
+        loadJobs(),
+        staggered(loadHackathons, 150),
+        staggered(loadNotifications, 300),
+        staggered(loadContests, 300),
+        staggered(loadProjects, 450),
+      ]).then(([jobsResult, hackathonsResult, notificationsResult, contestsResult, projectsResult]) => {
+        if (!active) return
+        const jobsPage = jobsResult.status === 'fulfilled' ? jobsResult.value : { items: [] }
+        const projectsPage = projectsResult.status === 'fulfilled' ? projectsResult.value : { items: [] }
+        const hackathonsPage = hackathonsResult.status === 'fulfilled' ? hackathonsResult.value : { items: [] }
+        const notificationsPage = notificationsResult.status === 'fulfilled' ? notificationsResult.value : { items: [] }
+        setJobs(jobsPage.items)
+        setPagination({
+          jobs: jobsPage,
+          projects: projectsPage,
+          hackathons: hackathonsPage,
+          notifications: notificationsPage,
+          contests: contestsResult.status === 'fulfilled' ? contestsResult.value : {},
+        })
+        setHackathons(hackathonsPage.items)
+        setNotifications(notificationsPage.items)
+        setContestSites(groupContestItems(contestsResult.status === 'fulfilled' ? contestsResult.value.items : []))
+        setProjects((current) => [...projectsPage.items, ...current.filter((project) => project.source === 'github')])
+      })
+    }
+
+    if (activePage === 'dashboard') {
+      const idleGcal = window.requestIdleCallback
+        ? window.requestIdleCallback(() => {
+          loadGoogleCalendarData()
+            .then(({ events }) => { if (active) setGoogleCalendarEvents(events) })
+            .catch(() => { if (active) setGoogleCalendarEvents([]) })
+        }, { timeout: 2000 })
+        : window.setTimeout(() => {
+          loadGoogleCalendarData()
+            .then(({ events }) => { if (active) setGoogleCalendarEvents(events) })
+            .catch(() => { if (active) setGoogleCalendarEvents([]) })
+        }, 800)
+      loadDashboardOverview(3)
+        .then(applyOverview)
+        .catch((error) => {
+          console.error('Dashboard overview failed, falling back to granular loads:', error)
+          loadGranularFallback()
+        })
+      return () => {
+        active = false
+        try {
+          if (typeof idleGcal === 'number' && window.cancelIdleCallback) window.cancelIdleCallback(idleGcal)
+          else window.clearTimeout(idleGcal)
+        } catch { /* ignore */ }
+      }
+    }
+
+    loadGranularFallback()
     return () => { active = false }
-  }, [currentUserId, debouncedRefreshKey])
+  }, [currentUserId, debouncedRefreshKey, activePage])
 
   const loadMore = async (type) => {
     const page = pagination[type]

@@ -65,6 +65,7 @@
 | [0050](0050-seven-day-file-logging.md) | Seven-day server file logging (rotated app + error logs + request middleware) | Accepted | 2026-09-10 |
 | [0051](0051-large-file-refactor-facades.md) | Large-file refactor via facaded packages (batch 1: 10 files, whatsapp exception, 10 phased + menu-text removal) | Accepted | 2026-09-10 |
 | [0052](0052-fastest-pytest-suite.md) | Fastest pytest suite (parallel, truncate, no-network) | Accepted | 2026-09-10 |
+| [0053](0053-health-liveness-shared-http-client.md) | Health liveness/readiness split + shared HTTP keepalive client | Accepted | 2026-09-11 |
 
 ## How to add a new ADR
 
