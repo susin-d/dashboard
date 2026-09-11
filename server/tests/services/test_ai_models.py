@@ -1,5 +1,6 @@
+import asyncio
 import unittest
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 from fastapi.testclient import TestClient
 
 from app.main import app
@@ -12,6 +13,19 @@ mock_db = MagicMock()
 client = TestClient(app)
 
 
+async def _static_catalog(user_keys=None):
+    """Static provider list — no live discovery (OpenRouter is public).
+
+    These tests assert preference CRUD + validation, not live model
+    discovery. Hitting the real endpoint per test costs seconds and
+    makes the suite network-dependent.
+    """
+    return [
+        {"id": "openai", "label": "OpenAI", "available": True, "models": []},
+        {"id": "anthropic", "label": "Anthropic", "available": False, "models": []},
+    ]
+
+
 class TestAiModelsSettings(unittest.TestCase):
     def setUp(self):
         # Isolate this module's dependency overrides so the shared global
@@ -21,8 +35,13 @@ class TestAiModelsSettings(unittest.TestCase):
         self._saved_firestore = app.dependency_overrides.get(get_firestore)
         app.dependency_overrides[get_current_user] = lambda: mock_user
         app.dependency_overrides[get_firestore] = lambda: mock_db
+        self._catalog_patcher = patch(
+            "app.api.routes.ai_models.provider_catalog", side_effect=_static_catalog
+        )
+        self._catalog_patcher.start()
 
     def tearDown(self):
+        self._catalog_patcher.stop()
         self._restore_override(get_current_user, self._saved_current_user)
         self._restore_override(get_firestore, self._saved_firestore)
 

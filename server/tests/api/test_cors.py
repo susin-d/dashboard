@@ -5,8 +5,14 @@ from app.main import create_app
 
 
 class TestCORSAndErrorMiddleware(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        # Build the app once per class, not per test: create_app() wires
+        # the full router + middleware stack, which dominates runtime.
+        cls.app = create_app()
+
     def setUp(self):
-        self.app = create_app()
+        self.app = self.__class__.app
         self.client = TestClient(self.app, raise_server_exceptions=False)
 
     def test_cors_headers_on_health(self):
