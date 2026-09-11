@@ -1,7 +1,7 @@
 # Starwaves Context
 
 Living snapshot for AI agents. `AGENTS.md` holds permanent rules; this file holds the **current state**. See `CHANGELOG.md` for history and `PROJECT_MAP.md` for the file index.
-Last updated: 2026-09-11 — /health now reports database, cache, WhatsApp worker, and workspace statuses; detailed endpoint inventory remains under /health/detailed.
+Last updated: 2026-09-11 — Dashboard GitHub loading requests three repositories without contribution history and uses a 60-second server cache; Projects/Stats retain full repository data and total counts.
 
 ## Contents
 1. [Overview](#1-overview) · 2. [Repository structure](#2-repository-structure) · 3. [Backend](#4-backend) · 4. [Frontend](#4-frontend) · 5. [Design system](#5-design-system) · 6. [Current snapshot](#6-current-snapshot) · 7. [Limitations](#7-limitations) · 8. [Verification](#8-verification)
@@ -46,6 +46,7 @@ For full maps see `PROJECT_MAP.md`. Keep this section brief; expand there.
   - **Performance:** hot reads `async+to_thread`, composite indexes, pools `5/5 recycle 300`, Redis/LRU `cached` per-user + `cache_clear` fixture, workspace disk. `usage:summary/logs` `SHORT 30s` + invalidates. Rate-limit `10r/s burst 60` + CORS via `$cors_allow_*` + `RateLimitMiddleware`.
 - **Logging:** `core/app_logging.py` `setup_logging()` + `core/request_log.py` access lines → `LOG_DIR` (`server/logs/` local, `/app/logs` + `server-logs` volume in Docker) `starwaves.log` INFO+ / `starwaves-error.log` WARNING+, midnight rotation × `LOG_RETENTION_DAYS=7` (ADR 0050); serverless stdout-only.
 - **Health:** `/health` and `/api/v1/health` report database, cache, WhatsApp worker, and workspace statuses without endpoint inventory; `/health/detailed`, `/health/checks`, and `/health/checks/{name}` remain available for detailed/readiness probes.
+- **Dashboard performance:** GitHub `/data` accepts `repository_limit` and `include_stats`; the dashboard requests 3 newest repositories without contribution history and uses a 60s server cache, while Projects/Stats request full data. GitHub `totalCount` keeps aggregate repository statistics accurate.
 
 ## 4. Frontend
 - **Entry:** `website/src/main.jsx` → `App.jsx` (routing + workspace state). **Layout:** `layouts/AppLayout.jsx`.

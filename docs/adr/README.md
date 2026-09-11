@@ -66,6 +66,7 @@
 | [0051](0051-large-file-refactor-facades.md) | Large-file refactor via facaded packages (batch 1: 10 files, whatsapp exception, 10 phased + menu-text removal) | Accepted | 2026-09-10 |
 | [0052](0052-fastest-pytest-suite.md) | Fastest pytest suite (parallel, truncate, no-network) | Accepted | 2026-09-10 |
 | [0053](0053-health-liveness-shared-http-client.md) | Health liveness/readiness split + shared HTTP keepalive client | Accepted | 2026-09-11 |
+| [0054](0054-dashboard-github-payload-limit.md) | Limit GitHub repository payload on the dashboard | Accepted | 2026-09-11 |
 
 ## How to add a new ADR
 

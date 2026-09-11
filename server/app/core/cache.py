@@ -5,6 +5,7 @@ Otherwise fallback to in-memory dict with TTL + LRU 1000 bound.
 Keeps 1GB host lean: no external Redis cost, no pgbouncer needed.
 """
 import asyncio
+import contextvars
 import hashlib
 import json as _json
 import time as _time
@@ -20,6 +21,10 @@ from app.core.config import settings
 
 _local_cache: dict[str, tuple[float, Any]] = {}
 _MAX_LOCAL = 1000
+_refresh_tasks: dict[str, asyncio.Task] = {}
+_local_refresh_locks: dict[str, float] = {}
+_cache_status = contextvars.ContextVar("cache_status", default="-")
+_refresh_status = contextvars.ContextVar("refresh_status", default="-")
 
 _redis_client = None
 
@@ -128,16 +133,147 @@ def cache_invalidate_prefix(prefix: str) -> None:
         try:
             for k in r.scan_iter(match=f"{prefix}*"):
                 r.delete(k)
+            for k in r.scan_iter(match=f"swr:{prefix}*"):
+                r.delete(k)
         except Exception:
             pass
     for k in list(_local_cache.keys()):
-        if k.startswith(prefix):
+        if k.startswith(prefix) or k.startswith(f"swr:{prefix}"):
             _local_cache.pop(k, None)
 
 
 def cache_clear() -> None:
     """Clear all local entries; Redis keys are left untouched (tests use local only)."""
     _local_cache.clear()
+
+
+def get_cache_status() -> str:
+    return _cache_status.get()
+
+
+def get_refresh_status() -> str:
+    return _refresh_status.get()
+
+
+def stale_cache_get(key: str) -> tuple[str, Any | None]:
+    """Return ``fresh``, ``stale``, or ``miss`` for a SWR cache entry."""
+    now = _time.time()
+    r = _get_redis()
+    raw = None
+    if r is not None:
+        try:
+            raw = r.get(f"swr:{key}")
+            if isinstance(raw, bytes):
+                raw = raw.decode()
+            raw = _json.loads(raw) if raw else None
+        except Exception:
+            raw = None
+    if raw is None:
+        entry = _local_cache.get(f"swr:{key}")
+        if entry:
+            expires, raw = entry
+            if expires < _time.monotonic():
+                _local_cache.pop(f"swr:{key}", None)
+                raw = None
+    if not isinstance(raw, dict) or "value" not in raw:
+        _cache_status.set("MISS")
+        return "miss", None
+    if raw.get("fresh_until", 0) > now:
+        _cache_status.set("HIT")
+        return "fresh", raw["value"]
+    if raw.get("stale_until", 0) > now:
+        _cache_status.set("STALE")
+        return "stale", raw["value"]
+    _cache_status.set("MISS")
+    return "miss", None
+
+
+def stale_cache_set(key: str, value: Any, fresh_ttl: int, stale_ttl: int) -> None:
+    """Store a value for fresh reads and a longer stale fallback window."""
+    now = _time.time()
+    payload = {
+        "value": _to_jsonable(value),
+        "fresh_until": now + fresh_ttl,
+        "stale_until": now + stale_ttl,
+    }
+    redis_key = f"swr:{key}"
+    r = _get_redis()
+    if r is not None:
+        try:
+            r.setex(redis_key, max(stale_ttl, fresh_ttl), _json.dumps(payload, default=str))
+            return
+        except Exception:
+            pass
+    if len(_local_cache) >= _MAX_LOCAL:
+        _local_cache.pop(next(iter(_local_cache)), None)
+    _local_cache[redis_key] = (_time.monotonic() + max(stale_ttl, fresh_ttl), payload)
+
+
+def _try_refresh_lock(key: str, ttl: int = 60) -> bool:
+    lock_key = f"swr-lock:{key}"
+    r = _get_redis()
+    if r is not None:
+        try:
+            return bool(r.set(lock_key, "1", nx=True, ex=ttl))
+        except Exception:
+            pass
+    now = _time.monotonic()
+    if _local_refresh_locks.get(lock_key, 0) > now:
+        return False
+    _local_refresh_locks[lock_key] = now + ttl
+    return True
+
+
+def _release_refresh_lock(key: str) -> None:
+    lock_key = f"swr-lock:{key}"
+    r = _get_redis()
+    if r is not None:
+        try:
+            r.delete(lock_key)
+        except Exception:
+            pass
+    _local_refresh_locks.pop(lock_key, None)
+
+
+def _schedule_refresh(key: str, loader: Callable[[], Any], fresh_ttl: int, stale_ttl: int) -> None:
+    if key in _refresh_tasks or not _try_refresh_lock(key):
+        return
+    _refresh_status.set("scheduled")
+
+    async def refresh() -> None:
+        try:
+            result = loader()
+            if asyncio.iscoroutine(result):
+                result = await result
+            if result is not None:
+                stale_cache_set(key, result, fresh_ttl, stale_ttl)
+        except Exception:
+            # The stale snapshot remains available until its stale window ends.
+            pass
+        finally:
+            _release_refresh_lock(key)
+            _refresh_tasks.pop(key, None)
+
+    task = asyncio.create_task(refresh())
+    _refresh_tasks[key] = task
+
+
+async def snapshot_read(
+    key: str,
+    loader: Callable[[], Any],
+    empty: Any,
+    *,
+    fresh_ttl: int = CACHE_TTL_SHORT,
+    stale_ttl: int = CACHE_TTL_LONG,
+) -> Any:
+    """Read a snapshot immediately and refresh it outside the request path."""
+    status, value = stale_cache_get(key)
+    if status in {"fresh", "stale"}:
+        if status == "stale":
+            _schedule_refresh(key, loader, fresh_ttl, stale_ttl)
+        return value
+    _schedule_refresh(key, loader, fresh_ttl, stale_ttl)
+    return empty
 
 
 # ---------------------------------------------------------------------------
@@ -221,7 +357,9 @@ def cached(ttl: int = CACHE_TTL_SHORT, prefix: str | None = None):
                 key = build_cache_key(cache_prefix, uid, **params) if params else build_cache_key(cache_prefix, uid)
                 hit = cache_get(key)
                 if hit is not None:
+                    _cache_status.set("HIT")
                     return hit
+                _cache_status.set("MISS")
                 result = await func(*args, **kwargs)
                 if result is not None:
                     cache_set(key, result, ttl=ttl)
@@ -242,7 +380,9 @@ def cached(ttl: int = CACHE_TTL_SHORT, prefix: str | None = None):
             key = build_cache_key(cache_prefix, uid, **params) if params else build_cache_key(cache_prefix, uid)
             hit = cache_get(key)
             if hit is not None:
+                _cache_status.set("HIT")
                 return hit
+            _cache_status.set("MISS")
             result = func(*args, **kwargs)
             if result is not None:
                 cache_set(key, result, ttl=ttl)

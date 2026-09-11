@@ -8,6 +8,7 @@ from app.db import ArrayUnion, SERVER_TIMESTAMP, SqlClient, get_firestore
 from itsdangerous import URLSafeTimedSerializer
 
 from app.core.auth import get_current_user
+from app.core.cache import CACHE_TTL_LONG, cache_invalidate_prefix, snapshot_read
 from app.core.config import settings
 from app.core.errors import bad_gateway, service_unavailable
 from app.services.google_calendar import (
@@ -53,6 +54,7 @@ def _set_calendar_cached(user_id: str, data: dict):
 
 def _invalidate_calendar_cache(user_id: str):
     _calendar_cache.pop(user_id, None)
+    cache_invalidate_prefix(f"google-calendar:data:{user_id}")
 
 
 def accounts_collection(database: SqlClient, user_id: str):
@@ -122,22 +124,13 @@ async def google_calendar_callback(
     return oauth_callback_html(settings.frontend_url, "calendar")
 
 
-@router.get("/data")
-async def get_google_calendar_data(
-    database: SqlClient = Depends(get_firestore),
-    user: dict = Depends(get_current_user),
-    force_refresh: bool = Query(default=False),
-):
-    if not force_refresh:
-        cached = _get_calendar_cached(user["uid"])
-        if cached is not None:
-            return cached
+async def _fetch_google_calendar_data(database: SqlClient, user_id: str):
     snapshots = await asyncio.to_thread(
-        lambda: list(accounts_collection(database, user["uid"]).stream()),
+        lambda: list(accounts_collection(database, user_id).stream()),
     )
     if not snapshots:
         result = {"connections": [], "events": [], "errors": []}
-        _set_calendar_cached(user["uid"], result)
+        _set_calendar_cached(user_id, result)
         return result
 
     async def process_account(snapshot):
@@ -199,8 +192,26 @@ async def get_google_calendar_data(
         events.extend(result[1])
 
     result = {"connections": connections, "events": events, "errors": errors}
-    _set_calendar_cached(user["uid"], result)
+    _set_calendar_cached(user_id, result)
     return result
+
+
+@router.get("/data")
+async def get_google_calendar_data(
+    database: SqlClient = Depends(get_firestore),
+    user: dict = Depends(get_current_user),
+    force_refresh: bool = Query(default=False),
+):
+    user_id = user["uid"]
+    if force_refresh:
+        return await _fetch_google_calendar_data(database, user_id)
+    return await snapshot_read(
+        f"google-calendar:data:{user_id}",
+        lambda: _fetch_google_calendar_data(database, user_id),
+        {"connections": [], "events": [], "errors": []},
+        fresh_ttl=300,
+        stale_ttl=CACHE_TTL_LONG,
+    )
 
 
 @router.delete("/accounts/{account_id}", status_code=204)

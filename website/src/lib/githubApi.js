@@ -22,8 +22,9 @@ export async function beginGithubOAuth() {
   window.location.assign(url)
 }
 
-export function loadGithubData() {
-  return request('/data')
+export function loadGithubData(repositoryLimit = 100, includeStats = true) {
+  const safeLimit = Math.max(1, Math.min(repositoryLimit, 100))
+  return request(`/data?repository_limit=${safeLimit}&include_stats=${includeStats}`)
 }
 
 export function disconnectGithub() {

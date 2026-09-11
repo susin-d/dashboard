@@ -1,4 +1,5 @@
 import asyncio
+import hashlib
 import logging
 from urllib.parse import quote
 
@@ -8,6 +9,7 @@ from fastapi.responses import RedirectResponse
 from app.db import ArrayUnion, SERVER_TIMESTAMP, SqlClient, get_firestore
 
 from app.core.auth import get_current_user
+from app.core.cache import CACHE_TTL_LONG, snapshot_read
 from app.core.config import settings
 from app.core.errors import service_unavailable
 from app.services.github import fetch_github_data, state_serializer
@@ -118,6 +120,8 @@ async def github_status(
 async def github_data(
     database: SqlClient = Depends(get_firestore),
     user: dict = Depends(get_current_user),
+    repository_limit: int = Query(default=100, ge=1, le=100),
+    include_stats: bool = Query(default=True),
 ):
     try:
         snapshot = await asyncio.to_thread(reference(database, user["uid"]).get)
@@ -128,7 +132,19 @@ async def github_data(
         if not access_token_enc:
             return {"connected": False, "github": None, "repositories": []}
         token = decrypt_token(access_token_enc)
-        return {"connected": True, **(await fetch_github_data(token))}
+        snapshot_key = "github:data:{}:{}:{}".format(
+            hashlib.sha256(token.encode()).hexdigest()[:24],
+            repository_limit,
+            include_stats,
+        )
+        snapshot = await snapshot_read(
+            snapshot_key,
+            lambda: fetch_github_data(token, repository_limit, include_stats),
+            {"github": None, "repositories": []},
+            fresh_ttl=60,
+            stale_ttl=CACHE_TTL_LONG,
+        )
+        return {"connected": True, **snapshot}
     except Exception as error:
         logger.warning("GitHub data fetch failed or disabled: %s", error)
         return {"connected": False, "github": None, "repositories": []}

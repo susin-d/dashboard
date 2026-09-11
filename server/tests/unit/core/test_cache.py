@@ -1,4 +1,6 @@
-"""Unit tests for core.cache — local LRU fallback behavior (Redis path mocked off)."""
+"""Unit tests for core.cache — local and stale-while-revalidate behavior."""
+
+import asyncio
 
 import pytest
 
@@ -10,8 +12,12 @@ def _local_only(monkeypatch):
     """Force the in-memory path and reset cache state around each test."""
     monkeypatch.setattr(cache, "_get_redis", lambda: None)
     cache._local_cache.clear()
+    cache._refresh_tasks.clear()
+    cache._local_refresh_locks.clear()
     yield
     cache._local_cache.clear()
+    cache._refresh_tasks.clear()
+    cache._local_refresh_locks.clear()
 
 
 class TestCacheGetSet:
@@ -73,3 +79,34 @@ class TestInvalidatePrefix:
         assert cache.cache_get("eve:mem:user-1") is None
         assert cache.cache_get("eve:mem:user-2") is None
         assert cache.cache_get("other:key") == 3
+
+
+@pytest.mark.asyncio
+async def test_snapshot_miss_returns_empty_and_refreshes_in_background():
+    loaded = []
+
+    async def loader():
+        loaded.append(True)
+        return {"value": 1}
+
+    result = await cache.snapshot_read("snapshot", loader, {"value": 0})
+    assert result == {"value": 0}
+    await asyncio.sleep(0)
+    assert loaded == [True]
+    assert await cache.snapshot_read("snapshot", loader, {"value": 0}) == {"value": 1}
+
+
+@pytest.mark.asyncio
+async def test_snapshot_stale_returns_immediately_and_refreshes_once():
+    calls = 0
+
+    async def loader():
+        nonlocal calls
+        calls += 1
+        return {"value": 2}
+
+    cache.stale_cache_set("stale", {"value": 1}, fresh_ttl=0, stale_ttl=60)
+    assert await cache.snapshot_read("stale", loader, {"value": 0}) == {"value": 1}
+    assert await cache.snapshot_read("stale", loader, {"value": 0}) == {"value": 1}
+    await asyncio.sleep(0)
+    assert calls == 1

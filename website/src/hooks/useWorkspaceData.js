@@ -358,7 +358,8 @@ export function useWorkspaceData(currentUser, activePage, refreshKey = 0) {
     }
   }, [currentUserId, activePage])
 
-  // GitHub Data Fetch — gated by uid, staggered 600ms to avoid burst with core batch
+  // GitHub Data Fetch — dashboard only needs its three visible repositories;
+  // Projects/Stats retain the full repository list.
   useEffect(() => {
     let active = true
     let timeoutId
@@ -370,7 +371,7 @@ export function useWorkspaceData(currentUser, activePage, refreshKey = 0) {
       }
     }
     const run = () =>
-      loadGithubData()
+      loadGithubData(activePage === 'dashboard' ? 3 : 100, activePage !== 'dashboard')
       .then((data) => {
         if (!active) return
         setCodingStats((current) => ({
@@ -414,7 +415,7 @@ export function useWorkspaceData(currentUser, activePage, refreshKey = 0) {
       active = false
       window.clearTimeout(timeoutId)
     }
-  }, [currentUserId])
+  }, [currentUserId, activePage])
 
   return {
     projects,

@@ -13,6 +13,7 @@ from fastapi import Request
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from app.core.app_logging import get_request_id, set_request_id
+from app.core.cache import get_cache_status, get_refresh_status
 
 logger = logging.getLogger(__name__)
 
@@ -60,8 +61,20 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
         if _is_health_path(path):
             logger.debug(line, *args)
         else:
-            logger.info(line, *args)
+            logger.info(
+                line + " cache=%s refresh=%s",
+                *args,
+                get_cache_status(),
+                get_refresh_status(),
+            )
         response.headers["X-Request-ID"] = request_id
+        response.headers["Server-Timing"] = f"app;dur={elapsed_ms:.1f}"
+        cache_status = get_cache_status()
+        if cache_status != "-":
+            response.headers["X-Cache"] = cache_status
+        refresh_status = get_refresh_status()
+        if refresh_status != "-":
+            response.headers["X-Provider-Refresh"] = refresh_status
         return response
 
 

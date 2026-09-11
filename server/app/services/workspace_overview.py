@@ -6,12 +6,14 @@ imports here — thin route in ``api/routes/workspace/overview.py`` owns HTTP.
 """
 
 import asyncio
+import hashlib
 import time
 from datetime import datetime, timezone
 from typing import Any
 
 import httpx
 
+from app.core.cache import snapshot_read
 from app.db import SqlClient
 from app.repositories import (
     JobRepository,
@@ -113,10 +115,16 @@ def _list_hackathons_page(database: SqlClient, user_id: str, limit: int) -> dict
 
 async def _resolve_hackathons_page(database: SqlClient, user_id: str, limit: int) -> dict:
     loaded = await asyncio.to_thread(_list_hackathons_page, database, user_id, limit)
-    try:
-        connected = await fetch_enabled_hackathons(loaded["enabled"])
-    except Exception:
-        connected = []
+    source_key = hashlib.sha256(
+        ",".join(sorted(loaded["enabled"])).encode(),
+    ).hexdigest()[:16]
+    connected = await snapshot_read(
+        f"hackathons:enabled:{source_key}",
+        lambda: fetch_enabled_hackathons(loaded["enabled"]),
+        [],
+        fresh_ttl=600,
+        stale_ttl=3600,
+    )
     records = sorted([*loaded["manual"], *connected], key=lambda item: item.get("starts_at", ""))
     page = records[:limit]
     has_more = len(records) > limit
@@ -125,33 +133,32 @@ async def _resolve_hackathons_page(database: SqlClient, user_id: str, limit: int
 
 
 async def _resolve_contests_page(limit: int) -> dict:
-    global _CONTEST_CACHE
-    platforms: list[dict] | None = None
-    if _CONTEST_CACHE and _CONTEST_CACHE[0] > time.monotonic():
-        platforms = _CONTEST_CACHE[1]
-    else:
+    async def fetch_platforms() -> list[dict]:
         headers = {
             "User-Agent": (
                 "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
                 "AppleWebKit/537.36 Chrome/126 Safari/537.36"
             ),
         }
-        try:
-            async with httpx.AsyncClient(
-                timeout=CONTEST_REQUEST_TIMEOUT,
-                follow_redirects=True,
-                headers=headers,
-            ) as client:
-                fetched = await asyncio.gather(
-                    codeforces_contests(client),
-                    codechef_contests(client),
-                    leetcode_contests(client),
-                )
-            platforms = [p for p in fetched if p is not None]
-            if platforms:
-                _CONTEST_CACHE = (time.monotonic() + _CONTEST_CACHE_TTL, platforms)
-        except Exception:
-            platforms = _CONTEST_CACHE[1] if _CONTEST_CACHE else []
+        async with httpx.AsyncClient(
+            timeout=CONTEST_REQUEST_TIMEOUT,
+            follow_redirects=True,
+            headers=headers,
+        ) as client:
+            fetched = await asyncio.gather(
+                codeforces_contests(client),
+                codechef_contests(client),
+                leetcode_contests(client),
+            )
+        return [platform for platform in fetched if platform is not None]
+
+    platforms = await snapshot_read(
+        "contests:platforms",
+        fetch_platforms,
+        [],
+        fresh_ttl=600,
+        stale_ttl=3600,
+    )
     records: list[dict] = []
     for platform in platforms or []:
         records.extend({**c, "platformId": platform["id"]} for c in platform.get("contests", []))

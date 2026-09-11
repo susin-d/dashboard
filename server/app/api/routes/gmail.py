@@ -9,6 +9,7 @@ from itsdangerous import URLSafeTimedSerializer
 from pydantic import BaseModel, Field
 
 from app.core.auth import get_current_user
+from app.core.cache import CACHE_TTL_LONG, cache_invalidate_prefix, snapshot_read
 from app.core.config import settings
 from app.core.errors import bad_gateway, bad_request, not_found, service_unavailable
 from app.services.oauth import (
@@ -176,6 +177,8 @@ def _set_cached_gmail_status(user_id: str, data: dict):
 
 def _invalidate_gmail_cache(user_id: str):
     _gmail_cache.pop(user_id, None)
+    cache_invalidate_prefix(f"gmail:accounts:{user_id}")
+    cache_invalidate_prefix(f"gmail:status:{user_id}")
     # remove token cache entries for user
     for key in list(_gmail_token_cache.keys()):
         if key.startswith(user_id + ":"):
@@ -242,16 +245,25 @@ async def get_gmail_accounts(
     database: SqlClient = Depends(get_firestore),
     user: dict = Depends(get_current_user),
 ):
-    snapshots = await asyncio.to_thread(lambda: list(gmail_accounts_collection(database, user["uid"]).stream()))
-    accounts = []
-    for snapshot in snapshots:
-        data = snapshot.to_dict()
-        accounts.append({
-            "id": snapshot.id,
-            "email": data.get("email", ""),
-            "connected": bool(data.get("connected", True)),
-        })
-    return {"accounts": accounts}
+    async def load_accounts():
+        snapshots = await asyncio.to_thread(lambda: list(gmail_accounts_collection(database, user["uid"]).stream()))
+        accounts = []
+        for snapshot in snapshots:
+            data = snapshot.to_dict()
+            accounts.append({
+                "id": snapshot.id,
+                "email": data.get("email", ""),
+                "connected": bool(data.get("connected", True)),
+            })
+        return {"accounts": accounts}
+
+    return await snapshot_read(
+        f"gmail:accounts:{user['uid']}",
+        load_accounts,
+        {"accounts": []},
+        fresh_ttl=120,
+        stale_ttl=CACHE_TTL_LONG,
+    )
 
 
 @router.get("/status")
@@ -262,25 +274,31 @@ async def gmail_status(
     cached = _get_cached_gmail_status(user["uid"])
     if cached is not None:
         return cached
-    snapshots = await asyncio.to_thread(lambda: list(gmail_accounts_collection(database, user["uid"]).stream()))
-    accounts = []
-    for snapshot in snapshots:
-        data = snapshot.to_dict()
-        accounts.append({
-            "id": snapshot.id,
-            "email": data.get("email", ""),
-            "connected": bool(data.get("connected", True)),
-        })
+    async def load_status():
+        snapshots = await asyncio.to_thread(lambda: list(gmail_accounts_collection(database, user["uid"]).stream()))
+        accounts = []
+        for snapshot in snapshots:
+            data = snapshot.to_dict()
+            accounts.append({
+                "id": snapshot.id,
+                "email": data.get("email", ""),
+                "connected": bool(data.get("connected", True)),
+            })
+        result = {
+            "connected": bool(accounts),
+            "account": accounts[0] if accounts else None,
+            "accounts": accounts,
+        }
+        _set_cached_gmail_status(user["uid"], result)
+        return result
 
-    connected = len(accounts) > 0
-    primary_account = accounts[0] if accounts else None
-    result = {
-        "connected": connected,
-        "account": primary_account,
-        "accounts": accounts,
-    }
-    _set_cached_gmail_status(user["uid"], result)
-    return result
+    return await snapshot_read(
+        f"gmail:status:{user['uid']}",
+        load_status,
+        {"connected": False, "account": None, "accounts": []},
+        fresh_ttl=120,
+        stale_ttl=CACHE_TTL_LONG,
+    )
 
 
 @router.delete("/accounts/{account_id}", status_code=204)

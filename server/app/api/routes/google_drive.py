@@ -8,6 +8,7 @@ from app.db import ArrayUnion, SERVER_TIMESTAMP, SqlClient, get_firestore
 from itsdangerous import URLSafeTimedSerializer
 
 from app.core.auth import get_current_user
+from app.core.cache import CACHE_TTL_LONG, snapshot_read
 from app.core.config import settings
 from app.core.errors import bad_gateway, bad_request, conflict, not_found, service_unavailable
 from app.services.oauth import (
@@ -173,23 +174,32 @@ async def google_drive_files(
     database: SqlClient = Depends(get_firestore),
     user: dict = Depends(get_current_user),
 ):
-    token = await access_token(database, user["uid"])
-    async with httpx.AsyncClient(timeout=30) as client:
-        response = await client.get(
-            "https://www.googleapis.com/drive/v3/files",
-            headers={"Authorization": f"Bearer {token}"},
-            params={
-                "pageSize": "100",
-                "orderBy": "modifiedTime desc",
-                "q": "trashed = false",
-                "fields": "files(id,name,mimeType,size,modifiedTime,webViewLink)",
-            },
-        )
-        try:
-            response.raise_for_status()
-        except httpx.HTTPStatusError as error:
-            raise bad_gateway(response.text) from error
-        return response.json()
+    async def fetch_files():
+        token = await access_token(database, user["uid"])
+        async with httpx.AsyncClient(timeout=30) as client:
+            response = await client.get(
+                "https://www.googleapis.com/drive/v3/files",
+                headers={"Authorization": f"Bearer {token}"},
+                params={
+                    "pageSize": "100",
+                    "orderBy": "modifiedTime desc",
+                    "q": "trashed = false",
+                    "fields": "files(id,name,mimeType,size,modifiedTime,webViewLink)",
+                },
+            )
+            try:
+                response.raise_for_status()
+            except httpx.HTTPStatusError as error:
+                raise bad_gateway(response.text) from error
+            return response.json()
+
+    return await snapshot_read(
+        f"google-drive:files:{user['uid']}",
+        fetch_files,
+        {"files": []},
+        fresh_ttl=120,
+        stale_ttl=CACHE_TTL_LONG,
+    )
 
 
 @router.get("/editor-url/{document_id}")
