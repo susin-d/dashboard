@@ -10,7 +10,6 @@ import time as _time
 import uuid
 
 from fastapi import Request
-from starlette.middleware.base import BaseHTTPMiddleware
 
 from app.core.app_logging import get_request_id, set_request_id
 from app.core.cache import get_cache_status, get_refresh_status
@@ -24,13 +23,45 @@ def _is_health_path(path: str) -> bool:
     return path == "/health" or path.startswith(HEALTH_PREFIXES[1:])
 
 
-class RequestLoggingMiddleware(BaseHTTPMiddleware):
-    async def dispatch(self, request: Request, call_next):
+class RequestLoggingMiddleware:
+    """Pure ASGI middleware so route cache context survives response logging."""
+
+    def __init__(self, app):
+        self.app = app
+
+    async def __call__(self, scope, receive, send):
+        if scope.get("type") != "http":
+            await self.app(scope, receive, send)
+            return
+
+        request = Request(scope, receive)
         request_id = uuid.uuid4().hex[:8]
         set_request_id(request_id)
         start = _time.perf_counter()
+        status_code = 500
+
+        async def send_with_metadata(message):
+            nonlocal status_code
+            if message["type"] == "http.response.start":
+                status_code = message["status"]
+                cache_status = get_cache_status()
+                refresh_status = get_refresh_status()
+                headers = list(message.get("headers", []))
+                headers.extend(
+                    [
+                        (b"x-request-id", request_id.encode()),
+                        (b"server-timing", f"app;dur={(_time.perf_counter() - start) * 1000:.1f}".encode()),
+                    ]
+                )
+                if cache_status != "-":
+                    headers.append((b"x-cache", cache_status.encode()))
+                if refresh_status != "-":
+                    headers.append((b"x-provider-refresh", refresh_status.encode()))
+                message = {**message, "headers": headers}
+            await send(message)
+
         try:
-            response = await call_next(request)
+            await self.app(scope, receive, send_with_metadata)
         except Exception as exc:
             elapsed_ms = (_time.perf_counter() - start) * 1000
             logger.error(
@@ -52,7 +83,7 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
         args = (
             request.method,
             path,
-            response.status_code,
+            status_code,
             elapsed_ms,
             client_ip,
             device_id,
@@ -67,15 +98,6 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
                 get_cache_status(),
                 get_refresh_status(),
             )
-        response.headers["X-Request-ID"] = request_id
-        response.headers["Server-Timing"] = f"app;dur={elapsed_ms:.1f}"
-        cache_status = get_cache_status()
-        if cache_status != "-":
-            response.headers["X-Cache"] = cache_status
-        refresh_status = get_refresh_status()
-        if refresh_status != "-":
-            response.headers["X-Provider-Refresh"] = refresh_status
-        return response
 
 
 __all__ = ["RequestLoggingMiddleware", "get_request_id", "set_request_id"]

@@ -10,7 +10,14 @@ from app.api.routes.workspace._shared import (
     invalidate_workspace_overview,
 )
 from app.core.auth import get_current_user
-from app.core.cache import CACHE_TTL_MEDIUM, CACHE_TTL_SHORT, cache_invalidate_prefix, cached
+from app.core.cache import (
+    CACHE_TTL_MEDIUM,
+    CACHE_TTL_SHORT,
+    build_cache_key,
+    cache_invalidate_prefix,
+    cached,
+    snapshot_read,
+)
 from app.core.errors import not_found
 from app.repositories import NotificationRepository
 from app.schemas.workspace import NotificationResponse, NotificationUpdate, PageResponse
@@ -26,16 +33,29 @@ def _invalidate_ws_notifications(user_id: str) -> None:
 
 
 @router.get("/notifications", response_model=PageResponse)
-@cached(ttl=CACHE_TTL_SHORT, prefix=_WS_NOTIFICATIONS_PREFIX)
 async def list_notifications(
     cursor: str | None = None,
     limit: int = Query(DEFAULT_PAGE_SIZE, ge=1, le=MAX_PAGE_SIZE),
     database: SqlClient = Depends(get_firestore),
     user: dict = Depends(get_current_user),
 ):
-    repository = NotificationRepository(database, user["uid"])
-    items, next_cursor, has_more = await asyncio.to_thread(repository.list_page, cursor, limit)
-    return {"items": items, "next_cursor": next_cursor, "has_more": has_more}
+    async def load_page():
+        repository = NotificationRepository(database, user["uid"])
+        items, next_cursor, has_more = await asyncio.to_thread(repository.list_page, cursor, limit)
+        return {"items": items, "next_cursor": next_cursor, "has_more": has_more}
+
+    return await snapshot_read(
+        build_cache_key(
+            "workspace:notifications:list",
+            user_id=user["uid"],
+            cursor=cursor,
+            limit=limit,
+        ),
+        load_page,
+        {"items": [], "next_cursor": None, "has_more": False},
+        fresh_ttl=CACHE_TTL_SHORT,
+        stale_ttl=CACHE_TTL_MEDIUM,
+    )
 
 
 @router.get("/notifications/{notification_id}", response_model=NotificationResponse)

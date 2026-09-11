@@ -2,7 +2,7 @@ import '../../styles/pages/avatar-modeling.css'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Box, Camera, ChevronLeft, ChevronRight, Eye, Grid3x3, Maximize2, PanelLeft, PanelRight, RotateCcw, Save, Sparkles, X } from 'lucide-react'
 import { EveAvatar } from '../../components/eve/avatar/EveAvatar'
-import { AVATAR_CATALOG, AVATAR_DEFAULTS, clampUserPan, clampZoom } from '../../components/eve/avatar/avatarConstants'
+import { AVATAR_CATALOG, AVATAR_DEFAULT_PAINT_COLOR, AVATAR_DEFAULTS, clampUserPan, clampZoom } from '../../components/eve/avatar/avatarConstants'
 import { useEveAvatar } from '../../components/eve/avatar/EveAvatarProvider'
 import { listAvatarModels, saveAvatarPreferences } from '../../lib/eveAvatarApi'
 import { capabilitiesForFormat, getImportFormat, isSupportedModelFile } from './editorCapabilities'
@@ -50,7 +50,7 @@ export function ModelingStudioWorkspace() {
   const [currentFrame, setCurrentFrame] = useState(0)
   const [timelineCollapsed, setTimelineCollapsed] = useState(false)
   const [materialPatch, setMaterialPatch] = useState(null)
-  const [paintSettings, setPaintSettings] = useState({ size: 24, strength: 0.8, color: '#a83b59', mode: 'paint' })
+  const [paintSettings, setPaintSettings] = useState({ size: 24, strength: 0.8, color: AVATAR_DEFAULT_PAINT_COLOR, mode: 'paint' })
   const [animationClips, setAnimationClips] = useState([])
   const [selectedKeyframe, setSelectedKeyframe] = useState(null)
   const viewportRef = useRef(null)

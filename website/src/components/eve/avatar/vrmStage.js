@@ -51,5 +51,5 @@ export function createVrmStage(mount) {
   placeholder.add(head)
   scene.add(placeholder)
 
-  return { scene, camera, renderer, width, height }
+  return { scene, camera, renderer, head, width, height }
 }

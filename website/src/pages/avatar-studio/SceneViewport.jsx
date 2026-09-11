@@ -112,7 +112,8 @@ export const SceneViewport = forwardRef(function SceneViewport({ source, nodes =
     const controls = new OrbitControls(camera, renderer.domElement)
     controls.enableDamping = true
     controls.target.set(0, 1, 0)
-    controls.addEventListener('change', () => onCameraChange?.({ position: toArray(camera.position), target: toArray(controls.target) }))
+    const reportCameraChange = () => onCameraChange?.({ position: toArray(camera.position), target: toArray(controls.target) })
+    controls.addEventListener('end', reportCameraChange)
     const transform = new TransformControls(camera, renderer.domElement)
     transform.addEventListener('dragging-changed', (event) => { controls.enabled = !event.value })
     transform.addEventListener('objectChange', () => {
@@ -229,6 +230,7 @@ export const SceneViewport = forwardRef(function SceneViewport({ source, nodes =
       renderer.domElement.removeEventListener('pointermove', pointerMove)
       renderer.domElement.removeEventListener('pointerup', pointerUp)
       transform.dispose()
+      controls.removeEventListener('end', reportCameraChange)
       controls.dispose()
       renderer.dispose()
       container.removeChild(renderer.domElement)

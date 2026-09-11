@@ -4,6 +4,7 @@ export const AVATAR_STORAGE_KEY = AVATAR_PREFS_KEY
 export const AVATAR_BC_CHANNEL = 'starwaves-avatar'
 export const AVATAR_OVERLAY_BC_CHANNEL = 'starwaves-avatar-overlay'
 export const AVATAR_CACHE_KEY = UI_CACHE_KEY
+export const AVATAR_DEFAULT_PAINT_COLOR = '#a83b59'
 
 export const AVATAR_EMOTIONS = ['idle', 'listening', 'thinking', 'speaking', 'tool', 'error']
 

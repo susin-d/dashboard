@@ -1,21 +1,19 @@
 """Contest route: aggregated upcoming contests across platforms, with caching."""
 
 import asyncio
-import time
 from typing import Any
 
 import httpx
 from fastapi import APIRouter, Query
 
 from app.api.routes.workspace._shared import DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE
+from app.core.cache import CACHE_TTL_LONG, snapshot_read
 from app.repositories.pagination import decode_cursor, encode_cursor
 from app.schemas.workspace import PageResponse
 from app.services.contests import codechef_contests, codeforces_contests, leetcode_contests
 
 router = APIRouter()
 
-CONTEST_CACHE_TTL = 10 * 60
-_contest_cache: tuple[float, list[dict]] | None = None
 CONTEST_REQUEST_TIMEOUT = httpx.Timeout(8.0, connect=2.0)
 
 
@@ -29,10 +27,7 @@ async def list_contests(
     cursor: str | None = None,
     limit: int = Query(DEFAULT_PAGE_SIZE, ge=1, le=MAX_PAGE_SIZE),
 ):
-    global _contest_cache
-    if _contest_cache and _contest_cache[0] > time.monotonic():
-        platforms = _contest_cache[1]
-    else:
+    async def load_platforms():
         headers = {
             "User-Agent": (
                 "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
@@ -44,14 +39,20 @@ async def list_contests(
             follow_redirects=True,
             headers=headers,
         ) as client:
-            platforms = await asyncio.gather(
+            loaded = await asyncio.gather(
                 codeforces_contests(client),
                 codechef_contests(client),
                 leetcode_contests(client),
             )
-        platforms = [platform for platform in platforms if platform is not None]
-        if platforms:
-            _contest_cache = (time.monotonic() + CONTEST_CACHE_TTL, platforms)
+        return [platform for platform in loaded if platform is not None]
+
+    platforms = await snapshot_read(
+        "contests:platforms",
+        load_platforms,
+        [],
+        fresh_ttl=600,
+        stale_ttl=CACHE_TTL_LONG,
+    )
 
     records = []
     for platform in platforms:

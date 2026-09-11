@@ -17,6 +17,8 @@ import { formatFileSize } from '../../utils/fileSize'
 import { useEveAttachments } from './useEveAttachments'
 import { useEveDictation } from './useEveDictation'
 
+const MAX_CHARS = 4000
+
 export function EveComposer({
   draft,
   setDraft,

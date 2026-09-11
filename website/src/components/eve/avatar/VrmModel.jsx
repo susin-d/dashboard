@@ -80,8 +80,9 @@ export function VrmModel({
     let scene
     let camera
     let renderer
+    let head
     try {
-      ;({ scene, camera, renderer } = createVrmStage(mount))
+      ;({ scene, camera, renderer, head } = createVrmStage(mount))
     } catch {
       setStatus('fallback')
       readyRef.current()

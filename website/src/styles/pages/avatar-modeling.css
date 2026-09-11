@@ -14,13 +14,18 @@
 }
 
 .modeling-studio {
+  --modeling-rail-width: 58px;
+  --modeling-browser-width: 270px;
+  --modeling-inspector-width: 320px;
+  --modeling-toolbar-height: 58px;
+  --modeling-timeline-height: 220px;
   --color-primary: var(--avatar-studio-accent);
   --color-primary-hover: color-mix(in srgb, var(--avatar-studio-accent) 84%, black);
   --color-primary-light: color-mix(in srgb, var(--avatar-studio-accent) 10%, transparent);
   --color-accent: var(--avatar-studio-accent);
-  --modeling-panel: color-mix(in srgb, var(--bg-primary) 96%, var(--avatar-studio-accent) 4%);
-  --modeling-panel-strong: color-mix(in srgb, var(--bg-primary) 90%, var(--avatar-studio-accent) 10%);
-  --modeling-stage: color-mix(in srgb, var(--bg-primary) 98%, var(--avatar-studio-accent) 2%);
+  --modeling-panel: color-mix(in srgb, var(--bg-primary) 92%, var(--avatar-studio-accent) 8%);
+  --modeling-panel-strong: color-mix(in srgb, var(--bg-primary) 86%, var(--avatar-studio-accent) 14%);
+  --modeling-stage: color-mix(in srgb, var(--bg-primary) 97%, var(--avatar-studio-accent) 3%);
   display: flex;
   flex-direction: column;
   width: 100%;
@@ -41,7 +46,7 @@
 .modeling-topbar {
   display: flex;
   align-items: center;
-  min-height: 58px;
+  min-height: var(--modeling-toolbar-height);
   padding: 0 var(--space-sm);
   gap: var(--space-sm);
   border-bottom: 1px solid var(--border-color);
@@ -70,7 +75,7 @@
 
 .modeling-menu { display: flex; align-items: center; gap: 2px; flex: 1; min-width: 0; overflow: auto; scrollbar-width: none; }
 .modeling-menu-group { position: relative; flex: 0 0 auto; }
-.modeling-menu-item { display: inline-flex; align-items: center; gap: 3px; padding: 7px 8px; border: 0; border-radius: var(--radius-sm); color: var(--text-secondary); background: transparent; white-space: nowrap; cursor: pointer; }
+.modeling-menu-item { display: inline-flex; align-items: center; gap: 4px; padding: 8px 9px; border: 0; border-radius: var(--radius-sm); color: var(--text-secondary); background: transparent; font-size: var(--text-md); white-space: nowrap; cursor: pointer; }
 .modeling-menu-item:hover { color: var(--text-primary); background: var(--color-primary-light); }
 .modeling-menu-dropdown { position: absolute; top: calc(100% + 4px); left: 0; display: grid; min-width: 180px; padding: 5px; border: 1px solid var(--border-color); border-radius: var(--radius-md); background: var(--glass-bg-dropdown); box-shadow: var(--shadow-lg); z-index: 12; }
 .modeling-menu-dropdown button { padding: 8px 9px; border: 0; border-radius: var(--radius-sm); color: var(--text-primary); background: transparent; text-align: left; white-space: nowrap; cursor: pointer; }
@@ -82,7 +87,7 @@
 .modeling-top-actions { display: flex; align-items: center; gap: 6px; }
 .modeling-action-button,
 .modeling-icon-button,
-.modeling-project-picker { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 32px; padding: 0 9px; border: 1px solid var(--border-color); border-radius: var(--radius-sm); color: var(--text-primary); background: var(--modeling-panel); cursor: pointer; white-space: nowrap; }
+.modeling-project-picker { display: inline-flex; align-items: center; justify-content: center; gap: 7px; min-height: 36px; padding: 0 11px; border: 1px solid var(--border-color); border-radius: var(--radius-sm); color: var(--text-primary); background: var(--modeling-panel); font-size: var(--text-md); cursor: pointer; white-space: nowrap; }
 .modeling-action-button:hover,
 .modeling-icon-button:hover,
 .modeling-project-picker:hover { border-color: var(--border-focus); background: var(--color-primary-light); }
@@ -98,7 +103,7 @@
 .modeling-export-options button { padding: 8px; border: 0; border-radius: var(--radius-sm); color: var(--text-primary); background: transparent; text-align: left; cursor: pointer; }
 .modeling-export-options button:hover { background: var(--color-primary-light); }
 
-.modeling-workspace { display: grid; grid-template-columns: 64px minmax(220px, 270px) minmax(420px, 1fr) minmax(260px, 320px); flex: 1; min-height: 0; overflow: hidden; }
+.modeling-workspace { display: grid; grid-template-columns: var(--modeling-rail-width) minmax(230px, var(--modeling-browser-width)) minmax(420px, 1fr) minmax(280px, var(--modeling-inspector-width)); flex: 1; min-height: 0; overflow: hidden; }
 .modeling-tool-rail { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: var(--space-xs) 7px; border-right: 1px solid var(--border-color); background: var(--modeling-panel); }
 .modeling-tool-rail-brand { width: 28px; height: 28px; margin-bottom: 8px; font-size: var(--text-md); }
 .modeling-tool-rail button { display: grid; place-items: center; gap: 3px; width: 48px; min-height: 48px; padding: 5px 2px; border: 1px solid transparent; border-radius: var(--radius-md); color: var(--text-secondary); background: transparent; cursor: pointer; }
@@ -114,15 +119,15 @@
 .modeling-right-column { display: grid; grid-template-rows: minmax(180px, 30%) minmax(250px, 1fr) auto; border-left: 1px solid var(--border-color); }
 .modeling-panel-heading { display: flex; align-items: center; justify-content: space-between; gap: var(--space-xs); padding: var(--space-sm); border-bottom: 1px solid var(--border-color); }
 .modeling-panel-heading.compact { padding: 11px var(--space-sm); }
-.modeling-panel-heading h2 { margin: 2px 0 0; font-size: var(--text-md); }
+.modeling-panel-heading h2 { margin: 2px 0 0; font-size: var(--text-lg); }
 .modeling-panel-kicker { display: block; color: var(--text-secondary); font-size: var(--text-2xs); font-weight: var(--font-weight-semibold); letter-spacing: .08em; text-transform: uppercase; }
 .modeling-upload-compact { display: grid; place-items: center; width: 30px; height: 30px; border: 1px solid var(--border-color); border-radius: var(--radius-sm); color: var(--color-primary); cursor: pointer; }
 .modeling-browser-tabs { display: flex; gap: 2px; padding: 7px var(--space-xs); border-bottom: 1px solid var(--border-color); overflow-x: auto; }
-.modeling-browser-tabs button { padding: 7px 8px; border: 0; border-bottom: 2px solid transparent; color: var(--text-secondary); background: transparent; cursor: pointer; white-space: nowrap; }
+.modeling-browser-tabs button { padding: 8px 9px; border: 0; border-bottom: 2px solid transparent; color: var(--text-secondary); background: transparent; font-size: var(--text-md); cursor: pointer; white-space: nowrap; }
 .modeling-browser-tabs button.is-active { border-bottom-color: var(--color-primary); color: var(--text-primary); }
 .modeling-search-field { display: flex; align-items: center; gap: 7px; margin: var(--space-xs); padding: 8px 9px; border: 1px solid var(--border-color); border-radius: var(--radius-sm); color: var(--text-secondary); background: var(--glass-bg-input); }
 .modeling-search-field:focus-within { border-color: var(--border-focus); box-shadow: var(--shadow-focus); }
-.modeling-search-field input { width: 100%; min-width: 0; border: 0; outline: 0; color: var(--text-primary); background: transparent; font-size: var(--text-sm); }
+.modeling-search-field input { width: 100%; min-width: 0; border: 0; outline: 0; color: var(--text-primary); background: transparent; font-size: var(--text-md); }
 .modeling-filter-list { display: grid; gap: 3px; padding: 0 var(--space-xs) var(--space-xs); }
 .modeling-filter-list button { display: flex; align-items: center; gap: 8px; padding: 8px; border: 0; border-radius: var(--radius-sm); color: var(--text-secondary); background: transparent; text-align: left; cursor: pointer; }
 .modeling-filter-list button small { margin-left: auto; }
@@ -134,13 +139,13 @@
 .modeling-model-card.is-active { border-color: var(--color-primary); background: color-mix(in srgb, var(--color-primary-light) 78%, var(--modeling-panel)); box-shadow: var(--glow-primary); }
 .modeling-model-art { display: grid; place-items: center; height: 44px; border-radius: var(--radius-sm); color: var(--color-primary); background: color-mix(in srgb, var(--color-primary) 14%, transparent); }
 .modeling-model-card-copy { display: grid; gap: 3px; min-width: 0; }
-.modeling-model-card-copy strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--text-sm); }
+.modeling-model-card-copy strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--text-md); }
 .modeling-model-card-copy small { color: var(--text-secondary); font-size: var(--text-2xs); }
 .modeling-model-arrow { color: var(--text-secondary); }
 .modeling-empty-library,
 .modeling-inspector-empty { display: grid; place-items: center; gap: 7px; padding: var(--space-lg); color: var(--text-secondary); text-align: center; }
 
-.modeling-center-column { display: grid; grid-template-rows: minmax(360px, 1fr) minmax(180px, 28%); min-width: 0; min-height: 0; background: var(--modeling-stage); }
+.modeling-center-column { display: grid; grid-template-rows: minmax(360px, 1fr) minmax(180px, var(--modeling-timeline-height)); min-width: 0; min-height: 0; background: var(--modeling-stage); }
 .modeling-viewport-shell { display: grid; grid-template-rows: 40px minmax(0, 1fr); min-height: 0; }
 .modeling-viewport-header { display: flex; align-items: center; justify-content: space-between; padding: 0 var(--space-sm); border-bottom: 1px solid var(--border-color); background: color-mix(in srgb, var(--modeling-panel) 75%, transparent); }
 .modeling-viewport-header strong { font-size: var(--text-sm); }

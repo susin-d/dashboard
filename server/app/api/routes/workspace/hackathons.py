@@ -14,6 +14,7 @@ from app.api.routes.workspace._shared import (
     user_collection,
 )
 from app.core.auth import get_current_user
+from app.core.cache import CACHE_TTL_LONG, cache_invalidate_prefix, snapshot_read
 from app.core.errors import not_found
 from app.repositories.pagination import decode_cursor, encode_cursor
 from app.schemas.workspace import (
@@ -29,6 +30,11 @@ from app.services.hackathon_sources import (
 )
 
 router = APIRouter()
+
+
+def _invalidate_hackathon_snapshots(user_id: str) -> None:
+    cache_invalidate_prefix(f"hackathons:list:{user_id}")
+    invalidate_workspace_overview(user_id)
 
 
 @router.get("/hackathon-sources")
@@ -71,6 +77,7 @@ async def update_hackathon_source(
             merge=True,
         )
     )
+    _invalidate_hackathon_snapshots(user["uid"])
     return {"source_id": source_id, "enabled": enabled}
 
 
@@ -95,21 +102,29 @@ async def list_hackathons(
             (settings_snapshot.to_dict() or {}).get("enabled", [])
         )
 
-    snapshots, enabled = await asyncio.to_thread(load_saved_data)
-    now = datetime.now(timezone.utc)
-    manual = []
-    for item in snapshots:
-        record = item.to_dict() or {}
-        if record.get("deleted"):
-            continue
-        end = record.get("ends_at")
-        if isinstance(end, str):
-            end = datetime.fromisoformat(end)
-        if end and end.astimezone(timezone.utc) >= now:
-            # Overrides after spread so the stored source cannot mask the marker
-            manual.append({"id": item.id, **record, "source": "manual"})
-    connected = await fetch_enabled_hackathons(enabled)
-    records = sorted([*manual, *connected], key=lambda item: item["starts_at"])
+    async def load_records():
+        snapshots, enabled = await asyncio.to_thread(load_saved_data)
+        now = datetime.now(timezone.utc)
+        manual = []
+        for item in snapshots:
+            record = item.to_dict() or {}
+            if record.get("deleted"):
+                continue
+            end = record.get("ends_at")
+            if isinstance(end, str):
+                end = datetime.fromisoformat(end)
+            if end and end.astimezone(timezone.utc) >= now:
+                manual.append({"id": item.id, **record, "source": "manual"})
+        connected = await fetch_enabled_hackathons(enabled)
+        return sorted([*manual, *connected], key=lambda item: item["starts_at"])
+
+    records = await snapshot_read(
+        f"hackathons:list:{user['uid']}",
+        load_records,
+        [],
+        fresh_ttl=600,
+        stale_ttl=CACHE_TTL_LONG,
+    )
     offset = int(decode_cursor(cursor) or 0)
     page = records[offset : offset + limit]
     next_cursor = encode_cursor(str(offset + limit)) if offset + limit < len(records) else None
@@ -134,7 +149,7 @@ async def create_hackathon(
         )
     )
     snap = await asyncio.to_thread(reference.get)
-    invalidate_workspace_overview(user["uid"])
+    _invalidate_hackathon_snapshots(user["uid"])
     return {"id": reference.id, **(snap.to_dict() or {})}
 
 
@@ -175,7 +190,7 @@ async def update_hackathon(
         )
     )
     snap = await asyncio.to_thread(reference.get)
-    invalidate_workspace_overview(user["uid"])
+    _invalidate_hackathon_snapshots(user["uid"])
     return {"id": reference.id, **(snap.to_dict() or {})}
 
 
@@ -199,7 +214,7 @@ async def delete_hackathon(
             },
         )
     )
-    invalidate_workspace_overview(user["uid"])
+    _invalidate_hackathon_snapshots(user["uid"])
     return Response(status_code=204)
 
 
@@ -223,5 +238,5 @@ async def restore_hackathon(
         )
     )
     snap = await asyncio.to_thread(reference.get)
-    invalidate_workspace_overview(user["uid"])
+    _invalidate_hackathon_snapshots(user["uid"])
     return {"id": reference.id, **(snap.to_dict() or {})}
